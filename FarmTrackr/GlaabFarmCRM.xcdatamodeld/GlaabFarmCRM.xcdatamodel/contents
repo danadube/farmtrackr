@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22522" systemVersion="23A344" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" userDefinedModelVersionIdentifier="">
+    <entity name="FarmContact" representedClassName="FarmContact" syncable="YES" codeGenerationType="class">
+        <attribute name="city" optional="NO" attributeType="String" defaultValueString=""/>
+        <attribute name="dateCreated" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="dateModified" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="email1" optional="YES" attributeType="String"/>
+        <attribute name="email2" optional="YES" attributeType="String"/>
+        <attribute name="farm" optional="NO" attributeType="String" defaultValueString=""/>
+        <attribute name="firstName" optional="NO" attributeType="String" defaultValueString=""/>
+        <attribute name="lastName" optional="NO" attributeType="String" defaultValueString=""/>
+        <attribute name="mailingAddress" optional="NO" attributeType="String" defaultValueString=""/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="phoneNumber1" optional="YES" attributeType="String"/>
+        <attribute name="phoneNumber2" optional="YES" attributeType="String"/>
+        <attribute name="phoneNumber3" optional="YES" attributeType="String"/>
+        <attribute name="phoneNumber4" optional="YES" attributeType="String"/>
+        <attribute name="phoneNumber5" optional="YES" attributeType="String"/>
+        <attribute name="phoneNumber6" optional="YES" attributeType="String"/>
+        <attribute name="siteCity" optional="YES" attributeType="String"/>
+        <attribute name="siteMailingAddress" optional="YES" attributeType="String"/>
+        <attribute name="siteState" optional="YES" attributeType="String"/>
+        <attribute name="siteZipCode" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="state" optional="NO" attributeType="String" defaultValueString=""/>
+        <attribute name="zipCode" optional="NO" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+    </entity>
+</model> 
