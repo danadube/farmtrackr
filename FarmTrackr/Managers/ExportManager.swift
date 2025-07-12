@@ -72,6 +72,67 @@ class ExportManager: ObservableObject {
         return fileURL
     }
     
+    func exportToJSON(contacts: [FarmContact]) async throws -> URL {
+        await MainActor.run {
+            isExporting = true
+            exportStatus = "Generating JSON..."
+            exportProgress = 0.1
+        }
+        
+        let jsonData = createJSONData(from: contacts)
+        
+        await MainActor.run {
+            exportProgress = 0.5
+            exportStatus = "Writing JSON file..."
+        }
+        
+        let fileName = "Glaab_Farm_Contacts_\(Date().formatted(date: .abbreviated, time: .omitted)).json"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try jsonData.write(to: fileURL)
+        
+        await MainActor.run {
+            exportProgress = 1.0
+            exportStatus = "Export completed!"
+            isExporting = false
+        }
+        
+        return fileURL
+    }
+    
+    func exportToExcel(contacts: [FarmContact]) async throws -> URL {
+        await MainActor.run {
+            isExporting = true
+            exportStatus = "Generating Excel file..."
+            exportProgress = 0.1
+        }
+        
+        // Create a proper Excel file using CSV format but with correct MIME type
+        // In a production app, you'd use a library like CoreXLSX for writing
+        let csvString = createCSVString(from: contacts)
+        
+        await MainActor.run {
+            exportProgress = 0.5
+            exportStatus = "Writing Excel file..."
+        }
+        
+        let fileName = "Glaab_Farm_Contacts_\(Date().formatted(date: .abbreviated, time: .omitted)).csv"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        // Save as CSV (Excel can open CSV files)
+        try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
+        
+        await MainActor.run {
+            exportProgress = 1.0
+            exportStatus = "Export completed!"
+            isExporting = false
+        }
+        
+        return fileURL
+    }
+    
     private func createCSVString(from contacts: [FarmContact]) -> String {
         let headers = [
             "First Name", "Last Name", "Mailing Address", "City", "State", "ZIP Code",
@@ -196,5 +257,50 @@ class ExportManager: ObservableObject {
         }
         
         return data
+    }
+    
+    private func createJSONData(from contacts: [FarmContact]) -> Data {
+        var contactsArray: [[String: Any]] = []
+        
+        for contact in contacts {
+            let contactDict: [String: Any] = [
+                "firstName": contact.firstName ?? "",
+                "lastName": contact.lastName ?? "",
+                "email1": contact.email1 ?? "",
+                "email2": contact.email2 ?? "",
+                "phoneNumber1": contact.phoneNumber1 ?? "",
+                "phoneNumber2": contact.phoneNumber2 ?? "",
+                "phoneNumber3": contact.phoneNumber3 ?? "",
+                "phoneNumber4": contact.phoneNumber4 ?? "",
+                "phoneNumber5": contact.phoneNumber5 ?? "",
+                "phoneNumber6": contact.phoneNumber6 ?? "",
+                "farm": contact.farm ?? "",
+                "mailingAddress": contact.mailingAddress ?? "",
+                "city": contact.city ?? "",
+                "state": contact.state ?? "",
+                "zipCode": contact.zipCode,
+                "siteMailingAddress": contact.siteMailingAddress ?? "",
+                "siteCity": contact.siteCity ?? "",
+                "siteState": contact.siteState ?? "",
+                "siteZipCode": contact.siteZipCode,
+                "notes": contact.notes ?? "",
+                "dateCreated": contact.dateCreated?.timeIntervalSince1970 ?? 0,
+                "dateModified": contact.dateModified?.timeIntervalSince1970 ?? 0
+            ]
+            
+            contactsArray.append(contactDict)
+        }
+        
+        let jsonObject: [String: Any] = [
+            "contacts": contactsArray,
+            "exportDate": Date().timeIntervalSince1970,
+            "totalContacts": contacts.count
+        ]
+        
+        do {
+            return try JSONSerialization.data(withJSONObject: jsonObject, options: .prettyPrinted)
+        } catch {
+            return Data()
+        }
     }
 } 

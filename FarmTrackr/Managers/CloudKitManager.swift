@@ -9,6 +9,20 @@ import Foundation
 import CloudKit
 import CoreData
 
+enum CloudKitError: Error, LocalizedError {
+    case databaseNotAvailable
+    case containerNotAvailable
+    
+    var errorDescription: String? {
+        switch self {
+        case .databaseNotAvailable:
+            return "CloudKit database is not available"
+        case .containerNotAvailable:
+            return "CloudKit container is not available"
+        }
+    }
+}
+
 class CloudKitManager: ObservableObject {
     static let shared = CloudKitManager()
     
@@ -17,8 +31,8 @@ class CloudKitManager: ObservableObject {
     @Published var syncStatus: SyncStatus = .unknown
     @Published var lastSyncDate: Date?
     
-    private let container = CKContainer(identifier: "iCloud.com.danadube.FarmTrackr")
-    private let privateDatabase: CKDatabase
+    private var container: CKContainer?
+    private var privateDatabase: CKDatabase?
     
     enum SyncStatus: Equatable {
         case unknown
@@ -43,16 +57,39 @@ class CloudKitManager: ObservableObject {
     }
     
     private init() {
-        self.privateDatabase = container.privateCloudDatabase
-        // Temporarily disable CloudKit initialization to fix white screen
-        // DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-        //     self.checkCloudKitStatus()
-        //     self.setupCloudKitSubscription()
-        // }
+        // Check if we're running in a test environment
+        let isRunningTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+        
+        if isRunningTests {
+            print("Running in test environment - CloudKit disabled")
+            self.syncStatus = .notAvailable
+            return
+        }
+        
+        // Initialize CloudKit container safely
+        self.container = CKContainer(identifier: "iCloud.com.danadube.FarmTrackr")
+        self.privateDatabase = container?.privateCloudDatabase
+        
+        // Only attempt CloudKit operations if container was initialized successfully
+        if container != nil {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                self.checkCloudKitStatus()
+                self.setupCloudKitSubscription()
+            }
+        } else {
+            self.syncStatus = .notAvailable
+            print("CloudKit container could not be initialized")
+        }
     }
     
     // MARK: - CloudKit Status
     func checkCloudKitStatus() {
+        // Don't check CloudKit status if we're in test environment
+        let isRunningTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+        if isRunningTests {
+            return
+        }
+        
         Task {
             await checkAccountStatus()
             await checkCloudKitAvailability()
@@ -61,6 +98,12 @@ class CloudKitManager: ObservableObject {
     
     @MainActor
     private func checkAccountStatus() async {
+        guard let container = container else {
+            isSignedInToiCloud = false
+            syncStatus = .notAvailable
+            return
+        }
+        
         do {
             let status = try await container.accountStatus()
             isSignedInToiCloud = status == .available
@@ -74,6 +117,12 @@ class CloudKitManager: ObservableObject {
     
     @MainActor
     private func checkCloudKitAvailability() async {
+        guard let container = container else {
+            isCloudKitAvailable = false
+            syncStatus = .notAvailable
+            return
+        }
+        
         do {
             let status = try await container.accountStatus()
             isCloudKitAvailable = status == .available
@@ -97,12 +146,23 @@ class CloudKitManager: ObservableObject {
     
     // MARK: - CloudKit Subscriptions
     private func setupCloudKitSubscription() {
+        // Don't setup subscriptions if we're in test environment
+        let isRunningTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+        if isRunningTests {
+            return
+        }
+        
         Task {
             await createSubscriptionIfNeeded()
         }
     }
     
     private func createSubscriptionIfNeeded() async {
+        guard let privateDatabase = privateDatabase else {
+            print("CloudKit private database not available.")
+            return
+        }
+        
         do {
             // Check if subscription already exists
             let existingSubscriptions = try await privateDatabase.allSubscriptions()
@@ -134,6 +194,13 @@ class CloudKitManager: ObservableObject {
     
     // MARK: - Sync Operations
     func performManualSync() async {
+        guard privateDatabase != nil else {
+            await MainActor.run {
+                syncStatus = .error("CloudKit not available")
+            }
+            return
+        }
+        
         await MainActor.run {
             syncStatus = .syncing
         }
@@ -165,6 +232,10 @@ class CloudKitManager: ObservableObject {
     
     // MARK: - CloudKit Records
     func fetchCloudKitRecords() async throws -> [CKRecord] {
+        guard let privateDatabase = privateDatabase else {
+            throw CloudKitError.databaseNotAvailable
+        }
+        
         let query = CKQuery(recordType: "FarmContact", predicate: NSPredicate(value: true))
         query.sortDescriptors = [NSSortDescriptor(key: "dateCreated", ascending: false)]
         
@@ -173,6 +244,9 @@ class CloudKitManager: ObservableObject {
     }
     
     func deleteCloudKitRecord(withID recordID: CKRecord.ID) async throws {
+        guard let privateDatabase = privateDatabase else {
+            throw CloudKitError.databaseNotAvailable
+        }
         try await privateDatabase.deleteRecord(withID: recordID)
     }
     

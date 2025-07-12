@@ -170,6 +170,35 @@ class DataImportManager: ObservableObject {
         }
     }
     
+    func importContact(_ record: ContactRecord, into context: NSManagedObjectContext) async throws {
+        await MainActor.run {
+            let contact = FarmContact(context: context)
+            
+            contact.firstName = record.firstName
+            contact.lastName = record.lastName
+            contact.mailingAddress = record.mailingAddress
+            contact.city = record.city
+            contact.state = record.state
+            contact.zipCode = record.zipCode
+            contact.email1 = record.email1
+            contact.email2 = record.email2
+            contact.phoneNumber1 = record.phoneNumber1
+            contact.phoneNumber2 = record.phoneNumber2
+            contact.phoneNumber3 = record.phoneNumber3
+            contact.phoneNumber4 = record.phoneNumber4
+            contact.phoneNumber5 = record.phoneNumber5
+            contact.phoneNumber6 = record.phoneNumber6
+            contact.siteMailingAddress = record.siteMailingAddress
+            contact.siteCity = record.siteCity
+            contact.siteState = record.siteState
+            contact.siteZipCode = record.siteZipCode
+            contact.notes = record.notes
+            contact.farm = record.farm
+            contact.dateCreated = Date()
+            contact.dateModified = Date()
+        }
+    }
+    
     // MARK: - Private Methods
     
     private func parseCSVLine(_ line: String) -> [String] {

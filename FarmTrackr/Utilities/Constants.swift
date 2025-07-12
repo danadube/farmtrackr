@@ -152,6 +152,48 @@ struct Theme {
 
 struct ThemeManager {
     static let themes: [String: Theme] = [
+        "Modern Green": Theme(
+            name: "Modern Green",
+            colors: ThemeColors(
+                primary: Color(red: 34/255, green: 139/255, blue: 34/255), // Forest Green
+                secondary: Color(red: 245/255, green: 245/255, blue: 220/255),
+                accent: Color(red: 144/255, green: 238/255, blue: 144/255), // Light Green
+                background: Color(red: 248/255, green: 252/255, blue: 248/255), // Very light green tint
+                text: Color(red: 27/255, green: 27/255, blue: 27/255),
+                cardBackground: Color(red: 242/255, green: 250/255, blue: 242/255), // Very light green
+                border: Color(red: 200/255, green: 220/255, blue: 200/255),
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color.gray,
+                tertiary: Color.gray.opacity(0.5),
+                backgroundSecondary: Color(red: 245/255, green: 250/255, blue: 245/255),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color.gray.opacity(0.3),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "SF Pro Display",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
         "Classic Green": Theme(
             name: "Classic Green",
             colors: ThemeColors(
@@ -367,5 +409,255 @@ struct ThemeManager {
 
     static func theme(named name: String) -> Theme {
         themes[name] ?? themes["Classic Green"]!
+    }
+} 
+
+// MARK: - Accessibility
+struct Accessibility {
+    struct Labels {
+        static let addContact = "Add new contact"
+        static let editContact = "Edit contact"
+        static let deleteContact = "Delete contact"
+        static let searchContacts = "Search contacts"
+        static let filterContacts = "Filter contacts"
+        static let importData = "Import data from file"
+        static let exportData = "Export data to file"
+        static let printLabels = "Print mailing labels"
+        static let dataQuality = "Data quality dashboard"
+        static let batchActions = "Batch actions"
+        static let settings = "Settings"
+        static let themeSelector = "Theme selector"
+        static let darkModeToggle = "Dark mode toggle"
+        static let backupData = "Backup data"
+        static let restoreData = "Restore data"
+        static let clearData = "Clear all data"
+    }
+    
+    struct Hints {
+        static let addContact = "Double tap to create a new contact"
+        static let editContact = "Double tap to edit this contact"
+        static let deleteContact = "Double tap to delete this contact"
+        static let searchContacts = "Type to search for contacts"
+        static let filterContacts = "Double tap to open filter options"
+        static let importData = "Double tap to select a file to import"
+        static let exportData = "Double tap to export your data"
+        static let printLabels = "Double tap to print mailing labels"
+        static let dataQuality = "Double tap to view data quality issues"
+        static let batchActions = "Double tap to perform batch operations"
+        static let settings = "Double tap to open settings"
+        static let themeSelector = "Double tap to change the app theme"
+        static let darkModeToggle = "Double tap to toggle dark mode"
+        static let backupData = "Double tap to create a backup"
+        static let restoreData = "Double tap to restore from backup"
+        static let clearData = "Double tap to clear all data (this action cannot be undone)"
+    }
+}
+
+
+
+// MARK: - Dynamic Type Support
+extension Font {
+    static func dynamicTitle() -> Font {
+        .largeTitle
+    }
+    
+    static func dynamicTitle2() -> Font {
+        .title2
+    }
+    
+    static func dynamicTitle3() -> Font {
+        .title3
+    }
+    
+    static func dynamicHeadline() -> Font {
+        .headline
+    }
+    
+    static func dynamicBody() -> Font {
+        .body
+    }
+    
+    static func dynamicCallout() -> Font {
+        .callout
+    }
+    
+    static func dynamicSubheadline() -> Font {
+        .subheadline
+    }
+    
+    static func dynamicFootnote() -> Font {
+        .footnote
+    }
+    
+    static func dynamicCaption() -> Font {
+        .caption
+    }
+    
+    static func dynamicCaption2() -> Font {
+        .caption2
+    }
+}
+
+// MARK: - Accessibility Manager
+class AccessibilityManager: ObservableObject {
+    @Published var isVoiceOverRunning = UIAccessibility.isVoiceOverRunning
+    @Published var isReduceMotionEnabled = UIAccessibility.isReduceMotionEnabled
+    @Published var isReduceTransparencyEnabled = UIAccessibility.isReduceTransparencyEnabled
+    @Published var isBoldTextEnabled = UIAccessibility.isBoldTextEnabled
+    @Published var isGrayscaleEnabled = UIAccessibility.isGrayscaleEnabled
+    @Published var isHighContrastEnabled = false // UIAccessibility.isHighContrastEnabled not available in iOS 18.5
+    @Published var isInvertColorsEnabled = UIAccessibility.isInvertColorsEnabled
+    @Published var isShakeToUndoEnabled = UIAccessibility.isShakeToUndoEnabled
+    @Published var isSpeakScreenEnabled = UIAccessibility.isSpeakScreenEnabled
+    @Published var isSpeakSelectionEnabled = UIAccessibility.isSpeakSelectionEnabled
+    @Published var isSwitchControlRunning = UIAccessibility.isSwitchControlRunning
+    @Published var isAssistiveTouchRunning = UIAccessibility.isAssistiveTouchRunning
+    
+    init() {
+        setupNotifications()
+    }
+    
+    private func setupNotifications() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(voiceOverStatusChanged),
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reduceMotionStatusChanged),
+            name: UIAccessibility.reduceMotionStatusDidChangeNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reduceTransparencyStatusChanged),
+            name: UIAccessibility.reduceTransparencyStatusDidChangeNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(boldTextStatusChanged),
+            name: UIAccessibility.boldTextStatusDidChangeNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(grayscaleStatusChanged),
+            name: UIAccessibility.grayscaleStatusDidChangeNotification,
+            object: nil
+        )
+        
+        // UIAccessibility.highContrastStatusDidChangeNotification not available in iOS 18.5
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(invertColorsStatusChanged),
+            name: UIAccessibility.invertColorsStatusDidChangeNotification,
+            object: nil
+        )
+        
+        // UIAccessibility.shakeToUndoStatusDidChangeNotification not available in iOS 18.5
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(speakScreenStatusChanged),
+            name: UIAccessibility.speakScreenStatusDidChangeNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(speakSelectionStatusChanged),
+            name: UIAccessibility.speakSelectionStatusDidChangeNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(switchControlStatusChanged),
+            name: UIAccessibility.switchControlStatusDidChangeNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(assistiveTouchStatusChanged),
+            name: UIAccessibility.assistiveTouchStatusDidChangeNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func voiceOverStatusChanged() {
+        DispatchQueue.main.async {
+            self.isVoiceOverRunning = UIAccessibility.isVoiceOverRunning
+        }
+    }
+    
+    @objc private func reduceMotionStatusChanged() {
+        DispatchQueue.main.async {
+            self.isReduceMotionEnabled = UIAccessibility.isReduceMotionEnabled
+        }
+    }
+    
+    @objc private func reduceTransparencyStatusChanged() {
+        DispatchQueue.main.async {
+            self.isReduceTransparencyEnabled = UIAccessibility.isReduceTransparencyEnabled
+        }
+    }
+    
+    @objc private func boldTextStatusChanged() {
+        DispatchQueue.main.async {
+            self.isBoldTextEnabled = UIAccessibility.isBoldTextEnabled
+        }
+    }
+    
+    @objc private func grayscaleStatusChanged() {
+        DispatchQueue.main.async {
+            self.isGrayscaleEnabled = UIAccessibility.isGrayscaleEnabled
+        }
+    }
+    
+    // UIAccessibility.isHighContrastEnabled not available in iOS 18.5
+    
+    @objc private func invertColorsStatusChanged() {
+        DispatchQueue.main.async {
+            self.isInvertColorsEnabled = UIAccessibility.isInvertColorsEnabled
+        }
+    }
+    
+    // UIAccessibility.isShakeToUndoEnabled not available in iOS 18.5
+    
+    @objc private func speakScreenStatusChanged() {
+        DispatchQueue.main.async {
+            self.isSpeakScreenEnabled = UIAccessibility.isSpeakScreenEnabled
+        }
+    }
+    
+    @objc private func speakSelectionStatusChanged() {
+        DispatchQueue.main.async {
+            self.isSpeakSelectionEnabled = UIAccessibility.isSpeakSelectionEnabled
+        }
+    }
+    
+    @objc private func switchControlStatusChanged() {
+        DispatchQueue.main.async {
+            self.isSwitchControlRunning = UIAccessibility.isSwitchControlRunning
+        }
+    }
+    
+    @objc private func assistiveTouchStatusChanged() {
+        DispatchQueue.main.async {
+            self.isAssistiveTouchRunning = UIAccessibility.isAssistiveTouchRunning
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 } 

@@ -21,16 +21,22 @@ class ThemeViewModel: ObservableObject {
 
 struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @EnvironmentObject var themeVM: ThemeViewModel
+    @StateObject private var themeVM = ThemeViewModel()
+    @StateObject private var accessibilityManager = AccessibilityManager()
     @State private var selectedTab: NavigationTab? = .overview
     @State private var selectedContact: FarmContact?
     @State private var searchText: String = ""
     @State private var sortOrder: SortOrder = .lastName
     @State private var showingAddContact: Bool = false
     
+    private var customFont: Font {
+        Font.custom(themeVM.theme.font, size: 16)
+    }
+    
     enum NavigationTab: String, CaseIterable {
         case overview = "Overview"
         case contacts = "Contacts"
+        case dataQuality = "Data Quality"
         case importExport = "Import/Export"
         case settings = "Settings"
         
@@ -38,6 +44,7 @@ struct ContentView: View {
             switch self {
             case .overview: return "house"
             case .contacts: return "person.2"
+            case .dataQuality: return "checkmark.shield"
             case .importExport: return "square.and.arrow.up.on.square"
             case .settings: return "gear"
             }
@@ -48,14 +55,54 @@ struct ContentView: View {
         HStack(spacing: 0) {
             SidebarView(selectedTab: $selectedTab)
                 .frame(width: 240) // Increased from 200
+                .environmentObject(themeVM) // Ensure sidebar also gets themeVM
             Divider()
-            DetailContentView(selectedTab: $selectedTab, selectedContact: $selectedContact, searchText: $searchText, sortOrder: $sortOrder, showingAddContact: $showingAddContact)
+            DetailContentView(
+                selectedTab: $selectedTab,
+                selectedContact: $selectedContact,
+                searchText: $searchText,
+                sortOrder: $sortOrder,
+                showingAddContact: $showingAddContact
+            )
+            .environmentObject(accessibilityManager)
+            .environmentObject(themeVM) // <-- Ensure themeVM is injected here
         }
         .environment(\.managedObjectContext, viewContext)
-        .font(Font.custom(themeVM.theme.font, size: 16))
+        .font(customFont)
         .background(appBackground)
         .accentColor(themeVM.theme.colors.accent)
         .preferredColorScheme(themeVM.darkModeEnabled ? .dark : .light)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("FarmTrackr main navigation")
+        .accessibilityHint("Use the tabs at the bottom to navigate between different sections of the app")
+    }
+}
+
+// MARK: - Navigation Item View
+struct NavigationItemView: View {
+    let tab: ContentView.NavigationTab
+    let isSelected: Bool
+    let onTap: () -> Void
+    @EnvironmentObject var themeVM: ThemeViewModel
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: Constants.Spacing.medium) {
+                Image(systemName: tab.icon)
+                    .foregroundColor(isSelected ? themeVM.theme.colors.primary : .secondaryLabel)
+                    .frame(width: 20)
+                    .accessibilityHidden(true)
+                Text(tab.rawValue)
+                    .foregroundColor(isSelected ? themeVM.theme.colors.primary : .primary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 8)
+            .background(isSelected ? Color.accentColor.opacity(0.1) : Color.clear)
+            .cornerRadius(themeVM.theme.cornerRadius.medium)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel("\(tab.rawValue) tab")
+        .accessibilityHint("Double tap to navigate to \(tab.rawValue)")
     }
 }
 
@@ -64,18 +111,26 @@ struct SidebarView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var themeVM: ThemeViewModel
     
+    private var logoImageName: String {
+        colorScheme == .dark ? "farmtrackr_logo_dark_TB 1024" : "farmtrackr_logo_TB 1024"
+    }
+    
+    private var titleFont: Font {
+        .system(size: 28, weight: .heavy, design: .rounded)
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             // Logo Section
             VStack(spacing: Constants.Spacing.small) {
-                Image(colorScheme == .dark ? "farmtrackr_logo_dark_TB 1024" : "farmtrackr_logo_TB 1024")
+                Image(logoImageName)
                     .resizable()
                     .scaledToFit()
                     .frame(height: 110)
                     .padding(.horizontal, Constants.Spacing.medium)
                 
                 Text("FarmTrackr")
-                    .font(.system(size: 28, weight: .heavy, design: .rounded))
+                    .font(titleFont)
                     .foregroundColor(themeVM.theme.colors.primary)
                     .padding(.horizontal, Constants.Spacing.medium)
             }
@@ -89,20 +144,11 @@ struct SidebarView: View {
             // Navigation List
             List {
                 ForEach(ContentView.NavigationTab.allCases, id: \.self) { tab in
-                    Button(action: { selectedTab = tab }) {
-                        HStack(spacing: Constants.Spacing.medium) {
-                            Image(systemName: tab.icon)
-                                .foregroundColor(selectedTab == tab ? themeVM.theme.colors.primary : .secondaryLabel)
-                                .frame(width: 20)
-                            Text(tab.rawValue)
-                                .foregroundColor(selectedTab == tab ? themeVM.theme.colors.primary : .primary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 8)
-                        .background(selectedTab == tab ? Color.accentColor.opacity(0.1) : Color.clear)
-                        .cornerRadius(themeVM.theme.cornerRadius.medium)
-                    }
-                    .buttonStyle(PlainButtonStyle())
+                    NavigationItemView(
+                        tab: tab,
+                        isSelected: selectedTab == tab,
+                        onTap: { selectedTab = tab }
+                    )
                 }
             }
             .listStyle(SidebarListStyle())
@@ -125,19 +171,31 @@ struct DetailContentView: View {
     @Binding var searchText: String
     @Binding var sortOrder: SortOrder
     @Binding var showingAddContact: Bool
-    
-    var body: some View {
+    @EnvironmentObject var accessibilityManager: AccessibilityManager
+    @EnvironmentObject var themeVM: ThemeViewModel
+
+    @ViewBuilder
+    private var selectedView: some View {
         switch selectedTab {
         case .overview:
             OverviewView(selectedContact: $selectedContact, selectedTab: $selectedTab)
         case .contacts:
             ContactsMasterView(selectedContact: $selectedContact, searchText: $searchText, sortOrder: $sortOrder, showingAddContact: $showingAddContact)
+        case .dataQuality:
+            DataQualityView()
         case .importExport:
             ImportExportView()
         case .settings:
             SettingsView()
         case .none:
             OverviewView(selectedContact: $selectedContact, selectedTab: $selectedTab)
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            themeVM.theme.colors.background.ignoresSafeArea()
+            selectedView
         }
     }
 }
@@ -286,7 +344,7 @@ struct OverviewView: View {
             ExportView()
         }
         .sheet(isPresented: $showingPrintLabelsSheet) {
-            PrintLabelsView()
+            PrintLabelsView(templateManager: LabelTemplateManager())
         }
     }
 }
@@ -297,29 +355,43 @@ struct ContactsMasterView: View {
     @Binding var sortOrder: SortOrder
     @Binding var showingAddContact: Bool
     @State private var showingContactDetail = false
+    @EnvironmentObject var themeVM: ThemeViewModel
+    @EnvironmentObject var accessibilityManager: AccessibilityManager
+    @Environment(\.managedObjectContext) private var viewContext
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Full-width Contact List
-            ContactListView(
-                selectedContact: $selectedContact,
-                searchText: $searchText,
-                sortOrder: $sortOrder,
-                showingAddContact: $showingAddContact
-            )
-        }
-        .sheet(isPresented: $showingAddContact) {
-            ContactEditView(contact: nil)
-        }
-        .sheet(isPresented: $showingContactDetail) {
-            if let contact = selectedContact {
-                ContactDetailView(contact: contact)
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Header
+                TabHeader(icon: "person.2", logoName: nil, title: "Contacts", subtitle: "Manage your farm contacts")
+                    .padding(.horizontal, Constants.Spacing.large)
+                    .padding(.top, Constants.Spacing.large)
+                
+                // Contact List
+                ContactListView(
+                    selectedContact: $selectedContact,
+                    searchText: $searchText,
+                    sortOrder: $sortOrder,
+                    showingAddContact: $showingAddContact,
+                    context: viewContext
+                )
             }
-        }
-        .onChange(of: selectedContact) { _, contact in
-            if contact != nil {
-                showingContactDetail = true
+            .background(appBackground)
+            .sheet(isPresented: $showingAddContact) {
+                ContactEditView(contact: nil)
             }
+            .sheet(isPresented: $showingContactDetail) {
+                if let contact = selectedContact {
+                    ContactDetailView(contact: contact)
+                }
+            }
+            .onChange(of: selectedContact) { _, contact in
+                if contact != nil {
+                    showingContactDetail = true
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("")
         }
     }
 }
@@ -385,128 +457,7 @@ struct ImportExportView: View {
             ExportView()
         }
         .sheet(isPresented: $showingPrintLabelsSheet) {
-            PrintLabelsView()
-        }
-    }
-}
-
-struct SettingsView: View {
-    @EnvironmentObject var themeVM: ThemeViewModel
-    @Environment(\.managedObjectContext) private var viewContext
-    // Removed local darkModeEnabled; now using themeVM.darkModeEnabled
-    @Environment(\.colorScheme) var colorScheme
-    // Removed CloudKitManager
-    @State private var showingBackupSheet = false
-    @State private var showingRestoreSheet = false
-    @State private var showingAlert = false
-    @State private var alertMessage = ""
-    @State private var showingClearDataAlert = false
-    var logoName: String { colorScheme == .dark ? "farmtrackr_logo_dark_TB 1024" : "farmtrackr_logo_TB 1024" }
-    
-    var body: some View {
-        ScrollView {
-            VStack(spacing: Constants.Spacing.large) {
-                TabHeader(icon: "gearshape", logoName: nil, title: "Settings", subtitle: "Version \(Bundle.main.appVersion) (\(Bundle.main.buildNumber))")
-                // Theme Picker
-                VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                    Text("Theme")
-                        .font(Constants.Typography.titleFont)
-                        .foregroundColor(.primary)
-                    
-                    let themeNames = ["Classic Green", "Sunset Soil", "Blueprint Pro", "Harvest Luxe", "Fieldlight"]
-                    HStack(spacing: 8) {
-                        ForEach(themeNames, id: \.self) { themeName in
-                            ThemeButton(
-                                themeName: themeName,
-                                isSelected: themeVM.selectedTheme == themeName,
-                                action: { themeVM.selectedTheme = themeName }
-                            )
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(Constants.Spacing.large)
-                .interactiveCardStyle()
-                // Dark Mode Toggle
-                VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                    Toggle(isOn: $themeVM.darkModeEnabled) {
-                        Text("Enable Dark Mode")
-                            .font(themeVM.theme.fonts.bodyFont)
-                            .foregroundColor(.primary)
-                    }
-                }
-                .padding(Constants.Spacing.large)
-                .interactiveCardStyle()
-                // Data Management Section (local only)
-                VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                    Text("Data Management")
-                        .font(themeVM.theme.fonts.titleFont)
-                        .foregroundColor(.primary)
-                    Button("Create Backup") {
-                        showingBackupSheet = true
-                    }
-                    .foregroundColor(themeVM.theme.colors.primary)
-                    Button("Restore from Backup") {
-                        showingRestoreSheet = true
-                    }
-                    .foregroundColor(themeVM.theme.colors.primary)
-                    Button("Clear All Data") {
-                        showingClearDataAlert = true
-                    }
-                    .foregroundColor(.red)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(Constants.Spacing.large)
-                .interactiveCardStyle()
-                // Support Section
-                VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                    Text("Support")
-                        .font(Constants.Typography.titleFont)
-                        .foregroundColor(.primary)
-                    Button("Contact Support") {}
-                        .foregroundColor(themeVM.theme.colors.primary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(Constants.Spacing.large)
-                .interactiveCardStyle()
-                Spacer()
-            }
-            .padding(Constants.Spacing.large)
-        }
-        .background(appBackground)
-        .sheet(isPresented: $showingBackupSheet) {
-            BackupView()
-        }
-        .sheet(isPresented: $showingRestoreSheet) {
-            RestoreView()
-        }
-        .alert("Settings", isPresented: $showingAlert) {
-            Button("OK") { }
-        } message: {
-            Text(alertMessage)
-        }
-        .alert("Clear All Data", isPresented: $showingClearDataAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Clear All", role: .destructive) {
-                clearAllData()
-            }
-        } message: {
-            Text("This will permanently delete all contacts from the database. This action cannot be undone.")
-        }
-    }
-    
-    private func clearAllData() {
-        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = FarmContact.fetchRequest()
-        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-        
-        do {
-            try viewContext.execute(deleteRequest)
-            try viewContext.save()
-            alertMessage = "All contacts have been cleared from the database."
-            showingAlert = true
-        } catch {
-            alertMessage = "Failed to clear data: \(error.localizedDescription)"
-            showingAlert = true
+            PrintLabelsView(templateManager: LabelTemplateManager())
         }
     }
 }

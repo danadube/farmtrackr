@@ -1,0 +1,35 @@
+{
+  "configurations" : [
+    {
+      "id" : "configuration1",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:FarmTrackr.xcodeproj",
+      "identifier" : "FarmTrackr",
+      "name" : "FarmTrackr"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:FarmTrackr.xcodeproj",
+        "identifier" : "Glaab_Farm_CRMTests",
+        "name" : "Glaab Farm CRMTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:FarmTrackr.xcodeproj",
+        "identifier" : "Glaab_Farm_CRMUITests",
+        "name" : "Glaab Farm CRMUITests"
+      }
+    }
+  ],
+  "version" : 1
+} 

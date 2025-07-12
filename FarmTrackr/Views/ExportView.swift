@@ -8,39 +8,54 @@
 import SwiftUI
 
 struct ExportView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var themeVM: ThemeViewModel
-    
     @StateObject private var exportManager = ExportManager()
     @State private var selectedExportType: ExportType = .csv
-    @State private var showingShareSheet = false
     @State private var exportedFileURL: URL?
+    @State private var showingShareSheet = false
+    @State private var showingSaveDialog = false
+    @State private var showingSuccessAlert = false
+    @State private var successMessage = ""
     
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \FarmContact.lastName, ascending: true)],
+        sortDescriptors: [NSSortDescriptor(keyPath: \FarmContact.firstName, ascending: true)],
         animation: .default
     ) private var contacts: FetchedResults<FarmContact>
     
     var body: some View {
         NavigationView {
             VStack(spacing: themeVM.theme.spacing.large) {
-                TabHeader(icon: "square.and.arrow.up", logoName: nil, title: "Export", subtitle: "Export your contacts in various formats")
+                TabHeader(
+                    icon: "square.and.arrow.up",
+                    logoName: nil,
+                    title: "Export Contacts",
+                    subtitle: "Export your contact data"
+                )
                 
-                // Export Options
-                VStack(spacing: themeVM.theme.spacing.medium) {
+                // Export Type Selection
+                VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
                     Text("Export Format")
                         .font(themeVM.theme.fonts.titleFont)
-                        .foregroundColor(themeVM.theme.colors.text)
+                        .foregroundColor(.primary)
                     
-                    Picker("Export Type", selection: $selectedExportType) {
-                        ForEach(ExportType.allCases, id: \.self) { type in
-                            Text(type.displayName).tag(type)
+                    LazyVGrid(columns: [
+                        GridItem(.flexible()),
+                        GridItem(.flexible())
+                    ], spacing: themeVM.theme.spacing.medium) {
+                        ForEach(ExportType.allCases, id: \.self) { exportType in
+                            ExportTypeCard(
+                                type: exportType,
+                                isSelected: selectedExportType == exportType
+                            ) {
+                                selectedExportType = exportType
+                            }
                         }
                     }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .padding(.horizontal, themeVM.theme.spacing.medium)
                 }
+                .padding(themeVM.theme.spacing.large)
+                .interactiveCardStyle()
                 
                 // Contact Count
                 VStack(spacing: themeVM.theme.spacing.small) {
@@ -97,6 +112,11 @@ struct ExportView: View {
                 ShareSheet(items: [exportedFileURL])
             }
         }
+        .alert("Export Complete", isPresented: $showingSuccessAlert) {
+            Button("OK") { }
+        } message: {
+            Text(successMessage)
+        }
     }
     
     private func exportContacts() async {
@@ -113,10 +133,50 @@ struct ExportView: View {
             
             await MainActor.run {
                 exportedFileURL = fileURL
+                showingShareSheet = true
             }
         } catch {
             print("Export error: \(error)")
+            // Show error alert
+            await MainActor.run {
+                // You could add an error alert here
+            }
         }
+    }
+}
+
+struct ExportTypeCard: View {
+    let type: ExportType
+    let isSelected: Bool
+    let action: () -> Void
+    @EnvironmentObject var themeVM: ThemeViewModel
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: themeVM.theme.spacing.medium) {
+                Image(systemName: type.iconName)
+                    .font(.title)
+                    .foregroundColor(isSelected ? .white : themeVM.theme.colors.primary)
+                
+                Text(type.displayName)
+                    .font(themeVM.theme.fonts.bodyFont)
+                    .fontWeight(.medium)
+                    .foregroundColor(isSelected ? .white : .primary)
+                
+                Text(type.fileExtension.uppercased())
+                    .font(themeVM.theme.fonts.captionFont)
+                    .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(themeVM.theme.spacing.large)
+            .background(isSelected ? themeVM.theme.colors.primary : Color(.systemGray6))
+            .cornerRadius(themeVM.theme.cornerRadius.medium)
+            .overlay(
+                RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.medium)
+                    .stroke(isSelected ? themeVM.theme.colors.primary : Color.clear, lineWidth: 2)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -139,16 +199,6 @@ struct ExportProgressView: View {
     }
 }
 
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
-
 enum ExportType: CaseIterable {
     case csv, pdf
     
@@ -156,6 +206,20 @@ enum ExportType: CaseIterable {
         switch self {
         case .csv: return "CSV"
         case .pdf: return "PDF"
+        }
+    }
+    
+    var iconName: String {
+        switch self {
+        case .csv: return "doc.text"
+        case .pdf: return "doc.text.magnifyingglass"
+        }
+    }
+    
+    var fileExtension: String {
+        switch self {
+        case .csv: return "csv"
+        case .pdf: return "pdf"
         }
     }
 } 

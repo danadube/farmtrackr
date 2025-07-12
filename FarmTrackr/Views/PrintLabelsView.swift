@@ -19,6 +19,7 @@ enum AddressType: String, CaseIterable, Identifiable {
 struct PrintLabelsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
+    @ObservedObject var templateManager: LabelTemplateManager
     
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \FarmContact.lastName, ascending: true)],
@@ -30,6 +31,8 @@ struct PrintLabelsView: View {
     @State private var showingPreview = false
     @State private var showingPrintSheet = false
     @State private var addressType: AddressType = .mailing
+    @State private var selectedTemplate: LabelTemplate?
+    @State private var showingTemplateSelector = false
     
     enum AveryLabelFormat: String, CaseIterable {
         case avery5160 = "Avery 5160 (1\" x 2.625\")"
@@ -120,12 +123,12 @@ struct PrintLabelsView: View {
                         .font(.system(size: 36))
                         .foregroundColor(Constants.Colors.primary)
                     
-                    Text("Print Mailing Labels")
+                    Text("Print Labels")
                         .font(Constants.Typography.headerFont)
                         .foregroundColor(Constants.Colors.text)
                         .padding(.top, 2)
                     
-                    Text("Select a farm to print labels for all contacts")
+                    Text("Select a farm and template to print labels")
                         .font(Constants.Typography.bodyFont)
                         .foregroundColor(.secondaryLabel)
                         .multilineTextAlignment(.center)
@@ -152,6 +155,26 @@ struct PrintLabelsView: View {
                         .background(Color(.systemGray6))
                         .cornerRadius(8)
                     }
+                    // Template Selection
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Label Template")
+                            .font(Constants.Typography.titleFont)
+                            .foregroundColor(Constants.Colors.text)
+                        Button(action: { showingTemplateSelector = true }) {
+                            HStack {
+                                Text(selectedTemplate?.name ?? "Select Template")
+                                    .foregroundColor(selectedTemplate == nil ? .secondary : .primary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(12)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(8)
+                        }
+                    }
+                    
                     // Label Format Selection
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Label Format")
@@ -168,13 +191,16 @@ struct PrintLabelsView: View {
                         .background(Color(.systemGray6))
                         .cornerRadius(8)
                     }
-                    // Address Type Picker
-                    Picker("Address Type", selection: $addressType) {
-                        ForEach(AddressType.allCases) { type in
-                            Text(type.rawValue).tag(type)
+                    
+                    // Address Type Picker (only show if template supports it)
+                    if selectedTemplate == nil || selectedTemplate?.fields.contains(where: { $0.type == .mailingAddress || $0.type == .siteAddress }) == true {
+                        Picker("Address Type", selection: $addressType) {
+                            ForEach(AddressType.allCases) { type in
+                                Text(type.rawValue).tag(type)
+                            }
                         }
+                        .pickerStyle(SegmentedPickerStyle())
                     }
-                    .pickerStyle(SegmentedPickerStyle())
                     // Contact Count
                     if !selectedFarm.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
@@ -188,7 +214,7 @@ struct PrintLabelsView: View {
                     }
                     // Action Buttons
                     VStack(spacing: 8) {
-                        if !selectedFarm.isEmpty && !selectedFarmContacts.isEmpty {
+                        if !selectedFarm.isEmpty && !selectedFarmContacts.isEmpty && selectedTemplate != nil {
                             Button(action: { showingPreview = true }) {
                                 Text("Preview Labels (\(selectedFarmContacts.count))")
                                     .frame(maxWidth: .infinity)
@@ -197,7 +223,7 @@ struct PrintLabelsView: View {
                             .primaryButtonStyle()
                             .padding(.vertical, 2)
                         }
-                        if !selectedFarm.isEmpty && !selectedFarmContacts.isEmpty {
+                        if !selectedFarm.isEmpty && !selectedFarmContacts.isEmpty && selectedTemplate != nil {
                             Button(action: {
                                 let printInfo = UIPrintInfo(dictionary: nil)
                                 printInfo.outputType = .photo
@@ -244,10 +270,18 @@ struct PrintLabelsView: View {
             LabelPreviewView(
                 contacts: selectedFarmContacts,
                 labelFormat: labelFormat,
-                addressType: addressType
+                addressType: addressType,
+                template: selectedTemplate,
+                templateManager: templateManager
             )
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showingTemplateSelector) {
+            TemplateSelectorView(
+                templateManager: templateManager,
+                selectedTemplate: $selectedTemplate
+            )
         }
 
     }
@@ -284,7 +318,9 @@ struct PrintLabelsView: View {
                     PrintLabelSheetView(
                         contacts: pageContacts,
                         labelFormat: labelFormat,
-                        addressType: addressType
+                        addressType: addressType,
+                        template: selectedTemplate,
+                        templateManager: templateManager
                     )
                 }
                 .frame(width: size.width, height: size.height)
@@ -315,6 +351,8 @@ struct LabelPreviewView: View {
     let contacts: [FarmContact]
     let labelFormat: PrintLabelsView.AveryLabelFormat
     let addressType: AddressType
+    let template: LabelTemplate?
+    let templateManager: LabelTemplateManager
     @Environment(\.dismiss) private var dismiss
     @State private var zoomScale: CGFloat = 1.0
     @State private var showPrintSheet = false
@@ -349,7 +387,9 @@ struct LabelPreviewView: View {
                     PrintLabelSheetView(
                         contacts: pageContacts,
                         labelFormat: labelFormat,
-                        addressType: addressType
+                        addressType: addressType,
+                        template: template,
+                        templateManager: templateManager
                     )
                 }
                 .frame(width: size.width, height: size.height)
@@ -419,11 +459,13 @@ struct LabelPreviewView: View {
                     ScrollView([.vertical, .horizontal]) {
                         VStack(spacing: 40) {
                             ForEach(0..<pages.count, id: \.self) { pageIndex in
-                                LabelSheetView(
-                                    contacts: pages[pageIndex],
-                                    labelFormat: labelFormat,
-                                    addressType: addressType
-                                )
+                                                            LabelSheetView(
+                                contacts: pages[pageIndex],
+                                labelFormat: labelFormat,
+                                addressType: addressType,
+                                template: template,
+                                templateManager: templateManager
+                            )
                                 .overlay(
                                     Text("Page \(pageIndex + 1)")
                                         .font(.caption)
@@ -454,6 +496,8 @@ struct LabelSheetView: View {
     let contacts: [FarmContact]
     let labelFormat: PrintLabelsView.AveryLabelFormat
     let addressType: AddressType
+    let template: LabelTemplate?
+    let templateManager: LabelTemplateManager
     
     var body: some View {
         let columns = labelFormat.columns
@@ -484,32 +528,45 @@ struct LabelSheetView: View {
                             ZStack {
                                 Color.white
                                 if let contact = contact {
-                                    VStack(alignment: .center, spacing: 2) {
-                                        let fullName = contact.fullName
-                                        let address = addressType == .mailing ? (contact.mailingAddress ?? "") : contact.displaySiteAddress
-                                        let cityStateZip = addressType == .mailing ? ((contact.city ?? "") + (contact.state != nil ? ", \(contact.state!)" : "") + " \(contact.formattedZipCode)") : ""
-                                        
-                                        Spacer()
-                                        Text(fullName)
-                                            .font(.system(size: 12, weight: .semibold))
-                                            .foregroundColor(.black)
-                                            .lineLimit(1)
-                                            .multilineTextAlignment(.center)
-                                        Text(address)
-                                            .font(.system(size: 10))
-                                            .foregroundColor(.black)
-                                            .lineLimit(2)
-                                            .multilineTextAlignment(.center)
-                                        if addressType == .mailing && !cityStateZip.isEmpty {
-                                            Text(cityStateZip)
-                                                .font(.system(size: 10))
+                                    if let template = template {
+                                        // Use custom template
+                                        VStack(alignment: .center, spacing: 2) {
+                                            Text(templateManager.renderLabel(for: contact, using: template))
+                                                .font(.custom(template.fontName, size: template.fontSize))
+                                                .foregroundColor(.black)
+                                                .multilineTextAlignment(.center)
+                                                .lineLimit(nil)
+                                        }
+                                        .padding(4)
+                                    } else {
+                                        // Use default format
+                                        VStack(alignment: .center, spacing: 2) {
+                                            let fullName = contact.fullName
+                                            let address = addressType == .mailing ? (contact.mailingAddress ?? "") : contact.displaySiteAddress
+                                            let cityStateZip = addressType == .mailing ? ((contact.city ?? "") + (contact.state != nil ? ", \(contact.state!)" : "") + " \(contact.formattedZipCode)") : ""
+                                            
+                                            Spacer()
+                                            Text(fullName)
+                                                .font(.system(size: 12, weight: .semibold))
                                                 .foregroundColor(.black)
                                                 .lineLimit(1)
                                                 .multilineTextAlignment(.center)
+                                            Text(address)
+                                                .font(.system(size: 10))
+                                                .foregroundColor(.black)
+                                                .lineLimit(2)
+                                                .multilineTextAlignment(.center)
+                                            if addressType == .mailing && !cityStateZip.isEmpty {
+                                                Text(cityStateZip)
+                                                    .font(.system(size: 10))
+                                                    .foregroundColor(.black)
+                                                    .lineLimit(1)
+                                                    .multilineTextAlignment(.center)
+                                            }
+                                            Spacer()
                                         }
-                                        Spacer()
+                                        .padding(4)
                                     }
-                                    .padding(4)
                                 }
                             }
                             .frame(width: labelFormat.labelSize.width * 72, height: labelFormat.labelSize.height * 72)
@@ -533,6 +590,8 @@ struct PrintLabelSheetView: View {
     let contacts: [FarmContact]
     let labelFormat: PrintLabelsView.AveryLabelFormat
     let addressType: AddressType
+    let template: LabelTemplate?
+    let templateManager: LabelTemplateManager
     
     var body: some View {
         let columns = labelFormat.columns
@@ -563,32 +622,45 @@ struct PrintLabelSheetView: View {
                             ZStack {
                                 Color.white
                                 if let contact = contact {
-                                    VStack(alignment: .center, spacing: 2) {
-                                        let fullName = contact.fullName
-                                        let address = addressType == .mailing ? (contact.mailingAddress ?? "") : contact.displaySiteAddress
-                                        let cityStateZip = addressType == .mailing ? ((contact.city ?? "") + (contact.state != nil ? ", \(contact.state!)" : "") + " \(contact.formattedZipCode)") : ""
-                                        
-                                        Spacer()
-                                        Text(fullName)
-                                            .font(.system(size: 12, weight: .semibold))
-                                            .foregroundColor(.black)
-                                            .lineLimit(1)
-                                            .multilineTextAlignment(.center)
-                                        Text(address)
-                                            .font(.system(size: 10))
-                                            .foregroundColor(.black)
-                                            .lineLimit(2)
-                                            .multilineTextAlignment(.center)
-                                        if addressType == .mailing && !cityStateZip.isEmpty {
-                                            Text(cityStateZip)
-                                                .font(.system(size: 10))
+                                    if let template = template {
+                                        // Use custom template
+                                        VStack(alignment: .center, spacing: 2) {
+                                            Text(templateManager.renderLabel(for: contact, using: template))
+                                                .font(.custom(template.fontName, size: template.fontSize))
+                                                .foregroundColor(.black)
+                                                .multilineTextAlignment(.center)
+                                                .lineLimit(nil)
+                                        }
+                                        .padding(4)
+                                    } else {
+                                        // Use default format
+                                        VStack(alignment: .center, spacing: 2) {
+                                            let fullName = contact.fullName
+                                            let address = addressType == .mailing ? (contact.mailingAddress ?? "") : contact.displaySiteAddress
+                                            let cityStateZip = addressType == .mailing ? ((contact.city ?? "") + (contact.state != nil ? ", \(contact.state!)" : "") + " \(contact.formattedZipCode)") : ""
+                                            
+                                            Spacer()
+                                            Text(fullName)
+                                                .font(.system(size: 12, weight: .semibold))
                                                 .foregroundColor(.black)
                                                 .lineLimit(1)
                                                 .multilineTextAlignment(.center)
+                                            Text(address)
+                                                .font(.system(size: 10))
+                                                .foregroundColor(.black)
+                                                .lineLimit(2)
+                                                .multilineTextAlignment(.center)
+                                            if addressType == .mailing && !cityStateZip.isEmpty {
+                                                Text(cityStateZip)
+                                                    .font(.system(size: 10))
+                                                    .foregroundColor(.black)
+                                                    .lineLimit(1)
+                                                    .multilineTextAlignment(.center)
+                                            }
+                                            Spacer()
                                         }
-                                        Spacer()
+                                        .padding(4)
                                     }
-                                    .padding(4)
                                 }
                             }
                             .frame(width: labelFormat.labelSize.width * 72, height: labelFormat.labelSize.height * 72)
@@ -708,7 +780,51 @@ struct PrintSheetView: View {
     }
 }
 
+struct TemplateSelectorView: View {
+    @ObservedObject var templateManager: LabelTemplateManager
+    @Binding var selectedTemplate: LabelTemplate?
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            List {
+                ForEach(templateManager.templates) { template in
+                    Button(action: {
+                        selectedTemplate = template
+                        dismiss()
+                    }) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(template.name)
+                                    .font(.headline)
+                                Text(template.description)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            if selectedTemplate?.id == template.id {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+            .navigationTitle("Select Template")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
 #Preview {
-    PrintLabelsView()
+    PrintLabelsView(templateManager: LabelTemplateManager())
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 } 

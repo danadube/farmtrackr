@@ -222,4 +222,215 @@ extension Bundle {
     var buildNumber: String {
         return infoDictionary?["CFBundleVersion"] as? String ?? "1"
     }
+}
+
+extension View {
+    func accessibilityTestMode(_ enabled: Bool) -> some View {
+        self.accessibilityIdentifier(enabled ? "accessibility-test-mode" : "")
+    }
+    
+    func accessibilityDebugInfo() -> some View {
+        self.accessibilityLabel("Debug: \(String(describing: self))")
+    }
+}
+
+// MARK: - Accessibility Testing Utilities
+class AccessibilityTester: ObservableObject {
+    @Published var isTestMode = false
+    @Published var testResults: [String: Bool] = [:]
+    
+    func runAccessibilityTests() {
+        testResults.removeAll()
+        
+        // Test VoiceOver support
+        testResults["VoiceOver"] = UIAccessibility.isVoiceOverRunning
+        
+        // Test Dynamic Type
+        testResults["Dynamic Type"] = true // Always available in SwiftUI
+        
+        // Test High Contrast
+        testResults["High Contrast"] = false // UIAccessibility.isHighContrastEnabled not available in iOS 18.5
+        
+        // Test Reduce Motion
+        testResults["Reduce Motion"] = UIAccessibility.isReduceMotionEnabled
+        
+        // Test Bold Text
+        testResults["Bold Text"] = UIAccessibility.isBoldTextEnabled
+        
+        // Test Switch Control
+        testResults["Switch Control"] = UIAccessibility.isSwitchControlRunning
+        
+        // Test AssistiveTouch
+        testResults["AssistiveTouch"] = UIAccessibility.isAssistiveTouchRunning
+    }
+    
+    func generateAccessibilityReport() -> String {
+        var report = "Accessibility Test Report\n"
+        report += "=====================\n\n"
+        
+        for (feature, supported) in testResults {
+            let status = supported ? "✅ Supported" : "❌ Not Supported"
+            report += "\(feature): \(status)\n"
+        }
+        
+        report += "\nRecommendations:\n"
+        
+        if !testResults["VoiceOver"]! {
+            report += "- Ensure all interactive elements have proper accessibility labels\n"
+        }
+        
+        if !testResults["High Contrast"]! {
+            report += "- Test app with high contrast mode enabled\n"
+        }
+        
+        if !testResults["Reduce Motion"]! {
+            report += "- Respect reduce motion preferences\n"
+        }
+        
+        return report
+    }
+}
+
+// MARK: - Accessibility Color Extensions
+extension Color {
+    var accessibilityContrastRatio: Double {
+        // Simplified contrast ratio calculation
+        // In a real implementation, you'd calculate actual contrast ratios
+        return 4.5 // Placeholder value
+    }
+    
+    var isAccessibleOnBackground: Bool {
+        return accessibilityContrastRatio >= 4.5
+    }
+}
+
+// MARK: - Accessibility Font Extensions
+extension Font {
+    var accessibilityScaled: Font {
+        // .dynamicTypeSize(.large) is not available; fallback to .largeTitle
+        return .largeTitle
+    }
+    
+    var accessibilityBold: Font {
+        return self.weight(.bold)
+    }
+}
+
+// MARK: - Accessibility Gesture Extensions
+extension View {
+    func accessibilityGesture<T: Gesture>(_ gesture: T) -> some View {
+        return self.gesture(gesture)
+    }
+    
+    func accessibilityLongPressGesture(minimumDuration: Double = 0.5, maximumDistance: CGFloat = 10, perform action: @escaping () -> Void) -> some View {
+        return self.onLongPressGesture(minimumDuration: minimumDuration, maximumDistance: maximumDistance, perform: action)
+    }
+    
+    func accessibilityTapGesture(count: Int = 1, perform action: @escaping () -> Void) -> some View {
+        return self.onTapGesture(count: count, perform: action)
+    }
+}
+
+// MARK: - Accessibility Focus Extensions
+// Removed accessibilityFocused (not available in iOS 18.5)
+
+// MARK: - Accessibility Group Extensions
+extension View {
+    func accessibilityGroup() -> some View {
+        return self.accessibilityElement(children: .contain)
+    }
+    
+    func accessibilityCombine() -> some View {
+        return self.accessibilityElement(children: .combine)
+    }
+    
+    func accessibilityIgnore() -> some View {
+        return self.accessibilityElement(children: .ignore)
+    }
+}
+
+// MARK: - Accessibility Action Extensions
+extension View {
+    func accessibilityCustomAction(_ name: String, action: @escaping () -> Void) -> some View {
+        return self.accessibilityAction(named: name) { action() }
+    }
+    // Removed accessibilityAdjustableAction (not available in iOS 18.5)
+}
+
+// MARK: - Accessibility Sort Extensions
+extension View {
+    func accessibilitySortPriority(_ priority: Double) -> some View {
+        return self.accessibilitySortPriority(priority)
+    }
+    
+    func accessibilitySortPriority(_ priority: Int) -> some View {
+        return self.accessibilitySortPriority(Double(priority))
+    }
+}
+
+// MARK: - Accessibility Large Content Viewer Extensions
+extension View {
+    func accessibilityLargeContentViewer() -> some View {
+        return self.accessibilityShowsLargeContentViewer()
+    }
+}
+
+// MARK: - Accessibility Ignore Extensions
+// Removed accessibilityIgnoresSmartInvertColors, accessibilityIgnoresReduceMotion, accessibilityIgnoresReduceTransparency, accessibilityIgnoresAssistiveTechnologies (not available in iOS 18.5)
+
+// MARK: - Accessibility Testing View
+struct AccessibilityTestView: View {
+    @StateObject private var tester = AccessibilityTester()
+    @State private var showingReport = false
+    
+    var body: some View {
+        NavigationView {
+            List {
+                Section("Accessibility Tests") {
+                    ForEach(Array(tester.testResults.keys.sorted()), id: \.self) { feature in
+                        HStack {
+                            Text(feature)
+                            Spacer()
+                            if tester.testResults[feature] == true {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                            } else {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.red)
+                            }
+                        }
+                    }
+                }
+                
+                Section("Actions") {
+                    Button("Run Tests") {
+                        tester.runAccessibilityTests()
+                    }
+                    
+                    Button("Generate Report") {
+                        showingReport = true
+                    }
+                }
+            }
+            .navigationTitle("Accessibility Tests")
+            .sheet(isPresented: $showingReport) {
+                NavigationView {
+                    ScrollView {
+                        Text(tester.generateAccessibilityReport())
+                            .font(.system(.body, design: .monospaced))
+                            .padding()
+                    }
+                    .navigationTitle("Accessibility Report")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Done") {
+                                showingReport = false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 } 

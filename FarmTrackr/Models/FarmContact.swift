@@ -13,7 +13,18 @@ import CoreData
 extension FarmContact {
     // Computed properties for display
     var fullName: String {
-        "\(firstName ?? "") \(lastName ?? "")".trimmingCharacters(in: .whitespaces)
+        let first = firstName?.trimmingCharacters(in: .whitespaces) ?? ""
+        let last = lastName?.trimmingCharacters(in: .whitespaces) ?? ""
+        
+        if first.isEmpty && last.isEmpty {
+            return ""
+        } else if first.isEmpty {
+            return last
+        } else if last.isEmpty {
+            return first
+        } else {
+            return "\(first) \(last)"
+        }
     }
     
     // Formatted zip code properties
@@ -112,5 +123,26 @@ extension FarmContact {
     var allEmails: [String] {
         [email1, email2]
             .compactMap { $0?.isEmpty == false ? $0 : nil }
+    }
+    
+    static func preview(context: NSManagedObjectContext = PersistenceController.shared.container.viewContext) -> FarmContact {
+        let contact = FarmContact(context: context)
+        contact.firstName = "Jane"
+        contact.lastName = "Doe"
+        contact.mailingAddress = "123 Main St"
+        contact.city = "Springfield"
+        contact.state = "IL"
+        contact.zipCode = 62704
+        contact.email1 = "jane.doe@example.com"
+        contact.phoneNumber1 = "555-123-4567"
+        contact.siteMailingAddress = "456 Field Rd"
+        contact.siteCity = "Springfield"
+        contact.siteState = "IL"
+        contact.siteZipCode = 62705
+        contact.notes = "Preview contact for label template."
+        contact.farm = "Doe Family Farm"
+        contact.dateCreated = Date()
+        contact.dateModified = Date()
+        return contact
     }
 } 

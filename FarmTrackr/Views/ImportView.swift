@@ -84,13 +84,13 @@ struct ImportView: View {
             .background(Color(.systemBackground))
             .navigationTitle("Import")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                 }
-            }
+            })
         }
         .fileImporter(
             isPresented: $showingFilePicker,
