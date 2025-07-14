@@ -49,7 +49,7 @@ class DataImportManager: ObservableObject {
             
             // Update progress
             await MainActor.run {
-                importProgress = Double(index + 1) / Double(dataRows.count)
+                importProgress = dataRows.count > 0 ? Double(index + 1) / Double(dataRows.count) : 0.0
             }
         }
         
@@ -66,11 +66,14 @@ class DataImportManager: ObservableObject {
     
     func validateData(_ records: [ContactRecord]) -> [ValidationError] {
         var errors: [ValidationError] = []
+        let validator = DataValidator()
         
         for (index, record) in records.enumerated() {
-            // Only validate essential fields - be more lenient
-            if record.firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && 
-               record.lastName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            // Validate names
+            let firstNameResult = validator.validateName(record.firstName, fieldName: "First Name")
+            let lastNameResult = validator.validateName(record.lastName, fieldName: "Last Name")
+            
+            if !firstNameResult.isValid && !lastNameResult.isValid {
                 errors.append(ValidationError(
                     id: UUID(),
                     row: index + 1,
@@ -79,59 +82,149 @@ class DataImportManager: ObservableObject {
                 ))
             }
             
-            // Only validate email format if email is provided and looks like an email
+            // Validate emails with enhanced validation
             if let email = record.email1, !email.isEmpty {
-                // Simple email validation - just check for @ symbol
-                if !email.contains("@") || !email.contains(".") {
+                let emailResult = validator.validateEmail(email)
+                if !emailResult.isValid {
                     errors.append(ValidationError(
                         id: UUID(),
                         row: index + 1,
                         field: "email1",
-                        message: "Email format appears invalid: \(email)"
+                        message: "Email validation failed: \(emailResult.errors.joined(separator: ", "))"
                     ))
                 }
             }
             
             if let email = record.email2, !email.isEmpty {
-                // Simple email validation - just check for @ symbol
-                if !email.contains("@") || !email.contains(".") {
+                let emailResult = validator.validateEmail(email)
+                if !emailResult.isValid {
                     errors.append(ValidationError(
                         id: UUID(),
                         row: index + 1,
                         field: "email2",
-                        message: "Email format appears invalid: \(email)"
+                        message: "Email validation failed: \(emailResult.errors.joined(separator: ", "))"
                     ))
                 }
             }
             
-            // Only validate phone numbers if they're provided and have some digits
+            // Validate phone numbers with enhanced validation
             let phoneNumbers = [record.phoneNumber1, record.phoneNumber2, record.phoneNumber3,
                               record.phoneNumber4, record.phoneNumber5, record.phoneNumber6]
             
             for (phoneIndex, phone) in phoneNumbers.enumerated() {
                 if let phone = phone, !phone.isEmpty {
-                    let digits = phone.filter { $0.isNumber }
-                    // Only validate if there are digits but not enough for a valid phone
-                    if digits.count > 0 && digits.count < 7 {
+                    let phoneResult = validator.validatePhoneNumber(phone)
+                    if !phoneResult.isValid {
                         errors.append(ValidationError(
                             id: UUID(),
                             row: index + 1,
                             field: "phoneNumber\(phoneIndex + 1)",
-                            message: "Phone number appears too short: \(phone)"
+                            message: "Phone validation failed: \(phoneResult.errors.joined(separator: ", "))"
                         ))
                     }
                 }
             }
             
-            // Skip ZIP code validation - our new logic handles formatting automatically
+            // Validate address
+            if !record.mailingAddress.isEmpty {
+                let addressResult = validator.validateAddress(record.mailingAddress)
+                if !addressResult.isValid {
+                    errors.append(ValidationError(
+                        id: UUID(),
+                        row: index + 1,
+                        field: "mailingAddress",
+                        message: "Address validation failed: \(addressResult.errors.joined(separator: ", "))"
+                    ))
+                }
+            }
+            
+            // Validate ZIP code
+            if record.zipCode > 0 {
+                let zipResult = validator.validateZipCode(String(record.zipCode))
+                if !zipResult.isValid {
+                    errors.append(ValidationError(
+                        id: UUID(),
+                        row: index + 1,
+                        field: "zipCode",
+                        message: "ZIP code validation failed: \(zipResult.errors.joined(separator: ", "))"
+                    ))
+                }
+            }
         }
         
         return errors
     }
     
-    func saveContactsToCoreData(_ records: [ContactRecord], context: NSManagedObjectContext) async throws {
-        try await MainActor.run {
-            for (index, record) in records.enumerated() {
+    func assessDataQuality(_ records: [ContactRecord]) -> DataQualityScore {
+        let validator = DataValidator()
+        return validator.calculateDataQualityScore(records)
+    }
+    
+    func detectDuplicateContacts(_ records: [ContactRecord], context: NSManagedObjectContext) -> [DuplicateGroup] {
+        let validator = DataValidator()
+        return validator.detectDuplicates(records, context: context)
+    }
+    
+    func getValidationSuggestions(_ records: [ContactRecord]) -> [String: [String]] {
+        let validator = DataValidator()
+        var suggestions: [String: [String]] = [:]
+        
+        for (index, record) in records.enumerated() {
+            var recordSuggestions: [String] = []
+            
+            // Email suggestions
+            if let email = record.email1, !email.isEmpty {
+                let emailResult = validator.validateEmail(email)
+                recordSuggestions.append(contentsOf: emailResult.suggestions)
+            }
+            
+            if let email = record.email2, !email.isEmpty {
+                let emailResult = validator.validateEmail(email)
+                recordSuggestions.append(contentsOf: emailResult.suggestions)
+            }
+            
+            // Phone suggestions
+            let phoneNumbers = [record.phoneNumber1, record.phoneNumber2, record.phoneNumber3,
+                              record.phoneNumber4, record.phoneNumber5, record.phoneNumber6]
+            
+            for phone in phoneNumbers {
+                if let phone = phone, !phone.isEmpty {
+                    let phoneResult = validator.validatePhoneNumber(phone)
+                    recordSuggestions.append(contentsOf: phoneResult.suggestions)
+                }
+            }
+            
+            // Address suggestions
+            if !record.mailingAddress.isEmpty {
+                let addressResult = validator.validateAddress(record.mailingAddress)
+                recordSuggestions.append(contentsOf: addressResult.suggestions)
+            }
+            
+            // ZIP code suggestions
+            if record.zipCode > 0 {
+                let zipResult = validator.validateZipCode(String(record.zipCode))
+                recordSuggestions.append(contentsOf: zipResult.suggestions)
+            }
+            
+            if !recordSuggestions.isEmpty {
+                suggestions["Row \(index + 1)"] = recordSuggestions
+            }
+        }
+        
+        return suggestions
+    }
+    
+    func saveContactsToCoreData(_ records: [ContactRecord], context: NSManagedObjectContext, progress: @escaping (Double, String) -> Void) async throws {
+        print("[DataImportManager] Starting to save \(records.count) contacts to Core Data...")
+        progress(0.0, "Saving contacts...")
+        guard !records.isEmpty else {
+            print("[DataImportManager] No contacts to save")
+            progress(1.0, "No contacts to save.")
+            return
+        }
+        for (index, record) in records.enumerated() {
+            print("[DataImportManager] Saving contact \(index + 1) of \(records.count): \(record.firstName) \(record.lastName)")
+            await MainActor.run {
                 let contact = FarmContact(context: context)
                 
                 contact.firstName = record.firstName
@@ -158,15 +251,28 @@ class DataImportManager: ObservableObject {
                 contact.dateModified = Date()
                 
                 // Update progress
-                importProgress = Double(index + 1) / Double(records.count)
+                importProgress = records.count > 0 ? Double(index + 1) / Double(records.count) : 0.0
                 importStatus = "Saving contact \(index + 1) of \(records.count)"
             }
-            
-            do {
-                try context.save()
-            } catch {
-                throw ImportError.saveFailed(error)
+            if index % 10 == 0 {
+                let prog = Double(index) / Double(records.count)
+                progress(prog, "Saved \(index + 1) of \(records.count) contacts")
             }
+        }
+        
+        print("[DataImportManager] Finished saving contacts.")
+        progress(1.0, "All contacts saved.")
+        
+        print("All contacts created in context, attempting to save context...")
+        
+        do {
+            try await context.perform {
+                try context.save()
+            }
+            print("Successfully saved \(records.count) contacts to Core Data")
+        } catch {
+            print("Failed to save context: \(error)")
+            throw ImportError.saveFailed(error)
         }
     }
     
@@ -254,40 +360,58 @@ class DataImportManager: ObservableObject {
             return Int32(stringValue) ?? 0
         }
         
-        // Get the best available value for each field
-        let firstName = getValue("firstname").isEmpty ? getValue("first_name") : getValue("firstname")
-        let lastName = getValue("lastname").isEmpty ? getValue("last_name") : getValue("lastname")
-        let mailingAddress = getValue("address").isEmpty ? getValue("mailingaddress") : getValue("address")
-        let city = getValue("city")
-        
-        // Debug: Print extracted values for first few rows
-        if values.count > 0 {
-            print("Row values: \(values)")
-            print("  firstName: '\(firstName)'")
-            print("  lastName: '\(lastName)'")
-            print("  city: '\(city)'")
-            print("  farm: '\(getValue("farm"))'")
+        // Helper to get first non-empty string from a list of keys
+        func getFirstNonEmpty(_ keys: [String]) -> String {
+            for key in keys {
+                let value = getValue(key)
+                if !value.isEmpty { return value }
+            }
+            return ""
         }
-        
+        // Helper to get first non-zero Int32 from a list of keys
+        func getFirstNonZeroInt(_ keys: [String]) -> Int32 {
+            for key in keys {
+                let value = getValue(key)
+                if let intVal = Int32(value), intVal != 0 { return intVal }
+            }
+            return 0
+        }
+        // Get the best available value for each field
+        let firstName = getFirstNonEmpty(["firstname", "first_name", "first name"])
+        let lastName = getFirstNonEmpty(["lastname", "last_name", "last name"])
+        let mailingAddress = getFirstNonEmpty(["address", "mailingaddress", "mailing_address", "street address"])
+        let city = getValue("city")
+        let zipCode = getFirstNonZeroInt(["zipcode", "zip", "zip_code", "postal code"])
+        let siteZipCode = getFirstNonZeroInt(["sitezipcode", "site_zipcode", "site zip", "site zip code"])
+        let phoneNumber1 = getFirstNonEmpty(["phone", "phone1", "phonenumber1", "phone number 1", "telephone"]).cleanedPhoneNumber
+        let phoneNumber2 = getFirstNonEmpty(["phone2", "phone number 2", "mobile", "cell", "cell phone", "phone 2"]).cleanedPhoneNumber
+        let phoneNumber3 = getFirstNonEmpty(["phone3", "phone number 3", "work phone", "phone 3"]).cleanedPhoneNumber
+        let phoneNumber4 = getFirstNonEmpty(["phone4", "phone number 4", "home phone", "phone 4"]).cleanedPhoneNumber
+        let phoneNumber5 = getFirstNonEmpty(["phone5", "phone number 5", "phone 5"]).cleanedPhoneNumber
+        let phoneNumber6 = getFirstNonEmpty(["phone6", "phone number 6", "phone 6"]).cleanedPhoneNumber
+        // Site address fields
+        let siteMailingAddress = getFirstNonEmpty(["siteaddress", "site_address", "site address", "site addr", "service address", "location address"])
+        let siteCity = getFirstNonEmpty(["sitecity", "site_city", "site city"])
+        let siteState = getFirstNonEmpty(["sitestate", "site_state", "site state"])
         return ContactRecord(
-            firstName: firstName.isEmpty ? getValue("first name") : firstName,
-            lastName: lastName.isEmpty ? getValue("last name") : lastName,
-            mailingAddress: mailingAddress.isEmpty ? getValue("mailing_address") : mailingAddress,
-            city: getValue("city"),
+            firstName: firstName,
+            lastName: lastName,
+            mailingAddress: mailingAddress,
+            city: city,
             state: getValue("state"),
-            zipCode: getIntValue("zipcode") + getIntValue("zip") + getIntValue("zip_code"),
-            email1: getValue("email").isEmpty ? getValue("email1") : getValue("email"),
+            zipCode: zipCode,
+            email1: getFirstNonEmpty(["email", "email1"]),
             email2: getValue("email2"),
-            phoneNumber1: (getValue("phone") + getValue("phone1") + getValue("phonenumber1")).cleanedPhoneNumber,
-            phoneNumber2: getValue("phone2").cleanedPhoneNumber,
-            phoneNumber3: getValue("phone3").cleanedPhoneNumber,
-            phoneNumber4: getValue("phone4").cleanedPhoneNumber,
-            phoneNumber5: getValue("phone5").cleanedPhoneNumber,
-            phoneNumber6: getValue("phone6").cleanedPhoneNumber,
-            siteMailingAddress: getValue("siteaddress").isEmpty ? getValue("site_address") : getValue("siteaddress"),
-            siteCity: getValue("sitecity").isEmpty ? getValue("site_city") : getValue("sitecity"),
-            siteState: getValue("sitestate").isEmpty ? getValue("site_state") : getValue("sitestate"),
-            siteZipCode: getIntValue("sitezipcode") + getIntValue("site_zipcode"),
+            phoneNumber1: phoneNumber1,
+            phoneNumber2: phoneNumber2,
+            phoneNumber3: phoneNumber3,
+            phoneNumber4: phoneNumber4,
+            phoneNumber5: phoneNumber5,
+            phoneNumber6: phoneNumber6,
+            siteMailingAddress: siteMailingAddress,
+            siteCity: siteCity,
+            siteState: siteState,
+            siteZipCode: siteZipCode,
             notes: getValue("notes"),
             farm: getValue("farm")
         )
@@ -331,6 +455,7 @@ enum ImportError: LocalizedError {
     case emptyFile
     case excelNotSupported
     case saveFailed(Error)
+    case timeout
     
     var errorDescription: String? {
         switch self {
@@ -342,6 +467,8 @@ enum ImportError: LocalizedError {
             return "Excel file import is not yet supported. Please use CSV format."
         case .saveFailed(let error):
             return "Failed to save contacts: \(error.localizedDescription)"
+        case .timeout:
+            return "Import operation timed out. Please try again with a smaller file."
         }
     }
 } 

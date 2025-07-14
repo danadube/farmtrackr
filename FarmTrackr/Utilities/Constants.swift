@@ -157,7 +157,7 @@ struct ThemeManager {
             colors: ThemeColors(
                 primary: Color(red: 34/255, green: 139/255, blue: 34/255), // Forest Green
                 secondary: Color(red: 245/255, green: 245/255, blue: 220/255),
-                accent: Color(red: 144/255, green: 238/255, blue: 144/255), // Light Green
+                accent: Color(red: 34/255, green: 139/255, blue: 34/255), // Dark Green (same as primary for better contrast)
                 background: Color(red: 248/255, green: 252/255, blue: 248/255), // Very light green tint
                 text: Color(red: 27/255, green: 27/255, blue: 27/255),
                 cardBackground: Color(red: 242/255, green: 250/255, blue: 242/255), // Very light green
@@ -199,7 +199,7 @@ struct ThemeManager {
             colors: ThemeColors(
                 primary: Color(red: 46/255, green: 125/255, blue: 50/255),
                 secondary: Color(red: 245/255, green: 245/255, blue: 220/255),
-                accent: Color(red: 165/255, green: 214/255, blue: 167/255),
+                accent: Color(red: 46/255, green: 125/255, blue: 50/255), // Dark green (same as primary)
                 background: Color(red: 240/255, green: 248/255, blue: 240/255), // Light green tint
                 text: Color(red: 27/255, green: 27/255, blue: 27/255),
                 cardBackground: Color.white,
@@ -242,7 +242,7 @@ struct ThemeManager {
             colors: ThemeColors(
                 primary: Color(red: 230/255, green: 81/255, blue: 0/255),
                 secondary: Color(red: 78/255, green: 52/255, blue: 46/255),
-                accent: Color(red: 1.0, green: 235/255, blue: 59/255),
+                accent: Color(red: 230/255, green: 81/255, blue: 0/255), // Dark orange (same as primary)
                 background: Color(red: 255/255, green: 248/255, blue: 235/255), // Warm cream
                 text: Color(red: 33/255, green: 33/255, blue: 33/255),
                 cardBackground: Color.white,
@@ -284,7 +284,7 @@ struct ThemeManager {
             colors: ThemeColors(
                 primary: Color(red: 13/255, green: 71/255, blue: 161/255),
                 secondary: Color(red: 129/255, green: 212/255, blue: 250/255),
-                accent: .white,
+                accent: Color(red: 13/255, green: 71/255, blue: 161/255), // Darker blue (same as primary)
                 background: Color(red: 240/255, green: 245/255, blue: 250/255), // Cool blue-gray
                 text: Color(red: 13/255, green: 27/255, blue: 42/255),
                 cardBackground: Color.white,
@@ -366,25 +366,67 @@ struct ThemeManager {
         "Fieldlight": Theme(
             name: "Fieldlight",
             colors: ThemeColors(
-                primary: Color(red: 0/255, green: 105/255, blue: 120/255),
-                secondary: Color(red: 224/255, green: 224/255, blue: 224/255),
-                accent: Color(red: 1.0, green: 112/255, blue: 67/255),
-                background: Color(red: 240/255, green: 248/255, blue: 250/255), // Light teal tint
+                primary: Color(red: 0.18, green: 0.24, blue: 0.32),
+                secondary: Color(red: 0.85, green: 0.92, blue: 0.98),
+                accent: Color(red: 0.98, green: 0.82, blue: 0.22),
+                background: Color(red: 0.97, green: 0.98, blue: 1.0),
                 text: Color.black,
-                cardBackground: Color.white,
-                border: Color(red: 224/255, green: 224/255, blue: 224/255),
+                cardBackground: Color(red: 0.99, green: 0.99, blue: 1.0),
+                border: Color(red: 0.85, green: 0.92, blue: 0.98),
                 error: .red,
                 success: .green,
                 warning: .orange,
-                secondaryLabel: Color(red: 30/255, green: 41/255, blue: 59/255),
-                tertiary: Color(red: 156/255, green: 163/255, blue: 175/255),
-                backgroundSecondary: Color.white,
+                secondaryLabel: Color(red: 0.5, green: 0.5, blue: 0.6),
+                tertiary: Color(red: 0.7, green: 0.7, blue: 0.8),
+                backgroundSecondary: Color(red: 0.95, green: 0.96, blue: 0.99),
                 disabled: Color.gray.opacity(0.3),
                 separator: Color.gray.opacity(0.3),
                 red: .red,
                 systemGray6: Color(.systemGray6)
             ),
             font: "Open Sans",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
+        "Royal": Theme(
+            name: "Royal",
+            colors: ThemeColors(
+                primary: Color(red: 88/255, green: 41/255, blue: 141/255), // Royal purple
+                secondary: Color(red: 60/255, green: 30/255, blue: 100/255), // Darker purple for contrast
+                accent: Color(red: 255/255, green: 215/255, blue: 0/255), // Gold accent
+                background: Color(red: 0.98, green: 0.97, blue: 1.0), // Nearly white with faint purple hint
+                text: Color.black, // Pure black for all text
+                cardBackground: Color.white, // Pure white for max contrast
+                border: Color(red: 88/255, green: 41/255, blue: 141/255), // Royal purple border
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color.black, // Black for secondary text
+                tertiary: Color.black, // Black for tertiary text
+                backgroundSecondary: Color(red: 0.97, green: 0.96, blue: 1.0),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color(red: 200/255, green: 180/255, blue: 230/255),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "Inter",
             spacing: ThemeSpacing(
                 small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
             ),

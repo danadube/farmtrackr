@@ -182,7 +182,7 @@ struct DetailContentView: View {
         case .contacts:
             ContactsMasterView(selectedContact: $selectedContact, searchText: $searchText, sortOrder: $sortOrder, showingAddContact: $showingAddContact)
         case .dataQuality:
-            DataQualityView()
+            DataQualityView().environmentObject(themeVM)
         case .importExport:
             ImportExportView()
         case .settings:
@@ -232,7 +232,7 @@ struct TabHeader: View {
                     .multilineTextAlignment(.center)
             }
         }
-        .padding(.top, Constants.Spacing.extraLarge)
+        .padding(.top, Constants.Spacing.medium)
     }
 }
 
@@ -380,7 +380,10 @@ struct ContactsMasterView: View {
             .sheet(isPresented: $showingAddContact) {
                 ContactEditView(contact: nil)
             }
-            .sheet(isPresented: $showingContactDetail) {
+            .sheet(isPresented: $showingContactDetail, onDismiss: {
+                // Reset selectedContact when sheet is dismissed
+                selectedContact = nil
+            }) {
                 if let contact = selectedContact {
                     ContactDetailView(contact: contact)
                 }

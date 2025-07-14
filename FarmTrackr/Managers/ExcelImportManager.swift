@@ -16,6 +16,8 @@ class ExcelImportManager: ObservableObject {
     @Published var isImporting: Bool = false
     
     func importExcelFiles() async throws -> [ContactRecord] {
+        print("[DEBUG] Starting Excel import")
+        fflush(__stdoutp)
         let excelFiles = Bundle.main.urls(forResourcesWithExtension: "xlsx", subdirectory: nil) ?? []
         guard !excelFiles.isEmpty else {
             throw ExcelImportError.noExcelFilesFound
@@ -26,7 +28,7 @@ class ExcelImportManager: ObservableObject {
         for (fileIndex, fileURL) in excelFiles.enumerated() {
             await MainActor.run {
                 importStatus = "Processing \(fileURL.lastPathComponent)..."
-                importProgress = Double(fileIndex) / Double(excelFiles.count)
+                importProgress = excelFiles.count > 0 ? Double(fileIndex) / Double(excelFiles.count) : 0.0
             }
             
             let contacts = try await parseExcelFile(at: fileURL)
@@ -84,6 +86,14 @@ class ExcelImportManager: ObservableObject {
             // Parse data rows
             for (index, row) in rows.dropFirst().enumerated() {
                 let values = row.cells.map { $0.stringValue(sharedStrings) ?? "" }
+                
+                // Skip completely empty rows
+                let nonEmptyValues = values.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                if nonEmptyValues.isEmpty {
+                    print("Skipping empty row \(index + 1)")
+                    continue
+                }
+                
                 print("Row \(index + 1) values: \(values)")
                 if let contact = createContactRecord(from: values, mapping: columnMapping, farmName: extractFarmName(from: url)) {
                     print("Created contact: \(contact.firstName) \(contact.lastName) from \(contact.farm)")
@@ -119,6 +129,14 @@ class ExcelImportManager: ObservableObject {
                 continue 
             }
             let values = parseCSVLine(line)
+            
+            // Skip rows with no meaningful data
+            let nonEmptyValues = values.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            if nonEmptyValues.isEmpty {
+                print("Skipping row with no meaningful data at index \(index)")
+                continue
+            }
+            
             print("Row \(index + 1) values: \(values)")
             if let contact = createContactRecord(from: values, mapping: columnMapping, farmName: extractFarmName(from: url)) {
                 print("Created contact: \(contact.firstName) \(contact.lastName) from \(contact.farm)")
@@ -534,22 +552,122 @@ class ExcelImportManager: ObservableObject {
     }
     
     private func createColumnMapping(from header: [String]) -> [String: Int] {
+        print("[DEBUG] Original Headers: \(header)")
         var mapping: [String: Int] = [:]
         
         for (index, column) in header.enumerated() {
             let normalizedColumn = column.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
             mapping[normalizedColumn] = index
+            // Fuzzy/partial matching for phone and site address fields
+            for (index, column) in header.enumerated() {
+                let norm = column.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                // Phone numbers
+                if mapping["phone number 1"] == nil &&
+                    (norm.contains("phone 1") ||
+                     (norm.contains("phone") &&
+                      !norm.contains("2") &&
+                      !norm.contains("3") &&
+                      !norm.contains("4") &&
+                      !norm.contains("5") &&
+                      !norm.contains("6"))) {
+                    mapping["phone number 1"] = index
+                }
+                if mapping["phone number 2"] == nil &&
+                    (norm.contains("phone 2") ||
+                     norm.contains("mobile") ||
+                     norm.contains("cell")) {
+                    mapping["phone number 2"] = index
+                }
+                if mapping["phone number 3"] == nil &&
+                    (norm.contains("phone 3") ||
+                     norm.contains("work")) {
+                    mapping["phone number 3"] = index
+                }
+                if mapping["phone number 4"] == nil &&
+                    (norm.contains("phone 4") ||
+                     norm.contains("home")) {
+                    mapping["phone number 4"] = index
+                }
+                if mapping["phone number 5"] == nil &&
+                    norm.contains("phone 5") {
+                    mapping["phone number 5"] = index
+                }
+                if mapping["phone number 6"] == nil &&
+                    norm.contains("phone 6") {
+                    mapping["phone number 6"] = index
+                }
+                // Site address
+                if mapping["site mailing address"] == nil &&
+                    (norm.contains("site address") ||
+                     norm.contains("site addr") ||
+                     norm.contains("service address") ||
+                     norm.contains("location address")) {
+                    mapping["site mailing address"] = index
+                }
+                if mapping["site city"] == nil &&
+                    (norm.contains("site city") ||
+                     norm == "sitecity") {
+                    mapping["site city"] = index
+                }
+                if mapping["site state"] == nil &&
+                    (norm.contains("site state") ||
+                     norm == "sitestate") {
+                    mapping["site state"] = index
+                }
+                if mapping["site zip code"] == nil &&
+                    (norm.contains("site zip") ||
+                     norm.contains("site postal")) {
+                    mapping["site zip code"] = index
+                }
+            }
         }
-        
+        print("[DEBUG] Column Mapping: \(mapping)")
+        fflush(__stdoutp)
         return mapping
     }
     
     private func createContactRecord(from values: [String], mapping: [String: Int], farmName: String) -> ContactRecord? {
+        print("[DEBUG] createContactRecord called")
+        fflush(__stdoutp)
         func getValue(_ key: String) -> String {
-            guard let index = mapping[key], index < values.count else { return "" }
-            let value = values[index]
-            // Auto-correct ALL CAPS to Title Case
-            return autoCorrectCapitalization(value)
+            // Try all possible variations for the key
+            let variations: [String]
+            switch key.lowercased() {
+            case "zip code":
+                variations = ["zip code", "zipcode", "zip", "postal code", "postalcode", "zip code", "zip", "zipcode", "postal", "postal code", "zip_code", "zip code"]
+            case "site zip code":
+                variations = ["site zip code", "site zipcode", "site zip", "site postal code", "site postalcode", "site zip code", "site zip", "sitezipcode", "site_zip_code"]
+            case "phone number 1":
+                variations = ["phone number 1", "phone 1", "phone", "telephone", "primary phone", "phone number1", "phonenumber1"]
+            case "phone number 2":
+                variations = ["phone number 2", "phone 2", "mobile", "cell", "secondary phone", "phone number2", "phonenumber2"]
+            case "phone number 3":
+                variations = ["phone number 3", "phone 3", "work phone", "phone number3", "phonenumber3"]
+            case "phone number 4":
+                variations = ["phone number 4", "phone 4", "home phone", "phone number4", "phonenumber4"]
+            case "phone number 5":
+                variations = ["phone number 5", "phone 5", "phone number5", "phonenumber5"]
+            case "phone number 6":
+                variations = ["phone number 6", "phone 6", "phone number6", "phonenumber6"]
+            case "site mailing address":
+                variations = ["site mailing address", "site address", "site addr", "service address", "location address", "site mailing address", "sitemailingaddress", "site_mailing_address"]
+            case "site city":
+                variations = ["site city", "sitecity", "site_city"]
+            case "site state":
+                variations = ["site state", "sitestate", "site_state"]
+            default:
+                variations = [key]
+            }
+            for variant in variations {
+                let normalizedVariant = variant.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                if let index = mapping[normalizedVariant], index < values.count {
+                    let value = values[index]
+                    if !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        return autoCorrectCapitalization(value)
+                    }
+                }
+            }
+            return ""
         }
         
         func autoCorrectCapitalization(_ text: String) -> String {
@@ -589,7 +707,6 @@ class ExcelImportManager: ObservableObject {
         
         func getZipCodeValue(_ key: String) -> Int32 {
             let stringValue = getValue(key)
-            // Handle both formats: "92270" and "92270-1960"
             let digits = stringValue.filter { $0.isNumber }
             let result = Int32(digits) ?? 0
             if !stringValue.isEmpty {
@@ -600,13 +717,27 @@ class ExcelImportManager: ObservableObject {
         
         let firstName = getValue("firstname") + getValue("first name")
         let lastName = getValue("lastname") + getValue("last name")
+        // Phone numbers
+        let phoneNumber1 = getValue("phone number 1").isEmpty ? getValue("phone").isEmpty ? getValue("telephone") : getValue("phone") : getValue("phone number 1")
+        let phoneNumber2 = getValue("phone number 2").isEmpty ? getValue("mobile").isEmpty ? getValue("cell") : getValue("mobile") : getValue("phone number 2")
+        let phoneNumber3 = getValue("phone number 3").isEmpty ? getValue("work phone").isEmpty ? getValue("phone 3") : getValue("work phone") : getValue("phone number 3")
+        let phoneNumber4 = getValue("phone number 4").isEmpty ? getValue("home phone").isEmpty ? getValue("phone 4") : getValue("home phone") : getValue("phone number 4")
+        let phoneNumber5 = getValue("phone number 5").isEmpty ? getValue("phone 5") : getValue("phone number 5")
+        let phoneNumber6 = getValue("phone number 6").isEmpty ? getValue("phone 6") : getValue("phone number 6")
+        // Site address fields
+        let siteMailingAddress = getValue("site mailing address").isEmpty ? getValue("site address").isEmpty ? getValue("site addr").isEmpty ? getValue("service address").isEmpty ? getValue("location address") : getValue("service address") : getValue("site addr") : getValue("site address") : getValue("site mailing address")
+        let siteCity = getValue("site city").isEmpty ? getValue("sitecity") : getValue("site city")
+        let siteState = getValue("site state").isEmpty ? getValue("sitestate") : getValue("site state")
+
+        print("[DEBUG] phoneNumber1: \(phoneNumber1), phoneNumber2: \(phoneNumber2), phoneNumber3: \(phoneNumber3), phoneNumber4: \(phoneNumber4), phoneNumber5: \(phoneNumber5), phoneNumber6: \(phoneNumber6)")
+        print("[DEBUG] siteMailingAddress: \(siteMailingAddress), siteCity: \(siteCity), siteState: \(siteState)")
         
         // Skip if no name
         if firstName.isEmpty && lastName.isEmpty {
             return nil
         }
         
-        return ContactRecord(
+        let contact = ContactRecord(
             firstName: firstName.isEmpty ? "Unknown" : firstName,
             lastName: lastName.isEmpty ? "Contact" : lastName,
             mailingAddress: getValue("mailing address"),
@@ -615,19 +746,21 @@ class ExcelImportManager: ObservableObject {
             zipCode: getZipCodeValue("zip code"),
             email1: getValue("email 1").isEmpty ? nil : getValue("email 1"),
             email2: getValue("email 2").isEmpty ? nil : getValue("email 2"),
-            phoneNumber1: getValue("phone number 1").isEmpty ? nil : getValue("phone number 1").cleanedPhoneNumber,
-            phoneNumber2: getValue("phone number 2").isEmpty ? nil : getValue("phone number 2").cleanedPhoneNumber,
-            phoneNumber3: getValue("phone number 3").isEmpty ? nil : getValue("phone number 3").cleanedPhoneNumber,
-            phoneNumber4: getValue("phone number 4").isEmpty ? nil : getValue("phone number 4").cleanedPhoneNumber,
-            phoneNumber5: getValue("phone number 5").isEmpty ? nil : getValue("phone number 5").cleanedPhoneNumber,
-            phoneNumber6: getValue("phone number 6").isEmpty ? nil : getValue("phone number 6").cleanedPhoneNumber,
-            siteMailingAddress: getValue("site mailing address").isEmpty ? nil : getValue("site mailing address"),
-            siteCity: getValue("site city").isEmpty ? nil : getValue("site city"),
-            siteState: getValue("site state").isEmpty ? nil : getValue("site state"),
+            phoneNumber1: phoneNumber1.isEmpty ? nil : phoneNumber1,
+            phoneNumber2: phoneNumber2.isEmpty ? nil : phoneNumber2,
+            phoneNumber3: phoneNumber3.isEmpty ? nil : phoneNumber3,
+            phoneNumber4: phoneNumber4.isEmpty ? nil : phoneNumber4,
+            phoneNumber5: phoneNumber5.isEmpty ? nil : phoneNumber5,
+            phoneNumber6: phoneNumber6.isEmpty ? nil : phoneNumber6,
+            siteMailingAddress: siteMailingAddress.isEmpty ? nil : siteMailingAddress,
+            siteCity: siteCity.isEmpty ? nil : siteCity,
+            siteState: siteState.isEmpty ? nil : siteState,
             siteZipCode: getZipCodeValue("site zip code"),
             notes: getValue("notes").isEmpty ? "Imported from \(farmName) Excel file" : getValue("notes"),
             farm: getValue("farm").isEmpty ? farmName : getValue("farm")
         )
+        print("[DEBUG] Extracted: phoneNumber1=\(contact.phoneNumber1 ?? ""), phoneNumber2=\(contact.phoneNumber2 ?? ""), phoneNumber3=\(contact.phoneNumber3 ?? ""), phoneNumber4=\(contact.phoneNumber4 ?? ""), phoneNumber5=\(contact.phoneNumber5 ?? ""), phoneNumber6=\(contact.phoneNumber6 ?? ""), siteMailingAddress=\(contact.siteMailingAddress ?? ""), siteCity=\(contact.siteCity ?? ""), siteState=\(contact.siteState ?? ""), siteZipCode=\(contact.siteZipCode), zipCode=\(contact.zipCode)")
+        return contact
     }
 }
 

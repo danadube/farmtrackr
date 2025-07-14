@@ -11,9 +11,9 @@ struct FilterView: View {
     @Environment(\.dismiss) private var dismiss
     
     let farms: [String]
-    let states: [String]
     @Binding var selectedFarm: String
-    @Binding var selectedState: String
+    @Binding var firstNameFilter: String
+    @Binding var lastNameFilter: String
     
     var body: some View {
         NavigationView {
@@ -28,20 +28,19 @@ struct FilterView: View {
                     .pickerStyle(MenuPickerStyle())
                 }
                 
-                Section("Filter by State") {
-                    Picker("State", selection: $selectedState) {
-                        Text("All States").tag("All States")
-                        ForEach(states, id: \.self) { state in
-                            Text(state).tag(state)
-                        }
-                    }
-                    .pickerStyle(MenuPickerStyle())
+                Section("Filter by Name") {
+                    TextField("First Name", text: $firstNameFilter)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    
+                    TextField("Last Name", text: $lastNameFilter)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
                 
                 Section {
                     Button("Clear All Filters") {
                         selectedFarm = "All Farms"
-                        selectedState = "All States"
+                        firstNameFilter = ""
+                        lastNameFilter = ""
                     }
                     .foregroundColor(Constants.Colors.error)
                 }

@@ -115,6 +115,44 @@ extension FarmContact {
             .first
     }
     
+    var primaryPhoneFormatted: String {
+        let phoneNumbers = [phoneNumber1, phoneNumber2, phoneNumber3, phoneNumber4, phoneNumber5, phoneNumber6]
+        if let raw = phoneNumbers.first(where: { ($0 ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false }) {
+            let phone = FarmContact.formatPhone(raw ?? "")
+            return phone
+        }
+        return ""
+    }
+    
+    static func formatPhone(_ input: String) -> String {
+        // Remove all non-digit characters
+        let digits = input
+            .replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        // If input is in scientific notation, try to convert
+        if let doubleValue = Double(input), digits.count < 10 {
+            let noExp = String(format: "%.0f", doubleValue)
+            if noExp.count >= 10 {
+                return FarmContact.formatPhone(noExp)
+            }
+        }
+        // Format as (XXX) XXX-XXXX if 10 digits
+        if digits.count == 10 {
+            let area = digits.prefix(3)
+            let mid = digits.dropFirst(3).prefix(3)
+            let last = digits.suffix(4)
+            return "(\(area)) \(mid)-\(last)"
+        }
+        // Format as +1 (XXX) XXX-XXXX if 11 digits and starts with 1
+        if digits.count == 11 && digits.first == "1" {
+            let area = digits.dropFirst().prefix(3)
+            let mid = digits.dropFirst(4).prefix(3)
+            let last = digits.suffix(4)
+            return "+1 (\(area)) \(mid)-\(last)"
+        }
+        // Otherwise, return the original input trimmed
+        return input.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
     var allPhoneNumbers: [String] {
         [phoneNumber1, phoneNumber2, phoneNumber3, phoneNumber4, phoneNumber5, phoneNumber6]
             .compactMap { $0?.isEmpty == false ? $0 : nil }

@@ -11,7 +11,8 @@ import CoreData
 // MARK: - Enums
 enum FilterType: String, CaseIterable {
     case farm = "Farm"
-    case state = "State"
+    case firstName = "First Name"
+    case lastName = "Last Name"
     case dateRange = "Date Range"
     
     var displayName: String {
@@ -35,11 +36,12 @@ struct ContactListView: View {
     @Binding var sortOrder: SortOrder
     @Binding var showingAddContact: Bool
     @State private var filterFarm: String = "All Farms"
+    @State private var firstNameFilter: String = ""
+    @State private var lastNameFilter: String = ""
     @State private var showingAdvancedFilters = false
     @State private var searchSuggestions: [String] = []
     @State private var showingSearchSuggestions = false
     @State private var activeFilters: Set<FilterType> = []
-    @State private var selectedStates: Set<String> = []
     @State private var dateRange: DateRange = .allTime
     @StateObject private var batchManager: BatchActionManager
     @State private var showingRefreshAlert = false
@@ -60,7 +62,7 @@ struct ContactListView: View {
     
     var body: some View {
         ZStack {
-            themeVM.theme.colors.background
+            appBackground
                 .ignoresSafeArea(.all, edges: .all)
             
             VStack(spacing: 0) {
@@ -74,13 +76,14 @@ struct ContactListView: View {
                 contactList
             }
         }
-        .background(themeVM.theme.colors.background)
+        .background(appBackground)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 if !batchManager.isSelectionMode {
                     Button(action: { batchManager.enterSelectionMode() }) {
                         Image(systemName: "checkmark.circle")
                             .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(themeVM.theme.colors.primary)
                     }
                     .accessibilityLabel("Batch actions")
                     .accessibilityHint("Double tap to enter batch selection mode")
@@ -93,6 +96,7 @@ struct ContactListView: View {
                         Button(action: refreshData) {
                             Image(systemName: "arrow.clockwise")
                                 .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.primary)
                         }
                         .accessibilityLabel("Refresh data")
                         .accessibilityHint("Double tap to refresh contact data")
@@ -102,6 +106,7 @@ struct ContactListView: View {
                         Button(action: { showingAddContact = true }) {
                             Image(systemName: "plus")
                                 .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.primary)
                         }
                         .accessibilityLabel(Accessibility.Labels.addContact)
                         .accessibilityHint(Accessibility.Hints.addContact)
@@ -131,12 +136,13 @@ struct ContactListView: View {
         .interactiveCardStyle()
         .padding(.horizontal, Constants.Spacing.large)
         .padding(.top, Constants.Spacing.medium)
+        .padding(.bottom, Constants.Spacing.large) // Add bottom padding for proper separation
     }
     
     private var searchBar: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
+                .foregroundColor(themeVM.theme.colors.secondaryLabel)
                 .accessibilityHidden(true)
             
             TextField("Search contacts...", text: $searchText)
@@ -150,7 +156,7 @@ struct ContactListView: View {
                     showingSearchSuggestions = false
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
                 }
                 .accessibilityLabel("Clear search")
                 .accessibilityHint("Double tap to clear the search field")
@@ -158,8 +164,13 @@ struct ContactListView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(Color(.systemGray6))
+        .background(cardBackgroundAdaptive)
         .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(themeVM.theme.colors.secondary.opacity(0.2), lineWidth: 0.5)
+        )
+        .shadow(color: themeVM.theme.colors.secondary.opacity(0.1), radius: 2, x: 0, y: 1)
     }
     
     private var filterControls: some View {
@@ -174,13 +185,19 @@ struct ContactListView: View {
             } label: {
                 HStack {
                     Text(filterFarm)
+                        .foregroundColor(themeVM.theme.colors.text)
                     Image(systemName: "chevron.down")
+                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
                         .accessibilityHidden(true)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color(.systemGray6))
+                .background(cardBackgroundAdaptive)
                 .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(themeVM.theme.colors.secondary.opacity(0.2), lineWidth: 0.5)
+                )
             }
             .accessibilityLabel("Farm filter")
             .accessibilityHint("Double tap to choose a farm to filter by")
@@ -190,13 +207,19 @@ struct ContactListView: View {
             Button(action: { showingAdvancedFilters = true }) {
                 HStack(spacing: 4) {
                     Image(systemName: "line.3.horizontal.decrease.circle")
+                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
                         .accessibilityHidden(true)
                     Text("Filters")
+                        .foregroundColor(themeVM.theme.colors.text)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color(.systemGray6))
+                .background(cardBackgroundAdaptive)
                 .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(themeVM.theme.colors.secondary.opacity(0.2), lineWidth: 0.5)
+                )
             }
             .accessibilityLabel(Accessibility.Labels.filterContacts)
             .accessibilityHint(Accessibility.Hints.filterContacts)
@@ -223,112 +246,83 @@ struct ContactListView: View {
             }
             .padding(.vertical, themeVM.theme.spacing.large)
         }
-        .background(themeVM.theme.colors.background)
+        .background(appBackground)
         .scrollContentBackground(.hidden)
+        .padding(.top, Constants.Spacing.medium) // Add top padding for proper separation from search header
     }
     
     private func simpleContactRow(_ contact: FarmContact) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                // Selection indicator
-                if batchManager.isSelectionMode {
-                    Button(action: {
-                        batchManager.toggleSelection(for: contact)
-                    }) {
-                        Image(systemName: batchManager.selectedContacts.contains(contact) ? "checkmark.circle.fill" : "circle")
-                            .font(.title2)
-                            .foregroundColor(batchManager.selectedContacts.contains(contact) ? themeVM.theme.colors.primary : .secondary)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .accessibilityLabel(batchManager.selectedContacts.contains(contact) ? "Deselect contact" : "Select contact")
-                    .accessibilityHint("Double tap to \(batchManager.selectedContacts.contains(contact) ? "deselect" : "select") this contact")
+        HStack(alignment: .center, spacing: 8) {
+            // Selection indicator
+            if batchManager.isSelectionMode {
+                Button(action: {
+                    batchManager.toggleSelection(for: contact)
+                }) {
+                    Image(systemName: batchManager.selectedContacts.contains(contact) ? "checkmark.circle.fill" : "circle")
+                        .font(.title2)
+                        .foregroundColor(batchManager.selectedContacts.contains(contact) ? themeVM.theme.colors.primary : .secondary)
                 }
-                
-                Circle()
-                    .fill(themeVM.theme.colors.primary.opacity(0.2))
-                    .frame(width: 40, height: 40)
-                    .overlay(
-                        Text(contact.fullName.prefix(1).uppercased())
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(themeVM.theme.colors.primary)
-                    )
-                    .accessibilityHidden(true)
-                
-                VStack(alignment: .leading, spacing: 2) {
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel(batchManager.selectedContacts.contains(contact) ? "Deselect contact" : "Select contact")
+                .accessibilityHint("Double tap to \(batchManager.selectedContacts.contains(contact) ? "deselect" : "select") this contact")
+            }
+            Circle()
+                .fill(themeVM.theme.colors.primary.opacity(0.2))
+                .frame(width: 40, height: 40)
+                .overlay(
+                    Text(contact.fullName.prefix(1).uppercased())
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(themeVM.theme.colors.primary)
+                )
+                .accessibilityHidden(true)
+            // Compact info row
+            VStack(alignment: .center, spacing: 2) {
+                HStack(spacing: 6) {
                     Text(contact.fullName)
                         .font(.system(size: 16, weight: .medium))
-                    
                     if let farm = contact.farm, !farm.isEmpty {
                         Text(farm)
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                     }
-                }
-                
-                Spacer()
-                
-                // Quality indicators
-                qualityIndicators(for: contact)
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .accessibilityHidden(true)
-            }
-            
-            if !contact.displayAddress.isEmpty {
-                Text(contact.displayAddress)
-                    .font(.system(size: 14))
-                    .lineLimit(2)
-            }
-            
-            HStack(spacing: 12) {
-                if let phone = contact.primaryPhone, !phone.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "phone")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                            .accessibilityHidden(true)
-                        Text(phone)
+                    if !contact.displayAddress.isEmpty {
+                        Text("•")
                             .font(.system(size: 14))
-                    }
-                }
-                
-                if let email = contact.primaryEmail, !email.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "envelope")
-                            .font(.system(size: 12))
                             .foregroundColor(.secondary)
-                            .accessibilityHidden(true)
-                        Text(email)
+                        Text(contact.displayAddress)
                             .font(.system(size: 14))
+                            .foregroundColor(.secondary)
                             .lineLimit(1)
                     }
                 }
             }
+            Spacer()
+            // Quality indicators
+            qualityIndicators(for: contact)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+                .accessibilityHidden(true)
         }
-        .padding(Constants.Spacing.large)
-        .interactiveCardStyle()
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(contact.fullName), \(contact.farm ?? "No farm"), \(contact.displayAddress.isEmpty ? "No address" : contact.displayAddress)")
-        .accessibilityHint(batchManager.isSelectionMode ? 
-            "Double tap to \(batchManager.selectedContacts.contains(contact) ? "deselect" : "select") this contact" :
-            "Double tap to view contact details")
+        .padding(.vertical, 8)
     }
     
     private func qualityIndicators(for contact: FarmContact) -> some View {
-        let issues = DataValidator.shared.assessContactQuality(contact).issues
-        let highPriorityIssues = issues.filter { $0.severity == .high }
-        let mediumPriorityIssues = issues.filter { $0.severity == .medium }
+        let validator = DataValidator()
+        let emailResult = contact.primaryEmail.map { validator.validateEmail($0) } ?? ValidationResult(id: UUID(), field: "Email", isValid: true, score: 100, suggestions: [], errors: [], warnings: [])
+        let phoneResult = contact.primaryPhone.map { validator.validatePhoneNumber($0) } ?? ValidationResult(id: UUID(), field: "Phone", isValid: true, score: 100, suggestions: [], errors: [], warnings: [])
+        
+        let hasErrors = !emailResult.errors.isEmpty || !phoneResult.errors.isEmpty
+        let hasWarnings = !emailResult.warnings.isEmpty || !phoneResult.warnings.isEmpty
         
         return HStack(spacing: 4) {
-            if !highPriorityIssues.isEmpty {
+            if hasErrors {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 12))
                     .foregroundColor(.red)
             }
             
-            if !mediumPriorityIssues.isEmpty {
+            if hasWarnings {
                 Image(systemName: "exclamationmark.circle.fill")
                     .font(.system(size: 12))
                     .foregroundColor(.orange)
@@ -345,9 +339,10 @@ struct ContactListView: View {
         for contact in arrayContacts {
             if !searchText.isEmpty {
                 let matchesSearch = contact.fullName.localizedCaseInsensitiveContains(searchText) ||
+                    (contact.firstName ?? "").localizedCaseInsensitiveContains(searchText) ||
+                    (contact.lastName ?? "").localizedCaseInsensitiveContains(searchText) ||
                     (contact.farm ?? "").localizedCaseInsensitiveContains(searchText) ||
                     (contact.city ?? "").localizedCaseInsensitiveContains(searchText) ||
-                    (contact.state ?? "").localizedCaseInsensitiveContains(searchText) ||
                     (contact.primaryEmail ?? "").localizedCaseInsensitiveContains(searchText) ||
                     (contact.primaryPhone ?? "").localizedCaseInsensitiveContains(searchText)
                 if !matchesSearch { continue }
@@ -357,7 +352,11 @@ struct ContactListView: View {
                 continue
             }
             
-            if !selectedStates.isEmpty && !selectedStates.contains(contact.state ?? "") {
+            if !firstNameFilter.isEmpty && contact.firstName?.localizedCaseInsensitiveContains(firstNameFilter) == false {
+                continue
+            }
+            
+            if !lastNameFilter.isEmpty && contact.lastName?.localizedCaseInsensitiveContains(lastNameFilter) == false {
                 continue
             }
             
@@ -413,16 +412,20 @@ struct ContactListView: View {
                 suggestions.insert(contact.fullName)
             }
             
+            if let firstName = contact.firstName, firstName.localizedCaseInsensitiveContains(searchText) {
+                suggestions.insert(firstName)
+            }
+            
+            if let lastName = contact.lastName, lastName.localizedCaseInsensitiveContains(searchText) {
+                suggestions.insert(lastName)
+            }
+            
             if let farm = contact.farm, farm.localizedCaseInsensitiveContains(searchText) {
                 suggestions.insert(farm)
             }
             
             if let city = contact.city, city.localizedCaseInsensitiveContains(searchText) {
                 suggestions.insert(city)
-            }
-            
-            if let state = contact.state, state.localizedCaseInsensitiveContains(searchText) {
-                suggestions.insert(state)
             }
         }
         
@@ -460,25 +463,12 @@ struct ContactListView: View {
                     .pickerStyle(MenuPickerStyle())
                 }
                 
-                Section("State Filter") {
-                    ForEach(Array(Set(contacts.compactMap { $0.state })).sorted(), id: \.self) { state in
-                        HStack {
-                            Text(state)
-                            Spacer()
-                            if selectedStates.contains(state) {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.accentColor)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            if selectedStates.contains(state) {
-                                selectedStates.remove(state)
-                            } else {
-                                selectedStates.insert(state)
-                            }
-                        }
-                    }
+                Section("First Name Filter") {
+                    TextField("First Name", text: $firstNameFilter)
+                }
+                
+                Section("Last Name Filter") {
+                    TextField("Last Name", text: $lastNameFilter)
                 }
                 
                 Section("Date Range") {
@@ -516,8 +506,12 @@ struct ContactListView: View {
             activeFilters.insert(.farm)
         }
         
-        if !selectedStates.isEmpty {
-            activeFilters.insert(.state)
+        if !firstNameFilter.isEmpty {
+            activeFilters.insert(.firstName)
+        }
+        
+        if !lastNameFilter.isEmpty {
+            activeFilters.insert(.lastName)
         }
         
         if dateRange != .allTime {
@@ -535,108 +529,67 @@ struct ContactRowView: View {
     @EnvironmentObject var themeVM: ThemeViewModel
     
     var body: some View {
-        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-            HStack(spacing: Constants.Spacing.medium) {
-                // Selection checkbox
-                if isSelectionMode {
-                    Button(action: onTap) {
-                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                            .foregroundColor(isSelected ? themeVM.theme.colors.primary : .gray)
-                            .font(.system(size: 20))
-                    }
-                    .buttonStyle(PlainButtonStyle())
+        HStack(alignment: .center, spacing: Constants.Spacing.medium) {
+            // Selection checkbox
+            if isSelectionMode {
+                Button(action: onTap) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(isSelected ? themeVM.theme.colors.primary : .gray)
+                        .font(.system(size: 20))
                 }
-                
-                // Contact avatar
-                Circle()
-                    .fill(themeVM.theme.colors.primary.opacity(0.2))
-                    .frame(width: 50, height: 50)
-                    .overlay(
-                        Text(contact.fullName.prefix(1).uppercased())
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(themeVM.theme.colors.primary)
-                    )
-                    .accessibilityHidden(true)
-                
-                // Contact info
-                VStack(alignment: .leading, spacing: Constants.Spacing.small) {
-                    HStack {
-                        Text(contact.fullName)
-                            .font(themeVM.theme.fonts.titleFont)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primary)
-                        
-                        Spacer()
-                        
-                        // Quality indicators
-                        qualityIndicators(for: contact)
-                    }
-                    
-                    if let farm = contact.farm, !farm.isEmpty {
-                        Text(farm)
-                            .font(themeVM.theme.fonts.bodyFont)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, Constants.Spacing.small)
-                            .padding(.vertical, 2)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(Constants.CornerRadius.small)
-                    }
-                }
-                
-                Spacer()
-                
-                // Chevron indicator
-                if !isSelectionMode {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14))
+                .buttonStyle(PlainButtonStyle())
+            }
+            // Contact avatar
+            Circle()
+                .fill(themeVM.theme.colors.primary.opacity(0.2))
+                .frame(width: 50, height: 50)
+                .overlay(
+                    Text(contact.fullName.prefix(1).uppercased())
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(themeVM.theme.colors.primary)
+                )
+                .accessibilityHidden(true)
+            // Name and farm (vertical)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(contact.fullName)
+                    .font(themeVM.theme.fonts.titleFont)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                if let farm = contact.farm, !farm.isEmpty {
+                    Text(farm)
+                        .font(themeVM.theme.fonts.bodyFont)
                         .foregroundColor(.secondary)
-                        .accessibilityHidden(true)
+                        .padding(.horizontal, Constants.Spacing.small)
+                        .padding(.vertical, 2)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(Constants.CornerRadius.small)
                 }
             }
-            
-            // Contact details
-            if !contact.displayAddress.isEmpty || contact.primaryPhone != nil || contact.primaryEmail != nil {
-                VStack(alignment: .leading, spacing: Constants.Spacing.small) {
-                    if !contact.displayAddress.isEmpty {
-                        HStack(spacing: 4) {
-                            Image(systemName: "location")
-                                .font(.system(size: 12))
-                                .foregroundColor(.secondary)
-                                .accessibilityHidden(true)
-                            Text(contact.displayAddress)
-                                .font(.system(size: 14))
-                                .lineLimit(2)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    
-                    HStack(spacing: Constants.Spacing.medium) {
-                        if let phone = contact.primaryPhone, !phone.isEmpty {
-                            HStack(spacing: 4) {
-                                Image(systemName: "phone")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.secondary)
-                                    .accessibilityHidden(true)
-                                Text(phone)
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        
-                        if let email = contact.primaryEmail, !email.isEmpty {
-                            HStack(spacing: 4) {
-                                Image(systemName: "envelope")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.secondary)
-                                    .accessibilityHidden(true)
-                                Text(email)
-                                    .font(.system(size: 14))
-                                    .lineLimit(1)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
+            // Address (vertical, but in same HStack)
+            if !contact.displayAddress.isEmpty {
+                VStack(alignment: .center, spacing: 2) {
+                    Text(contact.mailingAddress ?? "")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    if let city = contact.city, let state = contact.state {
+                        Text("\(city), \(state) \(contact.zipCode.formattedZipCode)")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
                     }
                 }
+                .frame(maxWidth: .infinity)
+            }
+            Spacer()
+            // Quality indicators
+            qualityIndicators(for: contact)
+            // Chevron indicator
+            if !isSelectionMode {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                    .accessibilityHidden(true)
             }
         }
         .padding(Constants.Spacing.large)
@@ -656,18 +609,21 @@ struct ContactRowView: View {
     }
     
     private func qualityIndicators(for contact: FarmContact) -> some View {
-        let issues = DataValidator.shared.assessContactQuality(contact).issues
-        let highPriorityIssues = issues.filter { $0.severity == .high }
-        let mediumPriorityIssues = issues.filter { $0.severity == .medium }
+        let validator = DataValidator()
+        let emailResult = contact.primaryEmail.map { validator.validateEmail($0) } ?? ValidationResult(id: UUID(), field: "Email", isValid: true, score: 100, suggestions: [], errors: [], warnings: [])
+        let phoneResult = contact.primaryPhone.map { validator.validatePhoneNumber($0) } ?? ValidationResult(id: UUID(), field: "Phone", isValid: true, score: 100, suggestions: [], errors: [], warnings: [])
+        
+        let hasErrors = !emailResult.errors.isEmpty || !phoneResult.errors.isEmpty
+        let hasWarnings = !emailResult.warnings.isEmpty || !phoneResult.warnings.isEmpty
         
         return HStack(spacing: 4) {
-            if !highPriorityIssues.isEmpty {
+            if hasErrors {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 12))
                     .foregroundColor(.red)
             }
             
-            if !mediumPriorityIssues.isEmpty {
+            if hasWarnings {
                 Image(systemName: "exclamationmark.circle.fill")
                     .font(.system(size: 12))
                     .foregroundColor(.orange)

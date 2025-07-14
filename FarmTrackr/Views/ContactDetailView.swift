@@ -47,10 +47,8 @@ struct ContactDetailView: View {
                             .frame(maxHeight: .infinity)
                         Spacer()
                         Spacer()
-                if let notes = contact.notes, !notes.isEmpty {
-                            NotesSection(notes: notes)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                        NotesSection(notes: contact.notes ?? "")
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(.vertical, themeVM.theme.spacing.large)
                     Divider()
@@ -189,10 +187,12 @@ struct ContactDetailView: View {
         @EnvironmentObject var themeVM: ThemeViewModel
         
         var body: some View {
-            VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
+            VStack(alignment: .leading, spacing: themeVM.theme.spacing.small) {
                 SectionHeader(title: "Contact Info", icon: "person.circle")
-                if let phone = contact.primaryPhone, !phone.isEmpty {
-                    InfoRow(title: "Phone", value: phone)
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(Array(contact.allPhoneNumbers.enumerated()), id: \ .offset) { idx, phone in
+                        InfoRow(title: "Phone \(idx + 1)", value: FarmContact.formatPhone(phone))
+                    }
                 }
                 if let email = contact.primaryEmail, !email.isEmpty {
                     InfoRow(title: "Email", value: email)

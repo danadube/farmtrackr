@@ -1,0 +1,11 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme FarmTrackr -destination "platform=iOS Simulator,name=iPad Pro (13-inch) (M4)" build
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  CoreXLSX: https://github.com/CoreOffice/CoreXLSX.git @ 0.14.2
+  XMLCoder: https://github.com/maxdesiatov/XMLCoder.git @ 0.14.0
+  ZIPFoundation: https://github.com/weichsel/ZIPFoundation.git @ 0.9.19
+

@@ -64,7 +64,7 @@ class BatchActionManager: ObservableObject {
         
         for (index, contact) in contactsToDelete.enumerated() {
             await MainActor.run {
-                progress = Double(index) / Double(totalCount)
+                progress = totalCount > 0 ? Double(index) / Double(totalCount) : 0.0
                 currentOperation = "Deleting \(contact.fullName)..."
             }
             
@@ -123,7 +123,6 @@ class BatchActionManager: ObservableObject {
         }
         
         let contactsToPrint = Array(selectedContacts)
-        let totalCount = contactsToPrint.count
         
         // Create a temporary CSV file for label printing
         let labelData = createLabelData(from: contactsToPrint)
@@ -161,7 +160,7 @@ class BatchActionManager: ObservableObject {
         
         for (index, contact) in contactsToUpdate.enumerated() {
             await MainActor.run {
-                progress = Double(index) / Double(totalCount)
+                progress = totalCount > 0 ? Double(index) / Double(totalCount) : 0.0
                 currentOperation = "Adding tag to \(contact.fullName)..."
             }
             
@@ -203,7 +202,7 @@ class BatchActionManager: ObservableObject {
         
         for (index, contact) in contactsToUpdate.enumerated() {
             await MainActor.run {
-                progress = Double(index) / Double(totalCount)
+                progress = totalCount > 0 ? Double(index) / Double(totalCount) : 0.0
                 currentOperation = "Updating \(contact.fullName)..."
             }
             

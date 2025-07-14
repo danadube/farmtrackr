@@ -110,7 +110,7 @@ struct LabelTemplateEditorView: View {
             .navigationTitle(template.name)
             .navigationBarTitleDisplayMode(.inline)
         }
-        .toolbar(content: {
+        .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {
                     dismiss()
@@ -121,7 +121,7 @@ struct LabelTemplateEditorView: View {
                     saveTemplate()
                 }
             }
-        })
+        }
         .sheet(isPresented: $showingFieldEditor) {
             if let field = editingField {
                 FieldEditorView(field: field) { updatedField in
@@ -137,7 +137,8 @@ struct LabelTemplateEditorView: View {
                 labelFormat: .avery5160,
                 addressType: .mailing,
                 template: template,
-                templateManager: templateManager
+                templateManager: templateManager,
+                fontFamily: "System"
             )
         }
         .alert("Validation Errors", isPresented: $showingValidationAlert) {
@@ -248,7 +249,7 @@ struct FieldEditorView: View {
             .navigationTitle("Edit Field")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .toolbar(content: {
+        .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {
                     dismiss()
@@ -260,6 +261,6 @@ struct FieldEditorView: View {
                     dismiss()
                 }
             }
-        })
+        }
     }
-} 
+}

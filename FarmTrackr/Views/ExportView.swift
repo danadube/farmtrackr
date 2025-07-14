@@ -13,6 +13,7 @@ struct ExportView: View {
     @EnvironmentObject var themeVM: ThemeViewModel
     @StateObject private var exportManager = ExportManager()
     @State private var selectedExportType: ExportType = .csv
+    @State private var selectedFarm: String = "All Farms"
     @State private var exportedFileURL: URL?
     @State private var showingShareSheet = false
     @State private var showingSaveDialog = false
@@ -24,58 +25,129 @@ struct ExportView: View {
         animation: .default
     ) private var contacts: FetchedResults<FarmContact>
     
+    var availableFarms: [String] {
+        Array(Set(contacts.compactMap { $0.farm }.filter { !$0.isEmpty })).sorted()
+    }
+    
+    var filteredContacts: [FarmContact] {
+        if selectedFarm == "All Farms" {
+            return Array(contacts)
+        } else {
+            return Array(contacts.filter { $0.farm == selectedFarm })
+        }
+    }
+    
     var body: some View {
         NavigationView {
-            VStack(spacing: themeVM.theme.spacing.large) {
-                TabHeader(
-                    icon: "square.and.arrow.up",
-                    logoName: nil,
-                    title: "Export Contacts",
-                    subtitle: "Export your contact data"
-                )
-                
-                // Export Type Selection
-                VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
-                    Text("Export Format")
-                        .font(themeVM.theme.fonts.titleFont)
-                        .foregroundColor(.primary)
+            ScrollView {
+                VStack(spacing: themeVM.theme.spacing.large) {
+                    // Header
+                    VStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 36))
+                            .foregroundColor(themeVM.theme.colors.primary)
+                        
+                        Text("Export Contacts")
+                            .font(themeVM.theme.fonts.headerFont)
+                            .foregroundColor(themeVM.theme.colors.text)
+                            .padding(.top, 2)
+                        
+                        Text("Export your contact data")
+                            .font(themeVM.theme.fonts.bodyFont)
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                            .multilineTextAlignment(.center)
+                            .padding(.bottom, 2)
+                    }
+                    .padding(.top, 8)
+                    .padding(.horizontal, 16)
                     
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: themeVM.theme.spacing.medium) {
-                        ForEach(ExportType.allCases, id: \.self) { exportType in
-                            ExportTypeCard(
-                                type: exportType,
-                                isSelected: selectedExportType == exportType
-                            ) {
-                                selectedExportType = exportType
+                    // Farm Selection
+                    VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+                        Text("Select Farm")
+                            .font(themeVM.theme.fonts.titleFont)
+                            .foregroundColor(.primary)
+                        
+                        Menu {
+                            Button("All Farms") { selectedFarm = "All Farms" }
+                                .accessibilityLabel("Export all farms")
+                            ForEach(availableFarms, id: \.self) { farm in
+                                Button(farm) { selectedFarm = farm }
+                                    .accessibilityLabel("Export \(farm) contacts")
+                            }
+                        } label: {
+                            HStack {
+                                Text(selectedFarm)
+                                    .foregroundColor(themeVM.theme.colors.text)
+                                Spacer()
+                                Image(systemName: "chevron.down")
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .accessibilityHidden(true)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(themeVM.theme.colors.secondary.opacity(0.2), lineWidth: 0.5)
+                            )
+                        }
+                        .accessibilityLabel("Farm filter")
+                        .accessibilityHint("Double tap to choose a farm to export")
+                    }
+                    .padding(themeVM.theme.spacing.large)
+                    .interactiveCardStyle()
+                    
+                    // Export Type Selection
+                    VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+                        Text("Export Format")
+                            .font(themeVM.theme.fonts.titleFont)
+                            .foregroundColor(.primary)
+                        
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: themeVM.theme.spacing.medium) {
+                            ForEach(ExportType.allCases, id: \.self) { exportType in
+                                ExportTypeCard(
+                                    type: exportType,
+                                    isSelected: selectedExportType == exportType
+                                ) {
+                                    selectedExportType = exportType
+                                }
                             }
                         }
                     }
-                }
-                .padding(themeVM.theme.spacing.large)
-                .interactiveCardStyle()
-                
-                // Contact Count
-                VStack(spacing: themeVM.theme.spacing.small) {
-                    Text("\(contacts.count) contacts will be exported")
-                        .font(themeVM.theme.fonts.bodyFont)
-                        .foregroundColor(themeVM.theme.colors.secondary)
+                    .padding(themeVM.theme.spacing.large)
+                    .interactiveCardStyle()
                     
-                    if contacts.isEmpty {
-                        Text("No contacts to export")
-                            .font(themeVM.theme.fonts.captionFont)
-                            .foregroundColor(themeVM.theme.colors.warning)
+                    // Contact Count
+                    VStack(spacing: themeVM.theme.spacing.small) {
+                        Text("\(filteredContacts.count) contacts will be exported")
+                            .font(themeVM.theme.fonts.bodyFont)
+                            .foregroundColor(themeVM.theme.colors.secondary)
+                        
+                        if selectedFarm != "All Farms" {
+                            Text("From \(selectedFarm)")
+                                .font(themeVM.theme.fonts.captionFont)
+                                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        }
+                        
+                        if filteredContacts.isEmpty {
+                            Text("No contacts to export")
+                                .font(themeVM.theme.fonts.captionFont)
+                                .foregroundColor(themeVM.theme.colors.warning)
+                        }
+                    }
+                    
+                    // Export Progress
+                    if exportManager.isExporting {
+                        ExportProgressView(progress: exportManager.exportProgress, status: exportManager.exportStatus)
                     }
                 }
-                
-                // Export Progress
-                if exportManager.isExporting {
-                    ExportProgressView(progress: exportManager.exportProgress, status: exportManager.exportStatus)
-                }
-                
-                // Action Buttons
+                .padding(.horizontal, themeVM.theme.spacing.large)
+            }
+            .safeAreaInset(edge: .bottom) {
                 VStack(spacing: themeVM.theme.spacing.medium) {
                     Button("Export \(selectedExportType.displayName)") {
                         Task {
@@ -83,7 +155,7 @@ struct ExportView: View {
                         }
                     }
                     .primaryButtonStyle()
-                    .disabled(contacts.isEmpty || exportManager.isExporting)
+                    .disabled(filteredContacts.isEmpty || exportManager.isExporting)
                     
                     if exportedFileURL != nil {
                         Button("Share File") {
@@ -92,13 +164,10 @@ struct ExportView: View {
                         .secondaryButtonStyle()
                     }
                 }
-                
-                Spacer()
+                .padding(.horizontal, themeVM.theme.spacing.large)
+                .padding(.bottom, themeVM.theme.spacing.large)
             }
-            .padding(themeVM.theme.spacing.large)
             .background(Color(.systemBackground))
-            .navigationTitle("Export")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
@@ -121,14 +190,17 @@ struct ExportView: View {
     
     private func exportContacts() async {
         do {
-            let contactsArray = Array(contacts)
             let fileURL: URL
             
             switch selectedExportType {
             case .csv:
-                fileURL = try await exportManager.exportToCSV(contacts: contactsArray)
+                fileURL = try await exportManager.exportToCSV(contacts: filteredContacts)
             case .pdf:
-                fileURL = try await exportManager.exportToPDF(contacts: contactsArray)
+                fileURL = try await exportManager.exportToPDF(contacts: filteredContacts)
+            case .json:
+                fileURL = try await exportManager.exportToJSON(contacts: filteredContacts)
+            case .excel:
+                fileURL = try await exportManager.exportToExcel(contacts: filteredContacts)
             }
             
             await MainActor.run {
@@ -200,12 +272,14 @@ struct ExportProgressView: View {
 }
 
 enum ExportType: CaseIterable {
-    case csv, pdf
+    case csv, pdf, json, excel
     
     var displayName: String {
         switch self {
         case .csv: return "CSV"
         case .pdf: return "PDF"
+        case .json: return "JSON"
+        case .excel: return "Excel"
         }
     }
     
@@ -213,6 +287,8 @@ enum ExportType: CaseIterable {
         switch self {
         case .csv: return "doc.text"
         case .pdf: return "doc.text.magnifyingglass"
+        case .json: return "doc.text"
+        case .excel: return "tablecells"
         }
     }
     
@@ -220,6 +296,8 @@ enum ExportType: CaseIterable {
         switch self {
         case .csv: return "csv"
         case .pdf: return "pdf"
+        case .json: return "json"
+        case .excel: return "csv"
         }
     }
 } 

@@ -117,10 +117,30 @@ extension View {
     var cardBackgroundAdaptive: Color {
         Color(UIColor { trait in
             if trait.userInterfaceStyle == .dark {
-                return UIColor.secondarySystemBackground
+                return UIColor.tertiarySystemBackground
             } else {
                 // Use the current theme's card background color in light mode
                 return UIColor(ThemeManager.theme(named: UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green").colors.cardBackground)
+            }
+        })
+    }
+    
+    var adaptiveShadowColor: Color {
+        Color(UIColor { trait in
+            if trait.userInterfaceStyle == .dark {
+                return UIColor.white
+            } else {
+                return UIColor.black
+            }
+        })
+    }
+    
+    var adaptiveBorderColor: Color {
+        Color(UIColor { trait in
+            if trait.userInterfaceStyle == .dark {
+                return UIColor.systemGray4
+            } else {
+                return UIColor.systemGray5
             }
         })
     }
@@ -128,11 +148,11 @@ extension View {
         self
             .background(cardBackgroundAdaptive)
             .cornerRadius(Constants.CornerRadius.large)
-            .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
-            .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
+            .shadow(color: adaptiveShadowColor.opacity(0.1), radius: 8, x: 0, y: 4)
+            .shadow(color: adaptiveShadowColor.opacity(0.05), radius: 2, x: 0, y: 1)
             .overlay(
                 RoundedRectangle(cornerRadius: Constants.CornerRadius.large)
-                    .stroke(Constants.Colors.border.opacity(0.3), lineWidth: 0.5)
+                    .stroke(adaptiveBorderColor.opacity(0.2), lineWidth: 0.5)
             )
     }
     
@@ -140,11 +160,11 @@ extension View {
         self
             .background(cardBackgroundAdaptive)
             .cornerRadius(Constants.CornerRadius.large)
-            .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 6)
-            .shadow(color: Color.black.opacity(0.06), radius: 4, x: 0, y: 2)
+            .shadow(color: adaptiveShadowColor.opacity(0.15), radius: 12, x: 0, y: 6)
+            .shadow(color: adaptiveShadowColor.opacity(0.08), radius: 4, x: 0, y: 2)
             .overlay(
                 RoundedRectangle(cornerRadius: Constants.CornerRadius.large)
-                    .stroke(Constants.Colors.border.opacity(0.4), lineWidth: 0.5)
+                    .stroke(adaptiveBorderColor.opacity(0.3), lineWidth: 0.5)
             )
             .scaleEffect(1.0)
             .animation(.easeInOut(duration: 0.2), value: true)
@@ -171,6 +191,17 @@ extension View {
                 RoundedRectangle(cornerRadius: Constants.CornerRadius.medium)
                     .stroke(Constants.Colors.primary, lineWidth: 1)
             )
+    }
+    
+    func settingsButtonStyle() -> some View {
+        self
+            .font(Constants.Typography.bodyFont)
+            .foregroundColor(.primary)
+            .frame(minHeight: 44) // Ensure minimum touch target
+            .frame(maxWidth: .infinity)
+            .background(cardBackgroundAdaptive)
+            .cornerRadius(Constants.CornerRadius.medium)
+            .shadow(color: adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
     }
     
     func listRowStyle() -> some View {
@@ -294,9 +325,24 @@ class AccessibilityTester: ObservableObject {
 // MARK: - Accessibility Color Extensions
 extension Color {
     var accessibilityContrastRatio: Double {
-        // Simplified contrast ratio calculation
-        // In a real implementation, you'd calculate actual contrast ratios
-        return 4.5 // Placeholder value
+        // Calculate contrast ratio using WCAG formula
+        func luminance(_ color: UIColor) -> Double {
+            let components = color.cgColor.components ?? [0,0,0,1]
+            let r = components[0]
+            let g = components.count > 1 ? components[1] : r
+            let b = components.count > 2 ? components[2] : r
+            func adjust(_ c: Double) -> Double {
+                return (c <= 0.03928) ? (c / 12.92) : pow((c + 0.055) / 1.055, 2.4)
+            }
+            return 0.2126 * adjust(Double(r)) + 0.7152 * adjust(Double(g)) + 0.0722 * adjust(Double(b))
+        }
+        let color = UIColor(self)
+        let bg = UIColor.white // Assume white background for contrast
+        let lum1 = luminance(color)
+        let lum2 = luminance(bg)
+        let lighter = max(lum1, lum2)
+        let darker = min(lum1, lum2)
+        return (lighter + 0.05) / (darker + 0.05)
     }
     
     var isAccessibleOnBackground: Bool {

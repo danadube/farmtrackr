@@ -20,29 +20,51 @@ struct ExcelImportView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: themeVM.theme.spacing.large) {
-                TabHeader(icon: "doc.text.magnifyingglass", logoName: nil, title: "Excel Import", subtitle: "Import contacts from Excel files in the Resources folder")
-                
-                // Excel Files Info
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Available Excel Files:")
-                        .font(themeVM.theme.fonts.headlineFont)
-                    
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("• Farm Tables San Marino.xlsx")
-                        Text("• Farm Tables Versailles.xlsx")
-                        Text("• Farm Tables Tamarisk CC Ranch.xlsx")
+            ScrollView {
+                VStack(spacing: themeVM.theme.spacing.large) {
+                    // Header
+                    VStack(spacing: 8) {
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .font(.system(size: 36))
+                            .foregroundColor(themeVM.theme.colors.primary)
+                        
+                        Text("Excel Import")
+                            .font(themeVM.theme.fonts.headerFont)
+                            .foregroundColor(themeVM.theme.colors.text)
+                            .padding(.top, 2)
+                        
+                        Text("Import contacts from Excel files in the Resources folder")
+                            .font(themeVM.theme.fonts.bodyFont)
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                            .multilineTextAlignment(.center)
+                            .padding(.bottom, 2)
                     }
-                    .font(themeVM.theme.fonts.subheadlineFont)
-                    .foregroundColor(themeVM.theme.colors.secondary)
+                    .padding(.top, 8)
+                    .padding(.horizontal, 16)
+                    
+                    // Excel Files Info
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Available Excel Files:")
+                            .font(themeVM.theme.fonts.headlineFont)
+                        
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("• Farm Tables San Marino.xlsx")
+                            Text("• Farm Tables Versailles.xlsx")
+                            Text("• Farm Tables Tamarisk CC Ranch.xlsx")
+                        }
+                        .font(themeVM.theme.fonts.subheadlineFont)
+                        .foregroundColor(themeVM.theme.colors.secondary)
+                    }
+                    .padding()
+                    .background(themeVM.theme.colors.backgroundSecondary)
+                    .cornerRadius(10)
                 }
-                .padding()
-                .background(themeVM.theme.colors.backgroundSecondary)
-                .cornerRadius(10)
-                
-                // Import Buttons
+                .padding(.top, themeVM.theme.spacing.large)
+                .padding(.horizontal, themeVM.theme.spacing.large)
+            }
+            .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 12) {
-                    // Direct Import Button
+                    // Import Buttons
                     Button(action: importAndSaveDirectly) {
                         HStack {
                             Image(systemName: "arrow.down.doc.fill")
@@ -57,7 +79,6 @@ struct ExcelImportView: View {
                     }
                     .disabled(excelImportManager.isImporting || dataImportManager.isImporting)
                     
-                    // Preview Import Button
                     Button(action: importExcelFiles) {
                         HStack {
                             Image(systemName: "arrow.down.doc")
@@ -71,43 +92,38 @@ struct ExcelImportView: View {
                         .cornerRadius(10)
                     }
                     .disabled(excelImportManager.isImporting || dataImportManager.isImporting)
-                }
-                .padding(.horizontal)
-                
-                // Progress View
-                if excelImportManager.isImporting {
-                    VStack(spacing: 10) {
-                        ProgressView(value: excelImportManager.importProgress)
-                            .progressViewStyle(LinearProgressViewStyle())
-                            .scaleEffect(x: 1, y: 2, anchor: .center)
-                        
-                        Text(excelImportManager.importStatus)
-                            .font(themeVM.theme.fonts.captionFont)
-                            .foregroundColor(themeVM.theme.colors.secondary)
-                    }
-                    .padding(.horizontal)
-                }
-                
-                // Preview Button
-                if !importedContacts.isEmpty {
-                    Button(action: { showingPreview = true }) {
-                        HStack {
-                            Image(systemName: "eye")
-                            Text("Preview \(importedContacts.count) Contacts")
+                    
+                    if !importedContacts.isEmpty {
+                        Button(action: { showingPreview = true }) {
+                            HStack {
+                                Image(systemName: "eye")
+                                Text("Preview \(importedContacts.count) Contacts")
+                            }
+                            .font(themeVM.theme.fonts.headlineFont)
+                            .foregroundColor(themeVM.theme.colors.text)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(themeVM.theme.colors.success)
+                            .cornerRadius(10)
                         }
-                        .font(themeVM.theme.fonts.headlineFont)
-                        .foregroundColor(themeVM.theme.colors.text)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(themeVM.theme.colors.success)
-                        .cornerRadius(10)
                     }
-                    .padding(.horizontal)
+                    
+                    if excelImportManager.isImporting {
+                        VStack(spacing: 10) {
+                            ProgressView(value: excelImportManager.importProgress)
+                                .progressViewStyle(LinearProgressViewStyle())
+                                .scaleEffect(x: 1, y: 2, anchor: .center)
+                            
+                            Text(excelImportManager.importStatus)
+                                .font(themeVM.theme.fonts.captionFont)
+                                .foregroundColor(themeVM.theme.colors.secondary)
+                        }
+                        .padding(.horizontal)
+                    }
                 }
-                
-                Spacer()
+                .padding(.horizontal, themeVM.theme.spacing.large)
+                .padding(.bottom, themeVM.theme.spacing.large)
             }
-            .padding(themeVM.theme.spacing.large)
             .background(Color(.systemBackground))
             .navigationTitle("Excel Import")
             .navigationBarTitleDisplayMode(.inline)
@@ -167,7 +183,12 @@ struct ExcelImportView: View {
             }
             
             do {
-                try await dataImportManager.saveContactsToCoreData(importedContacts, context: viewContext)
+                try await dataImportManager.saveContactsToCoreData(importedContacts, context: viewContext) { progress, status in
+                    Task { @MainActor in
+                        dataImportManager.importProgress = progress
+                        dataImportManager.importStatus = status
+                    }
+                }
                 
                 await MainActor.run {
                     dataImportManager.isImporting = false
@@ -186,6 +207,7 @@ struct ExcelImportView: View {
     }
     
     private func importAndSaveDirectly() {
+        print("Starting direct import and save process...")
         Task {
             await MainActor.run {
                 excelImportManager.isImporting = true
@@ -194,7 +216,9 @@ struct ExcelImportView: View {
             }
             
             do {
+                print("Calling excelImportManager.importExcelFiles()...")
                 let contacts = try await excelImportManager.importExcelFiles()
+                print("Excel import completed, found \(contacts.count) contacts")
                 
                 await MainActor.run {
                     excelImportManager.isImporting = false
@@ -204,7 +228,14 @@ struct ExcelImportView: View {
                 }
                 
                 // Save directly to database
-                try await dataImportManager.saveContactsToCoreData(contacts, context: viewContext)
+                print("Calling dataImportManager.saveContactsToCoreData()...")
+                try await dataImportManager.saveContactsToCoreData(contacts, context: viewContext) { progress, status in
+                    Task { @MainActor in
+                        dataImportManager.importProgress = progress
+                        dataImportManager.importStatus = status
+                    }
+                }
+                print("Database save completed successfully")
                 
                 await MainActor.run {
                     dataImportManager.isImporting = false
@@ -217,6 +248,7 @@ struct ExcelImportView: View {
                 }
                 
             } catch {
+                print("Import or save failed: \(error)")
                 await MainActor.run {
                     excelImportManager.isImporting = false
                     dataImportManager.isImporting = false

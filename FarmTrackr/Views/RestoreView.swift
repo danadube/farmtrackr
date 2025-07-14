@@ -21,22 +21,26 @@ struct RestoreView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: themeVM.theme.spacing.large) {
-                headerSection
-                warningSection
-                selectedFileSection
-                actionButtons
-                Spacer()
+            ScrollView {
+                VStack(spacing: themeVM.theme.spacing.large) {
+                    headerSection
+                    warningSection
+                    selectedFileSection
+                }
+                .padding(.top, themeVM.theme.spacing.large)
+                .padding(.horizontal, themeVM.theme.spacing.large)
             }
-            .padding(themeVM.theme.spacing.large)
+            .safeAreaInset(edge: .bottom) {
+                actionButtons
+                    .padding(.horizontal, themeVM.theme.spacing.large)
+                    .padding(.bottom, themeVM.theme.spacing.large)
+            }
             .background(Color(.systemBackground))
             .navigationTitle("Restore")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+                    Button("Done") { dismiss() }
                 }
             }
         }

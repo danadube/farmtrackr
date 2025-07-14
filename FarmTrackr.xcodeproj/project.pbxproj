@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4F497AEA2E21BE1700E81FEA /* CoreXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = 4F497AE92E21BE1700E81FEA /* CoreXLSX */; };
+		4FA689332E257DFA003F7105 /* CoreXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = 4FA689322E257DFA003F7105 /* CoreXLSX */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,9 +33,22 @@
 		4F0E13EF2E1ECD0200DCC97E /* FarmTrackrUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FarmTrackrUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4FA01A602E24B8300094C4AA /* Exceptions for "FarmTrackr" folder in "FarmTrackr" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 4F0E13D72E1ECCFF00DCC97E /* FarmTrackr */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4F0E13DA2E1ECCFF00DCC97E /* FarmTrackr */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4FA01A602E24B8300094C4AA /* Exceptions for "FarmTrackr" folder in "FarmTrackr" target */,
+			);
 			path = FarmTrackr;
 			sourceTree = "<group>";
 		};
@@ -56,7 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4F497AEA2E21BE1700E81FEA /* CoreXLSX in Frameworks */,
+				4FA689332E257DFA003F7105 /* CoreXLSX in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -117,7 +130,7 @@
 			);
 			name = FarmTrackr;
 			packageProductDependencies = (
-				4F497AE92E21BE1700E81FEA /* CoreXLSX */,
+				4FA689322E257DFA003F7105 /* CoreXLSX */,
 			);
 			productName = FarmTrackr;
 			productReference = 4F0E13D82E1ECCFF00DCC97E /* FarmTrackr.app */;
@@ -202,7 +215,7 @@
 			mainGroup = 4F0E13CF2E1ECCFF00DCC97E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				4F497AE82E21BE1700E81FEA /* XCRemoteSwiftPackageReference "CoreXLSX" */,
+				4FA689312E257DFA003F7105 /* XCRemoteSwiftPackageReference "CoreXLSX" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4F0E13D92E1ECCFF00DCC97E /* Products */;
@@ -409,7 +422,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = NN9J4BANGL;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				"INFOPLIST_FILE[sdk=*]" = FarmTrackr/Info.plist;
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.danadube.FarmTrackr\";\n    CFBundleURLSchemes =     (\n        \"com.danadube.FarmTrackr\"\n    );\n}";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -440,7 +455,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = NN9J4BANGL;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				"INFOPLIST_FILE[sdk=*]" = FarmTrackr/Info.plist;
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleURLName = \"com.danadube.FarmTrackr\";\n    CFBundleURLSchemes =     (\n        \"com.danadube.FarmTrackr\"\n    );\n}";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -575,7 +592,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		4F497AE82E21BE1700E81FEA /* XCRemoteSwiftPackageReference "CoreXLSX" */ = {
+		4FA689312E257DFA003F7105 /* XCRemoteSwiftPackageReference "CoreXLSX" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/CoreOffice/CoreXLSX.git";
 			requirement = {
@@ -586,9 +603,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		4F497AE92E21BE1700E81FEA /* CoreXLSX */ = {
+		4FA689322E257DFA003F7105 /* CoreXLSX */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 4F497AE82E21BE1700E81FEA /* XCRemoteSwiftPackageReference "CoreXLSX" */;
+			package = 4FA689312E257DFA003F7105 /* XCRemoteSwiftPackageReference "CoreXLSX" */;
 			productName = CoreXLSX;
 		};
 /* End XCSwiftPackageProductDependency section */

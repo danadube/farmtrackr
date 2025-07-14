@@ -21,88 +21,89 @@ struct BackupView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: themeVM.theme.spacing.large) {
-                // Header
-                VStack(spacing: themeVM.theme.spacing.medium) {
-                    Image(systemName: "icloud.and.arrow.up")
-                        .font(.system(size: 60))
-                        .foregroundColor(themeVM.theme.colors.primary)
-                    
-                    Text("Create Backup")
-                        .font(themeVM.theme.fonts.headerFont)
-                        .foregroundColor(themeVM.theme.colors.text)
-                    
-                    Text("Create a backup of all your farm contacts that you can save locally or restore later")
-                        .font(themeVM.theme.fonts.bodyFont)
-                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, themeVM.theme.spacing.extraLarge)
-                
-                // Backup Info
-                VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
-                    Text("What's included:")
-                        .font(themeVM.theme.fonts.titleFont)
-                        .foregroundColor(themeVM.theme.colors.text)
-                    
-                    VStack(alignment: .leading, spacing: themeVM.theme.spacing.small) {
-                        BackupInfoRow(icon: "person.2", text: "All farm contacts")
-                        BackupInfoRow(icon: "envelope", text: "Contact information")
-                        BackupInfoRow(icon: "location", text: "Addresses and notes")
-                        BackupInfoRow(icon: "calendar", text: "Creation and modification dates")
+            ScrollView {
+                VStack(spacing: themeVM.theme.spacing.large) {
+                    // Header
+                    VStack(spacing: themeVM.theme.spacing.medium) {
+                        Image(systemName: "icloud.and.arrow.up")
+                            .font(.system(size: 60))
+                            .foregroundColor(themeVM.theme.colors.primary)
+                        
+                        Text("Create Backup")
+                            .font(themeVM.theme.fonts.headerFont)
+                            .foregroundColor(themeVM.theme.colors.text)
+                        
+                        Text("Create a backup of all your farm contacts that you can save locally or restore later")
+                            .font(themeVM.theme.fonts.bodyFont)
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                            .multilineTextAlignment(.center)
                     }
-                }
-                .padding(themeVM.theme.spacing.large)
-                .background(themeVM.theme.colors.cardBackground)
-                .cornerRadius(themeVM.theme.cornerRadius.medium)
-                
-                // Create Backup Button
-                Button(action: createBackup) {
-                    HStack {
-                        if isCreatingBackup {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                                .foregroundColor(.white)
-                        } else {
-                            Image(systemName: "icloud.and.arrow.up")
+                    .padding(.top, themeVM.theme.spacing.extraLarge)
+                    
+                    // Backup Info
+                    VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+                        Text("What's included:")
+                            .font(themeVM.theme.fonts.titleFont)
+                            .foregroundColor(themeVM.theme.colors.text)
+                        
+                        VStack(alignment: .leading, spacing: themeVM.theme.spacing.small) {
+                            BackupInfoRow(icon: "person.2", text: "All farm contacts")
+                            BackupInfoRow(icon: "envelope", text: "Contact information")
+                            BackupInfoRow(icon: "location", text: "Addresses and notes")
+                            BackupInfoRow(icon: "calendar", text: "Creation and modification dates")
                         }
-                        Text(isCreatingBackup ? "Creating Backup..." : "Create Backup")
                     }
-                    .font(themeVM.theme.fonts.buttonFont)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(themeVM.theme.spacing.medium)
-                    .background(themeVM.theme.colors.primary)
+                    .padding(themeVM.theme.spacing.large)
+                    .background(themeVM.theme.colors.cardBackground)
                     .cornerRadius(themeVM.theme.cornerRadius.medium)
                 }
-                .disabled(isCreatingBackup)
-                
-                if backupURL != nil {
-                    Button(action: { showingShareSheet = true }) {
+                .padding(.horizontal, themeVM.theme.spacing.large)
+            }
+            .safeAreaInset(edge: .bottom) {
+                VStack(spacing: themeVM.theme.spacing.medium) {
+                    Button(action: createBackup) {
                         HStack {
-                            Image(systemName: "square.and.arrow.up")
-                            Text("Share Backup File")
+                            if isCreatingBackup {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .foregroundColor(.white)
+                            } else {
+                                Image(systemName: "icloud.and.arrow.up")
+                            }
+                            Text(isCreatingBackup ? "Creating Backup..." : "Create Backup")
                         }
                         .font(themeVM.theme.fonts.buttonFont)
-                        .foregroundColor(themeVM.theme.colors.primary)
+                        .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(themeVM.theme.spacing.medium)
-                        .background(themeVM.theme.colors.primary.opacity(0.1))
+                        .background(themeVM.theme.colors.primary)
                         .cornerRadius(themeVM.theme.cornerRadius.medium)
                     }
+                    .disabled(isCreatingBackup)
+                    if backupURL != nil {
+                        Button(action: { showingShareSheet = true }) {
+                            HStack {
+                                Image(systemName: "square.and.arrow.up")
+                                Text("Share Backup File")
+                            }
+                            .font(themeVM.theme.fonts.buttonFont)
+                            .foregroundColor(themeVM.theme.colors.primary)
+                            .frame(maxWidth: .infinity)
+                            .padding(themeVM.theme.spacing.medium)
+                            .background(themeVM.theme.colors.primary.opacity(0.1))
+                            .cornerRadius(themeVM.theme.cornerRadius.medium)
+                        }
+                    }
                 }
-                
-                Spacer()
+                .padding(.horizontal, themeVM.theme.spacing.large)
+                .padding(.bottom, themeVM.theme.spacing.large)
             }
-            .padding(themeVM.theme.spacing.large)
             .background(Color(.systemBackground))
             .navigationTitle("Backup")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+                    Button("Done") { dismiss() }
                 }
             }
         }
