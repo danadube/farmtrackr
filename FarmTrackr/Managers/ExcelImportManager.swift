@@ -550,202 +550,84 @@ class ExcelImportManager: ObservableObject {
         result.append(current.trimmingCharacters(in: .whitespacesAndNewlines))
         return result
     }
-    
+
+    // Helper to normalize keys (lowercase, remove spaces/underscores)
+    private func normalizeKey(_ key: String) -> String {
+        return key.lowercased()
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "_", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // Updated column mapping: normalized keys
     private func createColumnMapping(from header: [String]) -> [String: Int] {
-        print("[DEBUG] Original Headers: \(header)")
         var mapping: [String: Int] = [:]
-        
+        var normalizedHeader: [String] = []
         for (index, column) in header.enumerated() {
-            let normalizedColumn = column.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-            mapping[normalizedColumn] = index
-            // Fuzzy/partial matching for phone and site address fields
-            for (index, column) in header.enumerated() {
-                let norm = column.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                // Phone numbers
-                if mapping["phone number 1"] == nil &&
-                    (norm.contains("phone 1") ||
-                     (norm.contains("phone") &&
-                      !norm.contains("2") &&
-                      !norm.contains("3") &&
-                      !norm.contains("4") &&
-                      !norm.contains("5") &&
-                      !norm.contains("6"))) {
-                    mapping["phone number 1"] = index
-                }
-                if mapping["phone number 2"] == nil &&
-                    (norm.contains("phone 2") ||
-                     norm.contains("mobile") ||
-                     norm.contains("cell")) {
-                    mapping["phone number 2"] = index
-                }
-                if mapping["phone number 3"] == nil &&
-                    (norm.contains("phone 3") ||
-                     norm.contains("work")) {
-                    mapping["phone number 3"] = index
-                }
-                if mapping["phone number 4"] == nil &&
-                    (norm.contains("phone 4") ||
-                     norm.contains("home")) {
-                    mapping["phone number 4"] = index
-                }
-                if mapping["phone number 5"] == nil &&
-                    norm.contains("phone 5") {
-                    mapping["phone number 5"] = index
-                }
-                if mapping["phone number 6"] == nil &&
-                    norm.contains("phone 6") {
-                    mapping["phone number 6"] = index
-                }
-                // Site address
-                if mapping["site mailing address"] == nil &&
-                    (norm.contains("site address") ||
-                     norm.contains("site addr") ||
-                     norm.contains("service address") ||
-                     norm.contains("location address")) {
-                    mapping["site mailing address"] = index
-                }
-                if mapping["site city"] == nil &&
-                    (norm.contains("site city") ||
-                     norm == "sitecity") {
-                    mapping["site city"] = index
-                }
-                if mapping["site state"] == nil &&
-                    (norm.contains("site state") ||
-                     norm == "sitestate") {
-                    mapping["site state"] = index
-                }
-                if mapping["site zip code"] == nil &&
-                    (norm.contains("site zip") ||
-                     norm.contains("site postal")) {
-                    mapping["site zip code"] = index
-                }
-            }
+            let normalized = normalizeKey(column)
+            normalizedHeader.append(normalized)
+            mapping[normalized] = index
         }
+        print("[DEBUG] Raw Header: \(header)")
+        print("[DEBUG] Normalized Header: \(normalizedHeader)")
         print("[DEBUG] Column Mapping: \(mapping)")
         fflush(__stdoutp)
         return mapping
     }
-    
+
+    // Helper to get first non-empty value from possible keys
+    private func getFirstNonEmpty(_ keys: [String], values: [String], mapping: [String: Int]) -> String {
+        for key in keys {
+            let normalized = normalizeKey(key)
+            if let idx = mapping[normalized], idx < values.count {
+                let value = values[idx].trimmingCharacters(in: .whitespacesAndNewlines)
+                if !value.isEmpty { return value }
+            }
+        }
+        return ""
+    }
+
     private func createContactRecord(from values: [String], mapping: [String: Int], farmName: String) -> ContactRecord? {
         print("[DEBUG] createContactRecord called")
+        print("[DEBUG] Row Values: \(values)")
         fflush(__stdoutp)
-        func getValue(_ key: String) -> String {
-            // Try all possible variations for the key
-            let variations: [String]
-            switch key.lowercased() {
-            case "zip code":
-                variations = ["zip code", "zipcode", "zip", "postal code", "postalcode", "zip code", "zip", "zipcode", "postal", "postal code", "zip_code", "zip code"]
-            case "site zip code":
-                variations = ["site zip code", "site zipcode", "site zip", "site postal code", "site postalcode", "site zip code", "site zip", "sitezipcode", "site_zip_code"]
-            case "phone number 1":
-                variations = ["phone number 1", "phone 1", "phone", "telephone", "primary phone", "phone number1", "phonenumber1"]
-            case "phone number 2":
-                variations = ["phone number 2", "phone 2", "mobile", "cell", "secondary phone", "phone number2", "phonenumber2"]
-            case "phone number 3":
-                variations = ["phone number 3", "phone 3", "work phone", "phone number3", "phonenumber3"]
-            case "phone number 4":
-                variations = ["phone number 4", "phone 4", "home phone", "phone number4", "phonenumber4"]
-            case "phone number 5":
-                variations = ["phone number 5", "phone 5", "phone number5", "phonenumber5"]
-            case "phone number 6":
-                variations = ["phone number 6", "phone 6", "phone number6", "phonenumber6"]
-            case "site mailing address":
-                variations = ["site mailing address", "site address", "site addr", "service address", "location address", "site mailing address", "sitemailingaddress", "site_mailing_address"]
-            case "site city":
-                variations = ["site city", "sitecity", "site_city"]
-            case "site state":
-                variations = ["site state", "sitestate", "site_state"]
-            default:
-                variations = [key]
-            }
-            for variant in variations {
-                let normalizedVariant = variant.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                if let index = mapping[normalizedVariant], index < values.count {
-                    let value = values[index]
-                    if !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        return autoCorrectCapitalization(value)
-                    }
-                }
-            }
-            return ""
+        // Use getFirstNonEmpty for all fields with possible variations
+        let firstName = getFirstNonEmpty(["First Name", "FirstName", "first_name"], values: values, mapping: mapping)
+        let lastName = getFirstNonEmpty(["Last Name", "LastName", "last_name"], values: values, mapping: mapping)
+        let mailingAddress = getFirstNonEmpty(["Mailing Address", "Address", "Street Address", "mailingaddress", "mailing_address"], values: values, mapping: mapping)
+        let city = getFirstNonEmpty(["City", "city"], values: values, mapping: mapping)
+        let state = getFirstNonEmpty(["State", "state"], values: values, mapping: mapping)
+        let zipCode = getFirstNonEmpty(["Zip Code", "ZIP", "Postal Code", "zipcode", "zip"], values: values, mapping: mapping)
+        let email1 = getFirstNonEmpty(["Email 1", "Email", "email1", "email"], values: values, mapping: mapping)
+        let email2 = getFirstNonEmpty(["Email 2", "email2"], values: values, mapping: mapping)
+        let phoneNumber1 = getFirstNonEmpty(["Phone Number 1", "Phone 1", "Phone", "Telephone", "Primary Phone", "phonenumber1"], values: values, mapping: mapping)
+        let phoneNumber2 = getFirstNonEmpty(["Phone Number 2", "Phone 2", "Mobile", "Cell", "Secondary Phone", "phonenumber2"], values: values, mapping: mapping)
+        let phoneNumber3 = getFirstNonEmpty(["Phone Number 3", "Phone 3", "Work Phone", "phonenumber3"], values: values, mapping: mapping)
+        let phoneNumber4 = getFirstNonEmpty(["Phone Number 4", "Phone 4", "Home Phone", "phonenumber4"], values: values, mapping: mapping)
+        let phoneNumber5 = getFirstNonEmpty(["Phone Number 5", "Phone 5", "phonenumber5"], values: values, mapping: mapping)
+        let phoneNumber6 = getFirstNonEmpty(["Phone Number 6", "Phone 6", "phonenumber6"], values: values, mapping: mapping)
+        let siteMailingAddress = getFirstNonEmpty(["Site Mailing Address", "Site Address", "Site Addr", "Service Address", "Location Address", "siteaddress", "site_mailing_address"], values: values, mapping: mapping)
+        let siteCity = getFirstNonEmpty(["Site City", "sitecity", "site_city"], values: values, mapping: mapping)
+        let siteState = getFirstNonEmpty(["Site State", "sitestate", "site_state"], values: values, mapping: mapping)
+        let siteZipCode = getFirstNonEmpty(["Site Zip Code", "Site ZIP", "Site Postal Code", "sitezipcode", "site_zip_code"], values: values, mapping: mapping)
+        let notes = getFirstNonEmpty(["Notes", "notes"], values: values, mapping: mapping)
+        let farm = getFirstNonEmpty(["Farm", "farm"], values: values, mapping: mapping)
+        // Helper for zip code conversion
+        func zipToInt(_ zip: String) -> Int32 {
+            let digits = zip.filter { $0.isNumber }
+            return Int32(digits) ?? 0
         }
-        
-        func autoCorrectCapitalization(_ text: String) -> String {
-            // If the entire text is uppercase and longer than 1 character, convert to title case
-            if text == text.uppercased() && text.count > 1 && text.contains(where: { $0.isLetter }) {
-                // Preserve state abbreviations in all caps
-                if isStateAbbreviation(text) {
-                    return text
-                }
-                return text.capitalized
-            }
-            return text
-        }
-        
-        func isStateAbbreviation(_ text: String) -> Bool {
-            let stateAbbreviations = [
-                "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-                "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-                "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-                "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-                "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
-            ]
-            let otherAbbreviations = ["PO"] // PO Box
-            return stateAbbreviations.contains(text) || otherAbbreviations.contains(text)
-        }
-        
-        func getIntValue(_ key: String) -> Int32 {
-            let stringValue = getValue(key)
-            // For zip codes, extract only the digits
-            let digits = stringValue.filter { $0.isNumber }
-            let result = Int32(digits) ?? 0
-            if key.contains("zip") && !stringValue.isEmpty {
-                print("Zip code conversion: '\(stringValue)' -> '\(digits)' -> \(result)")
-            }
-            return result
-        }
-        
-        func getZipCodeValue(_ key: String) -> Int32 {
-            let stringValue = getValue(key)
-            let digits = stringValue.filter { $0.isNumber }
-            let result = Int32(digits) ?? 0
-            if !stringValue.isEmpty {
-                print("Zip code processing: '\(stringValue)' -> '\(digits)' -> \(result)")
-            }
-            return result
-        }
-        
-        let firstName = getValue("firstname") + getValue("first name")
-        let lastName = getValue("lastname") + getValue("last name")
-        // Phone numbers
-        let phoneNumber1 = getValue("phone number 1").isEmpty ? getValue("phone").isEmpty ? getValue("telephone") : getValue("phone") : getValue("phone number 1")
-        let phoneNumber2 = getValue("phone number 2").isEmpty ? getValue("mobile").isEmpty ? getValue("cell") : getValue("mobile") : getValue("phone number 2")
-        let phoneNumber3 = getValue("phone number 3").isEmpty ? getValue("work phone").isEmpty ? getValue("phone 3") : getValue("work phone") : getValue("phone number 3")
-        let phoneNumber4 = getValue("phone number 4").isEmpty ? getValue("home phone").isEmpty ? getValue("phone 4") : getValue("home phone") : getValue("phone number 4")
-        let phoneNumber5 = getValue("phone number 5").isEmpty ? getValue("phone 5") : getValue("phone number 5")
-        let phoneNumber6 = getValue("phone number 6").isEmpty ? getValue("phone 6") : getValue("phone number 6")
-        // Site address fields
-        let siteMailingAddress = getValue("site mailing address").isEmpty ? getValue("site address").isEmpty ? getValue("site addr").isEmpty ? getValue("service address").isEmpty ? getValue("location address") : getValue("service address") : getValue("site addr") : getValue("site address") : getValue("site mailing address")
-        let siteCity = getValue("site city").isEmpty ? getValue("sitecity") : getValue("site city")
-        let siteState = getValue("site state").isEmpty ? getValue("sitestate") : getValue("site state")
-
-        print("[DEBUG] phoneNumber1: \(phoneNumber1), phoneNumber2: \(phoneNumber2), phoneNumber3: \(phoneNumber3), phoneNumber4: \(phoneNumber4), phoneNumber5: \(phoneNumber5), phoneNumber6: \(phoneNumber6)")
-        print("[DEBUG] siteMailingAddress: \(siteMailingAddress), siteCity: \(siteCity), siteState: \(siteState)")
-        
         // Skip if no name
-        if firstName.isEmpty && lastName.isEmpty {
-            return nil
-        }
-        
+        if firstName.isEmpty && lastName.isEmpty { return nil }
         let contact = ContactRecord(
             firstName: firstName.isEmpty ? "Unknown" : firstName,
             lastName: lastName.isEmpty ? "Contact" : lastName,
-            mailingAddress: getValue("mailing address"),
-            city: getValue("city"),
-            state: getValue("state"),
-            zipCode: getZipCodeValue("zip code"),
-            email1: getValue("email 1").isEmpty ? nil : getValue("email 1"),
-            email2: getValue("email 2").isEmpty ? nil : getValue("email 2"),
+            mailingAddress: mailingAddress,
+            city: city,
+            state: state,
+            zipCode: zipToInt(zipCode),
+            email1: email1.isEmpty ? nil : email1,
+            email2: email2.isEmpty ? nil : email2,
             phoneNumber1: phoneNumber1.isEmpty ? nil : phoneNumber1,
             phoneNumber2: phoneNumber2.isEmpty ? nil : phoneNumber2,
             phoneNumber3: phoneNumber3.isEmpty ? nil : phoneNumber3,
@@ -755,11 +637,11 @@ class ExcelImportManager: ObservableObject {
             siteMailingAddress: siteMailingAddress.isEmpty ? nil : siteMailingAddress,
             siteCity: siteCity.isEmpty ? nil : siteCity,
             siteState: siteState.isEmpty ? nil : siteState,
-            siteZipCode: getZipCodeValue("site zip code"),
-            notes: getValue("notes").isEmpty ? "Imported from \(farmName) Excel file" : getValue("notes"),
-            farm: getValue("farm").isEmpty ? farmName : getValue("farm")
+            siteZipCode: zipToInt(siteZipCode),
+            notes: notes.isEmpty ? "Imported from \(farmName) Excel file" : notes,
+            farm: farm.isEmpty ? farmName : farm
         )
-        print("[DEBUG] Extracted: phoneNumber1=\(contact.phoneNumber1 ?? ""), phoneNumber2=\(contact.phoneNumber2 ?? ""), phoneNumber3=\(contact.phoneNumber3 ?? ""), phoneNumber4=\(contact.phoneNumber4 ?? ""), phoneNumber5=\(contact.phoneNumber5 ?? ""), phoneNumber6=\(contact.phoneNumber6 ?? ""), siteMailingAddress=\(contact.siteMailingAddress ?? ""), siteCity=\(contact.siteCity ?? ""), siteState=\(contact.siteState ?? ""), siteZipCode=\(contact.siteZipCode), zipCode=\(contact.zipCode)")
+        print("[DEBUG] Extracted: phoneNumber1=\(contact.phoneNumber1 ?? ""), siteMailingAddress=\(contact.siteMailingAddress ?? "")")
         return contact
     }
 }

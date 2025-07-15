@@ -34,7 +34,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		4FA01A602E24B8300094C4AA /* Exceptions for "FarmTrackr" folder in "FarmTrackr" target */ = {
+		4FB8571E2E258EFD0094B2E7 /* Exceptions for "FarmTrackr" folder in "FarmTrackr" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -47,7 +47,7 @@
 		4F0E13DA2E1ECCFF00DCC97E /* FarmTrackr */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				4FA01A602E24B8300094C4AA /* Exceptions for "FarmTrackr" folder in "FarmTrackr" target */,
+				4FB8571E2E258EFD0094B2E7 /* Exceptions for "FarmTrackr" folder in "FarmTrackr" target */,
 			);
 			path = FarmTrackr;
 			sourceTree = "<group>";

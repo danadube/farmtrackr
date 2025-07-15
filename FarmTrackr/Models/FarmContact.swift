@@ -15,9 +15,13 @@ extension FarmContact {
     var fullName: String {
         let first = firstName?.trimmingCharacters(in: .whitespaces) ?? ""
         let last = lastName?.trimmingCharacters(in: .whitespaces) ?? ""
-        
+        let company = farm?.trimmingCharacters(in: .whitespaces) ?? ""
+        // If last name is 'Contact', treat as company/organization and only show first name
+        if last.lowercased() == "contact" {
+            return first.isEmpty ? company : first
+        }
         if first.isEmpty && last.isEmpty {
-            return ""
+            return company
         } else if first.isEmpty {
             return last
         } else if last.isEmpty {
@@ -79,29 +83,29 @@ extension FarmContact {
     }
     
     var displaySiteAddress: String {
-        guard let siteAddress = siteMailingAddress, !siteAddress.isEmpty else { return "" }
+        let hasStreet = (siteMailingAddress ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        let hasCity = (siteCity ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        let hasState = (siteState ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        let hasZip = formattedSiteZipCode.isEmpty == false
         var cityStateZip = ""
-        
-        if let siteCity = siteCity, !siteCity.isEmpty {
-            cityStateZip += siteCity
+        if hasCity { cityStateZip += siteCity ?? "" }
+        if hasState {
+            if !cityStateZip.isEmpty { cityStateZip += ", " }
+            cityStateZip += siteState ?? ""
         }
-        if let siteState = siteState, !siteState.isEmpty {
-            if !cityStateZip.isEmpty {
-                cityStateZip += ", "
-            }
-            cityStateZip += siteState
-        }
-        if !formattedSiteZipCode.isEmpty {
-            if !cityStateZip.isEmpty {
-                cityStateZip += " "
-            }
+        if hasZip {
+            if !cityStateZip.isEmpty { cityStateZip += " " }
             cityStateZip += formattedSiteZipCode
         }
-        
-        if !cityStateZip.isEmpty {
-            return "\(siteAddress)\n\(cityStateZip)"
+        if hasStreet && !cityStateZip.isEmpty {
+            return "\(siteMailingAddress ?? "")\n\(cityStateZip)"
+        } else if hasStreet {
+            return siteMailingAddress ?? ""
+        } else if !cityStateZip.isEmpty {
+            return cityStateZip
+        } else {
+            return ""
         }
-        return siteAddress
     }
     
     var primaryEmail: String? {
@@ -126,13 +130,11 @@ extension FarmContact {
     
     static func formatPhone(_ input: String) -> String {
         // Remove all non-digit characters
-        let digits = input
-            .replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
-        // If input is in scientific notation, try to convert
-        if let doubleValue = Double(input), digits.count < 10 {
-            let noExp = String(format: "%.0f", doubleValue)
-            if noExp.count >= 10 {
-                return FarmContact.formatPhone(noExp)
+        var digits = input.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        // Always try to convert scientific notation
+        if input.contains("e") || input.contains("E") {
+            if let doubleValue = Double(input) {
+                digits = String(format: "%.0f", doubleValue)
             }
         }
         // Format as (XXX) XXX-XXXX if 10 digits

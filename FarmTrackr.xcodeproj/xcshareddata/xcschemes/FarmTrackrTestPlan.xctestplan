@@ -19,15 +19,15 @@
     {
       "target" : {
         "containerPath" : "container:FarmTrackr.xcodeproj",
-        "identifier" : "Glaab_Farm_CRMTests",
-        "name" : "Glaab Farm CRMTests"
+        "identifier" : "FarmTrackrTests",
+        "name" : "FarmTrackrTests"
       }
     },
     {
       "target" : {
         "containerPath" : "container:FarmTrackr.xcodeproj",
-        "identifier" : "Glaab_Farm_CRMUITests",
-        "name" : "Glaab Farm CRMUITests"
+        "identifier" : "FarmTrackrUITests",
+        "name" : "FarmTrackrUITests"
       }
     }
   ],

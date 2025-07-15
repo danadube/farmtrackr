@@ -363,6 +363,48 @@ struct ThemeManager {
                 mediumFont: { .system(size: $0, weight: .medium) }
             )
         ),
+        "High Contrast": Theme(
+            name: "High Contrast",
+            colors: ThemeColors(
+                primary: Color.black,
+                secondary: Color.white,
+                accent: Color.black,
+                background: Color.white,
+                text: Color.black,
+                cardBackground: Color.white,
+                border: Color.black,
+                error: Color.red,
+                success: Color.green,
+                warning: Color.orange,
+                secondaryLabel: Color.black,
+                tertiary: Color.black,
+                backgroundSecondary: Color.white,
+                disabled: Color.gray,
+                separator: Color.black,
+                red: Color.red,
+                systemGray6: Color.white
+            ),
+            font: "SF Pro Display",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
         "Fieldlight": Theme(
             name: "Fieldlight",
             colors: ThemeColors(

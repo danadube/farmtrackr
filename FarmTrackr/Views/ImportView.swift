@@ -34,6 +34,8 @@ struct ImportView: View {
     @State private var importResult: String? = nil
     @State private var showImportCompletePrompt: Bool = false
     
+    @StateObject private var excelImportManager = ExcelImportManager()
+    
     // App fields for mapping
     let appFields = [
         "firstName", "lastName", "mailingAddress", "city", "state", "zipCode",
@@ -484,37 +486,41 @@ struct ImportView: View {
                 }
             }
         case .excel:
+            guard let url = selectedFileURL else { return "No Excel file selected." }
             do {
-                guard let url = selectedFileURL, let file = XLSXFile(filepath: url.path) else { return "Failed to open Excel file." }
-                guard let sharedStrings = try? file.parseSharedStrings() else {
-                    return "Failed to parse shared strings in Excel file."
-                }
-                let workbooks = try file.parseWorkbooks()
-                guard let firstSheet = workbooks.first?.sheets.items.first else { return "No sheets found." }
-                let worksheetPaths = try file.parseWorksheetPathsAndNames(workbook: workbooks.first!)
-                guard let worksheetPath = worksheetPaths.first(where: { $0.name == firstSheet.name })?.path else { return "No worksheet path found." }
-                let worksheet = try file.parseWorksheet(at: worksheetPath)
-                let xlsxRows = worksheet.data?.rows ?? []
-                guard xlsxRows.count > 1 else { return "No data rows found." }
-                headers = xlsxRows[0].cells.map { $0.stringValue(sharedStrings) ?? "" }
-                rows = Array(xlsxRows.dropFirst()).map { row in
-                    headers.indices.map { idx in
-                        if idx < row.cells.count {
-                            return row.cells[idx].stringValue(sharedStrings) ?? ""
-                        } else {
-                            return ""
-                        }
+                let contacts = try await excelImportManager.importSingleExcelFile(from: url)
+                let context = PersistenceController.shared.container.viewContext
+                for record in contacts {
+                    await MainActor.run {
+                        let contact = FarmContact(context: context)
+                        contact.firstName = record.firstName
+                        contact.lastName = record.lastName
+                        contact.mailingAddress = record.mailingAddress
+                        contact.city = record.city
+                        contact.state = record.state
+                        contact.zipCode = record.zipCode
+                        contact.email1 = record.email1
+                        contact.email2 = record.email2
+                        contact.phoneNumber1 = record.phoneNumber1
+                        contact.phoneNumber2 = record.phoneNumber2
+                        contact.phoneNumber3 = record.phoneNumber3
+                        contact.phoneNumber4 = record.phoneNumber4
+                        contact.phoneNumber5 = record.phoneNumber5
+                        contact.phoneNumber6 = record.phoneNumber6
+                        contact.siteMailingAddress = record.siteMailingAddress
+                        contact.siteCity = record.siteCity
+                        contact.siteState = record.siteState
+                        contact.siteZipCode = record.siteZipCode
+                        contact.notes = record.notes
+                        contact.farm = record.farm
+                        contact.dateCreated = Date()
+                        contact.dateModified = Date()
                     }
                 }
-                // Skip empty rows
-                rows = rows.filter { row in
-                    row.enumerated().contains { (idx, val) in
-                        let mapped = (headers.indices.contains(idx) ? fieldMapping[headers[idx]] : "") ?? ""
-                        return !mapped.isEmpty && !val.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    }
-                }
+                try? context.save()
+                return "Imported \(contacts.count) contacts from Excel file successfully."
             } catch {
-                return "Failed to parse Excel file: \(error.localizedDescription)"
+                return "Failed to import Excel file: \(error.localizedDescription)"
             }
         case .googleSheets:
             // Use previewHeaders/previewRows already fetched

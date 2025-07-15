@@ -1,13 +1,13 @@
 //
-//  Glaab_Farm_CRMUITestsLaunchTests.swift
-//  Glaab Farm CRMUITests
+//  FarmTrackrUITestsLaunchTests.swift
+//  FarmTrackrUITests
 //
 //  Created by Dana Dube on 7/9/25.
 //
 
 import XCTest
 
-final class Glaab_Farm_CRMUITestsLaunchTests: XCTestCase {
+final class FarmTrackrUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
@@ -30,4 +30,4 @@ final class Glaab_Farm_CRMUITestsLaunchTests: XCTestCase {
         attachment.lifetime = .keepAlways
         add(attachment)
     }
-}
+} 

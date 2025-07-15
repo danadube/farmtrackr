@@ -13,7 +13,7 @@ This document outlines the testing strategy and implementation for the FarmTrack
 
 ### Test Categories
 
-#### 1. Unit Tests (`Glaab_Farm_CRMTests.swift`)
+#### 1. Unit Tests (`FarmTrackrTests.swift`)
 
 **FarmContact Model Tests**
 - `testFullNameComputation()`: Tests name formatting and edge cases
@@ -36,7 +36,7 @@ This document outlines the testing strategy and implementation for the FarmTrack
 **Performance Tests**
 - `testContactListPerformance()`: Tests Core Data fetch performance with large datasets
 
-#### 2. UI Tests (`Glaab_Farm_CRMUITests.swift`)
+#### 2. UI Tests (`FarmTrackrUITests.swift`)
 
 **Navigation Tests**
 - `testNavigationBetweenTabs()`: Tests tab navigation and screen verification

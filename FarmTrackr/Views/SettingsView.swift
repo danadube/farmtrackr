@@ -25,6 +25,7 @@ struct SettingsView: View {
     @State private var cloudKitAvailable = false
     @StateObject private var googleSheetsManager = GoogleSheetsManager()
     @State private var showingGoogleSheetsAuth = false
+    @State private var showingGoogleSheetsPicker = false
     
     var body: some View {
         NavigationStack {
@@ -32,10 +33,10 @@ struct SettingsView: View {
                 VStack(spacing: Constants.Spacing.large) {
                     TabHeader(icon: "gearshape", logoName: nil, title: "Settings", subtitle: "Customize your experience")
                     
-                    accessibilitySection
                     themeSection
                     darkModeSection
                     dataManagementSection
+                    accessibilitySection
                     supportSection
                 }
                 .padding(Constants.Spacing.large)
@@ -74,43 +75,107 @@ struct SettingsView: View {
             Text("Accessibility")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
             
             VStack(spacing: Constants.Spacing.small) {
+                // System-controlled toggles (read-only, tap to open settings)
                 Toggle("VoiceOver", isOn: .constant(accessibilityManager.isVoiceOverRunning))
                     .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
                     .disabled(true)
+                    .accessibilityLabel("VoiceOver status")
+                    .accessibilityHint("Double tap to open system accessibility settings")
                     .onTapGesture {
-                        // Open system accessibility settings
-                        if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(settingsUrl)
-                        }
-                    }
-                
-                Toggle("High Contrast", isOn: $accessibilityManager.isHighContrastEnabled)
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .onChange(of: accessibilityManager.isHighContrastEnabled) { _, newValue in
-                        // Apply high contrast theme changes
-                        applyHighContrastSettings(enabled: newValue)
+                        openSystemAccessibilitySettings()
                     }
                 
                 Toggle("Reduce Motion", isOn: .constant(accessibilityManager.isReduceMotionEnabled))
                     .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
                     .disabled(true)
+                    .accessibilityLabel("Reduce Motion status")
+                    .accessibilityHint("Double tap to open system accessibility settings")
                     .onTapGesture {
-                        // Open system accessibility settings
-                        if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(settingsUrl)
-                        }
+                        openSystemAccessibilitySettings()
                     }
                 
                 Toggle("Bold Text", isOn: .constant(accessibilityManager.isBoldTextEnabled))
                     .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
                     .disabled(true)
+                    .accessibilityLabel("Bold Text status")
+                    .accessibilityHint("Double tap to open system accessibility settings")
                     .onTapGesture {
-                        // Open system accessibility settings
-                        if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(settingsUrl)
-                        }
+                        openSystemAccessibilitySettings()
+                    }
+                
+                Toggle("Reduce Transparency", isOn: .constant(accessibilityManager.isReduceTransparencyEnabled))
+                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
+                    .disabled(true)
+                    .accessibilityLabel("Reduce Transparency status")
+                    .accessibilityHint("Double tap to open system accessibility settings")
+                    .onTapGesture {
+                        openSystemAccessibilitySettings()
+                    }
+                
+                Toggle("Grayscale", isOn: .constant(accessibilityManager.isGrayscaleEnabled))
+                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
+                    .disabled(true)
+                    .accessibilityLabel("Grayscale status")
+                    .accessibilityHint("Double tap to open system accessibility settings")
+                    .onTapGesture {
+                        openSystemAccessibilitySettings()
+                    }
+                
+                Toggle("Invert Colors", isOn: .constant(accessibilityManager.isInvertColorsEnabled))
+                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
+                    .disabled(true)
+                    .accessibilityLabel("Invert Colors status")
+                    .accessibilityHint("Double tap to open system accessibility settings")
+                    .onTapGesture {
+                        openSystemAccessibilitySettings()
+                    }
+                
+                Toggle("Speak Screen", isOn: .constant(accessibilityManager.isSpeakScreenEnabled))
+                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
+                    .disabled(true)
+                    .accessibilityLabel("Speak Screen status")
+                    .accessibilityHint("Double tap to open system accessibility settings")
+                    .onTapGesture {
+                        openSystemAccessibilitySettings()
+                    }
+                
+                Toggle("Speak Selection", isOn: .constant(accessibilityManager.isSpeakSelectionEnabled))
+                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
+                    .disabled(true)
+                    .accessibilityLabel("Speak Selection status")
+                    .accessibilityHint("Double tap to open system accessibility settings")
+                    .onTapGesture {
+                        openSystemAccessibilitySettings()
+                    }
+                
+                Toggle("Switch Control", isOn: .constant(accessibilityManager.isSwitchControlRunning))
+                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
+                    .disabled(true)
+                    .accessibilityLabel("Switch Control status")
+                    .accessibilityHint("Double tap to open system accessibility settings")
+                    .onTapGesture {
+                        openSystemAccessibilitySettings()
+                    }
+                
+                Toggle("Assistive Touch", isOn: .constant(accessibilityManager.isAssistiveTouchRunning))
+                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
+                    .disabled(true)
+                    .accessibilityLabel("Assistive Touch status")
+                    .accessibilityHint("Double tap to open system accessibility settings")
+                    .onTapGesture {
+                        openSystemAccessibilitySettings()
+                    }
+                
+                // App-controlled toggle
+                Toggle("High Contrast", isOn: $accessibilityManager.isHighContrastEnabled)
+                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
+                    .accessibilityLabel("High Contrast mode")
+                    .accessibilityHint("Double tap to toggle high contrast mode for better visibility")
+                    .onChange(of: accessibilityManager.isHighContrastEnabled) { _, newValue in
+                        applyHighContrastSettings(enabled: newValue)
                     }
             }
             .padding()
@@ -184,47 +249,98 @@ struct SettingsView: View {
     }
     
     private var dataManagementSection: some View {
-        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-            // Move the title outside the card
+        Group {
             Text("Data Management")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-            VStack(spacing: Constants.Spacing.small) {
-                // CloudKit Sync Section (only show if available)
-                if cloudKitAvailable {
-                    VStack(spacing: Constants.Spacing.small) {
-                        HStack {
-                            Image(systemName: "icloud")
-                                .foregroundColor(.blue)
-                            Text("iCloud Sync")
-                            Spacer()
-                            Text("Available")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        Button(action: {
-                            performManualSync()
-                        }) {
-                            HStack {
-                                Image(systemName: "icloud.and.arrow.up")
-                                    .font(.system(size: 16, weight: .medium))
-                                Text("Sync Data")
-                                    .font(themeVM.theme.fonts.bodyFont)
-                            }
-                            .foregroundColor(themeVM.theme.colors.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                VStack(spacing: Constants.Spacing.small) {
+                    // iCloud Sync row with trailing Sync Data button
+                    HStack(spacing: Constants.Spacing.medium) {
+                        Image(systemName: "icloud")
+                            .foregroundColor(.blue)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
+                        Text("iCloud Sync")
+                            .font(themeVM.theme.fonts.bodyFont)
+                        Spacer()
+                        Text(cloudKitAvailable ? "Available" : "Unavailable")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Button(action: performManualSync) {
+                            Text("Sync Data")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.black)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color(.systemGray5))
+                                .cornerRadius(8)
                         }
                     }
-                    .padding()
-                    .background(cardBackgroundAdaptive)
-                    .cornerRadius(Constants.CornerRadius.medium)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
+                    .background(Color(.systemBackground))
+                    // Divider between rows
+                    Divider()
+                        .frame(height: 1)
+                        .background(Color(.separator))
+                        .padding(.horizontal, 8)
+                    HStack(spacing: Constants.Spacing.medium) {
+                        Image(systemName: "tablecells.badge.ellipsis")
+                            .foregroundColor(.green)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
+                        Text("Google Sheets")
+                            .font(themeVM.theme.fonts.bodyFont)
+                        Spacer()
+                        Text(googleSheetsManager.isAuthenticated ? "Connected" : "Not Connected")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        if googleSheetsManager.isAuthenticated {
+                            Button(action: { showingGoogleSheetsPicker = true }) {
+                                Text("Import")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(.black)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color(.systemGray5))
+                                    .cornerRadius(8)
+                            }
+                            Button(action: { googleSheetsManager.logout() }) {
+                                Text("Disconnect")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(.black)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color(.systemGray5))
+                                    .cornerRadius(8)
+                            }
+                        } else {
+                            Button(action: { showingGoogleSheetsAuth = true }) {
+                                Text("Connect")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(.black)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color(.systemGray5))
+                                    .cornerRadius(8)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
+                    .background(Color(.systemBackground))
                 }
-                
-                // Google Sheets Integration Section
-                GoogleSheetsIntegrationSection()
-                
+            }
+            .background(cardBackgroundAdaptive)
+            .cornerRadius(Constants.CornerRadius.medium)
+            .shadow(color: adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
+            VStack(spacing: 0) {
                 Button(action: { showingImportSheet = true }) {
                     HStack {
                         Image(systemName: "square.and.arrow.down")
+                            .foregroundColor(.green)
                         Text("Import Data")
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -232,9 +348,14 @@ struct SettingsView: View {
                     .padding()
                 }
                 .settingsButtonStyle()
+                Divider()
+                    .frame(height: 1)
+                    .background(Color(.separator))
+                    .padding(.horizontal, 8)
                 Button(action: { showingExportSheet = true }) {
                     HStack {
                         Image(systemName: "square.and.arrow.up")
+                            .foregroundColor(.blue)
                         Text("Export Data")
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -242,9 +363,14 @@ struct SettingsView: View {
                     .padding()
                 }
                 .settingsButtonStyle()
+                Divider()
+                    .frame(height: 1)
+                    .background(Color(.separator))
+                    .padding(.horizontal, 8)
                 Button(action: { showingCleanupSheet = true }) {
                     HStack {
                         Image(systemName: "wrench.and.screwdriver")
+                            .foregroundColor(.orange)
                         Text("Data Cleanup")
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -252,9 +378,14 @@ struct SettingsView: View {
                     .padding()
                 }
                 .settingsButtonStyle()
+                Divider()
+                    .frame(height: 1)
+                    .background(Color(.separator))
+                    .padding(.horizontal, 8)
                 Button(action: { showingDeleteAlert = true }) {
                     HStack {
                         Image(systemName: "trash")
+                            .foregroundColor(.red)
                         Text("Delete All Data")
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -264,7 +395,9 @@ struct SettingsView: View {
                 .settingsButtonStyle()
                 .foregroundColor(.red)
             }
-            .interactiveCardStyle()
+            .background(cardBackgroundAdaptive)
+            .cornerRadius(Constants.CornerRadius.medium)
+            .shadow(color: adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
         }
     }
     
@@ -396,7 +529,9 @@ struct SettingsView: View {
     
     private func applyHighContrastSettings(enabled: Bool) {
         if enabled {
-            themeVM.selectedTheme = "High Contrast" // Assuming a specific theme for high contrast
+            // Save current theme before switching to high contrast
+            UserDefaults.standard.set(themeVM.selectedTheme, forKey: "lastSelectedTheme")
+            themeVM.selectedTheme = "High Contrast"
         } else {
             // Revert to the last selected theme or a default
             if let lastTheme = UserDefaults.standard.string(forKey: "lastSelectedTheme") {
@@ -404,6 +539,14 @@ struct SettingsView: View {
             } else {
                 themeVM.selectedTheme = "Classic Green" // Default theme
             }
+        }
+        // Save the current theme selection
+        UserDefaults.standard.set(themeVM.selectedTheme, forKey: "selectedTheme")
+    }
+    
+    private func openSystemAccessibilitySettings() {
+        if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(settingsUrl)
         }
     }
 }

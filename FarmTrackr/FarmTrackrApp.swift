@@ -1,5 +1,5 @@
 //
-//  Glaab_Farm_CRMApp.swift
+//  FarmTrackrApp.swift
 //  FarmTrackr
 //
 //  Created by Dana Dube on 7/9/25.
@@ -8,9 +8,13 @@
 import SwiftUI
 
 @main
-struct Glaab_Farm_CRMApp: App {
+struct FarmTrackrApp: App {
     let persistenceController = PersistenceController.shared
     @StateObject private var themeVM = ThemeViewModel()
+    
+    init() {
+        print("[DEBUG] App launched")
+    }
     
     var body: some Scene {
         WindowGroup {
@@ -20,4 +24,4 @@ struct Glaab_Farm_CRMApp: App {
                 .preferredColorScheme(themeVM.darkModeEnabled ? .dark : .light)
         }
     }
-}
+} 

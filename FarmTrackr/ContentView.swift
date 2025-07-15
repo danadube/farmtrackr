@@ -23,18 +23,19 @@ struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var themeVM = ThemeViewModel()
     @StateObject private var accessibilityManager = AccessibilityManager()
-    @State private var selectedTab: NavigationTab? = .overview
+    @State private var selectedTab: NavigationTab? = .home
     @State private var selectedContact: FarmContact?
     @State private var searchText: String = ""
     @State private var sortOrder: SortOrder = .lastName
     @State private var showingAddContact: Bool = false
+    @State private var showingContactDetail: Bool = false
     
     private var customFont: Font {
         Font.custom(themeVM.theme.font, size: 16)
     }
     
     enum NavigationTab: String, CaseIterable {
-        case overview = "Overview"
+        case home = "Home"
         case contacts = "Contacts"
         case dataQuality = "Data Quality"
         case importExport = "Import/Export"
@@ -42,7 +43,7 @@ struct ContentView: View {
         
         var icon: String {
             switch self {
-            case .overview: return "house"
+            case .home: return "house"
             case .contacts: return "person.2"
             case .dataQuality: return "checkmark.shield"
             case .importExport: return "square.and.arrow.up.on.square"
@@ -62,7 +63,8 @@ struct ContentView: View {
                 selectedContact: $selectedContact,
                 searchText: $searchText,
                 sortOrder: $sortOrder,
-                showingAddContact: $showingAddContact
+                showingAddContact: $showingAddContact,
+                showingContactDetail: $showingContactDetail
             )
             .environmentObject(accessibilityManager)
             .environmentObject(themeVM) // <-- Ensure themeVM is injected here
@@ -171,16 +173,17 @@ struct DetailContentView: View {
     @Binding var searchText: String
     @Binding var sortOrder: SortOrder
     @Binding var showingAddContact: Bool
+    @Binding var showingContactDetail: Bool
     @EnvironmentObject var accessibilityManager: AccessibilityManager
     @EnvironmentObject var themeVM: ThemeViewModel
 
     @ViewBuilder
     private var selectedView: some View {
         switch selectedTab {
-        case .overview:
-            OverviewView(selectedContact: $selectedContact, selectedTab: $selectedTab)
+        case .home:
+            HomeView(selectedContact: $selectedContact, selectedTab: $selectedTab, showingContactDetail: $showingContactDetail)
         case .contacts:
-            ContactsMasterView(selectedContact: $selectedContact, searchText: $searchText, sortOrder: $sortOrder, showingAddContact: $showingAddContact)
+            ContactsMasterView(selectedContact: $selectedContact, searchText: $searchText, sortOrder: $sortOrder, showingAddContact: $showingAddContact, showingContactDetail: $showingContactDetail)
         case .dataQuality:
             DataQualityView().environmentObject(themeVM)
         case .importExport:
@@ -188,7 +191,7 @@ struct DetailContentView: View {
         case .settings:
             SettingsView()
         case .none:
-            OverviewView(selectedContact: $selectedContact, selectedTab: $selectedTab)
+            HomeView(selectedContact: $selectedContact, selectedTab: $selectedTab, showingContactDetail: $showingContactDetail)
         }
     }
 
@@ -236,14 +239,15 @@ struct TabHeader: View {
     }
 }
 
-struct OverviewView: View {
+struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \FarmContact.dateCreated, ascending: false)],
+        sortDescriptors: [NSSortDescriptor(keyPath: \FarmContact.dateModified, ascending: false)],
         animation: .default
     ) private var contacts: FetchedResults<FarmContact>
     @Binding var selectedContact: FarmContact?
     @Binding var selectedTab: ContentView.NavigationTab?
+    @Binding var showingContactDetail: Bool
     @State private var showingAddContact = false
     @State private var showingImportSheet = false
     @State private var showingExportSheet = false
@@ -253,7 +257,7 @@ struct OverviewView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Constants.Spacing.large) {
-                TabHeader(icon: "house", logoName: nil, title: "Overview", subtitle: "Manage your farm contacts efficiently")
+                TabHeader(icon: "house", logoName: nil, title: "Home", subtitle: "Manage your farm contacts efficiently")
                 
                 // Stats Cards
                 LazyVGrid(columns: [
@@ -267,12 +271,7 @@ struct OverviewView: View {
                         color: Constants.Colors.primary
                     )
                     
-                    StatCard(
-                        title: "Recent Contacts",
-                        value: "\(contacts.prefix(5).count)",
-                        icon: "clock.fill",
-                        color: Constants.Colors.secondary
-                    )
+                    FarmsCard(contacts: Array(contacts))
                 }
                 
                 // Quick Actions
@@ -315,10 +314,10 @@ struct OverviewView: View {
                     }
                 }
                 
-                // Recent Contacts
+                // Recently Changed Contacts
                 if !contacts.isEmpty {
                     VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                        Text("Recent Contacts")
+                        Text("Recently Changed Contacts")
                             .font(themeVM.theme.fonts.titleFont)
                             .foregroundColor(.primary)
                         
@@ -326,6 +325,7 @@ struct OverviewView: View {
                             RecentContactRow(contact: contact) {
                                 selectedContact = contact
                                 selectedTab = .contacts
+                                showingContactDetail = true
                             }
                         }
                     }
@@ -354,7 +354,7 @@ struct ContactsMasterView: View {
     @Binding var searchText: String
     @Binding var sortOrder: SortOrder
     @Binding var showingAddContact: Bool
-    @State private var showingContactDetail = false
+    @Binding var showingContactDetail: Bool
     @EnvironmentObject var themeVM: ThemeViewModel
     @EnvironmentObject var accessibilityManager: AccessibilityManager
     @Environment(\.managedObjectContext) private var viewContext
@@ -492,6 +492,64 @@ struct StatCard: View {
                 Text(title)
                     .font(Constants.Typography.captionFont)
                     .foregroundColor(.secondary)
+            }
+        }
+        .padding(Constants.Spacing.large)
+        .cardStyle()
+    }
+}
+
+struct FarmsCard: View {
+    let contacts: [FarmContact]
+    
+    private var uniqueFarms: [String] {
+        let farms = contacts.compactMap { $0.farm?.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        return Array(Set(farms)).sorted()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+            HStack {
+                Image(systemName: "building.2.fill")
+                    .foregroundColor(Constants.Colors.secondary)
+                    .font(.title2)
+                
+                Spacer()
+            }
+            
+            HStack(alignment: .top, spacing: Constants.Spacing.medium) {
+                // Left side - Count
+                VStack(alignment: .leading, spacing: Constants.Spacing.small) {
+                    Text("\(uniqueFarms.count)")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    
+                    Text("Farms")
+                        .font(Constants.Typography.captionFont)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                // Right side - Farm names list
+                if !uniqueFarms.isEmpty {
+                    VStack(alignment: .trailing, spacing: 4) {
+                        ForEach(uniqueFarms.prefix(3), id: \.self) { farm in
+                            Text(farm)
+                                .font(Constants.Typography.captionFont)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .multilineTextAlignment(.trailing)
+                        }
+                        
+                        if uniqueFarms.count > 3 {
+                            Text("+ \(uniqueFarms.count - 3) more")
+                                .font(Constants.Typography.captionFont)
+                                .foregroundColor(.tertiaryLabel)
+                        }
+                    }
+                }
             }
         }
         .padding(Constants.Spacing.large)

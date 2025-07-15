@@ -1,6 +1,6 @@
 //
-//  Glaab_Farm_CRMTests.swift
-//  Glaab Farm CRMTests
+//  FarmTrackrTests.swift
+//  FarmTrackrTests
 //
 //  Created by Dana Dube on 7/9/25.
 //
@@ -10,7 +10,7 @@ import CoreData
 import SwiftUI
 @testable import FarmTrackr
 
-struct Glaab_Farm_CRMTests {
+struct FarmTrackrTests {
     
     // MARK: - Core Data Tests
     
@@ -244,4 +244,4 @@ struct Glaab_Farm_CRMTests {
             #expect((contacts?.count ?? 0) == 100)
         }
     }
-}
+} 
