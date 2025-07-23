@@ -23,5 +23,17 @@ struct FarmTrackrApp: App {
                 .environmentObject(themeVM)
                 .preferredColorScheme(themeVM.darkModeEnabled ? .dark : .light)
         }
+        .defaultSize(width: 1100, height: 800)
+        .windowResizability(.contentSize)
+#if targetEnvironment(macCatalyst)
+        .windowStyle(HiddenTitleBarWindowStyle())
+#endif
+        .commands {
+            CommandMenu("TestMenu") {
+                Button("Test Action") {
+                    print("Test Action triggered")
+                }
+            }
+        }
     }
 } 

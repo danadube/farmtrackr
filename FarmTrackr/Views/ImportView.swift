@@ -145,40 +145,21 @@ struct ImportView: View {
                 .font(.body)
                 .foregroundColor(.secondary)
             ForEach(ImportMethod.allCases, id: \.self) { method in
-                Button(action: { selectedMethod = method }) {
-                    HStack {
-                        Image(systemName: method.iconName)
-                        VStack(alignment: .leading) {
-                            Text(method.displayName)
-                                .font(.headline)
-                            Text(method.description)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
-                        if selectedMethod == method {
-                            Image(systemName: "checkmark.circle.fill").foregroundColor(.accentColor)
-                        }
-                    }
-                    .padding(8)
-                    .background(selectedMethod == method ? Color.accentColor.opacity(0.1) : Color.clear)
-                    .cornerRadius(8)
-                }
-                .buttonStyle(.plain)
+                ImportMethodButton(method: method, selectedMethod: $selectedMethod)
             }
         }
     }
     
     // MARK: - Step 2
     var step2_selectFileOrSource: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        let step2Content = VStack(alignment: .leading, spacing: 16) {
             Text("Step 2: Select File or Source")
                 .font(.title2.bold())
             if selectedMethod == .csv || selectedMethod == .excel {
                 Text("Choose a file from your device to import.")
                     .font(.body)
                     .foregroundColor(.secondary)
-                Button("Select File") {
+                HoverButton(label: "Select File") {
                     showingFileImporter = true
                 }
                 if let url = selectedFileURL {
@@ -190,7 +171,7 @@ struct ImportView: View {
                 Text("Connect to Google Sheets and select a sheet to import.")
                     .font(.body)
                     .foregroundColor(.secondary)
-                Button("Pick Google Sheet") {
+                HoverButton(label: "Pick Google Sheet") {
                     // Google Sheets picker logic here
                 }
                 if !selectedSheetID.isEmpty {
@@ -202,11 +183,21 @@ struct ImportView: View {
                 Text("Choose a saved import template.")
                     .font(.body)
                     .foregroundColor(.secondary)
-                Button("Select Template") {
+                HoverButton(label: "Select Template") {
                     // Template picker logic here
                 }
             }
         }
+#if targetEnvironment(macCatalyst)
+        return step2Content.modifier(FileDropModifier(selectedMethod: selectedMethod, onFileDropped: { url, type in
+            selectedFileURL = url
+            selectedFileType = type
+            parseFileForPreview(url: url, type: type)
+            currentStep = 3
+        }))
+#else
+        return step2Content
+#endif
     }
     
     // MARK: - Step 3
@@ -250,6 +241,29 @@ struct ImportView: View {
                                 }
                                 .pickerStyle(MenuPickerStyle())
                                 .frame(width: 140)
+                            }
+                        }
+                        if !previewRows.isEmpty {
+                            Divider()
+                            VStack(alignment: .leading, spacing: 4) {
+                                ForEach(Array(previewRows.enumerated()), id: \.offset) { rowIdx, row in
+                                    HStack(spacing: 8) {
+                                        ForEach(row, id: \.self) { cell in
+                                            Text(cell)
+                                                .font(.caption2)
+                                                .frame(width: 140, alignment: .leading)
+                                        }
+                                    }
+#if targetEnvironment(macCatalyst)
+                                    .contextMenu {
+                                        Button("Copy Row") {
+                                            let rowString = row.joined(separator: ", ")
+                                            NSPasteboard.general.clearContents()
+                                            NSPasteboard.general.setString(rowString, forType: .string)
+                                        }
+                                    }
+#endif
+                                }
                             }
                         }
                         Button("Map All") {
@@ -737,6 +751,96 @@ enum ImportMethod: CaseIterable, Equatable {
         }
     }
 }
+
+// MARK: - Mac Catalyst Pointer/Hover/ContextMenu Support
+struct ImportMethodButton: View {
+    let method: ImportMethod
+    @Binding var selectedMethod: ImportMethod?
+    @State private var isHovered = false
+    var body: some View {
+        Button(action: { selectedMethod = method }) {
+            HStack {
+                Image(systemName: method.iconName)
+                VStack(alignment: .leading) {
+                    Text(method.displayName)
+                        .font(.headline)
+                    Text(method.description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                if selectedMethod == method {
+                    Image(systemName: "checkmark.circle.fill").foregroundColor(.accentColor)
+                }
+            }
+            .padding(8)
+#if targetEnvironment(macCatalyst)
+            .background(isHovered ? Color.accentColor.opacity(0.18) : (selectedMethod == method ? Color.accentColor.opacity(0.1) : Color.clear))
+#else
+            .background(selectedMethod == method ? Color.accentColor.opacity(0.1) : Color.clear)
+#endif
+            .cornerRadius(8)
+        }
+        .buttonStyle(.plain)
+#if targetEnvironment(macCatalyst)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+#endif
+    }
+}
+
+struct HoverButton: View {
+    let label: String
+    let action: () -> Void
+    @State private var isHovered = false
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+#if targetEnvironment(macCatalyst)
+                .background(isHovered ? Color.accentColor.opacity(0.18) : Color.accentColor.opacity(0.1))
+#else
+                .background(Color.accentColor.opacity(0.1))
+#endif
+                .cornerRadius(8)
+        }
+        .buttonStyle(.plain)
+#if targetEnvironment(macCatalyst)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+#endif
+    }
+}
+
+// MARK: - Mac Catalyst File Drop Modifier
+#if targetEnvironment(macCatalyst)
+struct FileDropModifier: ViewModifier {
+    let selectedMethod: ImportMethod?
+    let onFileDropped: (URL, ImportMethod) -> Void
+    func body(content: Content) -> some View {
+        content.onDrop(of: [UTType.fileURL], isTargeted: nil) { providers in
+            guard let provider = providers.first else { return false }
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                guard let url = url else { return }
+                let ext = url.pathExtension.lowercased()
+                var type: ImportMethod? = nil
+                if ext == "csv" { type = .csv }
+                else if ext == "xlsx" { type = .excel }
+                // Only accept if matches selected method or is a supported type
+                if let type = type, selectedMethod == nil || selectedMethod == type {
+                    DispatchQueue.main.async {
+                        onFileDropped(url, type)
+                    }
+                }
+            }
+            return true
+        }
+    }
+}
+#endif
 
 #Preview {
     ImportView()

@@ -62,7 +62,7 @@ struct ContactListView: View {
     
     var body: some View {
         ZStack {
-            appBackground
+            Color.appBackground
                 .ignoresSafeArea(.all, edges: .all)
             
             VStack(spacing: 0) {
@@ -76,14 +76,14 @@ struct ContactListView: View {
                 contactList
             }
         }
-        .background(appBackground)
+        .background(Color.appBackground)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 if !batchManager.isSelectionMode {
                     Button(action: { batchManager.enterSelectionMode() }) {
                         Image(systemName: "checkmark.circle")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(themeVM.theme.colors.primary)
+                            .foregroundColor(Color.textColor)
                     }
                     .accessibilityLabel("Batch actions")
                     .accessibilityHint("Double tap to enter batch selection mode")
@@ -96,7 +96,7 @@ struct ContactListView: View {
                         Button(action: refreshData) {
                             Image(systemName: "arrow.clockwise")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(themeVM.theme.colors.primary)
+                                .foregroundColor(Color.textColor)
                         }
                         .accessibilityLabel("Refresh data")
                         .accessibilityHint("Double tap to refresh contact data")
@@ -142,11 +142,13 @@ struct ContactListView: View {
     private var searchBar: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                .foregroundColor(Color.textColor.opacity(0.6))
                 .accessibilityHidden(true)
             
             TextField("Search contacts...", text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
+                .foregroundColor(Color.textColor)
+                .accentColor(themeVM.theme.colors.accent)
                 .accessibilityLabel(Accessibility.Labels.searchContacts)
                 .accessibilityHint(Accessibility.Hints.searchContacts)
             
@@ -156,7 +158,7 @@ struct ContactListView: View {
                     showingSearchSuggestions = false
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        .foregroundColor(Color.textColor.opacity(0.6))
                 }
                 .accessibilityLabel("Clear search")
                 .accessibilityHint("Double tap to clear the search field")
@@ -164,7 +166,7 @@ struct ContactListView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(cardBackgroundAdaptive)
+        .background(Color.cardBackgroundAdaptive)
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
@@ -185,18 +187,18 @@ struct ContactListView: View {
             } label: {
                 HStack {
                     Text(filterFarm)
-                        .foregroundColor(themeVM.theme.colors.text)
+                        .foregroundColor(Color.textColor)
                     Image(systemName: "chevron.down")
-                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        .foregroundColor(Color.textColor.opacity(0.6))
                         .accessibilityHidden(true)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(cardBackgroundAdaptive)
+                .background(Color.cardBackgroundAdaptive)
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(themeVM.theme.colors.secondary.opacity(0.2), lineWidth: 0.5)
+                        .stroke(Color.borderColor.opacity(0.2), lineWidth: 0.5)
                 )
             }
             .accessibilityLabel("Farm filter")
@@ -207,18 +209,18 @@ struct ContactListView: View {
             Button(action: { showingAdvancedFilters = true }) {
                 HStack(spacing: 4) {
                     Image(systemName: "line.3.horizontal.decrease.circle")
-                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        .foregroundColor(Color.textColor.opacity(0.6))
                         .accessibilityHidden(true)
                     Text("Filters")
-                        .foregroundColor(themeVM.theme.colors.text)
+                        .foregroundColor(Color.textColor)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(cardBackgroundAdaptive)
+                .background(Color.cardBackgroundAdaptive)
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(themeVM.theme.colors.secondary.opacity(0.2), lineWidth: 0.5)
+                        .stroke(Color.borderColor.opacity(0.2), lineWidth: 0.5)
                 )
             }
             .accessibilityLabel(Accessibility.Labels.filterContacts)
@@ -246,7 +248,7 @@ struct ContactListView: View {
             }
             .padding(.vertical, themeVM.theme.spacing.large)
         }
-        .background(appBackground)
+        .background(Color.appBackground)
         .scrollContentBackground(.hidden)
         .padding(.top, Constants.Spacing.medium) // Add top padding for proper separation from search header
     }

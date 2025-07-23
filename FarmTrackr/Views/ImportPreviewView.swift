@@ -29,7 +29,7 @@ struct ContactPreviewRow: View {
             VStack(alignment: .leading, spacing: Constants.Spacing.small) {
                 Text("\(contact.firstName) \(contact.lastName)")
                     .font(Constants.Typography.titleFont)
-                    .foregroundColor(Constants.Colors.text)
+                    .foregroundColor(Color.textColor)
                 
                 Text(contact.farm)
                     .font(Constants.Typography.bodyFont)
@@ -38,7 +38,7 @@ struct ContactPreviewRow: View {
                 if !contact.mailingAddress.isEmpty {
                     Text(contact.mailingAddress)
                         .font(Constants.Typography.bodyFont)
-                        .foregroundColor(Constants.Colors.text)
+                        .foregroundColor(Color.textColor)
                     
                     Text("\(contact.city), \(contact.state) \(contact.zipCode > 0 ? String(contact.zipCode) : "")")
                         .font(Constants.Typography.captionFont)
@@ -58,7 +58,7 @@ struct ContactPreviewRow: View {
             }
         }
         .padding(Constants.Spacing.medium)
-        .background(Constants.Colors.cardBackground)
+        .background(Color.cardBackgroundAdaptive)
         .cornerRadius(Constants.CornerRadius.medium)
         .listRowSeparator(.hidden)
         .listRowInsets(EdgeInsets(top: Constants.Spacing.small, leading: Constants.Spacing.medium, bottom: Constants.Spacing.small, trailing: Constants.Spacing.medium))
@@ -87,14 +87,14 @@ struct ValidationErrorRow: View {
             
             Text(error.message)
                 .font(Constants.Typography.bodyFont)
-                .foregroundColor(Constants.Colors.text)
+                .foregroundColor(Color.textColor)
             
             Text("Field: \(error.field)")
                 .font(Constants.Typography.captionFont)
                 .foregroundColor(.secondaryLabel)
         }
         .padding(Constants.Spacing.medium)
-        .background(Constants.Colors.cardBackground)
+        .background(Color.cardBackgroundAdaptive)
         .cornerRadius(Constants.CornerRadius.medium)
         .overlay(
             RoundedRectangle(cornerRadius: Constants.CornerRadius.medium)
@@ -117,7 +117,7 @@ struct ContactInfoBadge: View {
             
             Text(text)
                 .font(Constants.Typography.captionFont)
-                .foregroundColor(Constants.Colors.text)
+                .foregroundColor(Color.textColor)
         }
         .padding(.horizontal, Constants.Spacing.small)
         .padding(.vertical, 2)
@@ -140,7 +140,7 @@ struct ImportProgressView: View {
                 .foregroundColor(Constants.Colors.secondary)
         }
         .padding(Constants.Spacing.medium)
-        .background(Constants.Colors.cardBackground)
+        .background(Color.cardBackgroundAdaptive)
         .cornerRadius(Constants.CornerRadius.medium)
     }
 } 
@@ -209,7 +209,7 @@ struct ImportPreviewView: View {
                         }
                     }
                     .padding(Constants.Spacing.medium)
-                    .background(Constants.Colors.cardBackground)
+                    .background(Color.cardBackgroundAdaptive)
                     .cornerRadius(Constants.CornerRadius.medium)
                     
                     // Data Quality Score
@@ -475,7 +475,7 @@ struct DataQualityScoreCard: View {
             }
         }
         .padding(Constants.Spacing.medium)
-        .background(Constants.Colors.cardBackground)
+        .background(Color.cardBackgroundAdaptive)
         .cornerRadius(Constants.CornerRadius.medium)
         .overlay(
             RoundedRectangle(cornerRadius: Constants.CornerRadius.medium)
@@ -520,7 +520,7 @@ struct DataQualityDetailsView: View {
                             .progressViewStyle(LinearProgressViewStyle(tint: scoreColor))
                     }
                     .padding(Constants.Spacing.medium)
-                    .background(Constants.Colors.cardBackground)
+                    .background(Color.cardBackgroundAdaptive)
                     .cornerRadius(Constants.CornerRadius.medium)
                     
                     // Critical Issues
@@ -541,7 +541,7 @@ struct DataQualityDetailsView: View {
                             }
                         }
                         .padding(Constants.Spacing.medium)
-                        .background(Constants.Colors.cardBackground)
+                        .background(Color.cardBackgroundAdaptive)
                         .cornerRadius(Constants.CornerRadius.medium)
                         .overlay(
                             RoundedRectangle(cornerRadius: Constants.CornerRadius.medium)
@@ -567,7 +567,7 @@ struct DataQualityDetailsView: View {
                             }
                         }
                         .padding(Constants.Spacing.medium)
-                        .background(Constants.Colors.cardBackground)
+                        .background(Color.cardBackgroundAdaptive)
                         .cornerRadius(Constants.CornerRadius.medium)
                         .overlay(
                             RoundedRectangle(cornerRadius: Constants.CornerRadius.medium)
@@ -593,7 +593,7 @@ struct DataQualityDetailsView: View {
                             }
                         }
                         .padding(Constants.Spacing.medium)
-                        .background(Constants.Colors.cardBackground)
+                        .background(Color.cardBackgroundAdaptive)
                         .cornerRadius(Constants.CornerRadius.medium)
                         .overlay(
                             RoundedRectangle(cornerRadius: Constants.CornerRadius.medium)
@@ -689,7 +689,7 @@ struct ValidationSuggestionsView: View {
                                 }
                             }
                             .padding(Constants.Spacing.medium)
-                            .background(Constants.Colors.cardBackground)
+                            .background(Color.cardBackgroundAdaptive)
                             .cornerRadius(Constants.CornerRadius.medium)
                         }
                     }

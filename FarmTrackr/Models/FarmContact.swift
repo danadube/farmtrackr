@@ -113,6 +113,14 @@ extension FarmContact {
         return email2
     }
     
+    var email: String? {
+        return primaryEmail
+    }
+    
+    var phone: String? {
+        return primaryPhone
+    }
+    
     var primaryPhone: String? {
         [phoneNumber1, phoneNumber2, phoneNumber3, phoneNumber4, phoneNumber5, phoneNumber6]
             .compactMap { $0?.isEmpty == false ? $0 : nil }

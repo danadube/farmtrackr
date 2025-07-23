@@ -2,38 +2,437 @@
 //  Extensions.swift
 //  FarmTrackr
 //
-//  Created by Dana Dube on 7/9/25.
+//  Created by Dana Dube on 7/23/25.
 //
 
-import Foundation
 import SwiftUI
+import Foundation
+
+#if os(iOS)
+import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
+
+// MARK: - Color Extensions
+
+extension Color {
+    #if os(iOS)
+    static let systemBackground = Color(UIColor.systemBackground)
+    static let secondarySystemBackground = Color(UIColor.secondarySystemBackground)
+    static let tertiarySystemBackground = Color(UIColor.tertiarySystemBackground)
+    static let label = Color(UIColor.label)
+    static let secondaryLabel = Color(UIColor.secondaryLabel)
+    static let tertiaryLabel = Color(UIColor.tertiaryLabel)
+    #elseif os(macOS)
+    static let systemBackground = Color(NSColor.controlBackgroundColor)
+    static let secondarySystemBackground = Color(NSColor.controlAlternatingRowBackgroundColors[0])
+    static let tertiarySystemBackground = Color(NSColor.controlAlternatingRowBackgroundColors[1])
+    static let label = Color(NSColor.labelColor)
+    static let secondaryLabel = Color(NSColor.secondaryLabelColor)
+    static let tertiaryLabel = Color(NSColor.tertiaryLabelColor)
+    #endif
+    
+    static var cardBackgroundColor: Color {
+        #if os(iOS)
+        return Color(UIColor { trait in
+            switch trait.userInterfaceStyle {
+            case .dark:
+                return UIColor.secondarySystemBackground
+            default:
+                return UIColor.systemBackground
+            }
+        })
+        #elseif os(macOS)
+        return Color(NSColor { appearance in
+            if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+                return NSColor.controlBackgroundColor
+            } else {
+                return NSColor.controlBackgroundColor
+            }
+        })
+        #endif
+    }
+    
+    static var appBackground: Color {
+        #if os(iOS)
+        return Color(UIColor { trait in
+            switch trait.userInterfaceStyle {
+            case .dark:
+                return UIColor.systemBackground
+            default:
+                return UIColor.systemBackground
+            }
+        })
+        #elseif os(macOS)
+        return Color(NSColor { appearance in
+            if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+                return NSColor.controlBackgroundColor
+            } else {
+                return NSColor.controlBackgroundColor
+            }
+        })
+        #endif
+    }
+    
+    static var cardBackgroundAdaptive: Color {
+        #if os(iOS)
+        return Color(UIColor { trait in
+            switch trait.userInterfaceStyle {
+            case .dark:
+                return UIColor.secondarySystemBackground
+            default:
+                return UIColor.systemBackground
+            }
+        })
+        #elseif os(macOS)
+        return Color(NSColor { appearance in
+            if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+                return NSColor.controlBackgroundColor
+            } else {
+                return NSColor.controlBackgroundColor
+            }
+        })
+        #endif
+    }
+    
+    static var adaptivePageBackground: Color {
+        #if os(iOS)
+        return Color(UIColor { trait in
+            switch trait.userInterfaceStyle {
+            case .dark:
+                return UIColor.systemGray5
+            default:
+                return UIColor.white
+            }
+        })
+        #elseif os(macOS)
+        return Color(NSColor { appearance in
+            if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+                return NSColor.controlBackgroundColor
+            } else {
+                return NSColor.white
+            }
+        })
+        #endif
+    }
+    
+    static var adaptiveShadowColor: Color {
+        #if os(iOS)
+        return Color(UIColor { trait in
+            switch trait.userInterfaceStyle {
+            case .dark:
+                return UIColor.black
+            default:
+                return UIColor.black
+            }
+        })
+        #elseif os(macOS)
+        return Color(NSColor { appearance in
+            if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+                return NSColor.black
+            } else {
+                return NSColor.black
+            }
+        })
+        #endif
+    }
+    
+    // Cross-platform color creation
+    static func dynamicColor(light: Color, dark: Color) -> Color {
+        #if os(iOS)
+        return Color(UIColor { trait in
+            switch trait.userInterfaceStyle {
+            case .dark:
+                return UIColor(dark)
+            default:
+                return UIColor(light)
+            }
+        })
+        #elseif os(macOS)
+        return Color(NSColor { appearance in
+            if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+                return NSColor(dark)
+            } else {
+                return NSColor(light)
+            }
+        })
+        #endif
+    }
+    
+    // Cross-platform system colors
+    static var systemBackgroundColor: Color {
+        #if os(iOS)
+        return Color(UIColor { trait in
+            switch trait.userInterfaceStyle {
+            case .dark:
+                return UIColor.systemBackground
+            default:
+                return UIColor(ThemeManager.theme(named: UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green").colors.background)
+            }
+        })
+        #elseif os(macOS)
+        return Color(NSColor { appearance in
+            if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+                return NSColor.controlBackgroundColor
+            } else {
+                return NSColor(ThemeManager.theme(named: UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green").colors.background)
+            }
+        })
+        #endif
+    }
+    
+    static var textColor: Color {
+        #if os(iOS)
+        return Color(UIColor { trait in
+            switch trait.userInterfaceStyle {
+            case .dark:
+                return UIColor.white
+            default:
+                return UIColor.black
+            }
+        })
+        #elseif os(macOS)
+        return Color(NSColor { appearance in
+            if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+                return NSColor.white
+            } else {
+                return NSColor.black
+            }
+        })
+        #endif
+    }
+    
+    static var borderColor: Color {
+        #if os(iOS)
+        return Color(UIColor { trait in
+            switch trait.userInterfaceStyle {
+            case .dark:
+                return UIColor.systemGray4
+            default:
+                return UIColor.systemGray5
+            }
+        })
+        #elseif os(macOS)
+        return Color(NSColor { appearance in
+            if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+                return NSColor.separatorColor
+            } else {
+                return NSColor.separatorColor
+            }
+        })
+        #endif
+    }
+}
+
+// MARK: - Cross-Platform Color Type
+
+#if os(iOS)
+typealias PlatformColor = UIColor
+#elseif os(macOS)
+typealias PlatformColor = NSColor
+#endif
+
+// MARK: - Color Utilities
+
+extension Color {
+    func luminance(_ color: PlatformColor) -> Double {
+        let components = color.cgColor.components ?? [0, 0, 0]
+        let r = components[0]
+        let g = components[1]
+        let b = components[2]
+        
+        return 0.299 * r + 0.587 * g + 0.114 * b
+    }
+    
+    var isLight: Bool {
+        #if os(iOS)
+        let color = UIColor(self)
+        let bg = UIColor.white // Assume white background for contrast
+        #elseif os(macOS)
+        let color = NSColor(self)
+        let bg = NSColor.white // Assume white background for contrast
+        #endif
+        
+        let luminance1 = luminance(color)
+        let luminance2 = luminance(bg)
+        
+        return abs(luminance1 - luminance2) > 0.5
+    }
+}
+
+// MARK: - View Extensions
+
+extension View {
+    func placeholder<Content: View>(
+        when shouldShow: Bool,
+        alignment: Alignment = .leading,
+        @ViewBuilder placeholder: () -> Content) -> some View {
+        
+        ZStack(alignment: alignment) {
+            placeholder().opacity(shouldShow ? 1 : 0)
+            self
+        }
+    }
+    
+    func cardStyle() -> some View {
+        self
+            .background(Color.cardBackgroundColor)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
+            )
+    }
+    
+    func elevatedCardStyle() -> some View {
+        self
+            .background(Color.cardBackgroundColor)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.3), radius: 16, x: 0, y: 8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.black.opacity(0.12), lineWidth: 1)
+            )
+    }
+    
+    func buttonStyle() -> some View {
+        self
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Color.accentColor)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .shadow(color: Color.black.opacity(0.3), radius: 6, x: 0, y: 3)
+    }
+    
+    func primaryButtonStyle() -> some View {
+        self
+            .font(.system(size: 16, weight: .medium))
+            .foregroundColor(.white)
+            .frame(height: 44)
+            .frame(maxWidth: .infinity)
+            .background(Color.accentColor)
+            .cornerRadius(10)
+            .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+    }
+    
+    func secondaryButtonStyle() -> some View {
+        self
+            .font(.system(size: 16, weight: .medium))
+            .foregroundColor(Color.accentColor)
+            .frame(height: 44)
+            .frame(maxWidth: .infinity)
+            .background(Color.clear)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.accentColor, lineWidth: 1.5)
+            )
+            .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+    }
+    
+    func settingsButtonStyle() -> some View {
+        self
+            .font(.system(size: 16))
+            .foregroundColor(.primary)
+            .frame(minHeight: 44)
+            .frame(maxWidth: .infinity)
+            .background(Color.cardBackgroundColor)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
+            )
+    }
+    
+    func listRowStyle() -> some View {
+        self
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Color.cardBackgroundColor)
+            .cornerRadius(10)
+            .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 3)
+    }
+    
+    func interactiveCardStyle() -> some View {
+        self
+            .background(Color.cardBackgroundColor)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
+            )
+    }
+    
+    func floatingCardStyle() -> some View {
+        self
+            .background(Color.cardBackgroundColor)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.35), radius: 20, x: 0, y: 10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.black.opacity(0.15), lineWidth: 1)
+            )
+    }
+    
+    func toolbarStyle() -> some View {
+        self
+            .background(Color.cardBackgroundColor)
+            .cornerRadius(8)
+            .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.black.opacity(0.08), lineWidth: 1)
+            )
+    }
+    
+    func inputFieldStyle() -> some View {
+        self
+            .background(Color.cardBackgroundColor)
+            .cornerRadius(8)
+            .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.black.opacity(0.12), lineWidth: 1)
+            )
+    }
+    
+    func menuCardStyle() -> some View {
+        self
+            .background(Color.cardBackgroundColor)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.3), radius: 12, x: 0, y: 6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.black.opacity(0.12), lineWidth: 1)
+            )
+    }
+    
+    #if os(macOS)
+    func macWindowStyle() -> some View {
+        self
+            .frame(minWidth: 800, minHeight: 600)
+            .background(Color.systemBackgroundColor)
+    }
+    #endif
+}
 
 // MARK: - String Extensions
+
 extension String {
     var isValidEmail: Bool {
-        let emailRegex = Constants.Validation.emailRegex
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
         return emailPredicate.evaluate(with: self)
     }
     
     var isValidPhone: Bool {
-        // First try the strict format (digits only)
-        let phoneRegex = Constants.Validation.phoneRegex
+        let phoneRegex = "^[+]?[0-9]{10,15}$"
         let phonePredicate = NSPredicate(format: "SELF MATCHES %@", phoneRegex)
-        if phonePredicate.evaluate(with: self) {
-            return true
-        }
-        
-        // Then try the flexible format (with formatting characters)
-        let phoneRegexWithFormatting = Constants.Validation.phoneRegexWithFormatting
-        let phonePredicateWithFormatting = NSPredicate(format: "SELF MATCHES %@", phoneRegexWithFormatting)
-        if phonePredicateWithFormatting.evaluate(with: self) {
-            // Check if it has at least 10 digits after cleaning
-            let digits = self.filter { $0.isNumber }
-            return digits.count >= 10 && digits.count <= 15
-        }
-        
-        return false
+        return phonePredicate.evaluate(with: self)
     }
     
     var cleanedPhoneNumber: String {
@@ -48,7 +447,7 @@ extension String {
     }
     
     var isValidZipCode: Bool {
-        let zipRegex = Constants.Validation.zipCodeRegex
+        let zipRegex = "^[0-9]{5}(-[0-9]{4})?$"
         let zipPredicate = NSPredicate(format: "SELF MATCHES %@", zipRegex)
         return zipPredicate.evaluate(with: self)
     }
@@ -68,24 +467,23 @@ extension String {
             .map { $0.prefix(1).uppercased() + $0.dropFirst().lowercased() }
             .joined(separator: " ")
     }
-}
-
-// MARK: - Int32 Extensions
-extension Int32 {
-    var formattedZipCode: String {
-        String(self).count == 9 ? 
-            "\(String(self).prefix(5))-\(String(self).dropFirst(5))" : 
-            String(self)
+    
+    func capitalizingFirstLetter() -> String {
+        return prefix(1).capitalized + dropFirst()
+    }
+    
+    var trimmed: String {
+        return self.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 
 // MARK: - Date Extensions
+
 extension Date {
-    var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter.string(from: self)
+    var relativeTime: String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: self, relativeTo: Date())
     }
     
     var formattedDateTime: String {
@@ -94,389 +492,68 @@ extension Date {
         formatter.timeStyle = .short
         return formatter.string(from: self)
     }
-    
-    var relativeTime: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: self, relativeTo: Date())
+}
+
+// MARK: - Array Extensions
+
+extension Array where Element: Hashable {
+    func removingDuplicates() -> [Element] {
+        return Array(Set(self))
     }
 }
 
-// MARK: - View Extensions
-extension View {
-    var appBackground: Color {
-        Color(UIColor { trait in
-            if trait.userInterfaceStyle == .dark {
-                return UIColor.systemBackground
-            } else {
-                // Use the current theme's background color in light mode
-                return UIColor(ThemeManager.theme(named: UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green").colors.background)
-            }
-        })
-    }
-    var cardBackgroundAdaptive: Color {
-        Color(UIColor { trait in
-            if trait.userInterfaceStyle == .dark {
-                return UIColor.tertiarySystemBackground
-            } else {
-                // Use the current theme's card background color in light mode
-                return UIColor(ThemeManager.theme(named: UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green").colors.cardBackground)
-            }
-        })
-    }
-    
-    var adaptiveShadowColor: Color {
-        Color(UIColor { trait in
-            if trait.userInterfaceStyle == .dark {
-                return UIColor.white
-            } else {
-                return UIColor.black
-            }
-        })
-    }
-    
-    var adaptiveBorderColor: Color {
-        Color(UIColor { trait in
-            if trait.userInterfaceStyle == .dark {
-                return UIColor.systemGray4
-            } else {
-                return UIColor.systemGray5
-            }
-        })
-    }
-    func cardStyle() -> some View {
-        self
-            .background(cardBackgroundAdaptive)
-            .cornerRadius(Constants.CornerRadius.large)
-            .shadow(color: adaptiveShadowColor.opacity(0.1), radius: 8, x: 0, y: 4)
-            .shadow(color: adaptiveShadowColor.opacity(0.05), radius: 2, x: 0, y: 1)
-            .overlay(
-                RoundedRectangle(cornerRadius: Constants.CornerRadius.large)
-                    .stroke(adaptiveBorderColor.opacity(0.2), lineWidth: 0.5)
-            )
-    }
-    
-    func interactiveCardStyle() -> some View {
-        self
-            .background(cardBackgroundAdaptive)
-            .cornerRadius(Constants.CornerRadius.large)
-            .shadow(color: adaptiveShadowColor.opacity(0.15), radius: 12, x: 0, y: 6)
-            .shadow(color: adaptiveShadowColor.opacity(0.08), radius: 4, x: 0, y: 2)
-            .overlay(
-                RoundedRectangle(cornerRadius: Constants.CornerRadius.large)
-                    .stroke(adaptiveBorderColor.opacity(0.3), lineWidth: 0.5)
-            )
-            .scaleEffect(1.0)
-            .animation(.easeInOut(duration: 0.2), value: true)
-    }
-    
-    func primaryButtonStyle() -> some View {
-        self
-            .font(Constants.Typography.buttonFont)
-            .foregroundColor(.white)
-            .frame(height: Constants.Spacing.buttonHeight)
-            .frame(maxWidth: .infinity)
-            .background(Constants.Colors.primary)
-            .cornerRadius(Constants.CornerRadius.medium)
-    }
-    
-    func secondaryButtonStyle() -> some View {
-        self
-            .font(Constants.Typography.buttonFont)
-            .foregroundColor(Constants.Colors.primary)
-            .frame(height: Constants.Spacing.buttonHeight)
-            .frame(maxWidth: .infinity)
-            .background(Color.clear)
-            .overlay(
-                RoundedRectangle(cornerRadius: Constants.CornerRadius.medium)
-                    .stroke(Constants.Colors.primary, lineWidth: 1)
-            )
-    }
-    
-    func settingsButtonStyle() -> some View {
-        self
-            .font(Constants.Typography.bodyFont)
-            .foregroundColor(.primary)
-            .frame(minHeight: 44) // Ensure minimum touch target
-            .frame(maxWidth: .infinity)
-            .background(cardBackgroundAdaptive)
-            .cornerRadius(Constants.CornerRadius.medium)
-            .shadow(color: adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
-    }
-    
-    func listRowStyle() -> some View {
-        self
-            .padding(.horizontal, Constants.Spacing.medium)
-            .padding(.vertical, Constants.Spacing.small)
-            .background(Constants.Colors.cardBackground)
-            .cornerRadius(Constants.CornerRadius.small)
+// MARK: - Int32 Extensions
+
+extension Int32 {
+    var formattedZipCode: String {
+        String(self).count == 9 ? 
+            "\(String(self).prefix(5))-\(String(self).dropFirst(5))" : 
+            String(self)
     }
 }
 
-// MARK: - Corner Radius Extension
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
+// MARK: - Optional Extensions
+
+extension Optional where Wrapped == String {
+    var isEmptyOrNil: Bool {
+        return self?.isEmpty ?? true
     }
-}
-
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
-        return Path(path.cgPath)
-    }
-}
-
-// MARK: - Color Extensions
-extension Color {
-    static let systemBackground = Color(UIColor.systemBackground)
-    static let secondarySystemBackground = Color(UIColor.secondarySystemBackground)
-    static let tertiarySystemBackground = Color(UIColor.tertiarySystemBackground)
-    static let label = Color(UIColor.label)
-    static let secondaryLabel = Color(UIColor.secondaryLabel)
-    static let tertiaryLabel = Color(UIColor.tertiaryLabel)
 }
 
 // MARK: - Bundle Extensions
+
 extension Bundle {
     var appName: String {
-        return infoDictionary?["CFBundleName"] as? String ?? "FarmTrackr"
+        return object(forInfoDictionaryKey: "CFBundleName") as? String ?? "FarmTrackr"
     }
     
     var appVersion: String {
-        return infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        return object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     }
     
     var buildNumber: String {
-        return infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        return object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
     }
 }
 
-extension View {
-    func accessibilityTestMode(_ enabled: Bool) -> some View {
-        self.accessibilityIdentifier(enabled ? "accessibility-test-mode" : "")
+// MARK: - FileManager Extensions
+
+extension FileManager {
+    var documentsDirectory: URL {
+        return urls(for: .documentDirectory, in: .userDomainMask).first!
     }
     
-    func accessibilityDebugInfo() -> some View {
-        self.accessibilityLabel("Debug: \(String(describing: self))")
-    }
-}
-
-// MARK: - Accessibility Testing Utilities
-class AccessibilityTester: ObservableObject {
-    @Published var isTestMode = false
-    @Published var testResults: [String: Bool] = [:]
-    
-    func runAccessibilityTests() {
-        testResults.removeAll()
-        
-        // Test VoiceOver support
-        testResults["VoiceOver"] = UIAccessibility.isVoiceOverRunning
-        
-        // Test Dynamic Type
-        testResults["Dynamic Type"] = true // Always available in SwiftUI
-        
-        // Test High Contrast
-        testResults["High Contrast"] = false // UIAccessibility.isHighContrastEnabled not available in iOS 18.5
-        
-        // Test Reduce Motion
-        testResults["Reduce Motion"] = UIAccessibility.isReduceMotionEnabled
-        
-        // Test Bold Text
-        testResults["Bold Text"] = UIAccessibility.isBoldTextEnabled
-        
-        // Test Switch Control
-        testResults["Switch Control"] = UIAccessibility.isSwitchControlRunning
-        
-        // Test AssistiveTouch
-        testResults["AssistiveTouch"] = UIAccessibility.isAssistiveTouchRunning
+    var applicationSupportDirectory: URL {
+        return urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
     }
     
-    func generateAccessibilityReport() -> String {
-        var report = "Accessibility Test Report\n"
-        report += "=====================\n\n"
-        
-        for (feature, supported) in testResults {
-            let status = supported ? "✅ Supported" : "❌ Not Supported"
-            report += "\(feature): \(status)\n"
-        }
-        
-        report += "\nRecommendations:\n"
-        
-        if !testResults["VoiceOver"]! {
-            report += "- Ensure all interactive elements have proper accessibility labels\n"
-        }
-        
-        if !testResults["High Contrast"]! {
-            report += "- Test app with high contrast mode enabled\n"
-        }
-        
-        if !testResults["Reduce Motion"]! {
-            report += "- Respect reduce motion preferences\n"
-        }
-        
-        return report
-    }
-}
-
-// MARK: - Accessibility Color Extensions
-extension Color {
-    var accessibilityContrastRatio: Double {
-        // Calculate contrast ratio using WCAG formula
-        func luminance(_ color: UIColor) -> Double {
-            let components = color.cgColor.components ?? [0,0,0,1]
-            let r = components[0]
-            let g = components.count > 1 ? components[1] : r
-            let b = components.count > 2 ? components[2] : r
-            func adjust(_ c: Double) -> Double {
-                return (c <= 0.03928) ? (c / 12.92) : pow((c + 0.055) / 1.055, 2.4)
-            }
-            return 0.2126 * adjust(Double(r)) + 0.7152 * adjust(Double(g)) + 0.0722 * adjust(Double(b))
-        }
-        let color = UIColor(self)
-        let bg = UIColor.white // Assume white background for contrast
-        let lum1 = luminance(color)
-        let lum2 = luminance(bg)
-        let lighter = max(lum1, lum2)
-        let darker = min(lum1, lum2)
-        return (lighter + 0.05) / (darker + 0.05)
-    }
-    
-    var isAccessibleOnBackground: Bool {
-        return accessibilityContrastRatio >= 4.5
-    }
-}
-
-// MARK: - Accessibility Font Extensions
-extension Font {
-    var accessibilityScaled: Font {
-        // .dynamicTypeSize(.large) is not available; fallback to .largeTitle
-        return .largeTitle
-    }
-    
-    var accessibilityBold: Font {
-        return self.weight(.bold)
-    }
-}
-
-// MARK: - Accessibility Gesture Extensions
-extension View {
-    func accessibilityGesture<T: Gesture>(_ gesture: T) -> some View {
-        return self.gesture(gesture)
-    }
-    
-    func accessibilityLongPressGesture(minimumDuration: Double = 0.5, maximumDistance: CGFloat = 10, perform action: @escaping () -> Void) -> some View {
-        return self.onLongPressGesture(minimumDuration: minimumDuration, maximumDistance: maximumDistance, perform: action)
-    }
-    
-    func accessibilityTapGesture(count: Int = 1, perform action: @escaping () -> Void) -> some View {
-        return self.onTapGesture(count: count, perform: action)
-    }
-}
-
-// MARK: - Accessibility Focus Extensions
-// Removed accessibilityFocused (not available in iOS 18.5)
-
-// MARK: - Accessibility Group Extensions
-extension View {
-    func accessibilityGroup() -> some View {
-        return self.accessibilityElement(children: .contain)
-    }
-    
-    func accessibilityCombine() -> some View {
-        return self.accessibilityElement(children: .combine)
-    }
-    
-    func accessibilityIgnore() -> some View {
-        return self.accessibilityElement(children: .ignore)
-    }
-}
-
-// MARK: - Accessibility Action Extensions
-extension View {
-    func accessibilityCustomAction(_ name: String, action: @escaping () -> Void) -> some View {
-        return self.accessibilityAction(named: name) { action() }
-    }
-    // Removed accessibilityAdjustableAction (not available in iOS 18.5)
-}
-
-// MARK: - Accessibility Sort Extensions
-extension View {
-    func accessibilitySortPriority(_ priority: Double) -> some View {
-        return self.accessibilitySortPriority(priority)
-    }
-    
-    func accessibilitySortPriority(_ priority: Int) -> some View {
-        return self.accessibilitySortPriority(Double(priority))
-    }
-}
-
-// MARK: - Accessibility Large Content Viewer Extensions
-extension View {
-    func accessibilityLargeContentViewer() -> some View {
-        return self.accessibilityShowsLargeContentViewer()
-    }
-}
-
-// MARK: - Accessibility Ignore Extensions
-// Removed accessibilityIgnoresSmartInvertColors, accessibilityIgnoresReduceMotion, accessibilityIgnoresReduceTransparency, accessibilityIgnoresAssistiveTechnologies (not available in iOS 18.5)
-
-// MARK: - Accessibility Testing View
-struct AccessibilityTestView: View {
-    @StateObject private var tester = AccessibilityTester()
-    @State private var showingReport = false
-    
-    var body: some View {
-        NavigationView {
-            List {
-                Section("Accessibility Tests") {
-                    ForEach(Array(tester.testResults.keys.sorted()), id: \.self) { feature in
-                        HStack {
-                            Text(feature)
-                            Spacer()
-                            if tester.testResults[feature] == true {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                            } else {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.red)
-                            }
-                        }
-                    }
-                }
-                
-                Section("Actions") {
-                    Button("Run Tests") {
-                        tester.runAccessibilityTests()
-                    }
-                    
-                    Button("Generate Report") {
-                        showingReport = true
-                    }
-                }
-            }
-            .navigationTitle("Accessibility Tests")
-            .sheet(isPresented: $showingReport) {
-                NavigationView {
-                    ScrollView {
-                        Text(tester.generateAccessibilityReport())
-                            .font(.system(.body, design: .monospaced))
-                            .padding()
-                    }
-                    .navigationTitle("Accessibility Report")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Done") {
-                                showingReport = false
-                            }
-                        }
-                    }
-                }
-            }
+    func createDirectoryIfNeeded(at url: URL) throws {
+        if !fileExists(atPath: url.path) {
+            try createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
         }
     }
-} 
+}
+
+// MARK: - Platform-Specific Extensions
+
+// Note: Font extensions are defined in RichTextEditorView.swift to avoid conflicts 

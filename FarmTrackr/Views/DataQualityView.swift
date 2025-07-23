@@ -53,7 +53,7 @@ struct DataQualityView: View {
             }
             .padding(Constants.Spacing.large)
         }
-        .background(appBackground)
+        .background(Color.appBackground)
         .onAppear {
             refreshQualityData()
         }

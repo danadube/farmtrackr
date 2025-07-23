@@ -29,6 +29,10 @@ struct ContentView: View {
     @State private var sortOrder: SortOrder = .lastName
     @State private var showingAddContact: Bool = false
     @State private var showingContactDetail: Bool = false
+    // Add these for menu actions
+    @State private var showingImportSheet: Bool = false
+    @State private var showingExportSheet: Bool = false
+    @State private var showingPrintLabelsSheet: Bool = false
     
     private var customFont: Font {
         Font.custom(themeVM.theme.font, size: 16)
@@ -37,6 +41,7 @@ struct ContentView: View {
     enum NavigationTab: String, CaseIterable {
         case home = "Home"
         case contacts = "Contacts"
+        case documents = "Documents"
         case dataQuality = "Data Quality"
         case importExport = "Import/Export"
         case settings = "Settings"
@@ -45,6 +50,7 @@ struct ContentView: View {
             switch self {
             case .home: return "house"
             case .contacts: return "person.2"
+            case .documents: return "doc.text"
             case .dataQuality: return "checkmark.shield"
             case .importExport: return "square.and.arrow.up.on.square"
             case .settings: return "gear"
@@ -71,12 +77,51 @@ struct ContentView: View {
         }
         .environment(\.managedObjectContext, viewContext)
         .font(customFont)
-        .background(appBackground)
+        .background(Color.appBackground)
         .accentColor(themeVM.theme.colors.accent)
         .preferredColorScheme(themeVM.darkModeEnabled ? .dark : .light)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("FarmTrackr main navigation")
         .accessibilityHint("Use the tabs at the bottom to navigate between different sections of the app")
+        // Menu action sheets
+        .sheet(isPresented: $showingAddContact) {
+            ContactEditView(contact: nil)
+        }
+        .sheet(isPresented: $showingImportSheet) {
+            ImportView()
+                .environmentObject(themeVM)
+        }
+        .sheet(isPresented: $showingExportSheet) {
+            ExportView()
+                .environmentObject(themeVM)
+        }
+        .sheet(isPresented: $showingPrintLabelsSheet) {
+            PrintLabelsView(templateManager: LabelTemplateManager())
+        }
+        .onAppear {
+#if targetEnvironment(macCatalyst)
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("NewContact"), object: nil, queue: .main) { _ in
+                showingAddContact = true
+            }
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowImport"), object: nil, queue: .main) { _ in
+                showingImportSheet = true
+            }
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowExport"), object: nil, queue: .main) { _ in
+                showingExportSheet = true
+            }
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowPrintLabels"), object: nil, queue: .main) { _ in
+                showingPrintLabelsSheet = true
+            }
+#endif
+        }
+        .onDisappear {
+#if targetEnvironment(macCatalyst)
+            NotificationCenter.default.removeObserver(self, name: NSNotification.Name("NewContact"), object: nil)
+            NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ShowImport"), object: nil)
+            NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ShowExport"), object: nil)
+            NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ShowPrintLabels"), object: nil)
+#endif
+        }
     }
 }
 
@@ -176,6 +221,7 @@ struct DetailContentView: View {
     @Binding var showingContactDetail: Bool
     @EnvironmentObject var accessibilityManager: AccessibilityManager
     @EnvironmentObject var themeVM: ThemeViewModel
+    @Environment(\.managedObjectContext) private var viewContext
 
     @ViewBuilder
     private var selectedView: some View {
@@ -184,6 +230,9 @@ struct DetailContentView: View {
             HomeView(selectedContact: $selectedContact, selectedTab: $selectedTab, showingContactDetail: $showingContactDetail)
         case .contacts:
             ContactsMasterView(selectedContact: $selectedContact, searchText: $searchText, sortOrder: $sortOrder, showingAddContact: $showingAddContact, showingContactDetail: $showingContactDetail)
+        case .documents:
+            DocumentsView(context: viewContext)
+                .environmentObject(themeVM)
         case .dataQuality:
             DataQualityView().environmentObject(themeVM)
         case .importExport:
@@ -268,10 +317,12 @@ struct HomeView: View {
                         title: "Total Contacts",
                         value: "\(contacts.count)",
                         icon: "person.2.fill",
-                        color: Constants.Colors.primary
+                        color: Color.accentColor
                     )
+                    .environmentObject(themeVM)
                     
                     FarmsCard(contacts: Array(contacts))
+                        .environmentObject(themeVM)
                 }
                 
                 // Quick Actions
@@ -333,15 +384,17 @@ struct HomeView: View {
             }
             .padding(Constants.Spacing.large)
         }
-        .background(appBackground)
+        .background(Color.appBackground)
         .sheet(isPresented: $showingAddContact) {
             ContactEditView(contact: nil)
         }
         .sheet(isPresented: $showingImportSheet) {
             ImportView()
+                .environmentObject(themeVM)
         }
         .sheet(isPresented: $showingExportSheet) {
             ExportView()
+                .environmentObject(themeVM)
         }
         .sheet(isPresented: $showingPrintLabelsSheet) {
             PrintLabelsView(templateManager: LabelTemplateManager())
@@ -376,7 +429,7 @@ struct ContactsMasterView: View {
                     context: viewContext
                 )
             }
-            .background(appBackground)
+            .background(Color.appBackground)
             .sheet(isPresented: $showingAddContact) {
                 ContactEditView(contact: nil)
             }
@@ -386,6 +439,7 @@ struct ContactsMasterView: View {
             }) {
                 if let contact = selectedContact {
                     ContactDetailView(contact: contact)
+                        .environmentObject(themeVM)
                 }
             }
             .onChange(of: selectedContact) { _, contact in
@@ -452,12 +506,14 @@ struct ImportExportView: View {
             }
             .padding(Constants.Spacing.large)
         }
-        .background(appBackground)
+        .background(Color.appBackground)
         .sheet(isPresented: $showingImportSheet) {
             ImportView()
+                .environmentObject(themeVM)
         }
         .sheet(isPresented: $showingExportSheet) {
             ExportView()
+                .environmentObject(themeVM)
         }
         .sheet(isPresented: $showingPrintLabelsSheet) {
             PrintLabelsView(templateManager: LabelTemplateManager())
@@ -472,6 +528,7 @@ struct StatCard: View {
     let value: String
     let icon: String
     let color: Color
+    @EnvironmentObject var themeVM: ThemeViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
@@ -487,20 +544,30 @@ struct StatCard: View {
                 Text(value)
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(Color.textColor)
                 
                 Text(title)
                     .font(Constants.Typography.captionFont)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.textColor.opacity(0.7))
             }
+            
+            Spacer(minLength: 0)
         }
+        .frame(minHeight: 120)
         .padding(Constants.Spacing.large)
-        .cardStyle()
+        .background(Color.cardBackgroundAdaptive)
+        .cornerRadius(12)
+        .shadow(color: Color.adaptiveShadowColor.opacity(0.25), radius: 12, x: 0, y: 6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.adaptiveShadowColor.opacity(0.1), lineWidth: 1)
+        )
     }
 }
 
 struct FarmsCard: View {
     let contacts: [FarmContact]
+    @EnvironmentObject var themeVM: ThemeViewModel
     
     private var uniqueFarms: [String] {
         let farms = contacts.compactMap { $0.farm?.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
@@ -511,7 +578,7 @@ struct FarmsCard: View {
         VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
             HStack {
                 Image(systemName: "building.2.fill")
-                    .foregroundColor(Constants.Colors.secondary)
+                    .foregroundColor(Color.textColor.opacity(0.6))
                     .font(.title2)
                 
                 Spacer()
@@ -523,11 +590,11 @@ struct FarmsCard: View {
                     Text("\(uniqueFarms.count)")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(Color.textColor)
                     
                     Text("Farms")
                         .font(Constants.Typography.captionFont)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.textColor.opacity(0.7))
                 }
                 
                 Spacer()
@@ -538,7 +605,7 @@ struct FarmsCard: View {
                         ForEach(uniqueFarms.prefix(3), id: \.self) { farm in
                             Text(farm)
                                 .font(Constants.Typography.captionFont)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.textColor.opacity(0.7))
                                 .lineLimit(1)
                                 .multilineTextAlignment(.trailing)
                         }
@@ -546,14 +613,23 @@ struct FarmsCard: View {
                         if uniqueFarms.count > 3 {
                             Text("+ \(uniqueFarms.count - 3) more")
                                 .font(Constants.Typography.captionFont)
-                                .foregroundColor(.tertiaryLabel)
+                                .foregroundColor(Color.textColor.opacity(0.5))
                         }
                     }
                 }
             }
+            
+            Spacer(minLength: 0)
         }
+        .frame(minHeight: 120)
         .padding(Constants.Spacing.large)
-        .cardStyle()
+        .background(Color.cardBackgroundAdaptive)
+        .cornerRadius(12)
+        .shadow(color: Color.adaptiveShadowColor.opacity(0.25), radius: 12, x: 0, y: 6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.adaptiveShadowColor.opacity(0.1), lineWidth: 1)
+        )
     }
 }
 
@@ -567,7 +643,7 @@ struct QuickActionCard: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: Constants.Spacing.small) {
                 Image(systemName: icon)
-                    .foregroundColor(Constants.Colors.primary)
+                    .foregroundColor(Color.accentColor)
                     .font(.title2)
                 
                 VStack(alignment: .leading, spacing: 2) {
@@ -599,7 +675,7 @@ struct ActionCard: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
                 Image(systemName: icon)
-                    .foregroundColor(Constants.Colors.primary)
+                    .foregroundColor(Color.accentColor)
                     .font(.title)
                 
                 VStack(alignment: .leading, spacing: Constants.Spacing.small) {
@@ -628,7 +704,7 @@ struct RecentContactRow: View {
         Button(action: onTap) {
             HStack(spacing: Constants.Spacing.medium) {
                 Circle()
-                    .fill(Constants.Colors.primary)
+                    .fill(Color.accentColor)
                     .frame(width: 40, height: 40)
                     .overlay(
                         Text(contact.fullName.prefix(2).uppercased())
@@ -681,7 +757,7 @@ struct PlaceholderView: View {
                 .padding(.horizontal, Constants.Spacing.large)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Constants.Colors.background)
+                        .background(Color.appBackground)
     }
 }
 

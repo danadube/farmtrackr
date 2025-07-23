@@ -103,20 +103,24 @@ struct ExportView: View {
                         Text("Export Format")
                             .font(themeVM.theme.fonts.titleFont)
                             .foregroundColor(.primary)
-                        
-                        LazyVGrid(columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ], spacing: themeVM.theme.spacing.medium) {
-                            ForEach(ExportType.allCases, id: \.self) { exportType in
-                                ExportTypeCard(
-                                    type: exportType,
-                                    isSelected: selectedExportType == exportType
-                                ) {
-                                    selectedExportType = exportType
+                        GeometryReader { geometry in
+                            let cardCount = ExportType.allCases.count
+                            let spacing = themeVM.theme.spacing.small
+                            let totalSpacing = spacing * CGFloat(cardCount - 1)
+                            let cardWidth = (geometry.size.width - totalSpacing) / CGFloat(cardCount)
+                            HStack(spacing: spacing) {
+                                ForEach(ExportType.allCases, id: \.self) { exportType in
+                                    ExportTypeCard(
+                                        type: exportType,
+                                        isSelected: selectedExportType == exportType
+                                    ) {
+                                        selectedExportType = exportType
+                                    }
+                                    .frame(width: cardWidth, height: 64)
                                 }
                             }
                         }
+                        .frame(height: 64)
                     }
                     .padding(themeVM.theme.spacing.large)
                     .interactiveCardStyle()
@@ -222,29 +226,22 @@ struct ExportTypeCard: View {
     let isSelected: Bool
     let action: () -> Void
     @EnvironmentObject var themeVM: ThemeViewModel
-    
     var body: some View {
         Button(action: action) {
-            VStack(spacing: themeVM.theme.spacing.medium) {
+            VStack(spacing: 6) {
                 Image(systemName: type.iconName)
-                    .font(.title)
+                    .font(.system(size: 20, weight: .medium))
                     .foregroundColor(isSelected ? .white : themeVM.theme.colors.primary)
-                
                 Text(type.displayName)
-                    .font(themeVM.theme.fonts.bodyFont)
-                    .fontWeight(.medium)
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(isSelected ? .white : .primary)
-                
-                Text(type.fileExtension.uppercased())
-                    .font(themeVM.theme.fonts.captionFont)
-                    .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
             }
-            .frame(maxWidth: .infinity)
-            .padding(themeVM.theme.spacing.large)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(isSelected ? themeVM.theme.colors.primary : Color(.systemGray6))
-            .cornerRadius(themeVM.theme.cornerRadius.medium)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 3)
             .overlay(
-                RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.medium)
+                RoundedRectangle(cornerRadius: 12)
                     .stroke(isSelected ? themeVM.theme.colors.primary : Color.clear, lineWidth: 2)
             )
         }

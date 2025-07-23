@@ -41,7 +41,7 @@ struct SettingsView: View {
                 }
                 .padding(Constants.Spacing.large)
             }
-            .background(appBackground)
+            .background(Color.appBackground)
             .alert("Delete All Data", isPresented: $showingDeleteAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Delete", role: .destructive) {
@@ -57,9 +57,11 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showingExportSheet) {
                 ExportView()
+                    .environmentObject(themeVM)
             }
             .sheet(isPresented: $showingImportSheet) {
                 ImportView()
+                    .environmentObject(themeVM)
             }
             .sheet(isPresented: $showingCleanupSheet) {
                 DataCleanupView()
@@ -179,9 +181,9 @@ struct SettingsView: View {
                     }
             }
             .padding()
-            .background(cardBackgroundAdaptive)
+            .background(Color.cardBackgroundAdaptive)
             .cornerRadius(Constants.CornerRadius.medium)
-            .shadow(color: adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
+            .shadow(color: Color.adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
         }
     }
     
@@ -200,6 +202,7 @@ struct SettingsView: View {
                                     Circle()
                                         .fill(theme.colors.primary)
                                         .frame(width: 44, height: 44)
+                                        .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
                                         .overlay(
                                             Circle()
                                                 .stroke(themeVM.selectedTheme == themeName ? theme.colors.accent : Color.clear, lineWidth: 3)
@@ -227,9 +230,9 @@ struct SettingsView: View {
                 .padding(.horizontal, 8)
             }
             .padding()
-            .background(cardBackgroundAdaptive)
+            .background(Color.cardBackgroundAdaptive)
             .cornerRadius(Constants.CornerRadius.medium)
-            .shadow(color: adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
+            .shadow(color: Color.adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
         }
     }
     
@@ -242,9 +245,9 @@ struct SettingsView: View {
             Toggle("Dark Mode", isOn: $themeVM.darkModeEnabled)
                 .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
                 .padding()
-                .background(cardBackgroundAdaptive)
+                .background(Color.cardBackgroundAdaptive)
                 .cornerRadius(Constants.CornerRadius.medium)
-                .shadow(color: adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
+                .shadow(color: Color.adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
         }
     }
     
@@ -333,9 +336,9 @@ struct SettingsView: View {
                     .background(Color(.systemBackground))
                 }
             }
-            .background(cardBackgroundAdaptive)
+            .background(Color.cardBackgroundAdaptive)
             .cornerRadius(Constants.CornerRadius.medium)
-            .shadow(color: adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
+            .shadow(color: Color.adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
             VStack(spacing: 0) {
                 Button(action: { showingImportSheet = true }) {
                     HStack {
@@ -395,9 +398,9 @@ struct SettingsView: View {
                 .settingsButtonStyle()
                 .foregroundColor(.red)
             }
-            .background(cardBackgroundAdaptive)
+            .background(Color.cardBackgroundAdaptive)
             .cornerRadius(Constants.CornerRadius.medium)
-            .shadow(color: adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
+            .shadow(color: Color.adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
         }
     }
     
@@ -694,7 +697,7 @@ struct GoogleSheetsIntegrationSection: View {
             }
         }
         .padding()
-        .background(cardBackgroundAdaptive)
+        .background(Color.cardBackgroundAdaptive)
         .cornerRadius(Constants.CornerRadius.medium)
         .sheet(isPresented: $showingGoogleSheetsAuth) {
             GoogleSheetsAuthView(googleSheetsManager: googleSheetsManager)
@@ -745,7 +748,7 @@ struct GoogleSheetsAuthView: View {
                     }
                 }
                 .padding()
-                .background(cardBackgroundAdaptive)
+                .background(Color.cardBackgroundAdaptive)
                 .cornerRadius(Constants.CornerRadius.medium)
                 
                 Spacer()
