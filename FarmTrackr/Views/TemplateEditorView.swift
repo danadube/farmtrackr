@@ -14,17 +14,16 @@ struct TemplateEditorView: View {
     @ObservedObject var documentManager: DocumentManager
     @State private var templateName: String = ""
     @State private var templateContent: String = ""
+    @State private var templateAttributedText: NSAttributedString = NSAttributedString(string: "")
     @State private var selectedType: DocumentType = .letter
     @State private var showingPlaceholderHelp = false
     @State private var showingPreview = false
     @State private var showingSaveDialog = false
     @State private var unsavedChanges = false
-    
-    // Font controls for toolbar
-    @State private var selectedFontSize: CGFloat = 16
+    @State private var selectedColor: PlatformColor = .label
     @State private var selectedFontName: String = "System"
-    @State private var selectedAlignment: NSTextAlignment = .left
-    @State private var selectedColor: UIColor = .label
+    @State private var showingColorPicker = false
+    @State private var showingFontPicker = false
     
     let template: DocumentTemplate?
     
@@ -35,6 +34,19 @@ struct TemplateEditorView: View {
         if let template = template {
             self._templateName = State(initialValue: template.name ?? "")
             self._templateContent = State(initialValue: template.content ?? "")
+            
+            // Load rich text data if available
+            if let rtfData = template.richTextData,
+               let attributedString = try? NSAttributedString(
+                   data: rtfData,
+                   options: [.documentType: NSAttributedString.DocumentType.rtf],
+                   documentAttributes: nil
+               ) {
+                self._templateAttributedText = State(initialValue: attributedString)
+            } else {
+                self._templateAttributedText = State(initialValue: NSAttributedString(string: template.content ?? ""))
+            }
+            
             if let typeString = template.type, let type = DocumentType(rawValue: typeString) {
                 self._selectedType = State(initialValue: type)
             }
@@ -161,17 +173,20 @@ struct TemplateEditorView: View {
                 Divider()
                     .background(Color.borderColor)
                 
-                // Content editor
-                VStack(spacing: 0) {
-                    // Simple text editor
-                    TextEditor(text: $templateContent)
-                        .font(.system(.body))
-                        .foregroundColor(Color.textColor)
-                        .background(Color.appBackground)
-                        .onChange(of: templateContent) { _, _ in
-                            unsavedChanges = true
-                        }
-                }
+                // Rich text toolbar
+                TextFormattingToolbar(attributedText: $templateAttributedText)
+                    .padding(.vertical, 8)
+                    .background(Color.cardBackgroundAdaptive)
+                
+                Divider()
+                    .background(Color.borderColor)
+                
+                // Rich text editor
+                RichTextEditorView(attributedText: $templateAttributedText)
+                    .onChange(of: templateAttributedText) { _, _ in
+                        templateContent = templateAttributedText.string
+                        unsavedChanges = true
+                    }
             }
         }
         .alert("Available Placeholders", isPresented: $showingPlaceholderHelp) {
@@ -198,6 +213,14 @@ struct TemplateEditorView: View {
         }
         .sheet(isPresented: $showingPreview) {
             TemplatePreviewView(content: templateContent, type: selectedType)
+                .environmentObject(themeVM)
+        }
+        .sheet(isPresented: $showingColorPicker) {
+            ColorPickerView(selectedColor: $selectedColor)
+                .environmentObject(themeVM)
+        }
+        .sheet(isPresented: $showingFontPicker) {
+            FontPickerView(selectedFontName: $selectedFontName)
                 .environmentObject(themeVM)
         }
         .alert("Save Changes?", isPresented: $showingSaveDialog) {
@@ -228,6 +251,8 @@ struct TemplateEditorView: View {
         }
     }
     
+
+    
     private var placeholderOptions: [(key: String, label: String)] {
         [
             ("{{firstName}}", "First Name"),
@@ -256,11 +281,12 @@ struct TemplateEditorView: View {
     
     private func saveTemplate() {
         if let existingTemplate = template {
-            documentManager.updateTemplate(existingTemplate, content: templateContent)
+            documentManager.updateTemplate(existingTemplate, content: templateContent, attributedContent: templateAttributedText)
         } else {
             _ = documentManager.createTemplate(
                 name: templateName,
                 content: templateContent,
+                attributedContent: templateAttributedText,
                 type: selectedType
             )
         }

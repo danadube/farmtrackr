@@ -332,9 +332,24 @@ struct MailMergeView: View {
         isProcessing = true
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            let documents = documentManager.performMailMerge(
-                template: template,
-                contacts: Array(selectedContacts)
+            // Load template as NSAttributedString
+            var templateAttributedString: NSAttributedString
+            if let rtfData = template.richTextData,
+               let attributedString = try? NSAttributedString(
+                   data: rtfData,
+                   options: [.documentType: NSAttributedString.DocumentType.rtf],
+                   documentAttributes: nil
+               ) {
+                templateAttributedString = attributedString
+            } else {
+                templateAttributedString = NSAttributedString(string: template.content ?? "")
+            }
+            
+            // Perform mail merge with rich text
+            let documents = MailMerge.performBatchMailMerge(
+                template: templateAttributedString,
+                contacts: Array(selectedContacts),
+                context: viewContext
             )
             
             generatedDocuments = documents

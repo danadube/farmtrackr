@@ -37,7 +37,7 @@ class DocumentManager: ObservableObject {
         }
     }
     
-    func createDocument(name: String, content: String, template: DocumentTemplate? = nil, contacts: [FarmContact] = []) -> Document {
+    func createDocument(name: String, content: String, attributedContent: NSAttributedString? = nil, template: DocumentTemplate? = nil, contacts: [FarmContact] = []) -> Document {
         let document = Document(context: context)
         document.id = UUID()
         document.name = name
@@ -47,14 +47,35 @@ class DocumentManager: ObservableObject {
         document.template = template
         document.contacts = NSSet(array: contacts)
         
+        // Store rich text data if provided
+        if let attributedContent = attributedContent {
+            if let rtfData = try? attributedContent.data(
+                from: NSRange(location: 0, length: attributedContent.length),
+                documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+            ) {
+                document.richTextData = rtfData
+            }
+        }
+        
         saveContext()
         loadDocuments()
         return document
     }
     
-    func updateDocument(_ document: Document, content: String) {
+    func updateDocument(_ document: Document, content: String, attributedContent: NSAttributedString? = nil) {
         document.content = content
         document.modifiedDate = Date()
+        
+        // Update rich text data if provided
+        if let attributedContent = attributedContent {
+            if let rtfData = try? attributedContent.data(
+                from: NSRange(location: 0, length: attributedContent.length),
+                documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+            ) {
+                document.richTextData = rtfData
+            }
+        }
+        
         saveContext()
         loadDocuments()
     }
@@ -78,7 +99,7 @@ class DocumentManager: ObservableObject {
         }
     }
     
-    func createTemplate(name: String, content: String, type: DocumentType) -> DocumentTemplate {
+    func createTemplate(name: String, content: String, attributedContent: NSAttributedString? = nil, type: DocumentType) -> DocumentTemplate {
         let template = DocumentTemplate(context: context)
         template.id = UUID()
         template.name = name
@@ -86,14 +107,35 @@ class DocumentManager: ObservableObject {
         template.type = type.rawValue
         template.createdDate = Date()
         
+        // Store rich text data if provided
+        if let attributedContent = attributedContent {
+            if let rtfData = try? attributedContent.data(
+                from: NSRange(location: 0, length: attributedContent.length),
+                documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+            ) {
+                template.richTextData = rtfData
+            }
+        }
+        
         saveContext()
         loadTemplates()
         return template
     }
     
-    func updateTemplate(_ template: DocumentTemplate, content: String) {
+    func updateTemplate(_ template: DocumentTemplate, content: String, attributedContent: NSAttributedString? = nil) {
         template.content = content
         template.modifiedDate = Date()
+        
+        // Update rich text data if provided
+        if let attributedContent = attributedContent {
+            if let rtfData = try? attributedContent.data(
+                from: NSRange(location: 0, length: attributedContent.length),
+                documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+            ) {
+                template.richTextData = rtfData
+            }
+        }
+        
         saveContext()
         loadTemplates()
     }
@@ -104,50 +146,7 @@ class DocumentManager: ObservableObject {
         loadTemplates()
     }
     
-    // MARK: - Mail Merge
-    
-    func performMailMerge(template: DocumentTemplate, contacts: [FarmContact]) -> [Document] {
-        var generatedDocuments: [Document] = []
-        
-        for contact in contacts {
-            let mergedContent = mergeTemplate(template.content ?? "", with: contact)
-            let documentName = "\(template.name ?? "Template") - \(contact.fullName)"
-            let document = createDocument(name: documentName, content: mergedContent, template: template, contacts: [contact])
-            generatedDocuments.append(document)
-        }
-        
-        return generatedDocuments
-    }
-    
-    private func mergeTemplate(_ template: String, with contact: FarmContact) -> String {
-        var mergedContent = template
-        
-        // Replace placeholders with contact data
-        let placeholders: [String: String] = [
-            "{{firstName}}": contact.firstName ?? "",
-            "{{lastName}}": contact.lastName ?? "",
-            "{{fullName}}": contact.fullName,
-            "{{company}}": contact.farm ?? "",
-            "{{email}}": contact.email ?? "",
-            "{{phone}}": contact.phone ?? "",
-            "{{address}}": contact.displayAddress,
-            "{{city}}": contact.city ?? "",
-            "{{state}}": contact.state ?? "",
-            "{{zipCode}}": contact.formattedZipCode,
-            "{{siteAddress}}": contact.displaySiteAddress,
-            "{{siteCity}}": contact.siteCity ?? "",
-            "{{siteState}}": contact.siteState ?? "",
-            "{{siteZipCode}}": contact.formattedSiteZipCode,
-            "{{notes}}": contact.notes ?? "",
-            "{{date}}": DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none)
-        ]
-        
-        for (placeholder, value) in placeholders {
-            mergedContent = mergedContent.replacingOccurrences(of: placeholder, with: value)
-        }
-        
-        return mergedContent
-    }
+
     
     // MARK: - Export
     
@@ -165,8 +164,12 @@ class DocumentManager: ObservableObject {
                 // For PDF, we'd need to use PDFKit or a third-party library
                 // For now, we'll create a simple text file
                 try content.write(to: tempURL, atomically: true, encoding: .utf8)
-            case .docx:
-                // For DOCX, we'd need to use a library like ZIPFoundation
+            case .rtf:
+                // For RTF, we'd need to use NSAttributedString
+                // For now, we'll create a simple text file
+                try content.write(to: tempURL, atomically: true, encoding: .utf8)
+            case .html:
+                // For HTML, we'd need to use NSAttributedString
                 // For now, we'll create a simple text file
                 try content.write(to: tempURL, atomically: true, encoding: .utf8)
             }
@@ -208,16 +211,4 @@ enum DocumentType: String, CaseIterable {
     }
 }
 
-enum DocumentExportFormat: String, CaseIterable {
-    case txt = "Text"
-    case pdf = "PDF"
-    case docx = "Word Document"
-    
-    var fileExtension: String {
-        switch self {
-        case .txt: return "txt"
-        case .pdf: return "pdf"
-        case .docx: return "docx"
-        }
-    }
-} 
+ 

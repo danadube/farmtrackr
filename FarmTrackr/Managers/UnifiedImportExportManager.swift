@@ -141,8 +141,10 @@ class UnifiedImportExportManager: ObservableObject {
             url = try await exportDocumentToTXT(content, name: document.name ?? "Document")
         case .pdf:
             url = try await exportDocumentToPDF(content, name: document.name ?? "Document")
-        case .docx:
-            url = try await exportDocumentToDOCX(content, name: document.name ?? "Document")
+        case .rtf:
+            url = try await exportDocumentToRTF(content, name: document.name ?? "Document")
+        case .html:
+            url = try await exportDocumentToHTML(content, name: document.name ?? "Document")
         }
         
         await MainActor.run {

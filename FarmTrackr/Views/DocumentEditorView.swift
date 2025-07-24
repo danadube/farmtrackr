@@ -17,6 +17,7 @@ struct DocumentEditorView: View {
     
     @State private var documentName: String = ""
     @State private var documentContent: String = ""
+    @State private var documentAttributedText: NSAttributedString = NSAttributedString(string: "")
     @State private var selectedTemplate: DocumentTemplate?
     @State private var showingTemplatePicker = false
     @State private var showingImportExport = false
@@ -24,6 +25,10 @@ struct DocumentEditorView: View {
     @State private var showingSaveDialog = false
     @State private var unsavedChanges = false
     @State private var showingSaveSuccess = false
+    @State private var selectedColor: PlatformColor = .label
+    @State private var selectedFontName: String = "System"
+    @State private var showingColorPicker = false
+    @State private var showingFontPicker = false
     
     init(documentManager: DocumentManager, document: Document? = nil) {
         self.documentManager = documentManager
@@ -167,16 +172,20 @@ struct DocumentEditorView: View {
                 Divider()
                     .background(Color.borderColor)
                 
-                                    // Simple text editor
-                    TextEditor(text: $documentContent)
-                        .font(.system(.body))
-                        .foregroundColor(Color.textColor)
-                        .background(Color.appBackground)
-                        .onChange(of: documentContent) { _, _ in
-                            unsavedChanges = true
-                        }
-                .environmentObject(themeVM)
-                .background(Color.appBackground)
+                // Rich text toolbar
+                TextFormattingToolbar(attributedText: $documentAttributedText)
+                    .padding(.vertical, 8)
+                    .background(Color.cardBackgroundColor)
+                
+                Divider()
+                    .background(Color.borderColor)
+                
+                // Rich text editor
+                RichTextEditorView(attributedText: $documentAttributedText)
+                    .onChange(of: documentAttributedText) { _, _ in
+                        documentContent = documentAttributedText.string
+                        unsavedChanges = true
+                    }
             }
         }
         .onAppear {
@@ -202,6 +211,14 @@ struct DocumentEditorView: View {
             UnifiedImportExportView(documentManager: documentManager)
                 .environmentObject(themeVM)
         }
+        .sheet(isPresented: $showingColorPicker) {
+            ColorPickerView(selectedColor: $selectedColor)
+                .environmentObject(themeVM)
+        }
+        .sheet(isPresented: $showingFontPicker) {
+            FontPickerView(selectedFontName: $selectedFontName)
+                .environmentObject(themeVM)
+        }
         .alert("Save Changes?", isPresented: $showingSaveDialog) {
             Button("Save") {
                 saveDocument()
@@ -220,15 +237,31 @@ struct DocumentEditorView: View {
         }
     }
     
+
+    
     // MARK: - Actions
     private func loadDocument() {
         if let document = document {
             documentName = document.name ?? "Untitled Document"
             documentContent = document.content ?? ""
+            
+            // Load rich text data if available
+            if let rtfData = document.richTextData,
+               let attributedString = try? NSAttributedString(
+                   data: rtfData,
+                   options: [.documentType: NSAttributedString.DocumentType.rtf],
+                   documentAttributes: nil
+               ) {
+                documentAttributedText = attributedString
+            } else {
+                documentAttributedText = NSAttributedString(string: documentContent)
+            }
+            
             selectedTemplate = document.template
         } else {
             documentName = ""
             documentContent = ""
+            documentAttributedText = NSAttributedString(string: "")
             selectedTemplate = nil
         }
         unsavedChanges = false
@@ -243,12 +276,13 @@ struct DocumentEditorView: View {
             // Update existing document
             existingDocument.name = documentName
             existingDocument.template = selectedTemplate
-            documentManager.updateDocument(existingDocument, content: documentContent)
+            documentManager.updateDocument(existingDocument, content: documentContent, attributedContent: documentAttributedText)
         } else {
             // Create new document
             _ = documentManager.createDocument(
                 name: documentName,
                 content: documentContent,
+                attributedContent: documentAttributedText,
                 template: selectedTemplate
             )
         }
@@ -260,6 +294,104 @@ struct DocumentEditorView: View {
     private func onTextChange(_ newContent: String) {
         documentContent = newContent
         unsavedChanges = true
+    }
+}
+
+
+
+// MARK: - Color Picker View
+struct ColorPickerView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var themeVM: ThemeViewModel
+    @Binding var selectedColor: PlatformColor
+    
+    private let colors: [PlatformColor] = [
+        .label, .systemBlue, .systemGreen, .systemRed, .systemOrange,
+        .systemPurple, .systemPink, .systemYellow, .systemGray
+    ]
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Select Color")
+                    .font(.headline)
+                    .foregroundColor(themeVM.theme.colors.text)
+                
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 16) {
+                    ForEach(colors, id: \.self) { color in
+                        Button(action: {
+                            selectedColor = color
+                            dismiss()
+                        }) {
+                            Circle()
+                                .fill(Color(color))
+                                .frame(width: 50, height: 50)
+                                .overlay(
+                                    Circle()
+                                        .stroke(selectedColor == color ? themeVM.theme.colors.accent : Color.clear, lineWidth: 3)
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .background(Color.appBackground)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Font Picker View
+struct FontPickerView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var themeVM: ThemeViewModel
+    @Binding var selectedFontName: String
+    
+    private let fonts = ["System", "Times New Roman", "Arial", "Courier New", "Georgia", "Verdana"]
+    
+    var body: some View {
+        NavigationView {
+            List(fonts, id: \.self) { font in
+                Button(action: {
+                    selectedFontName = font
+                    dismiss()
+                }) {
+                    HStack {
+                        Text(font)
+                            .font(.system(size: 16, design: font == "System" ? .default : .serif))
+                            .foregroundColor(themeVM.theme.colors.text)
+                        
+                        Spacer()
+                        
+                        if selectedFontName == font {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(themeVM.theme.colors.accent)
+                        }
+                    }
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .background(Color.appBackground)
+            .navigationTitle("Select Font")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 
