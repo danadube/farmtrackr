@@ -34,7 +34,15 @@ struct DataCleanupView: View {
                     
                     // Progress section
                     if cleanupManager.isCleaning {
-                        ExportProgressView(progress: cleanupManager.progress, status: cleanupManager.status)
+                        VStack(spacing: themeVM.theme.spacing.small) {
+                            ProgressView(value: cleanupManager.progress)
+                                .progressViewStyle(LinearProgressViewStyle())
+                            Text(cleanupManager.status)
+                                .font(themeVM.theme.fonts.captionFont)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(themeVM.theme.spacing.large)
+                        .interactiveCardStyle()
                     }
                     
                     // Results section

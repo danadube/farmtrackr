@@ -17,8 +17,7 @@ struct SettingsView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.colorScheme) var colorScheme
     @State private var showingDeleteAlert = false
-    @State private var showingExportSheet = false
-    @State private var showingImportSheet = false
+    @State private var showingUnifiedImportExport = false
     @State private var showingCleanupSheet = false
     @State private var showingSyncAlert = false
     @State private var syncAlertMessage = ""
@@ -55,12 +54,8 @@ struct SettingsView: View {
             } message: {
                 Text(syncAlertMessage)
             }
-            .sheet(isPresented: $showingExportSheet) {
-                ExportView()
-                    .environmentObject(themeVM)
-            }
-            .sheet(isPresented: $showingImportSheet) {
-                ImportView()
+            .sheet(isPresented: $showingUnifiedImportExport) {
+                UnifiedImportExportView(documentManager: DocumentManager(context: viewContext))
                     .environmentObject(themeVM)
             }
             .sheet(isPresented: $showingCleanupSheet) {
@@ -340,26 +335,11 @@ struct SettingsView: View {
             .cornerRadius(Constants.CornerRadius.medium)
             .shadow(color: Color.adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
             VStack(spacing: 0) {
-                Button(action: { showingImportSheet = true }) {
+                Button(action: { showingUnifiedImportExport = true }) {
                     HStack {
-                        Image(systemName: "square.and.arrow.down")
-                            .foregroundColor(.green)
-                        Text("Import Data")
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                    }
-                    .padding()
-                }
-                .settingsButtonStyle()
-                Divider()
-                    .frame(height: 1)
-                    .background(Color(.separator))
-                    .padding(.horizontal, 8)
-                Button(action: { showingExportSheet = true }) {
-                    HStack {
-                        Image(systemName: "square.and.arrow.up")
+                        Image(systemName: "square.and.arrow.up.on.square")
                             .foregroundColor(.blue)
-                        Text("Export Data")
+                        Text("Import & Export Hub")
                         Spacer()
                         Image(systemName: "chevron.right")
                     }

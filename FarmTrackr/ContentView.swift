@@ -30,8 +30,7 @@ struct ContentView: View {
     @State private var showingAddContact: Bool = false
     @State private var showingContactDetail: Bool = false
     // Add these for menu actions
-    @State private var showingImportSheet: Bool = false
-    @State private var showingExportSheet: Bool = false
+    @State private var showingUnifiedImportExport: Bool = false
     @State private var showingPrintLabelsSheet: Bool = false
     
     private var customFont: Font {
@@ -87,12 +86,8 @@ struct ContentView: View {
         .sheet(isPresented: $showingAddContact) {
             ContactEditView(contact: nil)
         }
-        .sheet(isPresented: $showingImportSheet) {
-            ImportView()
-                .environmentObject(themeVM)
-        }
-        .sheet(isPresented: $showingExportSheet) {
-            ExportView()
+        .sheet(isPresented: $showingUnifiedImportExport) {
+            UnifiedImportExportView(documentManager: DocumentManager(context: viewContext))
                 .environmentObject(themeVM)
         }
         .sheet(isPresented: $showingPrintLabelsSheet) {
@@ -104,10 +99,10 @@ struct ContentView: View {
                 showingAddContact = true
             }
             NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowImport"), object: nil, queue: .main) { _ in
-                showingImportSheet = true
+                showingUnifiedImportExport = true
             }
             NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowExport"), object: nil, queue: .main) { _ in
-                showingExportSheet = true
+                showingUnifiedImportExport = true
             }
             NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowPrintLabels"), object: nil, queue: .main) { _ in
                 showingPrintLabelsSheet = true
@@ -298,8 +293,7 @@ struct HomeView: View {
     @Binding var selectedTab: ContentView.NavigationTab?
     @Binding var showingContactDetail: Bool
     @State private var showingAddContact = false
-    @State private var showingImportSheet = false
-    @State private var showingExportSheet = false
+    @State private var showingUnifiedImportExport = false
     @State private var showingPrintLabelsSheet = false
     @EnvironmentObject var themeVM: ThemeViewModel
     
@@ -343,17 +337,10 @@ struct HomeView: View {
                         )
                         
                         QuickActionCard(
-                            title: "Import Data",
-                            subtitle: "CSV & Excel files",
-                            icon: "square.and.arrow.down",
-                            action: { showingImportSheet = true }
-                        )
-                        
-                        QuickActionCard(
-                            title: "Export Data",
-                            subtitle: "Export contacts",
-                            icon: "square.and.arrow.up",
-                            action: { showingExportSheet = true }
+                            title: "Import & Export",
+                            subtitle: "Unified data management",
+                            icon: "square.and.arrow.up.on.square",
+                            action: { showingUnifiedImportExport = true }
                         )
                         
                         QuickActionCard(
@@ -388,12 +375,8 @@ struct HomeView: View {
         .sheet(isPresented: $showingAddContact) {
             ContactEditView(contact: nil)
         }
-        .sheet(isPresented: $showingImportSheet) {
-            ImportView()
-                .environmentObject(themeVM)
-        }
-        .sheet(isPresented: $showingExportSheet) {
-            ExportView()
+        .sheet(isPresented: $showingUnifiedImportExport) {
+            UnifiedImportExportView(documentManager: DocumentManager(context: viewContext))
                 .environmentObject(themeVM)
         }
         .sheet(isPresented: $showingPrintLabelsSheet) {

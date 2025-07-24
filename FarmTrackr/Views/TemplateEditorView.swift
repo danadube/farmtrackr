@@ -163,14 +163,14 @@ struct TemplateEditorView: View {
                 
                 // Content editor
                 VStack(spacing: 0) {
-                    // Rich text editor
-                    RichTextEditorView(
-                        text: $templateContent,
-                        onTextChange: { newContent in
-                            templateContent = newContent
+                    // Simple text editor
+                    TextEditor(text: $templateContent)
+                        .font(.system(.body))
+                        .foregroundColor(Color.textColor)
+                        .background(Color.appBackground)
+                        .onChange(of: templateContent) { _, _ in
                             unsavedChanges = true
                         }
-                    )
                 }
             }
         }

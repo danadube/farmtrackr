@@ -14,6 +14,20 @@ import UIKit
 import AppKit
 #endif
 
+// MARK: - Platform-Specific Type Aliases
+
+#if os(iOS)
+typealias PlatformTextView = UITextView
+typealias PlatformFont = UIFont
+typealias PlatformColor = UIColor
+typealias PlatformTextViewDelegate = UITextViewDelegate
+#elseif os(macOS)
+typealias PlatformTextView = NSTextView
+typealias PlatformFont = NSFont
+typealias PlatformColor = NSColor
+typealias PlatformTextViewDelegate = NSTextViewDelegate
+#endif
+
 // MARK: - Color Extensions
 
 extension Color {
@@ -225,13 +239,7 @@ extension Color {
     }
 }
 
-// MARK: - Cross-Platform Color Type
 
-#if os(iOS)
-typealias PlatformColor = UIColor
-#elseif os(macOS)
-typealias PlatformColor = NSColor
-#endif
 
 // MARK: - Color Utilities
 

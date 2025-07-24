@@ -17,7 +17,6 @@ struct DocumentEditorView: View {
     
     @State private var documentName: String = ""
     @State private var documentContent: String = ""
-    @State private var documentAttributedText: NSAttributedString = NSAttributedString()
     @State private var selectedTemplate: DocumentTemplate?
     @State private var showingTemplatePicker = false
     @State private var showingImportExport = false
@@ -168,11 +167,14 @@ struct DocumentEditorView: View {
                 Divider()
                     .background(Color.borderColor)
                 
-                                    // Rich text editor using NSAttributedString
-                    NSAttributedStringRichTextEditorView(
-                        attributedText: $documentAttributedText,
-                        onTextChange: onAttributedTextChange
-                    )
+                                    // Simple text editor
+                    TextEditor(text: $documentContent)
+                        .font(.system(.body))
+                        .foregroundColor(Color.textColor)
+                        .background(Color.appBackground)
+                        .onChange(of: documentContent) { _, _ in
+                            unsavedChanges = true
+                        }
                 .environmentObject(themeVM)
                 .background(Color.appBackground)
             }
@@ -196,23 +198,9 @@ struct DocumentEditorView: View {
             TemplatePickerView(selectedTemplate: $selectedTemplate, templates: documentManager.templates)
                 .environmentObject(themeVM)
         }
-        .fullScreenCover(isPresented: $showingImportExport) {
-            DocumentImportExportView(
-                documentManager: documentManager,
-                document: document,
-                content: documentContent,
-                name: documentName
-            )
-            .environmentObject(themeVM)
-        }
-        .sheet(isPresented: $showingExportSheet) {
-            ExportDocumentView(
-                documentManager: documentManager,
-                document: document,
-                content: documentContent,
-                name: documentName
-            )
-            .environmentObject(themeVM)
+        .sheet(isPresented: $showingImportExport) {
+            UnifiedImportExportView(documentManager: documentManager)
+                .environmentObject(themeVM)
         }
         .alert("Save Changes?", isPresented: $showingSaveDialog) {
             Button("Save") {
@@ -237,19 +225,10 @@ struct DocumentEditorView: View {
         if let document = document {
             documentName = document.name ?? "Untitled Document"
             documentContent = document.content ?? ""
-            
-            // Convert string content to NSAttributedString
-            if let content = document.content, !content.isEmpty {
-                documentAttributedText = NSAttributedString(string: content)
-            } else {
-                documentAttributedText = NSAttributedString()
-            }
-            
             selectedTemplate = document.template
         } else {
             documentName = ""
             documentContent = ""
-            documentAttributedText = NSAttributedString()
             selectedTemplate = nil
         }
         unsavedChanges = false
@@ -259,9 +238,6 @@ struct DocumentEditorView: View {
         if documentName.isEmpty {
             documentName = "Untitled Document"
         }
-        
-        // Convert NSAttributedString to string for storage
-        documentContent = documentAttributedText.string
         
         if let existingDocument = document {
             // Update existing document
@@ -283,12 +259,6 @@ struct DocumentEditorView: View {
     
     private func onTextChange(_ newContent: String) {
         documentContent = newContent
-        unsavedChanges = true
-    }
-    
-    private func onAttributedTextChange(_ newAttributedText: NSAttributedString) {
-        documentAttributedText = newAttributedText
-        documentContent = newAttributedText.string
         unsavedChanges = true
     }
 }
@@ -395,133 +365,6 @@ struct TemplatePickerView: View {
                     }
                 }
             }
-        }
-    }
-}
-
-struct ExportDocumentView: View {
-    @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var themeVM: ThemeViewModel
-    @ObservedObject var documentManager: DocumentManager
-    let document: Document?
-    let content: String
-    let name: String
-    @State private var selectedFormat: DocumentExportFormat = .txt
-    @State private var showingShareSheet = false
-    @State private var exportURL: URL?
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                themeVM.theme.colors.background
-                    .ignoresSafeArea()
-                
-                VStack(spacing: 0) {
-                    // Header
-                    HStack {
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "xmark")
-                                .font(.title2)
-                                .foregroundColor(themeVM.theme.colors.accent)
-                        }
-                        .help("Cancel export")
-                        
-                        Spacer()
-                        
-                        Text("Export Document")
-                            .font(.headline)
-                            .foregroundColor(themeVM.theme.colors.text)
-                        
-                        Spacer()
-                        
-                        Button(action: exportDocument) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.title2)
-                                .foregroundColor(themeVM.theme.colors.accent)
-                        }
-                        .disabled(content.isEmpty)
-                        .help("Export document")
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 16)
-                    .background(themeVM.theme.colors.cardBackground)
-                    
-                    Divider()
-                        .background(themeVM.theme.colors.border)
-                    
-                    // Export options
-                    VStack(spacing: 24) {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Export Format")
-                                .font(.headline)
-                                .foregroundColor(themeVM.theme.colors.text)
-                            
-                            Picker("Format", selection: $selectedFormat) {
-                                ForEach(DocumentExportFormat.allCases, id: \.self) { format in
-                                    HStack {
-                                        Image(systemName: formatIcon(for: format))
-                                        Text(format.rawValue)
-                                    }
-                                    .tag(format)
-                                }
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Preview")
-                                .font(.headline)
-                                .foregroundColor(themeVM.theme.colors.text)
-                            
-                            ScrollView {
-                                Text(content)
-                                    .font(.system(.body, design: .monospaced))
-                                    .foregroundColor(themeVM.theme.colors.text)
-                                    .padding(16)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(themeVM.theme.colors.cardBackground)
-                                    .cornerRadius(12)
-                            }
-                            .frame(maxHeight: 200)
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding(24)
-                }
-            }
-        }
-        .sheet(isPresented: $showingShareSheet) {
-            if let url = exportURL {
-                ShareSheet(items: [url])
-            }
-        }
-    }
-    
-    private func formatIcon(for format: DocumentExportFormat) -> String {
-        switch format {
-        case .txt: return "doc.text"
-        case .pdf: return "doc.richtext"
-        case .docx: return "doc.plaintext"
-        }
-    }
-    
-    private func exportDocument() {
-        if let existingDocument = document {
-            exportURL = documentManager.exportDocument(existingDocument, format: selectedFormat)
-        } else {
-            // Create a temporary document for export
-            let tempDocument = documentManager.createDocument(
-                name: name,
-                content: content
-            )
-            exportURL = documentManager.exportDocument(tempDocument, format: selectedFormat)
-            // Delete the temporary document
-            documentManager.deleteDocument(tempDocument)
-        }
-        
-        if exportURL != nil {
-            showingShareSheet = true
         }
     }
 }

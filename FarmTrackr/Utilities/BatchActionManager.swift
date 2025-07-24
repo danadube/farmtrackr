@@ -95,16 +95,16 @@ class BatchActionManager: ObservableObject {
         
         let contactsToExport = Array(selectedContacts)
         
-        let exportManager = ExportManager()
+        let unifiedManager = UnifiedImportExportManager(context: viewContext)
         
         let url: URL
         switch format {
         case .csv:
-            url = try await exportManager.exportToCSV(contacts: contactsToExport)
+            url = try await unifiedManager.exportContacts(contactsToExport, format: .csv)
         case .json:
-            url = try await exportManager.exportToJSON(contacts: contactsToExport)
+            url = try await unifiedManager.exportContacts(contactsToExport, format: .json)
         case .excel:
-            url = try await exportManager.exportToExcel(contacts: contactsToExport)
+            url = try await unifiedManager.exportContacts(contactsToExport, format: .excel)
         }
         
         await MainActor.run {
