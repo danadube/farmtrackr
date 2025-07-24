@@ -13,6 +13,7 @@ struct MailMergeView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject var themeVM: ThemeViewModel
     @ObservedObject var documentManager: DocumentManager
+    @StateObject private var unifiedManager = UnifiedImportExportManager(context: PersistenceController.shared.container.viewContext)
     @State private var selectedTemplate: DocumentTemplate?
     @State private var selectedContacts: Set<FarmContact> = []
     @State private var selectedFarms: Set<String> = []
@@ -23,6 +24,7 @@ struct MailMergeView: View {
     @State private var generatedDocuments: [Document] = []
     @State private var isProcessing = false
     @State private var showingFarmSelector = false
+    @State private var showingExportOptions = false
     
     var body: some View {
         ZStack {
@@ -550,8 +552,13 @@ struct MailMergeResultsView: View {
     @EnvironmentObject var themeVM: ThemeViewModel
     let documents: [Document]
     @ObservedObject var documentManager: DocumentManager
+    @StateObject private var unifiedManager = UnifiedImportExportManager(context: PersistenceController.shared.container.viewContext)
     @State private var showingExportSheet = false
-    @State private var selectedExportFormat: DocumentExportFormat = .txt
+    @State private var selectedExportFormat: MailMergeExportFormat = .individual
+    @State private var showingShareSheet = false
+    @State private var exportURL: URL?
+    @State private var showingSuccessAlert = false
+    @State private var successMessage = ""
     
     var body: some View {
         ZStack {
@@ -621,10 +628,14 @@ struct MailMergeResultsView: View {
                     Spacer()
                     
                     VStack(spacing: 12) {
-                        Button(action: { showingExportSheet = true }) {
+                        Button(action: { 
+                            Task {
+                                await exportMailMergeResults()
+                            }
+                        }) {
                             HStack {
                                 Image(systemName: "square.and.arrow.up")
-                                Text("Export All Documents")
+                                Text("Export Mail Merge Results")
                             }
                             .fontWeight(.medium)
                             .frame(maxWidth: .infinity)
@@ -633,6 +644,7 @@ struct MailMergeResultsView: View {
                             .foregroundColor(.white)
                             .cornerRadius(12)
                         }
+                        .disabled(unifiedManager.isExporting)
                         .help("Export all generated documents")
                         
                         Button(action: { dismiss() }) {
@@ -653,13 +665,47 @@ struct MailMergeResultsView: View {
                         }
                         .help("View documents in the main Documents view")
                     }
+                    
+                    // Progress indicator
+                    if unifiedManager.isExporting {
+                        VStack(spacing: 12) {
+                            ProgressView(value: unifiedManager.exportProgress)
+                                .progressViewStyle(LinearProgressViewStyle())
+                            
+                            Text(unifiedManager.exportStatus)
+                                .font(.caption)
+                                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        }
+                        .padding(16)
+                        .background(themeVM.theme.colors.cardBackground)
+                        .cornerRadius(12)
+                    }
                 }
                 .padding(24)
             }
         }
-        .sheet(isPresented: $showingExportSheet) {
-            ExportAllDocumentsView(documents: documents, documentManager: documentManager)
-                .environmentObject(themeVM)
+        .sheet(isPresented: $showingShareSheet) {
+            if let url = exportURL {
+                ShareSheet(items: [url])
+            }
+        }
+        .alert("Export Complete", isPresented: $showingSuccessAlert) {
+            Button("OK") { }
+        } message: {
+            Text(successMessage)
+        }
+    }
+    
+    private func exportMailMergeResults() async {
+        do {
+            let url = try await unifiedManager.exportMailMergeResults(documents, format: selectedExportFormat)
+            exportURL = url
+            successMessage = "Mail merge results exported successfully"
+            showingSuccessAlert = true
+            showingShareSheet = true
+        } catch {
+            successMessage = "Export failed: \(error.localizedDescription)"
+            showingSuccessAlert = true
         }
     }
 }

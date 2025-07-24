@@ -1,0 +1,796 @@
+//
+//  UnifiedImportExportManager.swift
+//  FarmTrackr
+//
+//  Created by Dana Dube on 7/23/25.
+//
+
+import Foundation
+import CoreData
+import SwiftUI
+import UniformTypeIdentifiers
+import CoreXLSX
+
+class UnifiedImportExportManager: ObservableObject {
+    @Published var importProgress: Double = 0
+    @Published var importStatus: String = ""
+    @Published var isImporting: Bool = false
+    @Published var exportProgress: Double = 0
+    @Published var exportStatus: String = ""
+    @Published var isExporting: Bool = false
+    @Published var errorMessage: String?
+    
+    private let context: NSManagedObjectContext
+    
+    init(context: NSManagedObjectContext) {
+        self.context = context
+    }
+    
+    // MARK: - Unified Import Methods
+    
+    /// Import contacts from various file formats
+    func importContacts(from url: URL, format: ImportFormat) async throws -> [ContactRecord] {
+        await MainActor.run {
+            isImporting = true
+            importProgress = 0.1
+            importStatus = "Reading file..."
+        }
+        
+        let contacts: [ContactRecord]
+        
+        switch format {
+        case .csv:
+            contacts = try await importContactsFromCSV(from: url)
+        case .excel:
+            contacts = try await importContactsFromExcel(from: url)
+        case .json:
+            contacts = try await importContactsFromJSON(from: url)
+        }
+        
+        await MainActor.run {
+            importProgress = 1.0
+            importStatus = "Import completed successfully"
+            isImporting = false
+        }
+        
+        return contacts
+    }
+    
+    /// Import documents from various file formats
+    func importDocument(from url: URL, format: DocumentImportFormat) async throws -> (String, String) {
+        await MainActor.run {
+            isImporting = true
+            importProgress = 0.1
+            importStatus = "Reading document..."
+        }
+        
+        let (name, content): (String, String)
+        
+        switch format {
+        case .txt:
+            (name, content) = try await importDocumentFromTXT(from: url)
+        case .rtf:
+            (name, content) = try await importDocumentFromRTF(from: url)
+        case .docx:
+            (name, content) = try await importDocumentFromDOCX(from: url)
+        case .pdf:
+            (name, content) = try await importDocumentFromPDF(from: url)
+        case .html:
+            (name, content) = try await importDocumentFromHTML(from: url)
+        }
+        
+        await MainActor.run {
+            importProgress = 1.0
+            importStatus = "Document import completed"
+            isImporting = false
+        }
+        
+        return (name, content)
+    }
+    
+    // MARK: - Unified Export Methods
+    
+    /// Export contacts to various formats
+    func exportContacts(_ contacts: [FarmContact], format: ExportFormat, farmFilter: String? = nil) async throws -> URL {
+        await MainActor.run {
+            isExporting = true
+            exportProgress = 0.1
+            exportStatus = "Preparing export..."
+        }
+        
+        let filteredContacts = farmFilter != nil && farmFilter != "All Farms" 
+            ? contacts.filter { $0.farm == farmFilter }
+            : contacts
+        
+        let url: URL
+        
+        switch format {
+        case .csv:
+            url = try await exportContactsToCSV(filteredContacts)
+        case .pdf:
+            url = try await exportContactsToPDF(filteredContacts)
+        case .json:
+            url = try await exportContactsToJSON(filteredContacts)
+        case .excel:
+            url = try await exportContactsToExcel(filteredContacts)
+        }
+        
+        await MainActor.run {
+            exportProgress = 1.0
+            exportStatus = "Export completed successfully"
+            isExporting = false
+        }
+        
+        return url
+    }
+    
+    /// Export documents to various formats
+    func exportDocument(_ document: Document, format: DocumentExportFormat) async throws -> URL {
+        await MainActor.run {
+            isExporting = true
+            exportProgress = 0.1
+            exportStatus = "Preparing document export..."
+        }
+        
+        guard let content = document.content else {
+            throw ExportError.invalidContent
+        }
+        
+        let url: URL
+        
+        switch format {
+        case .txt:
+            url = try await exportDocumentToTXT(content, name: document.name ?? "Document")
+        case .rtf:
+            url = try await exportDocumentToRTF(content, name: document.name ?? "Document")
+        case .pdf:
+            url = try await exportDocumentToPDF(content, name: document.name ?? "Document")
+        case .docx:
+            url = try await exportDocumentToDOCX(content, name: document.name ?? "Document")
+        case .html:
+            url = try await exportDocumentToHTML(content, name: document.name ?? "Document")
+        }
+        
+        await MainActor.run {
+            exportProgress = 1.0
+            exportStatus = "Document export completed"
+            isExporting = false
+        }
+        
+        return url
+    }
+    
+    // MARK: - Mail Merge Export
+    
+    /// Export mail merge results to various formats
+    func exportMailMergeResults(_ documents: [Document], format: MailMergeExportFormat) async throws -> URL {
+        await MainActor.run {
+            isExporting = true
+            exportProgress = 0.1
+            exportStatus = "Preparing mail merge export..."
+        }
+        
+        let url: URL
+        
+        switch format {
+        case .individual:
+            url = try await exportIndividualDocuments(documents)
+        case .combined:
+            url = try await exportCombinedDocuments(documents)
+        case .zip:
+            url = try await exportDocumentsAsZip(documents)
+        }
+        
+        await MainActor.run {
+            exportProgress = 1.0
+            exportStatus = "Mail merge export completed"
+            isExporting = false
+        }
+        
+        return url
+    }
+    
+    // MARK: - Contact Import Implementations
+    
+    private func importContactsFromCSV(from url: URL) async throws -> [ContactRecord] {
+        let data = try Data(contentsOf: url)
+        guard let csvString = String(data: data, encoding: .utf8) else {
+            throw ImportError.invalidEncoding
+        }
+        
+        let lines = csvString.components(separatedBy: .newlines)
+        guard lines.count > 1 else {
+            throw ImportError.emptyFile
+        }
+        
+        // Parse header
+        let header = parseCSVLine(lines[0])
+        let columnMapping = createColumnMapping(from: header)
+        
+        // Parse data rows
+        var contacts: [ContactRecord] = []
+        let dataRows = lines.dropFirst()
+        
+        for (index, line) in dataRows.enumerated() {
+            if line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { 
+                continue 
+            }
+            
+            let values = parseCSVLine(line)
+            if let contact = createContactRecord(from: values, mapping: columnMapping) {
+                contacts.append(contact)
+            }
+            
+            // Update progress
+            await MainActor.run {
+                importProgress = 0.1 + (0.8 * Double(index + 1) / Double(dataRows.count))
+                importStatus = "Processing contact \(index + 1) of \(dataRows.count)..."
+            }
+        }
+        
+        return contacts
+    }
+    
+    private func importContactsFromExcel(from url: URL) async throws -> [ContactRecord] {
+        let file = try XLSXFile(filepath: url.path)
+        let workbook = try file.parseWorkbooks()
+        guard let worksheet = workbook.first else {
+            throw ImportError.noWorksheetFound
+        }
+        
+        let rows = try file.parseWorksheet(at: worksheet.path)
+        guard rows.count > 1 else {
+            throw ImportError.emptyFile
+        }
+        
+        // Parse header
+        let header = rows[0].compactMap { $0.stringValue }
+        let columnMapping = createColumnMapping(from: header)
+        
+        // Parse data rows
+        var contacts: [ContactRecord] = []
+        let dataRows = Array(rows.dropFirst())
+        
+        for (index, row) in dataRows.enumerated() {
+            let values = row.compactMap { $0.stringValue }
+            if let contact = createContactRecord(from: values, mapping: columnMapping) {
+                contacts.append(contact)
+            }
+            
+            // Update progress
+            await MainActor.run {
+                importProgress = 0.1 + (0.8 * Double(index + 1) / Double(dataRows.count))
+                importStatus = "Processing contact \(index + 1) of \(dataRows.count)..."
+            }
+        }
+        
+        return contacts
+    }
+    
+    private func importContactsFromJSON(from url: URL) async throws -> [ContactRecord] {
+        let data = try Data(contentsOf: url)
+        let decoder = JSONDecoder()
+        let contacts = try decoder.decode([ContactRecord].self, from: data)
+        return contacts
+    }
+    
+    // MARK: - Document Import Implementations
+    
+    private func importDocumentFromTXT(from url: URL) async throws -> (String, String) {
+        let content = try String(contentsOf: url, encoding: .utf8)
+        let name = url.deletingPathExtension().lastPathComponent
+        return (name, content)
+    }
+    
+    private func importDocumentFromRTF(from url: URL) async throws -> (String, String) {
+        let data = try Data(contentsOf: url)
+        let attributedString = try NSAttributedString(
+            data: data,
+            options: [.documentType: NSAttributedString.DocumentType.rtf],
+            documentAttributes: nil
+        )
+        let content = attributedString.string
+        let name = url.deletingPathExtension().lastPathComponent
+        return (name, content)
+    }
+    
+    private func importDocumentFromDOCX(from url: URL) async throws -> (String, String) {
+        // For now, we'll extract text content from DOCX
+        // In a production app, you'd use a library like ZIPFoundation to parse DOCX
+        let content = "DOCX import not yet implemented"
+        let name = url.deletingPathExtension().lastPathComponent
+        return (name, content)
+    }
+    
+    private func importDocumentFromPDF(from url: URL) async throws -> (String, String) {
+        // For now, we'll return a placeholder
+        // In a production app, you'd use PDFKit to extract text
+        let content = "PDF import not yet implemented"
+        let name = url.deletingPathExtension().lastPathComponent
+        return (name, content)
+    }
+    
+    private func importDocumentFromHTML(from url: URL) async throws -> (String, String) {
+        let data = try Data(contentsOf: url)
+        let attributedString = try NSAttributedString(
+            data: data,
+            options: [.documentType: NSAttributedString.DocumentType.html],
+            documentAttributes: nil
+        )
+        let content = attributedString.string
+        let name = url.deletingPathExtension().lastPathComponent
+        return (name, content)
+    }
+    
+    // MARK: - Contact Export Implementations
+    
+    private func exportContactsToCSV(_ contacts: [FarmContact]) async throws -> URL {
+        let csvString = createCSVString(from: contacts)
+        let fileName = "FarmTrackr_Contacts_\(Date().formatted(date: .abbreviated, time: .omitted)).csv"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
+        return fileURL
+    }
+    
+    private func exportContactsToPDF(_ contacts: [FarmContact]) async throws -> URL {
+        let pdfData = createPDFData(from: contacts)
+        let fileName = "FarmTrackr_Contacts_\(Date().formatted(date: .abbreviated, time: .omitted)).pdf"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try pdfData.write(to: fileURL)
+        return fileURL
+    }
+    
+    private func exportContactsToJSON(_ contacts: [FarmContact]) async throws -> URL {
+        let jsonData = createJSONData(from: contacts)
+        let fileName = "FarmTrackr_Contacts_\(Date().formatted(date: .abbreviated, time: .omitted)).json"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try jsonData.write(to: fileURL)
+        return fileURL
+    }
+    
+    private func exportContactsToExcel(_ contacts: [FarmContact]) async throws -> URL {
+        // For now, we'll create a CSV file that Excel can open
+        let csvString = createCSVString(from: contacts)
+        let fileName = "FarmTrackr_Contacts_\(Date().formatted(date: .abbreviated, time: .omitted)).csv"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
+        return fileURL
+    }
+    
+    // MARK: - Document Export Implementations
+    
+    private func exportDocumentToTXT(_ content: String, name: String) async throws -> URL {
+        let fileName = "\(name).txt"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try content.write(to: fileURL, atomically: true, encoding: .utf8)
+        return fileURL
+    }
+    
+    private func exportDocumentToRTF(_ content: String, name: String) async throws -> URL {
+        let attributedString = NSAttributedString(string: content)
+        let data = try attributedString.data(
+            from: NSRange(location: 0, length: attributedString.length),
+            documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+        )
+        
+        let fileName = "\(name).rtf"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try data.write(to: fileURL)
+        return fileURL
+    }
+    
+    private func exportDocumentToPDF(_ content: String, name: String) async throws -> URL {
+        // For now, we'll create a simple text-based PDF
+        // In a production app, you'd use PDFKit for proper PDF generation
+        let attributedString = NSAttributedString(string: content)
+        let fileName = "\(name).pdf"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        #if os(iOS)
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: CGSize(width: 612, height: 792)))
+        try renderer.writePDF(to: fileURL) { context in
+            context.beginPage()
+            let textRect = CGRect(x: 72, y: 72, width: 468, height: 648)
+            attributedString.draw(in: textRect)
+        }
+        #elseif os(macOS)
+        // macOS PDF generation would go here
+        try "PDF export not yet implemented".write(to: fileURL, atomically: true, encoding: .utf8)
+        #endif
+        
+        return fileURL
+    }
+    
+    private func exportDocumentToDOCX(_ content: String, name: String) async throws -> URL {
+        // For now, we'll create a simple text file
+        // In a production app, you'd use a library to create proper DOCX files
+        let fileName = "\(name).docx"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try content.write(to: fileURL, atomically: true, encoding: .utf8)
+        return fileURL
+    }
+    
+    private func exportDocumentToHTML(_ content: String, name: String) async throws -> URL {
+        let htmlContent = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>\(name)</title>
+        </head>
+        <body>
+            <div>\(content.replacingOccurrences(of: "\n", with: "<br>"))</div>
+        </body>
+        </html>
+        """
+        
+        let fileName = "\(name).html"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try htmlContent.write(to: fileURL, atomically: true, encoding: .utf8)
+        return fileURL
+    }
+    
+    // MARK: - Mail Merge Export Implementations
+    
+    private func exportIndividualDocuments(_ documents: [Document]) async throws -> URL {
+        // Create a directory with individual files
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let exportDir = documentsPath.appendingPathComponent("MailMerge_\(Date().formatted(date: .abbreviated, time: .omitted))")
+        
+        try FileManager.default.createDirectory(at: exportDir, withIntermediateDirectories: true)
+        
+        for document in documents {
+            let fileName = "\(document.name ?? "Document").txt"
+            let fileURL = exportDir.appendingPathComponent(fileName)
+            try (document.content ?? "").write(to: fileURL, atomically: true, encoding: .utf8)
+        }
+        
+        return exportDir
+    }
+    
+    private func exportCombinedDocuments(_ documents: [Document]) async throws -> URL {
+        let combinedContent = documents.map { doc in
+            "=== \(doc.name ?? "Document") ===\n\n\(doc.content ?? "")\n\n"
+        }.joined()
+        
+        let fileName = "MailMerge_Combined_\(Date().formatted(date: .abbreviated, time: .omitted)).txt"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try combinedContent.write(to: fileURL, atomically: true, encoding: .utf8)
+        return fileURL
+    }
+    
+    private func exportDocumentsAsZip(_ documents: [Document]) async throws -> URL {
+        // For now, we'll create a directory with all files
+        // In a production app, you'd use a library to create actual ZIP files
+        return try await exportIndividualDocuments(documents)
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func parseCSVLine(_ line: String) -> [String] {
+        // Simple CSV parsing - in production, use a proper CSV library
+        return line.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    }
+    
+    private func createColumnMapping(from header: [String]) -> [String: Int] {
+        var mapping: [String: Int] = [:]
+        for (index, column) in header.enumerated() {
+            let normalizedColumn = column.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+            mapping[normalizedColumn] = index
+        }
+        return mapping
+    }
+    
+    private func createContactRecord(from values: [String], mapping: [String: Int]) -> ContactRecord? {
+        let firstName = getValue(from: values, mapping: mapping, keys: ["firstname", "first_name", "first name"])
+        let lastName = getValue(from: values, mapping: mapping, keys: ["lastname", "last_name", "last name"])
+        let farm = getValue(from: values, mapping: mapping, keys: ["farm"])
+        
+        guard !firstName.isEmpty && !lastName.isEmpty && !farm.isEmpty else {
+            return nil
+        }
+        
+        return ContactRecord(
+            firstName: firstName,
+            lastName: lastName,
+            mailingAddress: getValue(from: values, mapping: mapping, keys: ["address", "mailingaddress", "mailing_address"]),
+            city: getValue(from: values, mapping: mapping, keys: ["city"]),
+            state: getValue(from: values, mapping: mapping, keys: ["state"]),
+            zipCode: getValue(from: values, mapping: mapping, keys: ["zipcode", "zip", "zip_code"]),
+            email1: getValue(from: values, mapping: mapping, keys: ["email", "email1"]),
+            email2: getValue(from: values, mapping: mapping, keys: ["email2"]),
+            phoneNumber1: getValue(from: values, mapping: mapping, keys: ["phone", "phone1", "phonenumber1"]),
+            phoneNumber2: getValue(from: values, mapping: mapping, keys: ["phone2", "phonenumber2"]),
+            phoneNumber3: getValue(from: values, mapping: mapping, keys: ["phone3", "phonenumber3"]),
+            phoneNumber4: getValue(from: values, mapping: mapping, keys: ["phone4", "phonenumber4"]),
+            phoneNumber5: getValue(from: values, mapping: mapping, keys: ["phone5", "phonenumber5"]),
+            phoneNumber6: getValue(from: values, mapping: mapping, keys: ["phone6", "phonenumber6"]),
+            siteMailingAddress: getValue(from: values, mapping: mapping, keys: ["siteaddress", "site_address"]),
+            siteCity: getValue(from: values, mapping: mapping, keys: ["sitecity", "site_city"]),
+            siteState: getValue(from: values, mapping: mapping, keys: ["sitestate", "site_state"]),
+            siteZipCode: getValue(from: values, mapping: mapping, keys: ["sitezipcode", "site_zipcode"]),
+            notes: getValue(from: values, mapping: mapping, keys: ["notes"]),
+            farm: farm
+        )
+    }
+    
+    private func getValue(from values: [String], mapping: [String: Int], keys: [String]) -> String {
+        for key in keys {
+            if let index = mapping[key], index < values.count {
+                return values[index]
+            }
+        }
+        return ""
+    }
+    
+    private func createCSVString(from contacts: [FarmContact]) -> String {
+        let headers = ["First Name", "Last Name", "Farm", "Address", "City", "State", "ZIP Code", "Email 1", "Email 2", "Phone 1", "Phone 2", "Phone 3", "Phone 4", "Phone 5", "Phone 6", "Site Address", "Site City", "Site State", "Site ZIP Code", "Notes"]
+        
+        var csvString = headers.joined(separator: ",") + "\n"
+        
+        for contact in contacts {
+            let row = [
+                contact.firstName ?? "",
+                contact.lastName ?? "",
+                contact.farm ?? "",
+                contact.mailingAddress ?? "",
+                contact.city ?? "",
+                contact.state ?? "",
+                contact.zipCode ?? "",
+                contact.email1 ?? "",
+                contact.email2 ?? "",
+                contact.phoneNumber1 ?? "",
+                contact.phoneNumber2 ?? "",
+                contact.phoneNumber3 ?? "",
+                contact.phoneNumber4 ?? "",
+                contact.phoneNumber5 ?? "",
+                contact.phoneNumber6 ?? "",
+                contact.siteMailingAddress ?? "",
+                contact.siteCity ?? "",
+                contact.siteState ?? "",
+                contact.siteZipCode ?? "",
+                contact.notes ?? ""
+            ].map { "\"\($0.replacingOccurrences(of: "\"", with: "\"\""))\"" }
+            
+            csvString += row.joined(separator: ",") + "\n"
+        }
+        
+        return csvString
+    }
+    
+    private func createPDFData(from contacts: [FarmContact]) -> Data {
+        // For now, we'll create a simple text-based PDF
+        // In a production app, you'd use PDFKit for proper PDF generation
+        let content = createCSVString(from: contacts)
+        return content.data(using: .utf8) ?? Data()
+    }
+    
+    private func createJSONData(from contacts: [FarmContact]) -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        
+        let contactDicts = contacts.map { contact in
+            [
+                "firstName": contact.firstName ?? "",
+                "lastName": contact.lastName ?? "",
+                "farm": contact.farm ?? "",
+                "mailingAddress": contact.mailingAddress ?? "",
+                "city": contact.city ?? "",
+                "state": contact.state ?? "",
+                "zipCode": contact.zipCode ?? "",
+                "email1": contact.email1 ?? "",
+                "email2": contact.email2 ?? "",
+                "phoneNumber1": contact.phoneNumber1 ?? "",
+                "phoneNumber2": contact.phoneNumber2 ?? "",
+                "phoneNumber3": contact.phoneNumber3 ?? "",
+                "phoneNumber4": contact.phoneNumber4 ?? "",
+                "phoneNumber5": contact.phoneNumber5 ?? "",
+                "phoneNumber6": contact.phoneNumber6 ?? "",
+                "siteMailingAddress": contact.siteMailingAddress ?? "",
+                "siteCity": contact.siteCity ?? "",
+                "siteState": contact.siteState ?? "",
+                "siteZipCode": contact.siteZipCode ?? "",
+                "notes": contact.notes ?? ""
+            ]
+        }
+        
+        return try! encoder.encode(contactDicts)
+    }
+}
+
+// MARK: - Supporting Types
+
+enum ImportFormat: String, CaseIterable {
+    case csv = "CSV"
+    case excel = "Excel"
+    case json = "JSON"
+    
+    var fileExtensions: [String] {
+        switch self {
+        case .csv: return ["csv"]
+        case .excel: return ["xlsx", "xls"]
+        case .json: return ["json"]
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .csv: return "doc.text"
+        case .excel: return "tablecells"
+        case .json: return "curlybraces"
+        }
+    }
+}
+
+enum DocumentImportFormat: String, CaseIterable {
+    case txt = "Plain Text"
+    case rtf = "Rich Text Format"
+    case docx = "Microsoft Word"
+    case pdf = "PDF"
+    case html = "HTML"
+    
+    var fileExtensions: [String] {
+        switch self {
+        case .txt: return ["txt"]
+        case .rtf: return ["rtf"]
+        case .docx: return ["docx", "doc"]
+        case .pdf: return ["pdf"]
+        case .html: return ["html", "htm"]
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .txt: return "doc.text"
+        case .rtf: return "doc.richtext"
+        case .docx: return "doc"
+        case .pdf: return "doc.pdf"
+        case .html: return "doc.html"
+        }
+    }
+}
+
+enum ExportFormat: String, CaseIterable {
+    case csv = "CSV"
+    case pdf = "PDF"
+    case json = "JSON"
+    case excel = "Excel"
+    
+    var fileExtension: String {
+        switch self {
+        case .csv: return "csv"
+        case .pdf: return "pdf"
+        case .json: return "json"
+        case .excel: return "csv"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .csv: return "doc.text"
+        case .pdf: return "doc.pdf"
+        case .json: return "curlybraces"
+        case .excel: return "tablecells"
+        }
+    }
+}
+
+enum DocumentExportFormat: String, CaseIterable {
+    case txt = "Plain Text"
+    case rtf = "Rich Text Format"
+    case pdf = "PDF"
+    case docx = "Microsoft Word"
+    case html = "HTML"
+    
+    var fileExtension: String {
+        switch self {
+        case .txt: return "txt"
+        case .rtf: return "rtf"
+        case .pdf: return "pdf"
+        case .docx: return "docx"
+        case .html: return "html"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .txt: return "doc.text"
+        case .rtf: return "doc.richtext"
+        case .pdf: return "doc.pdf"
+        case .docx: return "doc"
+        case .html: return "doc.html"
+        }
+    }
+}
+
+enum MailMergeExportFormat: String, CaseIterable {
+    case individual = "Individual Files"
+    case combined = "Combined File"
+    case zip = "ZIP Archive"
+    
+    var icon: String {
+        switch self {
+        case .individual: return "doc.on.doc"
+        case .combined: return "doc.text"
+        case .zip: return "archivebox"
+        }
+    }
+}
+
+enum ImportError: Error, LocalizedError {
+    case invalidEncoding
+    case emptyFile
+    case noWorksheetFound
+    case invalidFormat
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidEncoding:
+            return "The file encoding is not supported"
+        case .emptyFile:
+            return "The file is empty or contains no data"
+        case .noWorksheetFound:
+            return "No worksheet found in the Excel file"
+        case .invalidFormat:
+            return "The file format is not supported"
+        }
+    }
+}
+
+enum ExportError: Error, LocalizedError {
+    case invalidContent
+    case writeFailed
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidContent:
+            return "The document content is invalid"
+        case .writeFailed:
+            return "Failed to write the exported file"
+        }
+    }
+}
+
+// MARK: - Contact Record Structure
+
+struct ContactRecord {
+    let firstName: String
+    let lastName: String
+    let mailingAddress: String
+    let city: String
+    let state: String
+    let zipCode: String
+    let email1: String
+    let email2: String
+    let phoneNumber1: String
+    let phoneNumber2: String
+    let phoneNumber3: String
+    let phoneNumber4: String
+    let phoneNumber5: String
+    let phoneNumber6: String
+    let siteMailingAddress: String
+    let siteCity: String
+    let siteState: String
+    let siteZipCode: String
+    let notes: String
+    let farm: String
+} 

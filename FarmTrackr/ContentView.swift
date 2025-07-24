@@ -454,40 +454,28 @@ struct ContactsMasterView: View {
 }
 
 struct ImportExportView: View {
-    @State private var showingImportSheet = false
-    @State private var showingExportSheet = false
+    @State private var showingUnifiedImportExport = false
     @State private var showingPrintLabelsSheet = false
     @EnvironmentObject var themeVM: ThemeViewModel
+    @StateObject private var documentManager = DocumentManager(context: PersistenceController.shared.container.viewContext)
     
     var body: some View {
         ScrollView {
             VStack(spacing: Constants.Spacing.large) {
-                TabHeader(icon: "square.and.arrow.up.on.square", logoName: nil, title: "Import & Export", subtitle: "Manage your data import and export operations")
+                TabHeader(icon: "square.and.arrow.up.on.square", logoName: nil, title: "Import & Export", subtitle: "Unified data and document management")
                 
-                // Import & Export Section
+                // Unified Import & Export Section
                 VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                    Text("Data Operations")
+                    Text("Unified Operations")
                         .font(themeVM.theme.fonts.titleFont)
                         .foregroundColor(.primary)
                     
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: Constants.Spacing.medium) {
-                        ActionCard(
-                            title: "Import Data",
-                            subtitle: "CSV & Excel files",
-                            icon: "square.and.arrow.down",
-                            action: { showingImportSheet = true }
-                        )
-                        
-                        ActionCard(
-                            title: "Export Data",
-                            subtitle: "Export to CSV or PDF",
-                            icon: "square.and.arrow.up",
-                            action: { showingExportSheet = true }
-                        )
-                    }
+                    ActionCard(
+                        title: "Import & Export Hub",
+                        subtitle: "Contacts, documents, and mail merge",
+                        icon: "square.and.arrow.up.on.square",
+                        action: { showingUnifiedImportExport = true }
+                    )
                 }
                 
                 // Print Labels Section
@@ -507,12 +495,8 @@ struct ImportExportView: View {
             .padding(Constants.Spacing.large)
         }
         .background(Color.appBackground)
-        .sheet(isPresented: $showingImportSheet) {
-            ImportView()
-                .environmentObject(themeVM)
-        }
-        .sheet(isPresented: $showingExportSheet) {
-            ExportView()
+        .sheet(isPresented: $showingUnifiedImportExport) {
+            UnifiedImportExportView(documentManager: documentManager)
                 .environmentObject(themeVM)
         }
         .sheet(isPresented: $showingPrintLabelsSheet) {

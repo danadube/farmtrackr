@@ -17,6 +17,7 @@ struct DocumentEditorView: View {
     
     @State private var documentName: String = ""
     @State private var documentContent: String = ""
+    @State private var documentAttributedText: NSAttributedString = NSAttributedString()
     @State private var selectedTemplate: DocumentTemplate?
     @State private var showingTemplatePicker = false
     @State private var showingImportExport = false
@@ -167,10 +168,10 @@ struct DocumentEditorView: View {
                 Divider()
                     .background(Color.borderColor)
                 
-                                    // Rich text editor
-                    RichTextEditorView(
-                        text: $documentContent,
-                        onTextChange: onTextChange
+                                    // Rich text editor using NSAttributedString
+                    NSAttributedStringRichTextEditorView(
+                        attributedText: $documentAttributedText,
+                        onTextChange: onAttributedTextChange
                     )
                 .environmentObject(themeVM)
                 .background(Color.appBackground)
@@ -236,10 +237,19 @@ struct DocumentEditorView: View {
         if let document = document {
             documentName = document.name ?? "Untitled Document"
             documentContent = document.content ?? ""
+            
+            // Convert string content to NSAttributedString
+            if let content = document.content, !content.isEmpty {
+                documentAttributedText = NSAttributedString(string: content)
+            } else {
+                documentAttributedText = NSAttributedString()
+            }
+            
             selectedTemplate = document.template
         } else {
             documentName = ""
             documentContent = ""
+            documentAttributedText = NSAttributedString()
             selectedTemplate = nil
         }
         unsavedChanges = false
@@ -249,6 +259,9 @@ struct DocumentEditorView: View {
         if documentName.isEmpty {
             documentName = "Untitled Document"
         }
+        
+        // Convert NSAttributedString to string for storage
+        documentContent = documentAttributedText.string
         
         if let existingDocument = document {
             // Update existing document
@@ -270,6 +283,12 @@ struct DocumentEditorView: View {
     
     private func onTextChange(_ newContent: String) {
         documentContent = newContent
+        unsavedChanges = true
+    }
+    
+    private func onAttributedTextChange(_ newAttributedText: NSAttributedString) {
+        documentAttributedText = newAttributedText
+        documentContent = newAttributedText.string
         unsavedChanges = true
     }
 }

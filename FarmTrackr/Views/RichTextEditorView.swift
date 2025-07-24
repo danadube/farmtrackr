@@ -28,17 +28,19 @@ struct RichTextEditorView: View {
     @State private var showingLinkDialog = false
     @State private var linkURL = ""
     @State private var selectedTextRange: NSRange?
+    @State private var currentPage: Int = 0
+    @State private var pages: [String] = []
     
-    // Page settings - exactly 8.5x11 inches at 72 DPI
-    private let pageWidth: CGFloat = 850 // 8.5 inches * 100 DPI for better scaling
-    private let pageHeight: CGFloat = 1100 // 11 inches * 100 DPI for better scaling
-    private let pageMargin: CGFloat = 40 // Reduced margins for more text space
-    private let rulerWidth: CGFloat = 40
+    // Page settings - exactly 8.5x11 inches at 100 DPI for better scaling
+    private let pageWidth: CGFloat = 850 // 8.5 inches * 100 DPI
+    private let pageHeight: CGFloat = 1100 // 11 inches * 100 DPI
+    private let pageMargin: CGFloat = 40
+    private let rulerWidth: CGFloat = 50 // Increased for better number visibility
     
-    // Text margins - standard document margins
-    private let textMarginTop: CGFloat = 40 // Reduced from 80 to 40 to fix 2-inch margin issue
-    private let textMarginBottom: CGFloat = 80 // Reduced from 100 to 80 for better spacing
-    private let textMarginLeft: CGFloat = 50 // 0.5 inch left margin
+    // Text margins - standard document margins (1 inch top/bottom, 0.5 inch left/right)
+    private let textMarginTop: CGFloat = 80 // Reduced from 100 to 80 for better spacing
+    private let textMarginBottom: CGFloat = 100 // 1 inch bottom margin
+    private let textMarginLeft: CGFloat = 40 // Reduced from 50 to 40 for better spacing
     private let textMarginRight: CGFloat = 50 // 0.5 inch right margin
     
     // Ruler scaling - make rulers match page dimensions
@@ -67,71 +69,48 @@ struct RichTextEditorView: View {
                 .padding(.vertical, 8)
                 .toolbarStyle()
                 
-                // Main content area with proper centering
-                ScrollView([.horizontal, .vertical]) {
+                // Main content area with pagination
+                HStack(spacing: 0) {
+                    // Left vertical ruler
+                    VerticalRuler(pageHeight: pageHeight)
+                        .frame(width: rulerWidth)
+                        .background(Color.cardBackgroundAdaptive)
+                        .border(Color.borderColor, width: 1)
+                    
                     VStack(spacing: 0) {
-                        // Top horizontal ruler
+                        // Top horizontal ruler - aligned with page
                         HorizontalRuler(pageWidth: pageWidth)
                             .frame(height: rulerWidth)
                             .background(Color.cardBackgroundAdaptive)
                             .border(Color.borderColor, width: 1)
                             .zIndex(1)
                         
-                        // Page and vertical ruler row
-                        HStack(spacing: 0) {
-                            // Left vertical ruler
-                            VerticalRuler(pageHeight: pageHeight)
-                                .frame(width: rulerWidth)
-                                .background(Color.cardBackgroundAdaptive)
-                                .border(Color.borderColor, width: 1)
-                            
-                            // Page content
-                            ZStack {
-                                // Page background - white in light mode, dark in dark mode
-                                Rectangle()
-                                    .fill(Color.adaptivePageBackground)
-                                    .frame(width: pageWidth, height: pageHeight)
-                                    .cornerRadius(12)
-                                    .shadow(color: Color.black.opacity(0.25), radius: 16, x: 0, y: 8)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(themeVM.theme.colors.border.opacity(0.2), lineWidth: 1)
-                                    )
-                                
-                                // Text area background (shows margins) - same as page background
-                                Rectangle()
-                                    .fill(Color.adaptivePageBackground)
-                                    .frame(width: pageWidth - textMarginLeft - textMarginRight, 
-                                           height: pageHeight - textMarginTop - textMarginBottom)
-                                    .offset(x: textMarginLeft, y: textMarginTop)
-                                
-                                // Text editor
-                                PlatformTextViewWrapper(
-                                    text: $text,
-                                    onTextChange: onTextChange,
-                                    textViewRef: $textViewRef,
-                                    fontSize: selectedFontSize,
-                                    fontName: selectedFontName,
-                                    alignment: selectedAlignment,
-                                    textColor: selectedColor,
-                                    pageWidth: pageWidth,
-                                    pageHeight: pageHeight,
-                                    pageMargin: pageMargin
-                                )
-                                .frame(width: pageWidth - textMarginLeft - textMarginRight, 
-                                       height: pageHeight - textMarginTop - textMarginBottom)
-                                .offset(x: textMarginLeft, y: textMarginTop)
-                                .clipped()
-                            }
-                        }
+                        // Paginated document view
+                        PaginatedDocumentView(
+                            text: $text,
+                            onTextChange: onTextChange,
+                            textViewRef: $textViewRef,
+                            fontSize: selectedFontSize,
+                            fontName: selectedFontName,
+                            alignment: selectedAlignment,
+                            textColor: selectedColor,
+                            pageWidth: pageWidth,
+                            pageHeight: pageHeight,
+                            textMarginTop: textMarginTop,
+                            textMarginBottom: textMarginBottom,
+                            textMarginLeft: textMarginLeft,
+                            textMarginRight: textMarginRight,
+                            currentPage: $currentPage,
+                            pages: $pages
+                        )
                     }
-                    .frame(minWidth: pageWidth + rulerWidth + 40, minHeight: pageHeight + rulerWidth + 40)
                 }
+                .frame(minWidth: pageWidth + rulerWidth + 40, minHeight: pageHeight + rulerWidth + 40)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.appBackground)
-                .padding(.horizontal, 20)
-                .padding(.top, 5) // Reduced top padding to move page higher
-                .padding(.bottom, 10)
+                .padding(.horizontal, 10) // Reduced horizontal padding
+                .padding(.top, 2) // Minimal top padding
+                .padding(.bottom, 5) // Minimal bottom padding
             }
         }
         .sheet(isPresented: $showingColorPicker) {
@@ -162,6 +141,9 @@ struct RichTextEditorView: View {
         let selectedRange = textView.selectedRange
         guard selectedRange.length > 0 else { return }
         
+        // Store current scroll position
+        let currentOffset = textView.contentOffset
+        
         let attributedText = NSMutableAttributedString(attributedString: textView.attributedText)
         let currentFont = attributedText.attribute(.font, at: selectedRange.location, effectiveRange: nil) as? PlatformFont ?? PlatformFont.systemFont(ofSize: selectedFontSize)
         
@@ -177,6 +159,12 @@ struct RichTextEditorView: View {
         attributedText.addAttribute(.font, value: newFont, range: selectedRange)
         textView.attributedText = attributedText
         textView.selectedRange = selectedRange
+        
+        // Restore scroll position
+        DispatchQueue.main.async {
+            textView.setContentOffset(currentOffset, animated: false)
+        }
+        
         onTextChange(textView.attributedText.string)
     }
     
@@ -184,6 +172,9 @@ struct RichTextEditorView: View {
         guard let textView = textViewRef else { return }
         let selectedRange = textView.selectedRange
         guard selectedRange.length > 0 else { return }
+        
+        // Store current scroll position
+        let currentOffset = textView.contentOffset
         
         let attributedText = NSMutableAttributedString(attributedString: textView.attributedText)
         let currentFont = attributedText.attribute(.font, at: selectedRange.location, effectiveRange: nil) as? PlatformFont ?? PlatformFont.systemFont(ofSize: selectedFontSize)
@@ -200,6 +191,12 @@ struct RichTextEditorView: View {
         attributedText.addAttribute(.font, value: newFont, range: selectedRange)
         textView.attributedText = attributedText
         textView.selectedRange = selectedRange
+        
+        // Restore scroll position
+        DispatchQueue.main.async {
+            textView.setContentOffset(currentOffset, animated: false)
+        }
+        
         onTextChange(textView.attributedText.string)
     }
     
@@ -207,6 +204,9 @@ struct RichTextEditorView: View {
         guard let textView = textViewRef else { return }
         let selectedRange = textView.selectedRange
         guard selectedRange.length > 0 else { return }
+        
+        // Store current scroll position
+        let currentOffset = textView.contentOffset
         
         let attributedText = NSMutableAttributedString(attributedString: textView.attributedText)
         let currentUnderline = attributedText.attribute(.underlineStyle, at: selectedRange.location, effectiveRange: nil) as? Int ?? 0
@@ -223,6 +223,12 @@ struct RichTextEditorView: View {
         attributedText.addAttribute(.underlineStyle, value: newUnderline, range: selectedRange)
         textView.attributedText = attributedText
         textView.selectedRange = selectedRange
+        
+        // Restore scroll position
+        DispatchQueue.main.async {
+            textView.setContentOffset(currentOffset, animated: false)
+        }
+        
         onTextChange(textView.attributedText.string)
     }
     
@@ -517,7 +523,6 @@ struct HorizontalRuler: View {
                 )
                 
                 // Draw inch markings
-                let inchesPerUnit: CGFloat = 1.0
                 let dpi: CGFloat = 100
                 let pixelsPerInch = dpi
                 
@@ -534,11 +539,13 @@ struct HorizontalRuler: View {
                         lineWidth: 1
                     )
                     
-                    // Draw inch number
-                    let text = Text("\(inch)")
-                        .font(.system(size: 10))
-                        .foregroundColor(Color.textColor.opacity(0.7))
-                    context.draw(text, at: CGPoint(x: x + 2, y: 2))
+                    // Draw inch number (only if it fits in the ruler width)
+                    if x + 20 < rulerWidth {
+                        let text = Text("\(inch)")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(Color.textColor.opacity(0.8))
+                        context.draw(text, at: CGPoint(x: x + 4, y: 4))
+                    }
                     
                     // Draw half-inch marks
                     if inch < Int(pageWidth / pixelsPerInch) {
@@ -576,7 +583,6 @@ struct VerticalRuler: View {
                 )
                 
                 // Draw inch markings
-                let inchesPerUnit: CGFloat = 1.0
                 let dpi: CGFloat = 100
                 let pixelsPerInch = dpi
                 
@@ -593,11 +599,13 @@ struct VerticalRuler: View {
                         lineWidth: 1
                     )
                     
-                    // Draw inch number
-                    let text = Text("\(inch)")
-                        .font(.system(size: 10))
-                        .foregroundColor(Color.textColor.opacity(0.7))
-                    context.draw(text, at: CGPoint(x: 2, y: y + 2))
+                    // Draw inch number (only if it fits in the ruler height)
+                    if y + 20 < rulerHeight {
+                        let text = Text("\(inch)")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(Color.textColor.opacity(0.8))
+                        context.draw(text, at: CGPoint(x: 4, y: y + 4))
+                    }
                     
                     // Draw half-inch marks
                     if inch < Int(pageHeight / pixelsPerInch) {
@@ -645,4 +653,244 @@ extension NSFont {
         return NSFont(descriptor: descriptor!, size: pointSize) ?? self
     }
 }
-#endif 
+#endif
+
+// MARK: - Paginated Document View
+
+struct PaginatedDocumentView: View {
+    @Binding var text: String
+    let onTextChange: (String) -> Void
+    @Binding var textViewRef: PlatformTextView?
+    let fontSize: CGFloat
+    let fontName: String
+    let alignment: NSTextAlignment
+    let textColor: PlatformColor
+    let pageWidth: CGFloat
+    let pageHeight: CGFloat
+    let textMarginTop: CGFloat
+    let textMarginBottom: CGFloat
+    let textMarginLeft: CGFloat
+    let textMarginRight: CGFloat
+    @Binding var currentPage: Int
+    @Binding var pages: [String]
+    
+    @State private var allPages: [String] = []
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            // Page navigation
+            HStack {
+                Button("Previous") {
+                    if currentPage > 0 {
+                        currentPage -= 1
+                    }
+                }
+                .disabled(currentPage == 0)
+                
+                Spacer()
+                
+                Text("Page \(currentPage + 1) of \(max(1, allPages.count))")
+                    .font(.headline)
+                
+                Spacer()
+                
+                Button("Next") {
+                    if currentPage < allPages.count - 1 {
+                        currentPage += 1
+                    }
+                }
+                .disabled(currentPage >= allPages.count - 1)
+            }
+            .padding(.horizontal, 20)
+            
+            // Current page content
+            if !allPages.isEmpty && currentPage < allPages.count {
+                SinglePageView(
+                    pageText: allPages[currentPage],
+                    onTextChange: { newText in
+                        updatePageText(newText)
+                    },
+                    textViewRef: $textViewRef,
+                    fontSize: fontSize,
+                    fontName: fontName,
+                    alignment: alignment,
+                    textColor: textColor,
+                    pageWidth: pageWidth,
+                    pageHeight: pageHeight,
+                    textMarginTop: textMarginTop,
+                    textMarginBottom: textMarginBottom,
+                    textMarginLeft: textMarginLeft,
+                    textMarginRight: textMarginRight
+                )
+            } else {
+                // Fallback to single page view
+                SinglePageView(
+                    pageText: text,
+                    onTextChange: onTextChange,
+                    textViewRef: $textViewRef,
+                    fontSize: fontSize,
+                    fontName: fontName,
+                    alignment: alignment,
+                    textColor: textColor,
+                    pageWidth: pageWidth,
+                    pageHeight: pageHeight,
+                    textMarginTop: textMarginTop,
+                    textMarginBottom: textMarginBottom,
+                    textMarginLeft: textMarginLeft,
+                    textMarginRight: textMarginRight
+                )
+            }
+        }
+        .onAppear {
+            paginateText()
+        }
+        .onChange(of: text) {
+            paginateText()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            // Repaginate when app becomes active (after restart)
+            paginateText()
+        }
+    }
+    
+    private func paginateText() {
+        // Simple character-based pagination
+        let charactersPerPage = estimateCharactersPerPage()
+        allPages = splitTextIntoPages(text, charactersPerPage: charactersPerPage)
+        
+        // Ensure current page is valid
+        if currentPage >= allPages.count {
+            currentPage = max(0, allPages.count - 1)
+        }
+        
+        // If we have text but no pages, create at least one page
+        if !text.isEmpty && allPages.isEmpty {
+            allPages = [text]
+            currentPage = 0
+        }
+    }
+    
+    private func estimateCharactersPerPage() -> Int {
+        // Rough estimate based on page dimensions and font size
+        let textAreaWidth = pageWidth - textMarginLeft - textMarginRight
+        let textAreaHeight = pageHeight - textMarginTop - textMarginBottom
+        
+        // Estimate characters per line (assuming average character width)
+        let avgCharWidth = fontSize * 0.6 // Rough estimate
+        let charsPerLine = Int(textAreaWidth / avgCharWidth)
+        
+        // Estimate lines per page
+        let lineHeight = fontSize * 1.2 // Rough estimate
+        let linesPerPage = Int(textAreaHeight / lineHeight)
+        
+        return charsPerLine * linesPerPage
+    }
+    
+    private func splitTextIntoPages(_ text: String, charactersPerPage: Int) -> [String] {
+        guard !text.isEmpty else { return [""] }
+        
+        var pages: [String] = []
+        var remainingText = text
+        
+        while !remainingText.isEmpty {
+            let pageEndIndex = min(charactersPerPage, remainingText.count)
+            let pageText = String(remainingText.prefix(pageEndIndex))
+            
+            // Try to break at sentence or word boundary
+            let finalPageText = findGoodBreakPoint(pageText, remainingText: remainingText)
+            
+            pages.append(finalPageText)
+            
+            let consumedLength = finalPageText.count
+            if consumedLength >= remainingText.count {
+                break
+            }
+            
+            remainingText = String(remainingText.dropFirst(consumedLength))
+        }
+        
+        return pages.isEmpty ? [""] : pages
+    }
+    
+    private func findGoodBreakPoint(_ pageText: String, remainingText: String) -> String {
+        // Try to break at sentence end
+        if let sentenceEnd = pageText.lastIndex(of: ".") {
+            return String(pageText[...sentenceEnd])
+        }
+        
+        // Try to break at word boundary
+        if let wordEnd = pageText.lastIndex(of: " ") {
+            return String(pageText[...wordEnd])
+        }
+        
+        // If no good break point, use the full page text
+        return pageText
+    }
+    
+    private func updatePageText(_ newText: String) {
+        if currentPage < allPages.count {
+            allPages[currentPage] = newText
+            // Reconstruct full text
+            text = allPages.joined(separator: "")
+            onTextChange(text)
+        }
+    }
+}
+
+// MARK: - Single Page View
+
+struct SinglePageView: View {
+    let pageText: String
+    let onTextChange: (String) -> Void
+    @Binding var textViewRef: PlatformTextView?
+    let fontSize: CGFloat
+    let fontName: String
+    let alignment: NSTextAlignment
+    let textColor: PlatformColor
+    let pageWidth: CGFloat
+    let pageHeight: CGFloat
+    let textMarginTop: CGFloat
+    let textMarginBottom: CGFloat
+    let textMarginLeft: CGFloat
+    let textMarginRight: CGFloat
+    
+    var body: some View {
+        ZStack {
+            // Page background
+            Rectangle()
+                .fill(Color.adaptivePageBackground)
+                .frame(width: pageWidth, height: pageHeight)
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.25), radius: 16, x: 0, y: 8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.borderColor.opacity(0.2), lineWidth: 1)
+                )
+            
+            // Text area background (shows margins)
+            Rectangle()
+                .fill(Color.adaptivePageBackground)
+                .frame(width: pageWidth - textMarginLeft - textMarginRight, 
+                       height: pageHeight - textMarginTop - textMarginBottom)
+                .offset(x: textMarginLeft, y: textMarginTop)
+            
+            // Text editor
+            PlatformTextViewWrapper(
+                text: .constant(pageText),
+                onTextChange: onTextChange,
+                textViewRef: $textViewRef,
+                fontSize: fontSize,
+                fontName: fontName,
+                alignment: alignment,
+                textColor: textColor,
+                pageWidth: pageWidth,
+                pageHeight: pageHeight,
+                pageMargin: 0
+            )
+            .frame(width: pageWidth - textMarginLeft - textMarginRight, 
+                   height: pageHeight - textMarginTop - textMarginBottom)
+            .offset(x: textMarginLeft, y: textMarginTop)
+            .clipped()
+        }
+    }
+} 
