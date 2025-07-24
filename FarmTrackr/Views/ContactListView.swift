@@ -66,54 +66,80 @@ struct ContactListView: View {
                 .ignoresSafeArea(.all, edges: .all)
             
             VStack(spacing: 0) {
-                // Batch action view
+                searchHeader
+                
+                // Batch action view - positioned after search header to prevent jumping
                 if batchManager.isSelectionMode {
                     BatchActionView(contacts: filteredContacts)
                         .environmentObject(batchManager)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 
-                searchHeader
+                // Toolbar between search and contacts
+                HStack(spacing: Constants.Spacing.medium) {
+                    if !batchManager.isSelectionMode {
+                        Button(action: { batchManager.enterSelectionMode() }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark.circle")
+                                Text("Batch Actions")
+                            }
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(Color.textColor)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.cardBackgroundAdaptive)
+                            .cornerRadius(8)
+                        }
+                        .accessibilityLabel("Batch actions")
+                        .accessibilityHint("Double tap to enter batch selection mode")
+                    }
+                    
+                    Spacer()
+                    
+                    HStack(spacing: Constants.Spacing.medium) {
+                        if !batchManager.isSelectionMode {
+                            Button(action: refreshData) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "arrow.clockwise")
+                                    Text("Refresh")
+                                }
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(Color.textColor)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color.cardBackgroundAdaptive)
+                                .cornerRadius(8)
+                            }
+                            .accessibilityLabel("Refresh data")
+                            .accessibilityHint("Double tap to refresh contact data")
+                        }
+                        
+                        if !batchManager.isSelectionMode {
+                            Button(action: { showingAddContact = true }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "plus")
+                                    Text("Add Contact")
+                                }
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(themeVM.theme.colors.primary)
+                                .cornerRadius(8)
+                            }
+                            .accessibilityLabel(Accessibility.Labels.addContact)
+                            .accessibilityHint(Accessibility.Hints.addContact)
+                        }
+                    }
+                }
+                .padding(.horizontal, Constants.Spacing.large)
+                .padding(.vertical, Constants.Spacing.medium)
+                
                 contactList
             }
         }
+        .animation(.easeInOut(duration: 0.3), value: batchManager.isSelectionMode)
         .background(Color.appBackground)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                if !batchManager.isSelectionMode {
-                    Button(action: { batchManager.enterSelectionMode() }) {
-                        Image(systemName: "checkmark.circle")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(Color.textColor)
-                    }
-                    .accessibilityLabel("Batch actions")
-                    .accessibilityHint("Double tap to enter batch selection mode")
-                }
-            }
-            
-            ToolbarItem(placement: .navigationBarTrailing) {
-                HStack(spacing: Constants.Spacing.medium) {
-                    if !batchManager.isSelectionMode {
-                        Button(action: refreshData) {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(Color.textColor)
-                        }
-                        .accessibilityLabel("Refresh data")
-                        .accessibilityHint("Double tap to refresh contact data")
-                    }
-                    
-                    if !batchManager.isSelectionMode {
-                        Button(action: { showingAddContact = true }) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(themeVM.theme.colors.primary)
-                        }
-                        .accessibilityLabel(Accessibility.Labels.addContact)
-                        .accessibilityHint(Accessibility.Hints.addContact)
-                    }
-                }
-            }
-        }
         .sheet(isPresented: $showingAdvancedFilters) {
             advancedFilterView
         }

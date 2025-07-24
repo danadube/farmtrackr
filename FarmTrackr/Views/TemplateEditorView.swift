@@ -15,7 +15,27 @@ struct TemplateEditorView: View {
     @State private var templateName: String = ""
     @State private var templateContent: String = ""
     @State private var templateAttributedText: NSAttributedString = NSAttributedString(string: "")
+    @State private var selectedRange: NSRange = NSRange(location: 0, length: 0)
     @State private var selectedType: DocumentType = .letter
+    
+    private let placeholderOptions: [(String, String)] = [
+        ("{{firstName}}", "Contact's first name"),
+        ("{{lastName}}", "Contact's last name"),
+        ("{{fullName}}", "Contact's full name"),
+        ("{{company}}", "Company/farm name"),
+        ("{{email}}", "Email address"),
+        ("{{phone}}", "Phone number"),
+        ("{{address}}", "Full mailing address"),
+        ("{{city}}", "City"),
+        ("{{state}}", "State"),
+        ("{{zipCode}}", "ZIP code"),
+        ("{{siteAddress}}", "Site address"),
+        ("{{siteCity}}", "Site city"),
+        ("{{siteState}}", "Site state"),
+        ("{{siteZipCode}}", "Site ZIP code"),
+        ("{{notes}}", "Contact notes"),
+        ("{{date}}", "Current date")
+    ]
     @State private var showingPlaceholderHelp = false
     @State private var showingPreview = false
     @State private var showingSaveDialog = false
@@ -25,11 +45,11 @@ struct TemplateEditorView: View {
     @State private var showingColorPicker = false
     @State private var showingFontPicker = false
     
-    let template: DocumentTemplate?
+    @State private var template: DocumentTemplate?
     
     init(documentManager: DocumentManager, template: DocumentTemplate? = nil) {
         self.documentManager = documentManager
-        self.template = template
+        self._template = State(initialValue: template)
         
         if let template = template {
             self._templateName = State(initialValue: template.name ?? "")
@@ -99,6 +119,13 @@ struct TemplateEditorView: View {
                         }
                         .help("Preview template")
                         
+                        Button(action: printTemplate) {
+                            Image(systemName: "printer")
+                                .font(.title2)
+                                .foregroundColor(themeVM.theme.colors.accent)
+                        }
+                        .help("Print template")
+                        
                         Button(action: saveTemplate) {
                             HStack(spacing: 8) {
                                 Image(systemName: "checkmark")
@@ -156,12 +183,24 @@ struct TemplateEditorView: View {
                             }
                         }
                         
-                        Button(action: { showingPlaceholderHelp = true }) {
-                            Label("Placeholders", systemImage: "questionmark.circle")
+                        Menu {
+                            Button("View Available Placeholders") {
+                                showingPlaceholderHelp = true
+                            }
+                            
+                            Divider()
+                            
+                            ForEach(placeholderOptions, id: \.0) { placeholder, description in
+                                Button("\(placeholder) - \(description)") {
+                                    insertPlaceholder(placeholder)
+                                }
+                            }
+                        } label: {
+                            Label("Placeholders", systemImage: "plus.circle")
                                 .font(.caption)
                         }
                         .buttonStyle(.bordered)
-                        .help("View available placeholders")
+                        .help("Insert placeholders")
                         
                         Spacer()
                     }
@@ -174,7 +213,7 @@ struct TemplateEditorView: View {
                     .background(Color.borderColor)
                 
                 // Rich text toolbar
-                TextFormattingToolbar(attributedText: $templateAttributedText)
+                TextFormattingToolbar(attributedText: $templateAttributedText, selectedRange: $selectedRange)
                     .padding(.vertical, 8)
                     .background(Color.cardBackgroundAdaptive)
                 
@@ -182,11 +221,14 @@ struct TemplateEditorView: View {
                     .background(Color.borderColor)
                 
                 // Rich text editor
-                RichTextEditorView(attributedText: $templateAttributedText)
-                    .onChange(of: templateAttributedText) { _, _ in
-                        templateContent = templateAttributedText.string
+                RichTextEditorView(
+                    attributedText: $templateAttributedText, 
+                    selectedRange: $selectedRange,
+                    onTextChange: { newText in
+                        templateContent = newText
                         unsavedChanges = true
                     }
+                )
             }
         }
         .alert("Available Placeholders", isPresented: $showingPlaceholderHelp) {
@@ -253,29 +295,18 @@ struct TemplateEditorView: View {
     
 
     
-    private var placeholderOptions: [(key: String, label: String)] {
-        [
-            ("{{firstName}}", "First Name"),
-            ("{{lastName}}", "Last Name"),
-            ("{{fullName}}", "Full Name"),
-            ("{{company}}", "Company"),
-            ("{{email}}", "Email"),
-            ("{{phone}}", "Phone"),
-            ("{{address}}", "Address"),
-            ("{{city}}", "City"),
-            ("{{state}}", "State"),
-            ("{{zipCode}}", "ZIP Code"),
-            ("{{siteAddress}}", "Site Address"),
-            ("{{siteCity}}", "Site City"),
-            ("{{siteState}}", "Site State"),
-            ("{{siteZipCode}}", "Site ZIP"),
-            ("{{notes}}", "Notes"),
-            ("{{date}}", "Date")
-        ]
-    }
+
     
     private func insertText(_ text: String) {
         templateContent += text
+        unsavedChanges = true
+    }
+    
+    private func insertPlaceholder(_ placeholder: String) {
+        // Insert placeholder at cursor position or at the end
+        let placeholderText = " \(placeholder) "
+        templateContent += placeholderText
+        templateAttributedText = NSAttributedString(string: templateContent)
         unsavedChanges = true
     }
     
@@ -283,15 +314,32 @@ struct TemplateEditorView: View {
         if let existingTemplate = template {
             documentManager.updateTemplate(existingTemplate, content: templateContent, attributedContent: templateAttributedText)
         } else {
-            _ = documentManager.createTemplate(
+            let newTemplate = documentManager.createTemplate(
                 name: templateName,
                 content: templateContent,
                 attributedContent: templateAttributedText,
                 type: selectedType
             )
+            // Update the template reference to prevent double creation
+            template = newTemplate
         }
         unsavedChanges = false
-        dismiss()
+        // Don't dismiss - let user continue editing
+    }
+    
+    private func printTemplate() {
+        let printInfo = UIPrintInfo(dictionary: nil)
+        printInfo.outputType = .general
+        printInfo.jobName = templateName.isEmpty ? "Template" : templateName
+        
+        let controller = UIPrintInteractionController.shared
+        controller.printInfo = printInfo
+        
+        // Create attributed string for printing
+        let printAttributedString = templateAttributedText.length > 0 ? templateAttributedText : NSAttributedString(string: templateContent)
+        controller.printingItem = printAttributedString
+        
+        controller.present(animated: true) { _, _, _ in }
     }
 }
 

@@ -121,6 +121,40 @@ class RichTextDocument {
         #endif
     }
     
+    static func exportAsWord(_ text: NSAttributedString, to url: URL) throws {
+        // For Word export, we'll create a simple HTML file that Word can open
+        // This is a basic implementation - in a production app, you'd use a proper Word library
+        let htmlContent = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Document</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; }
+                p { margin-bottom: 10px; }
+            </style>
+        </head>
+        <body>
+            \(text.string.replacingOccurrences(of: "\n", with: "<br>"))
+        </body>
+        </html>
+        """
+        
+        try htmlContent.write(to: url, atomically: true, encoding: .utf8)
+    }
+    
+    static func exportAsExcel(_ content: String, to url: URL) throws {
+        // For Excel export, we'll create a CSV file that Excel can open
+        // This is a basic implementation - in a production app, you'd use a proper Excel library
+        let csvContent = """
+        Content
+        "\(content.replacingOccurrences(of: "\"", with: "\"\""))"
+        """
+        
+        try csvContent.write(to: url, atomically: true, encoding: .utf8)
+    }
+    
     // MARK: - Utility Functions
     
     static func createEmptyDocument() -> NSAttributedString {

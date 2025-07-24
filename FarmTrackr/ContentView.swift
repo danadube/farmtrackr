@@ -293,6 +293,7 @@ struct HomeView: View {
     @Binding var selectedTab: ContentView.NavigationTab?
     @Binding var showingContactDetail: Bool
     @State private var showingAddContact = false
+    @State private var showingAddDocument = false
     @State private var showingUnifiedImportExport = false
     @State private var showingPrintLabelsSheet = false
     @EnvironmentObject var themeVM: ThemeViewModel
@@ -337,10 +338,10 @@ struct HomeView: View {
                         )
                         
                         QuickActionCard(
-                            title: "Import & Export",
-                            subtitle: "Unified data management",
-                            icon: "square.and.arrow.up.on.square",
-                            action: { showingUnifiedImportExport = true }
+                            title: "Add Document",
+                            subtitle: "Create new document",
+                            icon: "doc.badge.plus",
+                            action: { showingAddDocument = true }
                         )
                         
                         QuickActionCard(
@@ -348,6 +349,13 @@ struct HomeView: View {
                             subtitle: "Mailing labels",
                             icon: "printer",
                             action: { showingPrintLabelsSheet = true }
+                        )
+                        
+                        QuickActionCard(
+                            title: "Import & Export",
+                            subtitle: "Unified data management",
+                            icon: "square.and.arrow.up.on.square",
+                            action: { showingUnifiedImportExport = true }
                         )
                     }
                 }
@@ -374,6 +382,10 @@ struct HomeView: View {
         .background(Color.appBackground)
         .sheet(isPresented: $showingAddContact) {
             ContactEditView(contact: nil)
+        }
+        .sheet(isPresented: $showingAddDocument) {
+            DocumentEditorView(documentManager: DocumentManager(context: viewContext))
+                .environmentObject(themeVM)
         }
         .sheet(isPresented: $showingUnifiedImportExport) {
             UnifiedImportExportView(documentManager: DocumentManager(context: viewContext))

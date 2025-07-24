@@ -37,6 +37,8 @@ struct BatchActionView: View {
                 progressView
             }
         }
+        .background(Color.appBackground)
+        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
         .alert(alertTitle, isPresented: $showingAlert) {
             Button("OK") { }
         } message: {
@@ -84,6 +86,7 @@ struct BatchActionView: View {
             .background(themeVM.theme.colors.cardBackground)
             
             Divider()
+                .background(Color.gray.opacity(0.3))
             
             // Selection controls
             HStack(spacing: Constants.Spacing.medium) {
@@ -112,12 +115,17 @@ struct BatchActionView: View {
             .background(themeVM.theme.colors.cardBackground)
             
             Divider()
+                .background(Color.gray.opacity(0.3))
             
             // Action buttons
             if batchManager.hasSelection {
                 actionButtons
             }
         }
+        .background(themeVM.theme.colors.cardBackground)
+        .cornerRadius(8)
+        .padding(.horizontal, Constants.Spacing.large)
+        .padding(.vertical, Constants.Spacing.small)
     }
     
     private var actionButtons: some View {

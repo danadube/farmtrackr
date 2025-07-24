@@ -172,6 +172,32 @@ class DocumentManager: ObservableObject {
                 // For HTML, we'd need to use NSAttributedString
                 // For now, we'll create a simple text file
                 try content.write(to: tempURL, atomically: true, encoding: .utf8)
+            case .docx:
+                // For Word export, we'll create a simple HTML file that Word can open
+                let htmlContent = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>\(document.name ?? "Document")</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; }
+                        p { margin-bottom: 10px; }
+                    </style>
+                </head>
+                <body>
+                    \(content.replacingOccurrences(of: "\n", with: "<br>"))
+                </body>
+                </html>
+                """
+                try htmlContent.write(to: tempURL, atomically: true, encoding: .utf8)
+            case .xlsx:
+                // For Excel export, we'll create a CSV file that Excel can open
+                let csvContent = """
+                Content
+                "\(content.replacingOccurrences(of: "\"", with: "\"\""))"
+                """
+                try csvContent.write(to: tempURL, atomically: true, encoding: .utf8)
             }
             return tempURL
         } catch {

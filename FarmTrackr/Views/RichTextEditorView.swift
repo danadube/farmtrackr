@@ -10,10 +10,16 @@ import Foundation
 
 struct RichTextEditorView: View {
     @Binding var attributedText: NSAttributedString
+    @Binding var selectedRange: NSRange
+    var onTextChange: ((String) -> Void)? = nil
     
     var body: some View {
-        PlatformTextViewRepresentable(attributedText: $attributedText)
-            .background(Color.appBackground)
+        PlatformTextViewRepresentable(
+            attributedText: $attributedText, 
+            selectedRange: $selectedRange,
+            onTextChange: onTextChange
+        )
+        .background(Color.appBackground)
     }
 }
 
@@ -22,6 +28,8 @@ struct RichTextEditorView: View {
 #if os(iOS)
 struct PlatformTextViewRepresentable: UIViewRepresentable {
     @Binding var attributedText: NSAttributedString
+    @Binding var selectedRange: NSRange
+    var onTextChange: ((String) -> Void)?
     
     func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
@@ -34,6 +42,10 @@ struct PlatformTextViewRepresentable: UIViewRepresentable {
         textView.autocorrectionType = .default
         textView.spellCheckingType = .default
         textView.dataDetectorTypes = [.link, .phoneNumber, .address]
+        
+        // Add padding to prevent text from starting at the edge
+        textView.textContainerInset = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
+        
         return textView
     }
     
@@ -56,6 +68,11 @@ struct PlatformTextViewRepresentable: UIViewRepresentable {
         
         func textViewDidChange(_ textView: UITextView) {
             parent.attributedText = textView.attributedText
+            parent.onTextChange?(textView.text)
+        }
+        
+        func textViewDidChangeSelection(_ textView: UITextView) {
+            parent.selectedRange = textView.selectedRange
         }
     }
 }
@@ -63,6 +80,8 @@ struct PlatformTextViewRepresentable: UIViewRepresentable {
 #elseif os(macOS)
 struct PlatformTextViewRepresentable: NSViewRepresentable {
     @Binding var attributedText: NSAttributedString
+    @Binding var selectedRange: NSRange
+    var onTextChange: ((String) -> Void)?
     
     func makeNSView(context: Context) -> NSTextView {
         let textView = NSTextView()
@@ -78,9 +97,12 @@ struct PlatformTextViewRepresentable: NSViewRepresentable {
         textView.isAutomaticTextReplacementEnabled = true
         textView.isAutomaticSpellingCorrectionEnabled = true
         
-        // Configure text container
+        // Configure text container with padding
         textView.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
         textView.textContainer?.widthTracksTextView = true
+        
+        // Add padding to prevent text from starting at the edge
+        textView.textContainerInset = NSSize(width: 20, height: 20)
         
         return textView
     }
@@ -105,6 +127,12 @@ struct PlatformTextViewRepresentable: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             parent.attributedText = textView.attributedString()
+            parent.onTextChange?(textView.string)
+        }
+        
+        func textViewDidChangeSelection(_ notification: Notification) {
+            guard let textView = notification.object as? NSTextView else { return }
+            parent.selectedRange = textView.selectedRange()
         }
     }
 }

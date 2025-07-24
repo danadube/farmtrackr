@@ -13,11 +13,12 @@ struct DocumentEditorView: View {
     @EnvironmentObject var themeVM: ThemeViewModel
     @ObservedObject var documentManager: DocumentManager
     
-    let document: Document?
+    @State private var document: Document?
     
     @State private var documentName: String = ""
     @State private var documentContent: String = ""
     @State private var documentAttributedText: NSAttributedString = NSAttributedString(string: "")
+    @State private var selectedRange: NSRange = NSRange(location: 0, length: 0)
     @State private var selectedTemplate: DocumentTemplate?
     @State private var showingTemplatePicker = false
     @State private var showingImportExport = false
@@ -32,7 +33,7 @@ struct DocumentEditorView: View {
     
     init(documentManager: DocumentManager, document: Document? = nil) {
         self.documentManager = documentManager
-        self.document = document
+        self._document = State(initialValue: document)
     }
     
     var body: some View {
@@ -93,6 +94,13 @@ struct DocumentEditorView: View {
                                 .foregroundColor(themeVM.theme.colors.accent)
                         }
                         .help("Export document to file")
+                        
+                        Button(action: printDocument) {
+                            Image(systemName: "printer")
+                                .font(.title2)
+                                .foregroundColor(themeVM.theme.colors.accent)
+                        }
+                        .help("Print document")
                         
                         Button(action: saveDocument) {
                             HStack(spacing: 8) {
@@ -173,7 +181,7 @@ struct DocumentEditorView: View {
                     .background(Color.borderColor)
                 
                 // Rich text toolbar
-                TextFormattingToolbar(attributedText: $documentAttributedText)
+                TextFormattingToolbar(attributedText: $documentAttributedText, selectedRange: $selectedRange)
                     .padding(.vertical, 8)
                     .background(Color.cardBackgroundColor)
                 
@@ -181,11 +189,11 @@ struct DocumentEditorView: View {
                     .background(Color.borderColor)
                 
                 // Rich text editor
-                RichTextEditorView(attributedText: $documentAttributedText)
-                    .onChange(of: documentAttributedText) { _, _ in
-                        documentContent = documentAttributedText.string
-                        unsavedChanges = true
-                    }
+                RichTextEditorView(
+                    attributedText: $documentAttributedText, 
+                    selectedRange: $selectedRange,
+                    onTextChange: onTextChange
+                )
             }
         }
         .onAppear {
@@ -279,16 +287,33 @@ struct DocumentEditorView: View {
             documentManager.updateDocument(existingDocument, content: documentContent, attributedContent: documentAttributedText)
         } else {
             // Create new document
-            _ = documentManager.createDocument(
+            let newDocument = documentManager.createDocument(
                 name: documentName,
                 content: documentContent,
                 attributedContent: documentAttributedText,
                 template: selectedTemplate
             )
+            // Update the document reference to prevent double creation
+            document = newDocument
         }
         
         unsavedChanges = false
         showingSaveSuccess = true
+    }
+    
+    private func printDocument() {
+        let printInfo = UIPrintInfo(dictionary: nil)
+        printInfo.outputType = .general
+        printInfo.jobName = documentName.isEmpty ? "Document" : documentName
+        
+        let controller = UIPrintInteractionController.shared
+        controller.printInfo = printInfo
+        
+        // Create attributed string for printing
+        let printAttributedString = documentAttributedText.length > 0 ? documentAttributedText : NSAttributedString(string: documentContent)
+        controller.printingItem = printAttributedString
+        
+        controller.present(animated: true) { _, _, _ in }
     }
     
     private func onTextChange(_ newContent: String) {
@@ -299,57 +324,7 @@ struct DocumentEditorView: View {
 
 
 
-// MARK: - Color Picker View
-struct ColorPickerView: View {
-    @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var themeVM: ThemeViewModel
-    @Binding var selectedColor: PlatformColor
-    
-    private let colors: [PlatformColor] = [
-        .label, .systemBlue, .systemGreen, .systemRed, .systemOrange,
-        .systemPurple, .systemPink, .systemYellow, .systemGray
-    ]
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                Text("Select Color")
-                    .font(.headline)
-                    .foregroundColor(themeVM.theme.colors.text)
-                
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 16) {
-                    ForEach(colors, id: \.self) { color in
-                        Button(action: {
-                            selectedColor = color
-                            dismiss()
-                        }) {
-                            Circle()
-                                .fill(Color(color))
-                                .frame(width: 50, height: 50)
-                                .overlay(
-                                    Circle()
-                                        .stroke(selectedColor == color ? themeVM.theme.colors.accent : Color.clear, lineWidth: 3)
-                                )
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                }
-                
-                Spacer()
-            }
-            .padding()
-            .background(Color.appBackground)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
+
 
 // MARK: - Font Picker View
 struct FontPickerView: View {

@@ -145,6 +145,10 @@ class UnifiedImportExportManager: ObservableObject {
             url = try await exportDocumentToRTF(content, name: document.name ?? "Document")
         case .html:
             url = try await exportDocumentToHTML(content, name: document.name ?? "Document")
+        case .docx:
+            url = try await exportDocumentToWord(content, name: document.name ?? "Document")
+        case .xlsx:
+            url = try await exportDocumentToExcel(content, name: document.name ?? "Document")
         }
         
         await MainActor.run {
@@ -387,6 +391,48 @@ class UnifiedImportExportManager: ObservableObject {
         let fileURL = documentsPath.appendingPathComponent(fileName)
         
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
+        return fileURL
+    }
+    
+    private func exportDocumentToWord(_ content: String, name: String) async throws -> URL {
+        // For Word export, we'll create a simple HTML file that Word can open
+        let htmlContent = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>\(name)</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; }
+                p { margin-bottom: 10px; }
+            </style>
+        </head>
+        <body>
+            \(content.replacingOccurrences(of: "\n", with: "<br>"))
+        </body>
+        </html>
+        """
+        
+        let fileName = "\(name).docx"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try htmlContent.write(to: fileURL, atomically: true, encoding: .utf8)
+        return fileURL
+    }
+    
+    private func exportDocumentToExcel(_ content: String, name: String) async throws -> URL {
+        // For Excel export, we'll create a CSV file that Excel can open
+        let csvContent = """
+        Content
+        "\(content.replacingOccurrences(of: "\"", with: "\"\""))"
+        """
+        
+        let fileName = "\(name).xlsx"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        try csvContent.write(to: fileURL, atomically: true, encoding: .utf8)
         return fileURL
     }
     

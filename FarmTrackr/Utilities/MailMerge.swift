@@ -240,6 +240,22 @@ class MailMerge {
                     let attributedString = NSAttributedString(string: content)
                     try RichTextDocument.saveAsHTML(attributedString, to: tempURL)
                 }
+            case .docx:
+                if let rtfData = document.richTextData,
+                   let attributedString = try? NSAttributedString(
+                       data: rtfData,
+                       options: [.documentType: NSAttributedString.DocumentType.rtf],
+                       documentAttributes: nil
+                   ) {
+                    try RichTextDocument.exportAsWord(attributedString, to: tempURL)
+                } else if let content = document.content {
+                    let attributedString = NSAttributedString(string: content)
+                    try RichTextDocument.exportAsWord(attributedString, to: tempURL)
+                }
+            case .xlsx:
+                if let content = document.content {
+                    try RichTextDocument.exportAsExcel(content, to: tempURL)
+                }
             }
             
             return tempURL
@@ -257,6 +273,8 @@ enum DocumentExportFormat: String, CaseIterable {
     case rtf = "Rich Text Format"
     case pdf = "PDF"
     case html = "HTML"
+    case docx = "Word Document"
+    case xlsx = "Excel Spreadsheet"
     
     var fileExtension: String {
         switch self {
@@ -264,6 +282,8 @@ enum DocumentExportFormat: String, CaseIterable {
         case .rtf: return "rtf"
         case .pdf: return "pdf"
         case .html: return "html"
+        case .docx: return "docx"
+        case .xlsx: return "xlsx"
         }
     }
     
@@ -273,6 +293,8 @@ enum DocumentExportFormat: String, CaseIterable {
         case .rtf: return "doc.richtext"
         case .pdf: return "doc.pdf"
         case .html: return "doc.html"
+        case .docx: return "doc.word"
+        case .xlsx: return "tablecells"
         }
     }
 } 

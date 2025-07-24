@@ -10,7 +10,9 @@ import Foundation
 
 struct TextFormattingToolbar: View {
     @Binding var attributedText: NSAttributedString
-    @State private var selectedRange: NSRange = NSRange(location: 0, length: 0)
+    @Binding var selectedRange: NSRange
+    @State private var showingColorPicker = false
+    @State private var showingBackgroundColorPicker = false
     
     @EnvironmentObject var themeVM: ThemeViewModel
     
@@ -45,6 +47,20 @@ struct TextFormattingToolbar: View {
                 colorControls
             }
             .padding(.horizontal, 16)
+        }
+        .sheet(isPresented: $showingColorPicker) {
+            ColorPickerView(selectedColor: Binding(
+                get: { currentTextColor },
+                set: { applyTextColor($0) }
+            ))
+            .environmentObject(themeVM)
+        }
+        .sheet(isPresented: $showingBackgroundColorPicker) {
+            ColorPickerView(selectedColor: Binding(
+                get: { currentBackgroundColor },
+                set: { applyBackgroundColor($0) }
+            ))
+            .environmentObject(themeVM)
         }
     }
     
@@ -162,7 +178,7 @@ struct TextFormattingToolbar: View {
             
             // Justify
             Button(action: { applyAlignment(.justified) }) {
-                Image(systemName: "text.alignjustify")
+                                        Image(systemName: "text.justify")
                     .font(.system(size: 16))
                     .foregroundColor(currentAlignment == .justified ? themeVM.theme.colors.accent : themeVM.theme.colors.text)
             }
@@ -175,7 +191,7 @@ struct TextFormattingToolbar: View {
     private var colorControls: some View {
         HStack(spacing: 8) {
             // Text color
-            Button(action: {}) {
+            Button(action: { showingColorPicker = true }) {
                 Circle()
                     .fill(Color(currentTextColor))
                     .frame(width: 20, height: 20)
@@ -187,7 +203,7 @@ struct TextFormattingToolbar: View {
             .buttonStyle(PlainButtonStyle())
             
             // Background color
-            Button(action: {}) {
+            Button(action: { showingBackgroundColorPicker = true }) {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(Color(currentBackgroundColor))
                     .frame(width: 20, height: 20)
@@ -362,7 +378,7 @@ struct TextFormattingToolbar: View {
         let mutableText = NSMutableAttributedString(attributedString: attributedText)
         
         if selectedRange.length > 0 {
-            let underlineValue = isUnderlined ? NSUnderlineStyle.single.rawValue : NSUnderlineStyle.single.rawValue
+            let underlineValue = isUnderlined ? 0 : NSUnderlineStyle.single.rawValue
             mutableText.addAttribute(.underlineStyle, value: underlineValue, range: selectedRange)
         }
         
@@ -373,7 +389,7 @@ struct TextFormattingToolbar: View {
         let mutableText = NSMutableAttributedString(attributedString: attributedText)
         
         if selectedRange.length > 0 {
-            let strikethroughValue = isStrikethrough ? NSUnderlineStyle.single.rawValue : NSUnderlineStyle.single.rawValue
+            let strikethroughValue = isStrikethrough ? 0 : NSUnderlineStyle.single.rawValue
             mutableText.addAttribute(.strikethroughStyle, value: strikethroughValue, range: selectedRange)
         }
         
@@ -390,6 +406,32 @@ struct TextFormattingToolbar: View {
         } else {
             // Apply to entire text if nothing is selected
             mutableText.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: mutableText.length))
+        }
+        
+        attributedText = mutableText
+    }
+    
+    private func applyTextColor(_ color: PlatformColor) {
+        let mutableText = NSMutableAttributedString(attributedString: attributedText)
+        
+        if selectedRange.length > 0 {
+            mutableText.addAttribute(.foregroundColor, value: color, range: selectedRange)
+        } else {
+            // Apply to entire text if nothing is selected
+            mutableText.addAttribute(.foregroundColor, value: color, range: NSRange(location: 0, length: mutableText.length))
+        }
+        
+        attributedText = mutableText
+    }
+    
+    private func applyBackgroundColor(_ color: PlatformColor) {
+        let mutableText = NSMutableAttributedString(attributedString: attributedText)
+        
+        if selectedRange.length > 0 {
+            mutableText.addAttribute(.backgroundColor, value: color, range: selectedRange)
+        } else {
+            // Apply to entire text if nothing is selected
+            mutableText.addAttribute(.backgroundColor, value: color, range: NSRange(location: 0, length: mutableText.length))
         }
         
         attributedText = mutableText

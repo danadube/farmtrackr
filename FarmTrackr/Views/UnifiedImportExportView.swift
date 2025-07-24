@@ -39,6 +39,45 @@ struct UnifiedImportExportView: View {
         animation: .default
     ) private var contacts: FetchedResults<FarmContact>
     
+    // Computed property to automatically detect format based on file extension
+    private var detectedImportFormat: ImportFormat {
+        guard let url = selectedFileURL else { return selectedImportFormat }
+        let fileExtension = url.pathExtension.lowercased()
+        
+        switch fileExtension {
+        case "csv":
+            return .csv
+        case "xlsx", "xls":
+            return .excel
+        case "json":
+            return .json
+        case "txt":
+            return .csv // Assume CSV format for .txt files
+        default:
+            return selectedImportFormat
+        }
+    }
+    
+    private var detectedDocumentImportFormat: DocumentImportFormat {
+        guard let url = selectedFileURL else { return selectedDocumentImportFormat }
+        let fileExtension = url.pathExtension.lowercased()
+        
+        switch fileExtension {
+        case "txt":
+            return .txt
+        case "rtf":
+            return .rtf
+        case "pdf":
+            return .pdf
+        case "html", "htm":
+            return .html
+        case "docx", "doc":
+            return .txt // Convert to plain text for now
+        default:
+            return selectedDocumentImportFormat
+        }
+    }
+    
     var availableFarms: [String] {
         Array(Set(contacts.compactMap { $0.farm }.filter { !$0.isEmpty })).sorted()
     }
@@ -154,30 +193,57 @@ struct UnifiedImportExportView: View {
                     }
                     
                     VStack(spacing: 12) {
-                        // Format selector
-                        HStack {
-                            Text("Format:")
-                                .font(.subheadline)
-                                .foregroundColor(Color.textColor)
-                            
-                            Picker("Import Format", selection: $selectedImportFormat) {
-                                ForEach(ImportFormat.allCases, id: \.self) { format in
-                                    Text(format.rawValue).tag(format)
+                        // Format detection info
+                        if let url = selectedFileURL {
+                            HStack {
+                                Text("Detected Format:")
+                                    .font(.subheadline)
+                                    .foregroundColor(Color.textColor)
+                                
+                                Text(detectedImportFormat.rawValue)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(themeVM.theme.colors.accent)
+                                
+                                Spacer()
+                                
+                                Button("Change") {
+                                    selectedFileURL = nil
                                 }
+                                .font(.caption)
+                                .foregroundColor(themeVM.theme.colors.accent)
                             }
-                            .pickerStyle(MenuPickerStyle())
-                            
-                            Spacer()
+                        } else {
+                            HStack {
+                                Text("Format:")
+                                    .font(.subheadline)
+                                    .foregroundColor(Color.textColor)
+                                
+                                Picker("Import Format", selection: $selectedImportFormat) {
+                                    ForEach(ImportFormat.allCases, id: \.self) { format in
+                                        Text(format.rawValue).tag(format)
+                                    }
+                                }
+                                .pickerStyle(MenuPickerStyle())
+                                
+                                Spacer()
+                            }
                         }
                         
                         // Import button
                         Button(action: { 
-                            selectedFileURL = nil
-                            showingFilePicker = true 
+                            if selectedFileURL == nil {
+                                showingFilePicker = true 
+                            } else {
+                                // Perform import with detected format
+                                Task {
+                                    await performImport()
+                                }
+                            }
                         }) {
                             HStack {
-                                Image(systemName: "square.and.arrow.down")
-                                Text("Import Contacts")
+                                Image(systemName: selectedFileURL == nil ? "square.and.arrow.down" : "checkmark")
+                                Text(selectedFileURL == nil ? "Select File" : "Import Contacts")
                             }
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
@@ -211,30 +277,50 @@ struct UnifiedImportExportView: View {
                     }
                     
                     VStack(spacing: 12) {
-                        // Format selector
-                        HStack {
-                            Text("Format:")
-                                .font(.subheadline)
-                                .foregroundColor(Color.textColor)
-                            
-                            Picker("Document Import Format", selection: $selectedDocumentImportFormat) {
-                                ForEach(DocumentImportFormat.allCases, id: \.self) { format in
-                                    Text(format.rawValue).tag(format)
+                        // Format detection info
+                        if let url = selectedFileURL {
+                            HStack {
+                                Text("Detected Format:")
+                                    .font(.subheadline)
+                                    .foregroundColor(Color.textColor)
+                                
+                                Text(detectedDocumentImportFormat.rawValue)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(themeVM.theme.colors.accent)
+                                
+                                Spacer()
+                                
+                                Button("Change") {
+                                    selectedFileURL = nil
                                 }
+                                .font(.caption)
+                                .foregroundColor(themeVM.theme.colors.accent)
                             }
-                            .pickerStyle(MenuPickerStyle())
-                            
-                            Spacer()
+                        } else {
+                            HStack {
+                                Text("Select a file to automatically detect its format")
+                                    .font(.subheadline)
+                                    .foregroundColor(Color.textColor.opacity(0.7))
+                                
+                                Spacer()
+                            }
                         }
                         
                         // Import button
                         Button(action: { 
-                            selectedFileURL = nil
-                            showingFilePicker = true 
+                            if selectedFileURL == nil {
+                                showingFilePicker = true 
+                            } else {
+                                // Perform document import with detected format
+                                Task {
+                                    await performDocumentImport()
+                                }
+                            }
                         }) {
                             HStack {
-                                Image(systemName: "square.and.arrow.down")
-                                Text("Import Document")
+                                Image(systemName: selectedFileURL == nil ? "square.and.arrow.down" : "checkmark")
+                                Text(selectedFileURL == nil ? "Select File" : "Import Document")
                             }
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
@@ -547,63 +633,70 @@ struct UnifiedImportExportView: View {
         guard let url = selectedFileURL else { return }
         
         do {
-            if selectedTab == 0 {
-                if selectedImportFormat != .csv || selectedImportFormat != .excel || selectedImportFormat != .json {
-                    // Document import
-                    let (name, content) = try await unifiedManager.importDocument(from: url, format: selectedDocumentImportFormat)
-                    
-                    // Create document in Core Data
-                    let document = Document(context: viewContext)
-                    document.id = UUID()
-                    document.name = name
-                    document.content = content
-                    document.createdDate = Date()
-                    document.modifiedDate = Date()
-                    
-                    try viewContext.save()
-                    documentManager.loadDocuments()
-                    
-                    successMessage = "Document '\(name)' imported successfully"
-                    showingSuccessAlert = true
-                } else {
-                    // Contact import
-                    let contacts = try await unifiedManager.importContacts(from: url, format: selectedImportFormat)
-                    
-                    // Save contacts to Core Data
-                    for record in contacts {
-                        let contact = FarmContact(context: viewContext)
-                        contact.firstName = record.firstName
-                        contact.lastName = record.lastName
-                        contact.mailingAddress = record.mailingAddress
-                        contact.city = record.city
-                        contact.state = record.state
-                        contact.zipCode = record.zipCode
-                        contact.email1 = record.email1
-                        contact.email2 = record.email2
-                        contact.phoneNumber1 = record.phoneNumber1
-                        contact.phoneNumber2 = record.phoneNumber2
-                        contact.phoneNumber3 = record.phoneNumber3
-                        contact.phoneNumber4 = record.phoneNumber4
-                        contact.phoneNumber5 = record.phoneNumber5
-                        contact.phoneNumber6 = record.phoneNumber6
-                        contact.siteMailingAddress = record.siteMailingAddress
-                        contact.siteCity = record.siteCity
-                        contact.siteState = record.siteState
-                        contact.siteZipCode = record.siteZipCode
-                        contact.notes = record.notes
-                        contact.farm = record.farm
-                        contact.dateCreated = Date()
-                        contact.dateModified = Date()
-                    }
-                    
-                    try viewContext.save()
-                    
-                    successMessage = "Imported \(contacts.count) contacts successfully"
-                    showingSuccessAlert = true
-                }
+            // Contact import using detected format
+            let contacts = try await unifiedManager.importContacts(from: url, format: detectedImportFormat)
+            
+            // Save contacts to Core Data
+            for record in contacts {
+                let contact = FarmContact(context: viewContext)
+                contact.firstName = record.firstName
+                contact.lastName = record.lastName
+                contact.mailingAddress = record.mailingAddress
+                contact.city = record.city
+                contact.state = record.state
+                contact.zipCode = record.zipCode
+                contact.email1 = record.email1
+                contact.email2 = record.email2
+                contact.phoneNumber1 = record.phoneNumber1
+                contact.phoneNumber2 = record.phoneNumber2
+                contact.phoneNumber3 = record.phoneNumber3
+                contact.phoneNumber4 = record.phoneNumber4
+                contact.phoneNumber5 = record.phoneNumber5
+                contact.phoneNumber6 = record.phoneNumber6
+                contact.siteMailingAddress = record.siteMailingAddress
+                contact.siteCity = record.siteCity
+                contact.siteState = record.siteState
+                contact.siteZipCode = record.siteZipCode
+                contact.notes = record.notes
+                contact.farm = record.farm
+                contact.dateCreated = Date()
+                contact.dateModified = Date()
             }
+            
+            try viewContext.save()
+            
+            successMessage = "Imported \(contacts.count) contacts successfully"
+            showingSuccessAlert = true
+            selectedFileURL = nil // Reset for next import
         } catch {
             errorMessage = "Import failed: \(error.localizedDescription)"
+            showingErrorAlert = true
+        }
+    }
+    
+    private func performDocumentImport() async {
+        guard let url = selectedFileURL else { return }
+        
+        do {
+            // Document import using detected format
+            let (name, content) = try await unifiedManager.importDocument(from: url, format: detectedDocumentImportFormat)
+            
+            // Create document in Core Data
+            let document = Document(context: viewContext)
+            document.id = UUID()
+            document.name = name
+            document.content = content
+            document.createdDate = Date()
+            document.modifiedDate = Date()
+            
+            try viewContext.save()
+            documentManager.loadDocuments()
+            
+            successMessage = "Document '\(name)' imported successfully"
+            showingSuccessAlert = true
+            selectedFileURL = nil // Reset for next import
+        } catch {
+            errorMessage = "Document import failed: \(error.localizedDescription)"
             showingErrorAlert = true
         }
     }
