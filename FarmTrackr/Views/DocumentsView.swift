@@ -37,16 +37,75 @@ struct DocumentsView: View {
     }
     
     var body: some View {
-        ZStack {
-            // Background
-            Color.appBackground
-                .ignoresSafeArea()
-            
-            // Document browser
-            documentBrowserView
+        ScrollView {
+            VStack(spacing: Constants.Spacing.large) {
+                TabHeader(icon: "doc.text", logoName: nil, title: "Documents", subtitle: "Create and manage your farm documents")
+                
+                // Search and view toggle
+                HStack {
+                    // Search bar
+                    SearchBar(text: $searchText, placeholder: "Search documents...")
+                    
+                    Button(action: { showingDocumentList.toggle() }) {
+                        Image(systemName: "list.bullet")
+                            .font(.title2)
+                            .foregroundColor(themeVM.theme.colors.accent)
+                    }
+                    .help("Toggle between grid and list view")
+                }
+                
+                // Quick actions
+                HStack(spacing: 16) {
+                    Button(action: createNewDocument) {
+                        HStack {
+                            Image(systemName: "doc.badge.plus")
+                            Text("New Document")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(themeVM.theme.colors.accent)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                    }
+                    .help("Create a new document")
+                    
+                    Button(action: { showingCreateTemplate = true }) {
+                        HStack {
+                            Image(systemName: "doc.text.below.ecg")
+                            Text("New Template")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.cardBackgroundAdaptive)
+                        .foregroundColor(Color.textColor)
+                        .cornerRadius(12)
+                    }
+                    .help("Create a new document template")
+                    
+                    Button(action: { showingMailMerge = true }) {
+                        HStack {
+                            Image(systemName: "envelope.badge")
+                            Text("Mail Merge")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.cardBackgroundAdaptive)
+                        .foregroundColor(Color.textColor)
+                        .cornerRadius(12)
+                    }
+                    .help("Create documents from templates and contact data")
+                }
+                
+                // Documents grid or list
+                if showingDocumentList {
+                    documentListView
+                } else {
+                    documentGridView
+                }
+            }
+            .padding(Constants.Spacing.large)
         }
-        .navigationBarHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        .background(Color.appBackground)
         .fullScreenCover(isPresented: $showingCreateTemplate) {
             TemplateEditorView(documentManager: documentManager)
                 .environmentObject(themeVM)
@@ -59,8 +118,6 @@ struct DocumentsView: View {
             MailMergeView(documentManager: documentManager)
                 .environmentObject(themeVM)
         }
-
-
         .alert("Delete Document?", isPresented: $showingDeleteDialog) {
             Button("Delete", role: .destructive) {
                 if let document = documentToDelete {
@@ -73,131 +130,36 @@ struct DocumentsView: View {
         }
     }
     
-    // MARK: - Document Browser View
-    private var documentBrowserView: some View {
-        VStack(spacing: 0) {
-            // Header
-            VStack(spacing: 16) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Documents")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(Color.textColor)
-                        
-                        Text("Create and manage your farm documents")
-                            .font(.subheadline)
-                            .foregroundColor(Color.textColor.opacity(0.7))
-                    }
-                    
-                    Spacer()
-                    
-                    Button(action: { showingDocumentList.toggle() }) {
-                        Image(systemName: "list.bullet")
-                            .font(.title2)
-                            .foregroundColor(themeVM.theme.colors.accent)
-                    }
-                    .help("Toggle between grid and list view")
-                }
-                
-                // Search bar
-                SearchBar(text: $searchText, placeholder: "Search documents...")
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 16)
-            
-            // Quick actions
-            HStack(spacing: 16) {
-                Button(action: createNewDocument) {
-                    HStack {
-                        Image(systemName: "doc.badge.plus")
-                        Text("New Document")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(themeVM.theme.colors.accent)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-                }
-                .help("Create a new document")
-                
-                Button(action: { showingCreateTemplate = true }) {
-                    HStack {
-                        Image(systemName: "doc.text.below.ecg")
-                        Text("New Template")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.cardBackgroundAdaptive)
-                    .foregroundColor(Color.textColor)
-                    .cornerRadius(12)
-                }
-                .help("Create a new document template")
-                
-                Button(action: { showingMailMerge = true }) {
-                    HStack {
-                        Image(systemName: "envelope.badge")
-                        Text("Mail Merge")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.cardBackgroundAdaptive)
-                    .foregroundColor(Color.textColor)
-                    .cornerRadius(12)
-                }
-                .help("Create documents from templates and contact data")
-                
-
-            }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
-            
-            // Documents grid or list
-            if showingDocumentList {
-                documentListView
-            } else {
-                documentGridView
-            }
-        }
-        .background(Color.appBackground)
-    }
-    
     // MARK: - Document Grid View
     private var documentGridView: some View {
-        ScrollView {
-            LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: 16),
-                GridItem(.flexible(), spacing: 16)
-            ], spacing: 16) {
-                ForEach(filteredDocuments, id: \.id) { document in
-                    DocumentCardView(
-                        document: document,
-                        onTap: { openDocument(document) },
-                        onDelete: { deleteDocument(document) }
-                    )
-                    .environmentObject(themeVM)
-                }
+        LazyVGrid(columns: [
+            GridItem(.flexible(), spacing: 16),
+            GridItem(.flexible(), spacing: 16)
+        ], spacing: 16) {
+            ForEach(filteredDocuments, id: \.id) { document in
+                DocumentCardView(
+                    document: document,
+                    onTap: { openDocument(document) },
+                    onDelete: { deleteDocument(document) }
+                )
+                .environmentObject(themeVM)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
         }
     }
     
     // MARK: - Document List View
     private var documentListView: some View {
-        List(filteredDocuments, id: \.id) { document in
-            DocumentRowView(
-                document: document,
-                onTap: { openDocument(document) },
-                onDelete: { deleteDocument(document) }
-            )
-            .listRowBackground(Color.cardBackgroundAdaptive)
+        VStack(spacing: 12) {
+            ForEach(filteredDocuments, id: \.id) { document in
+                DocumentRowView(
+                    document: document,
+                    onTap: { openDocument(document) },
+                    onDelete: { deleteDocument(document) }
+                )
+                .environmentObject(themeVM)
+            }
         }
-        .listStyle(PlainListStyle())
-        .background(Color.appBackground)
     }
-    
-
     
     // MARK: - Actions
     private func createNewDocument() {
@@ -214,8 +176,6 @@ struct DocumentsView: View {
         documentToDelete = document
         showingDeleteDialog = true
     }
-    
-
 }
 
 // MARK: - Document Card View
@@ -324,8 +284,6 @@ struct DocumentRowView: View {
         .shadow(color: Color.adaptiveShadowColor.opacity(0.15), radius: 4, x: 0, y: 2)
     }
 }
-
-
 
 // MARK: - Search Bar
 struct SearchBar: View {
