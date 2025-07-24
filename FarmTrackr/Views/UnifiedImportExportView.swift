@@ -114,7 +114,9 @@ struct UnifiedImportExportView: View {
             Text(errorMessage)
         }
         .sheet(isPresented: $showingFilePicker) {
-            DocumentPicker(selectedURL: $selectedFileURL, allowedContentTypes: allowedContentTypes)
+            DocumentPicker(types: allowedContentTypes) { url in
+                selectedFileURL = url
+            }
         }
         .sheet(isPresented: $showingShareSheet) {
             if let url = exportURL {
@@ -160,11 +162,7 @@ struct UnifiedImportExportView: View {
                             
                             Picker("Import Format", selection: $selectedImportFormat) {
                                 ForEach(ImportFormat.allCases, id: \.self) { format in
-                                    HStack {
-                                        Image(systemName: format.icon)
-                                        Text(format.rawValue)
-                                    }
-                                    .tag(format)
+                                    Text(format.rawValue).tag(format)
                                 }
                             }
                             .pickerStyle(MenuPickerStyle())
@@ -221,11 +219,7 @@ struct UnifiedImportExportView: View {
                             
                             Picker("Document Import Format", selection: $selectedDocumentImportFormat) {
                                 ForEach(DocumentImportFormat.allCases, id: \.self) { format in
-                                    HStack {
-                                        Image(systemName: format.icon)
-                                        Text(format.rawValue)
-                                    }
-                                    .tag(format)
+                                    Text(format.rawValue).tag(format)
                                 }
                             }
                             .pickerStyle(MenuPickerStyle())
@@ -323,11 +317,7 @@ struct UnifiedImportExportView: View {
                             
                             Picker("Export Format", selection: $selectedExportFormat) {
                                 ForEach(ExportFormat.allCases, id: \.self) { format in
-                                    HStack {
-                                        Image(systemName: format.icon)
-                                        Text(format.rawValue)
-                                    }
-                                    .tag(format)
+                                    Text(format.rawValue).tag(format)
                                 }
                             }
                             .pickerStyle(MenuPickerStyle())
@@ -385,11 +375,7 @@ struct UnifiedImportExportView: View {
                             
                             Picker("Document Export Format", selection: $selectedDocumentExportFormat) {
                                 ForEach(DocumentExportFormat.allCases, id: \.self) { format in
-                                    HStack {
-                                        Image(systemName: format.icon)
-                                        Text(format.rawValue)
-                                    }
-                                    .tag(format)
+                                    Text(format.rawValue).tag(format)
                                 }
                             }
                             .pickerStyle(MenuPickerStyle())
@@ -475,11 +461,7 @@ struct UnifiedImportExportView: View {
                             
                             Picker("Mail Merge Export Format", selection: $selectedMailMergeExportFormat) {
                                 ForEach(MailMergeExportFormat.allCases, id: \.self) { format in
-                                    HStack {
-                                        Image(systemName: format.icon)
-                                        Text(format.rawValue)
-                                    }
-                                    .tag(format)
+                                    Text(format.rawValue).tag(format)
                                 }
                             }
                             .pickerStyle(MenuPickerStyle())
@@ -667,45 +649,6 @@ struct UnifiedImportExportView: View {
 }
 
 // MARK: - Supporting Views
-
-struct DocumentPicker: UIViewControllerRepresentable {
-    @Binding var selectedURL: URL?
-    let allowedContentTypes: [UTType]
-    
-    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: allowedContentTypes)
-        picker.delegate = context.coordinator
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, UIDocumentPickerDelegate {
-        let parent: DocumentPicker
-        
-        init(_ parent: DocumentPicker) {
-            self.parent = parent
-        }
-        
-        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            parent.selectedURL = urls.first
-        }
-    }
-}
-
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
 
 struct ImportPreviewSheet: View {
     let previewData: ImportPreviewData
