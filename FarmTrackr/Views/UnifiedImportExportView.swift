@@ -153,8 +153,8 @@ struct UnifiedImportExportView: View {
             Text(errorMessage)
         }
         .sheet(isPresented: $showingFilePicker) {
-            DocumentPicker(types: allowedContentTypes) { url in
-                selectedFileURL = url
+            DocumentPicker(types: allowedContentTypes) { selectedURL in
+                selectedFileURL = selectedURL
             }
         }
         .sheet(isPresented: $showingShareSheet) {

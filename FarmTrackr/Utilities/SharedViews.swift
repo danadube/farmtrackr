@@ -176,13 +176,13 @@ struct SidebarTab: View {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(isSelected ? themeVM.theme.colors.accent : (isHovered ? themeVM.theme.colors.text : themeVM.theme.colors.secondaryLabel))
+                    .foregroundColor(isSelected ? themeVM.theme.colors.accent : (isHovered ? Color(.label) : Color(.secondaryLabel)))
                     .frame(width: 20, height: 20, alignment: .center)
                     .padding(.leading, 12)
                 
                 Text(title)
                     .font(.system(size: 15, weight: isSelected ? .semibold : .medium))
-                    .foregroundColor(isSelected ? themeVM.theme.colors.accent : (isHovered ? themeVM.theme.colors.text : themeVM.theme.colors.text))
+                    .foregroundColor(isSelected ? themeVM.theme.colors.accent : (isHovered ? Color(.label) : Color(.label)))
                 Spacer()
             }
             .padding(.vertical, 8)
@@ -191,7 +191,7 @@ struct SidebarTab: View {
                     .fill(
                         isSelected ? 
                         themeVM.theme.colors.accent.opacity(0.15) : 
-                        (isHovered ? themeVM.theme.colors.cardBackground.opacity(0.5) : Color.clear)
+                        (isHovered ? Color(.secondarySystemBackground) : Color.clear)
                     )
             )
             .overlay(

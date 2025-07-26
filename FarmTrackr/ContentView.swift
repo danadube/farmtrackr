@@ -56,52 +56,57 @@ struct ContentView: View {
                 }
             })
         } else {
-            NavigationSplitView {
-                SidebarView(selectedTab: $selectedTab)
-            } detail: {
-                switch selectedTab {
-                case .home:
-                    HomeView(
-                        contacts: contacts,
-                        showingAddContact: $showingAddContact,
-                        showingAddDocument: $showingAddDocument,
-                        showingUnifiedImportExport: $showingUnifiedImportExport,
-                        showingPrintLabelsSheet: $showingPrintLabelsSheet,
-                        selectedTab: $selectedTab
-                    )
-                case .contacts:
-                    if let contact = selectedContact {
-                        ContactDetailView(contact: contact)
-                    } else {
-                        ContactsMasterView(
-                            selectedContact: $selectedContact,
-                            searchText: $searchText,
-                            sortOrder: $sortOrder,
+            ZStack {
+                themeVM.theme.colors.background.ignoresSafeArea()
+                
+                NavigationSplitView {
+                    SidebarView(selectedTab: $selectedTab)
+                } detail: {
+                    switch selectedTab {
+                    case .home:
+                        HomeView(
+                            contacts: contacts,
                             showingAddContact: $showingAddContact,
-                            showingContactDetail: $showingContactDetail
+                            showingAddDocument: $showingAddDocument,
+                            showingUnifiedImportExport: $showingUnifiedImportExport,
+                            showingPrintLabelsSheet: $showingPrintLabelsSheet,
+                            selectedTab: $selectedTab
+                        )
+                    case .contacts:
+                        if let contact = selectedContact {
+                            ContactDetailView(contact: contact)
+                        } else {
+                            ContactsMasterView(
+                                selectedContact: $selectedContact,
+                                searchText: $searchText,
+                                sortOrder: $sortOrder,
+                                showingAddContact: $showingAddContact,
+                                showingContactDetail: $showingContactDetail
+                            )
+                        }
+                    case .documents:
+                        DocumentsView(context: viewContext)
+                    case .dataQuality:
+                        DataQualityView()
+                    case .importExport:
+                        ImportExportView(
+                            showingUnifiedImportExport: $showingUnifiedImportExport,
+                            showingPrintLabelsSheet: $showingPrintLabelsSheet
+                        )
+                    case .settings:
+                        SettingsView()
+                    case .none:
+                        HomeView(
+                            contacts: contacts,
+                            showingAddContact: $showingAddContact,
+                            showingAddDocument: $showingAddDocument,
+                            showingUnifiedImportExport: $showingUnifiedImportExport,
+                            showingPrintLabelsSheet: $showingPrintLabelsSheet,
+                            selectedTab: $selectedTab
                         )
                     }
-                case .documents:
-                    DocumentsView(context: viewContext)
-                case .dataQuality:
-                    DataQualityView()
-                case .importExport:
-                    ImportExportView(
-                        showingUnifiedImportExport: $showingUnifiedImportExport,
-                        showingPrintLabelsSheet: $showingPrintLabelsSheet
-                    )
-                case .settings:
-                    SettingsView()
-                case .none:
-                    HomeView(
-                        contacts: contacts,
-                        showingAddContact: $showingAddContact,
-                        showingAddDocument: $showingAddDocument,
-                        showingUnifiedImportExport: $showingUnifiedImportExport,
-                        showingPrintLabelsSheet: $showingPrintLabelsSheet,
-                        selectedTab: $selectedTab
-                    )
                 }
+                .navigationSplitViewStyle(.balanced)
             }
             .sheet(isPresented: $showingAddContact) {
                 ContactEditView(contact: nil)
@@ -141,21 +146,60 @@ struct WelcomeScreen: View {
                     .font(.system(size: 36, weight: .bold, design: .rounded))
                     .foregroundColor(themeVM.theme.colors.text)
                     .multilineTextAlignment(.center)
+                    .padding(.bottom, themeVM.theme.spacing.large)
                 
                 // Subtitle
                 Text("Your farm CRM for managing contacts, documents, and more.")
                     .font(themeVM.theme.fonts.bodyFont)
                     .foregroundColor(themeVM.theme.colors.secondaryLabel)
                     .multilineTextAlignment(.center)
+                    .padding(.bottom, themeVM.theme.spacing.large)
                 
                 // Features
                 VStack(spacing: themeVM.theme.spacing.medium) {
-                    FeatureRow(icon: "person.2", title: "Manage Contacts", description: "Organize all your farm contacts in one place")
-                    FeatureRow(icon: "doc.text", title: "Document Management", description: "Store and organize important documents")
-                    FeatureRow(icon: "checkmark.shield", title: "Data Quality", description: "Ensure your data is clean and accurate")
-                    FeatureRow(icon: "square.and.arrow.up", title: "Import & Export", description: "Easily import and export your data")
+                    Text("Key Features")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(themeVM.theme.colors.text)
+                        .padding(.bottom, themeVM.theme.spacing.small)
+                    
+                    VStack(spacing: themeVM.theme.spacing.medium) {
+                        FeatureRow(icon: "person.2", title: "Manage Contacts", description: "Organize all your farm contacts in one place")
+                        FeatureRow(icon: "doc.text", title: "Document Management", description: "Store and organize important documents")
+                        FeatureRow(icon: "checkmark.shield", title: "Data Quality", description: "Ensure your data is clean and accurate")
+                        FeatureRow(icon: "square.and.arrow.up", title: "Import & Export", description: "Easily import and export your data")
+                    }
                 }
-                .padding(.horizontal, themeVM.theme.spacing.large)
+                .padding(themeVM.theme.spacing.large)
+                .background(
+                    RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.large)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(.systemBackground),
+                                    Color(.systemBackground).opacity(0.8)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.large)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            themeVM.theme.colors.accent.opacity(0.3),
+                                            themeVM.theme.colors.accent.opacity(0.1)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                )
+                .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 6)
+                .shadow(color: themeVM.theme.colors.primary.opacity(0.1), radius: 20, x: 0, y: 10)
+                .frame(maxWidth: 500) // Limit width for better appearance
             }
             .padding(.top, themeVM.theme.spacing.extraLarge * 3) // Increased top padding for more separation
             
@@ -196,29 +240,25 @@ struct FeatureRow: View {
     var body: some View {
         HStack(spacing: themeVM.theme.spacing.medium) {
             Image(systemName: icon)
-                .font(.system(size: 24, weight: .medium))
+                .font(.system(size: 20, weight: .medium))
                 .foregroundColor(themeVM.theme.colors.primary)
-                .frame(width: 32)
+                .frame(width: 24)
             
-            VStack(alignment: .center, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(themeVM.theme.colors.text)
-                    .multilineTextAlignment(.center)
                 
                 Text(description)
-                    .font(.system(size: 14))
+                    .font(.system(size: 13))
                     .foregroundColor(themeVM.theme.colors.secondaryLabel)
-                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
             }
+            
+            Spacer()
         }
-        .frame(maxWidth: .infinity)
         .padding(.horizontal, themeVM.theme.spacing.medium)
         .padding(.vertical, themeVM.theme.spacing.small)
-        .background(
-            RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.medium)
-                .fill(themeVM.theme.colors.cardBackground)
-        )
     }
 }
 
@@ -318,27 +358,51 @@ struct SidebarView: View {
                     Image("farmtrackr_logo_TB 1024")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 100, height: 100) // Double the size
+                        .frame(width: 125, height: 125) // 25% larger
+                        .shadow(color: themeVM.theme.colors.primary.opacity(0.3), radius: 8, x: 0, y: 4)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            themeVM.theme.colors.primary.opacity(0.6),
+                                            themeVM.theme.colors.primary.opacity(0.2)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 2
+                                )
+                        )
                     
                     if !isCollapsed {
-                        VStack(alignment: .center, spacing: 2) {
+                        VStack(alignment: .center, spacing: 4) {
                             Text("FarmTrackr")
-                                .font(.system(size: 18, weight: .bold))
+                                .font(.system(size: 22, weight: .bold)) // Larger title
                                 .foregroundColor(themeVM.theme.colors.text)
+                                .shadow(color: themeVM.theme.colors.primary.opacity(0.2), radius: 2, x: 0, y: 1)
                             Text("Farm CRM")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: 14, weight: .medium)) // Slightly larger subtitle
                                 .foregroundColor(themeVM.theme.colors.secondaryLabel)
                         }
                     }
                 }
-                .padding(.horizontal, themeVM.theme.spacing.medium)
-                .padding(.top, themeVM.theme.spacing.small)
-                .padding(.bottom, themeVM.theme.spacing.small)
+                .frame(maxWidth: .infinity)
+                .padding(themeVM.theme.spacing.medium)
+                .background(
+                    RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.medium)
+                        .fill(themeVM.theme.colors.cardBackground)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.medium)
+                                .stroke(themeVM.theme.colors.border, lineWidth: 0.5)
+                        )
+                )
+                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
             }
-            .background(themeVM.theme.colors.cardBackground)
+            .padding(.bottom, themeVM.theme.spacing.medium)
             
             Divider()
-                .background(themeVM.theme.colors.separator)
+                .background(Color(.separator))
             
             // Navigation List with Sections
             ScrollView {
@@ -381,11 +445,11 @@ struct SidebarView: View {
                 }
                 .padding(.vertical, themeVM.theme.spacing.small)
             }
-            .background(themeVM.theme.colors.background)
+            .background(Color(.systemBackground))
             
             Spacer()
         }
-        .background(themeVM.theme.colors.background)
+        .background(Color(.systemBackground))
         .frame(width: isCollapsed ? 60 : 220)
         .animation(.easeInOut(duration: 0.3), value: isCollapsed)
     }
@@ -438,84 +502,103 @@ struct HomeView: View {
     }
     
     private var quickActionsSection: some View {
-        VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
             Text("Quick Actions")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
             
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: themeVM.theme.spacing.medium) {
-                QuickActionCard(
-                    icon: "person.badge.plus",
-                    title: "Add Contact",
-                    subtitle: "Create a new farm contact",
-                    color: .blue
-                ) {
-                    showingAddContact = true
-                }
-                
-                QuickActionCard(
-                    icon: "doc.badge.plus",
-                    title: "Add Document",
-                    subtitle: "Create a new document",
-                    color: .green
-                ) {
-                    showingAddDocument = true
-                }
-                
-                QuickActionCard(
-                    icon: "square.and.arrow.up.on.square",
-                    title: "Import/Export",
-                    subtitle: "Manage your data",
-                    color: .orange
-                ) {
-                    showingUnifiedImportExport = true
-                }
-                
-                QuickActionCard(
-                    icon: "printer",
-                    title: "Print Labels",
-                    subtitle: "Print address labels",
-                    color: .purple
-                ) {
-                    showingPrintLabelsSheet = true
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: themeVM.theme.spacing.medium) {
+                    QuickActionCard(
+                        icon: "person.badge.plus",
+                        title: "Add Contact",
+                        subtitle: "Create a new farm contact",
+                        color: themeVM.theme.colors.primary
+                    ) {
+                        // Add contact action
+                    }
+                    
+                    QuickActionCard(
+                        icon: "doc.text",
+                        title: "Import Data",
+                        subtitle: "Import contacts from file",
+                        color: themeVM.theme.colors.accent
+                    ) {
+                        // Import action
+                    }
                 }
             }
+            .interactiveCardStyle()
         }
-        .padding(themeVM.theme.spacing.large)
-        .background(themeVM.theme.colors.cardBackground)
-        .cornerRadius(themeVM.theme.cornerRadius.medium)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
     
     private var recentContactsSection: some View {
-        VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
-            HStack {
-                Text("Recent Contacts")
-                    .font(themeVM.theme.fonts.titleFont)
-                    .foregroundColor(themeVM.theme.colors.text)
-                
-                Spacer()
-                
-                Button("View All") {
-                    selectedTab = .contacts
-                }
-                .font(themeVM.theme.fonts.bodyFont)
-                .foregroundColor(themeVM.theme.colors.accent)
-            }
+        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+            Text("Recent Contacts")
+                .font(themeVM.theme.fonts.titleFont)
+                .foregroundColor(themeVM.theme.colors.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
             
-            if contacts.isEmpty {
-                emptyContactsView
-            } else {
-                contactsListView
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                if contacts.isEmpty {
+                    VStack(spacing: Constants.Spacing.small) {
+                        Image(systemName: "person.2")
+                            .font(.system(size: 40))
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        Text("No contacts yet")
+                            .font(themeVM.theme.fonts.bodyFont)
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        Text("Add your first farm contact to get started")
+                            .font(themeVM.theme.fonts.captionFont)
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(Constants.Spacing.large)
+                } else {
+                    ForEach(contacts.prefix(5), id: \.self) { contact in
+                        HStack(spacing: Constants.Spacing.medium) {
+                            Circle()
+                                .fill(themeVM.theme.colors.primary.opacity(0.2))
+                                .frame(width: 40, height: 40)
+                                .overlay(
+                                    Text(contact.initials)
+                                        .font(themeVM.theme.fonts.bodyFont)
+                                        .foregroundColor(themeVM.theme.colors.primary)
+                                )
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(contact.fullName)
+                                    .font(themeVM.theme.fonts.bodyFont)
+                                    .foregroundColor(themeVM.theme.colors.text)
+                                if let farm = contact.farm, !farm.isEmpty {
+                                    Text(farm)
+                                        .font(themeVM.theme.fonts.captionFont)
+                                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            Text(contact.dateCreated?.formatted(date: .abbreviated, time: .omitted) ?? "")
+                                .font(themeVM.theme.fonts.captionFont)
+                                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        }
+                        .padding(.vertical, Constants.Spacing.small)
+                        
+                        if contact != contacts.prefix(5).last {
+                            Divider()
+                                .background(Color(.separator))
+                        }
+                    }
+                }
             }
+            .interactiveCardStyle()
         }
-        .padding(themeVM.theme.spacing.large)
-        .background(themeVM.theme.colors.cardBackground)
-        .cornerRadius(themeVM.theme.cornerRadius.medium)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
     
     private var emptyContactsView: some View {
@@ -591,9 +674,7 @@ struct QuickActionCard: View {
             }
             .frame(minHeight: 100)
             .padding(Constants.Spacing.medium)
-            .background(themeVM.theme.colors.cardBackground)
-            .cornerRadius(Constants.CornerRadius.medium)
-            .shadow(color: .black.opacity(0.1), radius: 3, x: 0, y: 2)
+            .interactiveCardStyle()
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -657,76 +738,142 @@ struct ContactsMasterView: View {
     }
     
     private var searchAndSortSection: some View {
-        VStack(spacing: Constants.Spacing.medium) {
-            // Search bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
-                TextField("Search contacts...", text: $searchText)
-                    .textFieldStyle(PlainTextFieldStyle())
-                
-                if !searchText.isEmpty {
-                    Button(action: { searchText = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
-                    }
-                }
-            }
-            .padding(Constants.Spacing.medium)
-            .background(themeVM.theme.colors.cardBackground)
-            .cornerRadius(Constants.CornerRadius.medium)
+        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+            Text("Search & Sort")
+                .font(themeVM.theme.fonts.titleFont)
+                .foregroundColor(themeVM.theme.colors.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
             
-            // Sort and Add Contact
-            HStack {
-                Menu {
-                    ForEach(SortOrder.allCases, id: \.self) { order in
-                        Button(order.displayName) {
-                            sortOrder = order
+            VStack(spacing: Constants.Spacing.medium) {
+                // Search bar
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                    TextField("Search contacts...", text: $searchText)
+                        .textFieldStyle(PlainTextFieldStyle())
+                    
+                    if !searchText.isEmpty {
+                        Button(action: { searchText = "" }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(themeVM.theme.colors.secondaryLabel)
                         }
                     }
-                } label: {
-                    HStack {
-                        Image(systemName: "arrow.up.arrow.down")
-                        Text("Sort by: \(sortOrder.displayName)")
-                    }
-                    .font(themeVM.theme.fonts.bodyFont)
-                    .foregroundColor(themeVM.theme.colors.text)
                 }
+                .padding(Constants.Spacing.medium)
+                .background(Color(.systemBackground))
+                .cornerRadius(Constants.CornerRadius.medium)
                 
-                Spacer()
-                
-                Button(action: { showingAddContact = true }) {
-                    HStack {
-                        Image(systemName: "plus")
-                        Text("Add Contact")
+                // Sort options
+                HStack(spacing: Constants.Spacing.medium) {
+                    Button(action: { sortOrder = .firstName }) {
+                        HStack {
+                            Image(systemName: "textformat.abc")
+                            Text("First Name")
+                        }
+                        .font(themeVM.theme.fonts.bodyFont)
+                        .foregroundColor(sortOrder == .firstName ? themeVM.theme.colors.accent : themeVM.theme.colors.text)
+                        .padding(.horizontal, Constants.Spacing.medium)
+                        .padding(.vertical, Constants.Spacing.small)
+                        .background(sortOrder == .firstName ? themeVM.theme.colors.accent.opacity(0.1) : Color.clear)
+                        .cornerRadius(Constants.CornerRadius.small)
                     }
-                    .font(themeVM.theme.fonts.buttonFont)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, Constants.Spacing.medium)
-                    .padding(.vertical, Constants.Spacing.small)
-                    .background(themeVM.theme.colors.accent)
-                    .cornerRadius(Constants.CornerRadius.medium)
+                    
+                    Button(action: { sortOrder = .farm }) {
+                        HStack {
+                            Image(systemName: "building.2")
+                            Text("Farm")
+                        }
+                        .font(themeVM.theme.fonts.bodyFont)
+                        .foregroundColor(sortOrder == .farm ? themeVM.theme.colors.accent : themeVM.theme.colors.text)
+                        .padding(.horizontal, Constants.Spacing.medium)
+                        .padding(.vertical, Constants.Spacing.small)
+                        .background(sortOrder == .farm ? themeVM.theme.colors.accent.opacity(0.1) : Color.clear)
+                        .cornerRadius(Constants.CornerRadius.small)
+                    }
+                    
+                    Button(action: { sortOrder = .dateCreated }) {
+                        HStack {
+                            Image(systemName: "calendar")
+                            Text("Date Created")
+                        }
+                        .font(themeVM.theme.fonts.bodyFont)
+                        .foregroundColor(sortOrder == .dateCreated ? themeVM.theme.colors.accent : themeVM.theme.colors.text)
+                        .padding(.horizontal, Constants.Spacing.medium)
+                        .padding(.vertical, Constants.Spacing.small)
+                        .background(sortOrder == .dateCreated ? themeVM.theme.colors.accent.opacity(0.1) : Color.clear)
+                        .cornerRadius(Constants.CornerRadius.small)
+                    }
+                    
+                    Spacer()
                 }
             }
+            .interactiveCardStyle()
         }
-        .padding(Constants.Spacing.large)
-        .background(themeVM.theme.colors.cardBackground)
-        .cornerRadius(Constants.CornerRadius.medium)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
     
     private var contactsListSection: some View {
-        LazyVStack(spacing: Constants.Spacing.small) {
-            ForEach(filteredContacts, id: \.self) { contact in
-                ContactRowView(
-                    contact: contact,
-                    isSelected: false,
-                    isSelectionMode: false
-                ) {
-                    selectedContact = contact
-                    showingContactDetail = true
+        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+            Text("Contacts")
+                .font(themeVM.theme.fonts.titleFont)
+                .foregroundColor(themeVM.theme.colors.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                if filteredContacts.isEmpty {
+                    VStack(spacing: Constants.Spacing.small) {
+                        Image(systemName: "person.2")
+                            .font(.system(size: 40))
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        Text("No contacts found")
+                            .font(themeVM.theme.fonts.bodyFont)
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        Text("Try adjusting your search or add a new contact")
+                            .font(themeVM.theme.fonts.captionFont)
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(Constants.Spacing.large)
+                } else {
+                    ForEach(filteredContacts, id: \.self) { contact in
+                        HStack(spacing: Constants.Spacing.medium) {
+                            Circle()
+                                .fill(themeVM.theme.colors.primary.opacity(0.2))
+                                .frame(width: 40, height: 40)
+                                .overlay(
+                                    Text(contact.initials)
+                                        .font(themeVM.theme.fonts.bodyFont)
+                                        .foregroundColor(themeVM.theme.colors.primary)
+                                )
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(contact.fullName)
+                                    .font(themeVM.theme.fonts.bodyFont)
+                                    .foregroundColor(themeVM.theme.colors.text)
+                                if let farm = contact.farm, !farm.isEmpty {
+                                    Text(farm)
+                                        .font(themeVM.theme.fonts.captionFont)
+                                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            Button(action: { selectedContact = contact }) {
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                            }
+                        }
+                        .padding(.vertical, Constants.Spacing.small)
+                        
+                        if contact != filteredContacts.last {
+                            Divider()
+                                .background(Color(.separator))
+                        }
+                    }
                 }
             }
+            .interactiveCardStyle()
         }
     }
 }
@@ -747,45 +894,55 @@ struct ImportExportView: View {
             ScrollView {
                 VStack(spacing: Constants.Spacing.large) {
                     // Quick Actions
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: Constants.Spacing.medium) {
-                        QuickActionCard(
-                            icon: "square.and.arrow.down",
-                            title: "Import Data",
-                            subtitle: "Import contacts from CSV or Excel",
-                            color: .blue
-                        ) {
-                            showingUnifiedImportExport = true
-                        }
+                    VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                        Text("Import & Export Tools")
+                            .font(themeVM.theme.fonts.titleFont)
+                            .foregroundColor(themeVM.theme.colors.text)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         
-                        QuickActionCard(
-                            icon: "square.and.arrow.up",
-                            title: "Export Data",
-                            subtitle: "Export contacts to various formats",
-                            color: .green
-                        ) {
-                            showingUnifiedImportExport = true
+                        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: Constants.Spacing.medium) {
+                                QuickActionCard(
+                                    icon: "square.and.arrow.down",
+                                    title: "Import Contacts",
+                                    subtitle: "Import from CSV or Excel",
+                                    color: themeVM.theme.colors.primary
+                                ) {
+                                    showingUnifiedImportExport = true
+                                }
+                                
+                                QuickActionCard(
+                                    icon: "square.and.arrow.up",
+                                    title: "Export Contacts",
+                                    subtitle: "Export to CSV format",
+                                    color: themeVM.theme.colors.accent
+                                ) {
+                                    showingUnifiedImportExport = true
+                                }
+                                
+                                QuickActionCard(
+                                    icon: "doc.text",
+                                    title: "Import Documents",
+                                    subtitle: "Import PDFs and files",
+                                    color: .green
+                                ) {
+                                    showingUnifiedImportExport = true
+                                }
+                                
+                                QuickActionCard(
+                                    icon: "printer",
+                                    title: "Print Labels",
+                                    subtitle: "Print address labels",
+                                    color: .purple
+                                ) {
+                                    showingPrintLabelsSheet = true
+                                }
+                            }
                         }
-                        
-                        QuickActionCard(
-                            icon: "printer",
-                            title: "Print Labels",
-                            subtitle: "Print address labels for contacts",
-                            color: .orange
-                        ) {
-                            showingPrintLabelsSheet = true
-                        }
-                        
-                        QuickActionCard(
-                            icon: "doc.text",
-                            title: "Documents",
-                            subtitle: "Create and manage documents",
-                            color: .purple
-                        ) {
-                            // Navigate to documents
-                        }
+                        .interactiveCardStyle()
                     }
                 }
                 .padding(Constants.Spacing.large)
@@ -829,13 +986,7 @@ struct StatCard: View {
         }
         .frame(minHeight: 120)
         .padding(Constants.Spacing.large)
-        .background(Color.cardBackgroundAdaptive)
-        .cornerRadius(12)
-        .shadow(color: Color.adaptiveShadowColor.opacity(0.25), radius: 12, x: 0, y: 6)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.adaptiveShadowColor.opacity(0.1), lineWidth: 1)
-        )
+        .interactiveCardStyle()
     }
 }
 

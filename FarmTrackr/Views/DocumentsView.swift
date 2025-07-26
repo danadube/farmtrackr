@@ -20,6 +20,15 @@ struct DocumentsView: View {
     @State private var showingDocumentList = false
     @State private var showingDeleteDialog = false
     @State private var documentToDelete: Document?
+    @State private var showingDocumentPicker = false
+    @State private var showingGoogleDrivePicker = false
+    @State private var selectedDocument: Document?
+    @State private var showingDocumentDetail = false
+    @State private var viewMode: ViewMode = .list
+    
+    enum ViewMode {
+        case list, grid
+    }
     
     init(context: NSManagedObjectContext) {
         self._documentManager = StateObject(wrappedValue: DocumentManager(context: context))
@@ -43,67 +52,8 @@ struct DocumentsView: View {
             
             ScrollView {
                 VStack(spacing: Constants.Spacing.large) {
-                    // Search and view toggle
-                    HStack {
-                        // Search bar
-                        SearchBar(text: $searchText, placeholder: "Search documents...")
-                        
-                        Button(action: { showingDocumentList.toggle() }) {
-                            Image(systemName: "list.bullet")
-                                .font(.title2)
-                                .foregroundColor(themeVM.theme.colors.accent)
-                        }
-                        .help("Toggle between grid and list view")
-                    }
-                    
-                    // Quick actions
-                    HStack(spacing: 16) {
-                        Button(action: createNewDocument) {
-                            HStack {
-                                Image(systemName: "doc.badge.plus")
-                                Text("New Document")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(themeVM.theme.colors.accent)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                        }
-                        .help("Create a new document")
-                        
-                        Button(action: { showingCreateTemplate = true }) {
-                            HStack {
-                                Image(systemName: "doc.text.below.ecg")
-                                Text("New Template")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.cardBackgroundAdaptive)
-                            .foregroundColor(Color.textColor)
-                            .cornerRadius(12)
-                        }
-                        .help("Create a new document template")
-                        
-                        Button(action: { showingMailMerge = true }) {
-                            HStack {
-                                Image(systemName: "envelope.badge")
-                                Text("Mail Merge")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.cardBackgroundAdaptive)
-                            .foregroundColor(Color.textColor)
-                            .cornerRadius(12)
-                        }
-                        .help("Create documents from templates and contact data")
-                    }
-                    
-                    // Documents grid or list
-                    if showingDocumentList {
-                        documentListView
-                    } else {
-                        documentGridView
-                    }
+                    searchAndActionsSection
+                    documentsSection
                 }
                 .padding(Constants.Spacing.large)
             }
@@ -133,33 +83,150 @@ struct DocumentsView: View {
         }
     }
     
-    // MARK: - Document Grid View
-    private var documentGridView: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible(), spacing: 16),
-            GridItem(.flexible(), spacing: 16)
-        ], spacing: 16) {
-            ForEach(filteredDocuments, id: \.id) { document in
-                DocumentCardView(
-                    document: document,
-                    onTap: { openDocument(document) },
-                    onDelete: { deleteDocument(document) }
-                )
-                .environmentObject(themeVM)
+    private var searchAndActionsSection: some View {
+        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+            Text("Document Management")
+                .font(themeVM.theme.fonts.titleFont)
+                .foregroundColor(themeVM.theme.colors.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                // Search and view toggle
+                HStack {
+                    // Search bar
+                    SearchBar(text: $searchText, placeholder: "Search documents...")
+                    
+                    Spacer()
+                    
+                    // View toggle
+                    Picker("View", selection: $viewMode) {
+                        Image(systemName: "list.bullet").tag(ViewMode.list)
+                        Image(systemName: "square.grid.2x2").tag(ViewMode.grid)
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .frame(width: 100)
+                }
+                
+                // Action buttons
+                HStack(spacing: Constants.Spacing.medium) {
+                    Button(action: { showingCreateTemplate = true }) {
+                        HStack {
+                            Image(systemName: "plus")
+                            Text("New Document")
+                        }
+                        .font(themeVM.theme.fonts.buttonFont)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, Constants.Spacing.medium)
+                        .padding(.vertical, Constants.Spacing.small)
+                        .background(themeVM.theme.colors.primary)
+                        .cornerRadius(Constants.CornerRadius.medium)
+                    }
+                    
+                    Button(action: { showingMailMerge = true }) {
+                        HStack {
+                            Image(systemName: "envelope.badge")
+                            Text("Mail Merge")
+                        }
+                        .font(themeVM.theme.fonts.buttonFont)
+                        .foregroundColor(themeVM.theme.colors.primary)
+                        .padding(.horizontal, Constants.Spacing.medium)
+                        .padding(.vertical, Constants.Spacing.small)
+                        .background(themeVM.theme.colors.primary.opacity(0.1))
+                        .cornerRadius(Constants.CornerRadius.medium)
+                    }
+                    
+                    Spacer()
+                }
             }
+            .interactiveCardStyle()
         }
     }
     
-    // MARK: - Document List View
-    private var documentListView: some View {
-        VStack(spacing: 12) {
-            ForEach(filteredDocuments, id: \.id) { document in
-                DocumentRowView(
-                    document: document,
-                    onTap: { openDocument(document) },
-                    onDelete: { deleteDocument(document) }
-                )
-                .environmentObject(themeVM)
+    private var documentsSection: some View {
+        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+            Text("Documents")
+                .font(themeVM.theme.fonts.titleFont)
+                .foregroundColor(themeVM.theme.colors.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                if filteredDocuments.isEmpty {
+                    emptyDocumentsView
+                } else {
+                    documentsContentView
+                }
+            }
+            .interactiveCardStyle()
+        }
+    }
+    
+    private var emptyDocumentsView: some View {
+        VStack(spacing: Constants.Spacing.small) {
+            Image(systemName: "doc.text")
+                .font(.system(size: 40))
+                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+            Text("No documents yet")
+                .font(themeVM.theme.fonts.bodyFont)
+                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+            Text("Add your first document to get started")
+                .font(themeVM.theme.fonts.captionFont)
+                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(Constants.Spacing.large)
+    }
+    
+    private var documentsContentView: some View {
+        Group {
+            if viewMode == .list {
+                LazyVStack(spacing: Constants.Spacing.small) {
+                    ForEach(filteredDocuments, id: \.self) { document in
+                        DocumentRowView(
+                            document: document,
+                            onTap: {
+                                selectedDocument = document
+                                showingDocumentDetail = true
+                            },
+                            onEdit: {
+                                documentToEdit = document
+                                showingDocumentEditor = true
+                            },
+                            onDelete: {
+                                documentToDelete = document
+                                showingDeleteDialog = true
+                            }
+                        )
+                        
+                        if document != filteredDocuments.last {
+                            Divider()
+                                .background(Color(.separator))
+                        }
+                    }
+                }
+            } else {
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: Constants.Spacing.medium) {
+                                    ForEach(filteredDocuments, id: \.self) { document in
+                    DocumentCardView(
+                        document: document,
+                        onTap: {
+                            selectedDocument = document
+                            showingDocumentDetail = true
+                        },
+                        onEdit: {
+                            documentToEdit = document
+                            showingDocumentEditor = true
+                        },
+                        onDelete: {
+                            documentToDelete = document
+                            showingDeleteDialog = true
+                        }
+                    )
+                }
+                }
             }
         }
     }
@@ -169,16 +236,6 @@ struct DocumentsView: View {
         documentToEdit = nil
         showingDocumentEditor = true
     }
-    
-    private func openDocument(_ document: Document) {
-        documentToEdit = document
-        showingDocumentEditor = true
-    }
-    
-    private func deleteDocument(_ document: Document) {
-        documentToDelete = document
-        showingDeleteDialog = true
-    }
 }
 
 // MARK: - Document Card View
@@ -186,54 +243,111 @@ struct DocumentCardView: View {
     @EnvironmentObject var themeVM: ThemeViewModel
     let document: Document
     let onTap: () -> Void
+    let onEdit: () -> Void
     let onDelete: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
+            // Card title header
             HStack {
-                Button(action: onTap) {
-                    HStack {
-                        Image(systemName: "doc.text")
-                            .font(.title2)
-                            .foregroundColor(themeVM.theme.colors.accent)
-                        
-                        Spacer()
-                        
-                        Text(document.modifiedDate?.formatted(date: .abbreviated, time: .omitted) ?? "")
-                            .font(.caption)
-                            .foregroundColor(Color.textColor.opacity(0.8))
-                    }
-                }
-                .buttonStyle(PlainButtonStyle())
+                Text("Document")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(themeVM.theme.colors.text)
                 
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .font(.caption)
-                        .foregroundColor(themeVM.theme.colors.error)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .help("Delete document")
-            }
-            
-            Button(action: onTap) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(document.name ?? "Untitled Document")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color.textColor)
-                        .lineLimit(2)
+                Spacer()
+                
+                // Action buttons
+                HStack(spacing: 8) {
+                    Button(action: onEdit) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(themeVM.theme.colors.primary)
+                            .frame(width: 28, height: 28)
+                            .background(themeVM.theme.colors.primary.opacity(0.1))
+                            .cornerRadius(6)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .help("Edit document")
                     
-                    Text(document.content?.prefix(100) ?? "")
-                        .font(.caption)
-                        .foregroundColor(Color.textColor.opacity(0.7))
-                        .lineLimit(3)
+                    Button(action: onDelete) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(themeVM.theme.colors.error)
+                            .frame(width: 28, height: 28)
+                            .background(themeVM.theme.colors.error.opacity(0.1))
+                            .cornerRadius(6)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .help("Delete document")
                 }
             }
-            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 16)
+            
+            Divider()
+                .background(themeVM.theme.colors.border)
+                .padding(.horizontal, 20)
+            
+            // Document content
+            VStack(alignment: .leading, spacing: 16) {
+                // Document icon and name
+                HStack(spacing: 12) {
+                    Image(systemName: "doc.text")
+                        .font(.title2)
+                        .foregroundColor(themeVM.theme.colors.primary)
+                        .frame(width: 32, height: 32)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(document.name ?? "Untitled Document")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(themeVM.theme.colors.text)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                        
+                        Text(document.content?.prefix(80) ?? "")
+                            .font(.system(size: 13))
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                    }
+                    
+                    Spacer()
+                }
+                
+                // Date info
+                HStack {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 11))
+                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                    
+                    Text(document.modifiedDate?.formatted(date: .abbreviated, time: .omitted) ?? "")
+                        .font(.system(size: 11))
+                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                    
+                    Spacer()
+                    
+                    // Tap indicator
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onTap()
+            }
         }
-        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .floatingCardStyle()
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
     }
 }
 
@@ -242,49 +356,99 @@ struct DocumentRowView: View {
     @EnvironmentObject var themeVM: ThemeViewModel
     let document: Document
     let onTap: () -> Void
+    let onEdit: () -> Void
     let onDelete: () -> Void
     
     var body: some View {
-        HStack(spacing: 16) {
-            Button(action: onTap) {
-                HStack(spacing: 16) {
-                    Image(systemName: "doc.text")
-                        .font(.title2)
-                        .foregroundColor(themeVM.theme.colors.accent)
-                        .frame(width: 32)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(document.name ?? "Untitled Document")
-                            .font(.headline)
-                            .foregroundColor(Color.textColor)
-                        
-                        Text(document.modifiedDate?.formatted(date: .abbreviated, time: .omitted) ?? "")
-                            .font(.caption)
-                            .foregroundColor(Color.textColor.opacity(0.8))
+        VStack(alignment: .leading, spacing: 0) {
+            // Card title header
+            HStack {
+                Text("Document")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(themeVM.theme.colors.text)
+                
+                Spacer()
+                
+                // Action buttons
+                HStack(spacing: 8) {
+                    Button(action: onEdit) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(themeVM.theme.colors.primary)
+                            .frame(width: 28, height: 28)
+                            .background(themeVM.theme.colors.primary.opacity(0.1))
+                            .cornerRadius(6)
                     }
+                    .buttonStyle(PlainButtonStyle())
+                    .help("Edit document")
                     
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(Color.textColor.opacity(0.6))
+                    Button(action: onDelete) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(themeVM.theme.colors.error)
+                            .frame(width: 28, height: 28)
+                            .background(themeVM.theme.colors.error.opacity(0.1))
+                            .cornerRadius(6)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .help("Delete document")
                 }
             }
-            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
             
-            Button(action: onDelete) {
-                Image(systemName: "trash")
-                    .font(.caption)
-                    .foregroundColor(themeVM.theme.colors.error)
+            Divider()
+                .background(themeVM.theme.colors.border)
+                .padding(.horizontal, 16)
+            
+            // Document content
+            HStack(spacing: 16) {
+                // Document icon
+                Image(systemName: "doc.text")
+                    .font(.title2)
+                    .foregroundColor(themeVM.theme.colors.primary)
+                    .frame(width: 32, height: 32)
+                
+                // Document info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(document.name ?? "Untitled Document")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(themeVM.theme.colors.text)
+                    
+                    HStack(spacing: 8) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 11))
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        
+                        Text(document.modifiedDate?.formatted(date: .abbreviated, time: .omitted) ?? "")
+                            .font(.system(size: 12))
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                    }
+                }
+                
+                Spacer()
+                
+                // Tap area for opening document
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                    .frame(width: 24, height: 24)
             }
-            .buttonStyle(PlainButtonStyle())
-            .help("Delete document")
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onTap()
+            }
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
-        .background(Color.cardBackgroundAdaptive)
-        .cornerRadius(8)
-        .shadow(color: Color.adaptiveShadowColor.opacity(0.15), radius: 4, x: 0, y: 2)
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
     }
 }
 
