@@ -35,145 +35,70 @@ struct DataQualityView: View {
     @State private var pendingBulkEditValue: String = ""
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: Constants.Spacing.large) {
-                TabHeader(icon: "checkmark.shield", logoName: nil, title: "Data Quality", subtitle: "Monitor and improve your contact data")
-                
-                // Quality Overview Cards
-                qualityOverviewCards
-                
-                // Quick Actions (moved to top for better accessibility)
-                actionsSection
-                
-                // Issue Breakdown
-                issueBreakdownSection
-                
-                // Farm Duplicate Analysis
-                farmDuplicateAnalysisSection
+        VStack(spacing: 0) {
+            // TabHeader
+            TabHeader(icon: "checkmark.shield", logoName: nil, title: "Data Quality", subtitle: "Monitor and improve your data quality")
+            
+            ScrollView {
+                VStack(spacing: Constants.Spacing.large) {
+                    // Quality Overview Cards
+                    qualityOverviewCards
+                    
+                    // Quick Actions (moved to top for better accessibility)
+                    actionsSection
+                    
+                    // Issue Breakdown
+                    issueBreakdownSection
+                    
+                    // Farm Duplicate Analysis
+                    farmDuplicateAnalysisSection
+                }
+                .padding(Constants.Spacing.large)
             }
-            .padding(Constants.Spacing.large)
         }
-        .background(Color.appBackground)
+        .background(themeVM.theme.colors.background)
         .onAppear {
-            refreshQualityData()
+            loadQualityData()
         }
         .sheet(isPresented: $showingIssueDetails) {
-            IssueDetailsView(issues: qualityReports.filter { !$0.errors.isEmpty || !$0.warnings.isEmpty })
+            IssueDetailsView(issues: qualityReports)
         }
         .sheet(isPresented: $showingDuplicateResolution) {
             DuplicateResolutionView(duplicates: duplicates, themeVM: themeVM)
         }
-        .overlay(
-            // Success message overlay
-            Group {
-                if showingSuccessMessage {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                                .font(.title2)
-                            
-                            Text(successMessage)
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.primary)
-                                .multilineTextAlignment(.leading)
-                            
-                            Spacer()
-                        }
-                        .padding(Constants.Spacing.large)
-                        .background(
-                            RoundedRectangle(cornerRadius: Constants.CornerRadius.medium)
-                                .fill(themeVM.theme.colors.cardBackground)
-                                .shadow(radius: 4)
-                        )
-                        .padding(.horizontal, Constants.Spacing.large)
-                        .padding(.bottom, Constants.Spacing.large)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .animation(.easeInOut(duration: 0.3), value: showingSuccessMessage)
-                    }
-                }
-            }
-        )
-        .sheet(isPresented: $showingBulkEditSheet) {
-            NavigationView {
-                VStack(spacing: 0) {
-                    // Filter controls
-                    HStack {
-                        TextField("Filter by name", text: $filterName)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.horizontal)
-                        Menu {
-                            Button("All Farms") { filterFarm = "All Farms" }
-                            ForEach(Array(Set(contacts.compactMap { $0.farm ?? "" }).filter { !$0.isEmpty }), id: \.self) { farm in
-                                Button(farm) { filterFarm = farm }
-                            }
-                        } label: {
-                            HStack {
-                                Text(filterFarm)
-                                Image(systemName: "chevron.down")
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 6)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                        }
-                        .padding(.trailing)
-                    }
-                    .padding(.vertical)
-                    Divider()
-                    // Selection list
-                    List(selectableContacts, id: \.objectID, selection: $selectedContacts) { contact in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("\(contact.firstName ?? "") \(contact.lastName ?? "")")
-                                    .font(.body)
-                                if let farm = contact.farm, !farm.isEmpty {
-                                    Text(farm).font(.caption).foregroundColor(.secondary)
-                                }
-                            }
-                            Spacer()
-                            if selectedContacts.contains(contact.objectID) {
-                                Image(systemName: "checkmark.circle.fill").foregroundColor(.accentColor)
-                            } else {
-                                Image(systemName: "circle").foregroundColor(.secondary)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            if selectedContacts.contains(contact.objectID) {
-                                selectedContacts.remove(contact.objectID)
-                            } else {
-                                selectedContacts.insert(contact.objectID)
-                            }
-                        }
-                    }
-                    .environment(\.editMode, .constant(.active))
-                    Divider()
-                    // Value entry and action
-                    VStack(spacing: 12) {
-                        if let field = pendingBulkEditField {
-                            TextField("New value for all selected", text: $pendingBulkEditValue)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .padding(.horizontal)
-                            Button("Apply to Selected") {
-                                applyBulkEdit(field: field, value: pendingBulkEditValue)
-                            }
-                            .disabled(pendingBulkEditValue.isEmpty || selectedContacts.isEmpty)
-                            .buttonStyle(.borderedProminent)
-                            .padding(.bottom)
-                        }
-                    }
-                }
-                .navigationTitle("Bulk Edit Contacts")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { showingBulkEditSheet = false }
-                    }
-                }
-            }
+        .alert("Success", isPresented: $showingSuccessMessage) {
+            Button("OK") { }
+        } message: {
+            Text(successMessage)
         }
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var totalContacts: Int {
+        contacts.count
+    }
+    
+    private var completeRecords: Int {
+        contacts.filter { contact in
+            !(contact.firstName ?? "").isEmpty &&
+            !(contact.lastName ?? "").isEmpty &&
+            !(contact.email ?? "").isEmpty &&
+            !(contact.phone ?? "").isEmpty
+        }.count
+    }
+    
+    private var missingEmail: Int {
+        contacts.filter { ($0.email ?? "").isEmpty }.count
+    }
+    
+    private var missingPhone: Int {
+        contacts.filter { ($0.phone ?? "").isEmpty }.count
+    }
+    
+    private var qualityScore: Double {
+        guard totalContacts > 0 else { return 0 }
+        return Double(completeRecords) / Double(totalContacts) * 100
     }
     
     private var qualityOverviewCards: some View {
@@ -348,7 +273,7 @@ struct DataQualityView: View {
                     icon: "plus.circle",
                     action: {
                         TestDataHelper.addTestDuplicates(context: viewContext)
-                        refreshQualityData()
+                        loadQualityData()
                     }
                 )
                 
@@ -370,7 +295,7 @@ struct DataQualityView: View {
                     title: "Refresh Data",
                     subtitle: "Reassess quality",
                     icon: "arrow.clockwise",
-                    action: refreshQualityData
+                    action: loadQualityData
                 )
                 
                 QualityActionButton(
@@ -393,7 +318,7 @@ struct DataQualityView: View {
         return .red
     }
     
-    private func refreshQualityData() {
+    private func loadQualityData() {
         let allContacts = Array(contacts)
         print("DataQualityView: Assessing \(allContacts.count) contacts")
         
@@ -510,7 +435,7 @@ struct DataQualityView: View {
     
     private func cleanupBadMergedContacts() {
         TestDataHelper.cleanupAllBadMergedContacts(context: viewContext)
-        refreshQualityData()
+        loadQualityData()
         
         successMessage = "Cleaned up all bad merged contacts!"
         showingSuccessMessage = true

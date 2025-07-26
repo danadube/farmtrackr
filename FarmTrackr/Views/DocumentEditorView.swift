@@ -38,7 +38,7 @@ struct DocumentEditorView: View {
     
     var body: some View {
         ZStack {
-            Color.appBackground
+            themeVM.theme.colors.background
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {

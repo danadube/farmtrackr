@@ -31,6 +31,23 @@ extension FarmContact {
         }
     }
     
+    var initials: String {
+        let first = firstName?.trimmingCharacters(in: .whitespaces) ?? ""
+        let last = lastName?.trimmingCharacters(in: .whitespaces) ?? ""
+        
+        if first.isEmpty && last.isEmpty {
+            // If no name, use farm initials
+            let farmName = farm?.trimmingCharacters(in: .whitespaces) ?? ""
+            return farmName.prefix(2).uppercased()
+        } else if first.isEmpty {
+            return last.prefix(1).uppercased()
+        } else if last.isEmpty {
+            return first.prefix(1).uppercased()
+        } else {
+            return "\(first.prefix(1))\(last.prefix(1))".uppercased()
+        }
+    }
+    
     // Formatted zip code properties
     var formattedZipCode: String {
         if zipCode > 0 {

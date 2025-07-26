@@ -20,118 +20,272 @@ class ThemeViewModel: ObservableObject {
 }
 
 struct ContentView: View {
-    @Environment(\.managedObjectContext) private var viewContext
-    @StateObject private var themeVM = ThemeViewModel()
-    @StateObject private var accessibilityManager = AccessibilityManager()
     @State private var selectedTab: NavigationTab? = .home
+    @State private var searchText = ""
+    @State private var sortOrder: SortOrder = .firstName
+    @State private var showingAddContact = false
+    @State private var showingContactDetail = false
     @State private var selectedContact: FarmContact?
-    @State private var searchText: String = ""
-    @State private var sortOrder: SortOrder = .lastName
-    @State private var showingAddContact: Bool = false
-    @State private var showingContactDetail: Bool = false
-    // Add these for menu actions
-    @State private var showingUnifiedImportExport: Bool = false
-    @State private var showingPrintLabelsSheet: Bool = false
+    @State private var showingAddDocument = false
+    @State private var showingUnifiedImportExport = false
+    @State private var showingPrintLabelsSheet = false
+    @State private var hasSeenWelcome = false
+    @EnvironmentObject var themeVM: ThemeViewModel
+    @EnvironmentObject var accessibilityManager: AccessibilityManager
+    @Environment(\.managedObjectContext) private var viewContext
+    @StateObject private var documentManager = DocumentManager(context: PersistenceController.shared.container.viewContext)
     
-    private var customFont: Font {
-        Font.custom(themeVM.theme.font, size: 16)
-    }
-    
-    enum NavigationTab: String, CaseIterable {
-        case home = "Home"
-        case contacts = "Contacts"
-        case documents = "Documents"
-        case dataQuality = "Data Quality"
-        case importExport = "Import/Export"
-        case settings = "Settings"
+    private var contacts: [FarmContact] {
+        let fetchRequest: NSFetchRequest<FarmContact> = FarmContact.fetchRequest()
+        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \FarmContact.dateCreated, ascending: false)]
+        fetchRequest.fetchLimit = 10
         
-        var icon: String {
-            switch self {
-            case .home: return "house"
-            case .contacts: return "person.2"
-            case .documents: return "doc.text"
-            case .dataQuality: return "checkmark.shield"
-            case .importExport: return "square.and.arrow.up.on.square"
-            case .settings: return "gear"
-            }
+        do {
+            return try viewContext.fetch(fetchRequest)
+        } catch {
+            print("Error fetching contacts: \(error)")
+            return []
         }
     }
     
     var body: some View {
-        HStack(spacing: 0) {
-            SidebarView(selectedTab: $selectedTab)
-                .frame(width: 240) // Increased from 200
-                .environmentObject(themeVM) // Ensure sidebar also gets themeVM
-            Divider()
-            DetailContentView(
-                selectedTab: $selectedTab,
-                selectedContact: $selectedContact,
-                searchText: $searchText,
-                sortOrder: $sortOrder,
-                showingAddContact: $showingAddContact,
-                showingContactDetail: $showingContactDetail
-            )
-            .environmentObject(accessibilityManager)
-            .environmentObject(themeVM) // <-- Ensure themeVM is injected here
-        }
-        .environment(\.managedObjectContext, viewContext)
-        .font(customFont)
-        .background(Color.appBackground)
-        .accentColor(themeVM.theme.colors.accent)
-        .preferredColorScheme(themeVM.darkModeEnabled ? .dark : .light)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("FarmTrackr main navigation")
-        .accessibilityHint("Use the tabs at the bottom to navigate between different sections of the app")
-        // Menu action sheets
-        .sheet(isPresented: $showingAddContact) {
-            ContactEditView(contact: nil)
-        }
-        .sheet(isPresented: $showingUnifiedImportExport) {
-            UnifiedImportExportView(documentManager: DocumentManager(context: viewContext))
-                .environmentObject(themeVM)
-        }
-        .sheet(isPresented: $showingPrintLabelsSheet) {
-            PrintLabelsView(templateManager: LabelTemplateManager())
-        }
-        .onAppear {
-#if targetEnvironment(macCatalyst)
-            NotificationCenter.default.addObserver(forName: NSNotification.Name("NewContact"), object: nil, queue: .main) { _ in
-                showingAddContact = true
+        if !hasSeenWelcome {
+            WelcomeScreen(onGetStarted: {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    hasSeenWelcome = true
+                }
+            })
+        } else {
+            NavigationSplitView {
+                SidebarView(selectedTab: $selectedTab)
+            } detail: {
+                switch selectedTab {
+                case .home:
+                    HomeView(
+                        contacts: contacts,
+                        showingAddContact: $showingAddContact,
+                        showingAddDocument: $showingAddDocument,
+                        showingUnifiedImportExport: $showingUnifiedImportExport,
+                        showingPrintLabelsSheet: $showingPrintLabelsSheet,
+                        selectedTab: $selectedTab
+                    )
+                case .contacts:
+                    if let contact = selectedContact {
+                        ContactDetailView(contact: contact)
+                    } else {
+                        ContactsMasterView(
+                            selectedContact: $selectedContact,
+                            searchText: $searchText,
+                            sortOrder: $sortOrder,
+                            showingAddContact: $showingAddContact,
+                            showingContactDetail: $showingContactDetail
+                        )
+                    }
+                case .documents:
+                    DocumentsView(context: viewContext)
+                case .dataQuality:
+                    DataQualityView()
+                case .importExport:
+                    ImportExportView(
+                        showingUnifiedImportExport: $showingUnifiedImportExport,
+                        showingPrintLabelsSheet: $showingPrintLabelsSheet
+                    )
+                case .settings:
+                    SettingsView()
+                case .none:
+                    HomeView(
+                        contacts: contacts,
+                        showingAddContact: $showingAddContact,
+                        showingAddDocument: $showingAddDocument,
+                        showingUnifiedImportExport: $showingUnifiedImportExport,
+                        showingPrintLabelsSheet: $showingPrintLabelsSheet,
+                        selectedTab: $selectedTab
+                    )
+                }
             }
-            NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowImport"), object: nil, queue: .main) { _ in
-                showingUnifiedImportExport = true
+            .sheet(isPresented: $showingAddContact) {
+                ContactEditView(contact: nil)
             }
-            NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowExport"), object: nil, queue: .main) { _ in
-                showingUnifiedImportExport = true
+            .sheet(isPresented: $showingAddDocument) {
+                DocumentEditorView(documentManager: documentManager)
+                    .environmentObject(themeVM)
             }
-            NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowPrintLabels"), object: nil, queue: .main) { _ in
-                showingPrintLabelsSheet = true
+            .sheet(isPresented: $showingUnifiedImportExport) {
+                UnifiedImportExportView(documentManager: documentManager)
+                    .environmentObject(themeVM)
             }
-#endif
+            .sheet(isPresented: $showingPrintLabelsSheet) {
+                PrintLabelsView(templateManager: LabelTemplateManager())
+            }
         }
-        .onDisappear {
-#if targetEnvironment(macCatalyst)
-            NotificationCenter.default.removeObserver(self, name: NSNotification.Name("NewContact"), object: nil)
-            NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ShowImport"), object: nil)
-            NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ShowExport"), object: nil)
-            NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ShowPrintLabels"), object: nil)
-#endif
+    }
+}
+
+// MARK: - Welcome Screen
+struct WelcomeScreen: View {
+    let onGetStarted: () -> Void
+    @EnvironmentObject var themeVM: ThemeViewModel
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Main Content - Moved further toward top
+            VStack(spacing: themeVM.theme.spacing.extraLarge) {
+                // App Icon
+                Image("farmtrackr_logo_TB 1024")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 180, height: 180)
+                
+                // Title
+                Text("Welcome to FarmTrackr")
+                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .foregroundColor(themeVM.theme.colors.text)
+                    .multilineTextAlignment(.center)
+                
+                // Subtitle
+                Text("Your farm CRM for managing contacts, documents, and more.")
+                    .font(themeVM.theme.fonts.bodyFont)
+                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                    .multilineTextAlignment(.center)
+                
+                // Features
+                VStack(spacing: themeVM.theme.spacing.medium) {
+                    FeatureRow(icon: "person.2", title: "Manage Contacts", description: "Organize all your farm contacts in one place")
+                    FeatureRow(icon: "doc.text", title: "Document Management", description: "Store and organize important documents")
+                    FeatureRow(icon: "checkmark.shield", title: "Data Quality", description: "Ensure your data is clean and accurate")
+                    FeatureRow(icon: "square.and.arrow.up", title: "Import & Export", description: "Easily import and export your data")
+                }
+                .padding(.horizontal, themeVM.theme.spacing.large)
+            }
+            .padding(.top, themeVM.theme.spacing.extraLarge * 3) // Increased top padding for more separation
+            
+            Spacer()
+            
+            // Get Started Button
+            Button(action: onGetStarted) {
+                HStack(spacing: themeVM.theme.spacing.medium) {
+                    Text("Get Started")
+                        .font(themeVM.theme.fonts.buttonFont)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 18, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(
+                    RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.large)
+                        .fill(themeVM.theme.colors.primary)
+                )
+                .shadow(color: themeVM.theme.colors.primary.opacity(0.3), radius: 8, x: 0, y: 4)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, themeVM.theme.spacing.large)
+            .padding(.bottom, themeVM.theme.spacing.extraLarge)
+        }
+        .background(themeVM.theme.colors.background)
+    }
+}
+
+// MARK: - Feature Row
+struct FeatureRow: View {
+    let icon: String
+    let title: String
+    let description: String
+    @EnvironmentObject var themeVM: ThemeViewModel
+    
+    var body: some View {
+        HStack(spacing: themeVM.theme.spacing.medium) {
+            Image(systemName: icon)
+                .font(.system(size: 24, weight: .medium))
+                .foregroundColor(themeVM.theme.colors.primary)
+                .frame(width: 32)
+            
+            VStack(alignment: .center, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(themeVM.theme.colors.text)
+                    .multilineTextAlignment(.center)
+                
+                Text(description)
+                    .font(.system(size: 14))
+                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, themeVM.theme.spacing.medium)
+        .padding(.vertical, themeVM.theme.spacing.small)
+        .background(
+            RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.medium)
+                .fill(themeVM.theme.colors.cardBackground)
+        )
+    }
+}
+
+// MARK: - Welcome Detail View
+struct WelcomeDetailView: View {
+    @EnvironmentObject var themeVM: ThemeViewModel
+    
+    var body: some View {
+        VStack(spacing: themeVM.theme.spacing.large) {
+            Spacer()
+            
+            VStack(spacing: themeVM.theme.spacing.medium) {
+                Image(systemName: "person.2.circle")
+                    .font(.system(size: 80))
+                    .foregroundColor(themeVM.theme.colors.primary)
+                
+                Text("Welcome to FarmTrackr")
+                    .font(themeVM.theme.fonts.headerFont)
+                    .fontWeight(.bold)
+                    .foregroundColor(themeVM.theme.colors.text)
+                
+                Text("Select a contact from the list to view details, or use the sidebar to navigate between different sections of the app.")
+                    .font(themeVM.theme.fonts.bodyFont)
+                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, themeVM.theme.spacing.large)
+            }
+            
+            Spacer()
+        }
+        .background(themeVM.theme.colors.background)
+    }
+}
+
+// MARK: - Navigation Tab
+enum NavigationTab: String, CaseIterable {
+    case home = "Home"
+    case contacts = "Contacts"
+    case documents = "Documents"
+    case dataQuality = "Data Quality"
+    case importExport = "Import & Export"
+    case settings = "Settings"
+    
+    var icon: String {
+        switch self {
+        case .home: return "house"
+        case .contacts: return "person.2"
+        case .documents: return "doc.text"
+        case .dataQuality: return "checkmark.shield"
+        case .importExport: return "square.and.arrow.up.on.square"
+        case .settings: return "gear"
         }
     }
 }
 
 // MARK: - Navigation Item View
 struct NavigationItemView: View {
-    let tab: ContentView.NavigationTab
+    let tab: NavigationTab
     let isSelected: Bool
     let onTap: () -> Void
     @EnvironmentObject var themeVM: ThemeViewModel
     
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: Constants.Spacing.medium) {
+            HStack(spacing: themeVM.theme.spacing.medium) {
                 Image(systemName: tab.icon)
-                    .foregroundColor(isSelected ? themeVM.theme.colors.primary : .secondaryLabel)
+                    .foregroundColor(isSelected ? themeVM.theme.colors.primary : themeVM.theme.colors.secondaryLabel)
                     .frame(width: 20)
                     .accessibilityHidden(true)
                 Text(tab.rawValue)
@@ -148,255 +302,304 @@ struct NavigationItemView: View {
     }
 }
 
+// MARK: - Sidebar View
 struct SidebarView: View {
-    @Binding var selectedTab: ContentView.NavigationTab?
+    @Binding var selectedTab: NavigationTab?
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var themeVM: ThemeViewModel
-    
-    private var logoImageName: String {
-        colorScheme == .dark ? "farmtrackr_logo_dark_TB 1024" : "farmtrackr_logo_TB 1024"
-    }
-    
-    private var titleFont: Font {
-        .system(size: 28, weight: .heavy, design: .rounded)
-    }
+    @State private var isCollapsed = false
     
     var body: some View {
         VStack(spacing: 0) {
-            // Logo Section
-            VStack(spacing: Constants.Spacing.small) {
-                Image(logoImageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 110)
-                    .padding(.horizontal, Constants.Spacing.medium)
-                
-                Text("FarmTrackr")
-                    .font(titleFont)
-                    .foregroundColor(themeVM.theme.colors.primary)
-                    .padding(.horizontal, Constants.Spacing.medium)
-            }
-            .padding(.top, Constants.Spacing.large)
-            .padding(.bottom, Constants.Spacing.large)
-            
-            // Divider between logo and navigation
-            Divider()
-                .background(Color(.separator))
-            
-            // Navigation List
-            List {
-                ForEach(ContentView.NavigationTab.allCases, id: \.self) { tab in
-                    NavigationItemView(
-                        tab: tab,
-                        isSelected: selectedTab == tab,
-                        onTap: { selectedTab = tab }
-                    )
-                }
-            }
-            .listStyle(SidebarListStyle())
-        }
-        .background(Color(.systemBackground))
-        .navigationTitle("FarmTrackr")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {}) {
-                    Image(systemName: "person.circle")
-                }
-            }
-        }
-    }
-}
-
-struct DetailContentView: View {
-    @Binding var selectedTab: ContentView.NavigationTab?
-    @Binding var selectedContact: FarmContact?
-    @Binding var searchText: String
-    @Binding var sortOrder: SortOrder
-    @Binding var showingAddContact: Bool
-    @Binding var showingContactDetail: Bool
-    @EnvironmentObject var accessibilityManager: AccessibilityManager
-    @EnvironmentObject var themeVM: ThemeViewModel
-    @Environment(\.managedObjectContext) private var viewContext
-
-    @ViewBuilder
-    private var selectedView: some View {
-        switch selectedTab {
-        case .home:
-            HomeView(selectedContact: $selectedContact, selectedTab: $selectedTab, showingContactDetail: $showingContactDetail)
-        case .contacts:
-            ContactsMasterView(selectedContact: $selectedContact, searchText: $searchText, sortOrder: $sortOrder, showingAddContact: $showingAddContact, showingContactDetail: $showingContactDetail)
-        case .documents:
-            DocumentsView(context: viewContext)
-                .environmentObject(themeVM)
-        case .dataQuality:
-            DataQualityView().environmentObject(themeVM)
-        case .importExport:
-            ImportExportView()
-        case .settings:
-            SettingsView()
-        case .none:
-            HomeView(selectedContact: $selectedContact, selectedTab: $selectedTab, showingContactDetail: $showingContactDetail)
-        }
-    }
-
-    var body: some View {
-        ZStack {
-            themeVM.theme.colors.background.ignoresSafeArea()
-            selectedView
-        }
-    }
-}
-
-// MARK: - Tab Header
-struct TabHeader: View {
-    let icon: String? // SF Symbol or nil for logo
-    let logoName: String?
-    let title: String
-    let subtitle: String?
-    @EnvironmentObject var themeVM: ThemeViewModel
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        VStack(spacing: Constants.Spacing.medium) {
-            if let logoName = logoName {
-                Image(logoName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 80, height: 80)
-            } else if let icon = icon {
-                Image(systemName: icon)
-                    .font(.system(size: 60))
-                    .foregroundColor(themeVM.theme.colors.primary)
-            }
-            Text(title)
-                .font(themeVM.theme.fonts.headerFont)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-            if let subtitle = subtitle {
-                Text(subtitle)
-                    .font(themeVM.theme.fonts.bodyFont)
-                    .foregroundColor(.secondaryLabel)
-                    .multilineTextAlignment(.center)
-            }
-        }
-        .padding(.top, Constants.Spacing.medium)
-    }
-}
-
-struct HomeView: View {
-    @Environment(\.managedObjectContext) private var viewContext
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \FarmContact.dateModified, ascending: false)],
-        animation: .default
-    ) private var contacts: FetchedResults<FarmContact>
-    @Binding var selectedContact: FarmContact?
-    @Binding var selectedTab: ContentView.NavigationTab?
-    @Binding var showingContactDetail: Bool
-    @State private var showingAddContact = false
-    @State private var showingAddDocument = false
-    @State private var showingUnifiedImportExport = false
-    @State private var showingPrintLabelsSheet = false
-    @EnvironmentObject var themeVM: ThemeViewModel
-    
-    var body: some View {
-        ScrollView {
-            VStack(spacing: Constants.Spacing.large) {
-                TabHeader(icon: "house", logoName: nil, title: "Home", subtitle: "Manage your farm contacts efficiently")
-                
-                // Stats Cards
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: Constants.Spacing.medium) {
-                    StatCard(
-                        title: "Total Contacts",
-                        value: "\(contacts.count)",
-                        icon: "person.2.fill",
-                        color: Color.accentColor
-                    )
-                    .environmentObject(themeVM)
+            // Logo and App Name Section
+            VStack(spacing: themeVM.theme.spacing.small) {
+                // Logo above title
+                VStack(spacing: themeVM.theme.spacing.small) {
+                    Image("farmtrackr_logo_TB 1024")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 100, height: 100) // Double the size
                     
-                    FarmsCard(contacts: Array(contacts))
-                        .environmentObject(themeVM)
-                }
-                
-                // Quick Actions
-                VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                    Text("Quick Actions")
-                        .font(themeVM.theme.fonts.titleFont)
-                        .foregroundColor(.primary)
-                    
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: Constants.Spacing.medium) {
-                        QuickActionCard(
-                            title: "Add Contact",
-                            subtitle: "Create new contact",
-                            icon: "person.badge.plus",
-                            action: { showingAddContact = true }
-                        )
-                        
-                        QuickActionCard(
-                            title: "Add Document",
-                            subtitle: "Create new document",
-                            icon: "doc.badge.plus",
-                            action: { showingAddDocument = true }
-                        )
-                        
-                        QuickActionCard(
-                            title: "Print Labels",
-                            subtitle: "Mailing labels",
-                            icon: "printer",
-                            action: { showingPrintLabelsSheet = true }
-                        )
-                        
-                        QuickActionCard(
-                            title: "Import & Export",
-                            subtitle: "Unified data management",
-                            icon: "square.and.arrow.up.on.square",
-                            action: { showingUnifiedImportExport = true }
-                        )
-                    }
-                }
-                
-                // Recently Changed Contacts
-                if !contacts.isEmpty {
-                    VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                        Text("Recently Changed Contacts")
-                            .font(themeVM.theme.fonts.titleFont)
-                            .foregroundColor(.primary)
-                        
-                        ForEach(contacts.prefix(5), id: \.self) { contact in
-                            RecentContactRow(contact: contact) {
-                                selectedContact = contact
-                                selectedTab = .contacts
-                                showingContactDetail = true
-                            }
+                    if !isCollapsed {
+                        VStack(alignment: .center, spacing: 2) {
+                            Text("FarmTrackr")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(themeVM.theme.colors.text)
+                            Text("Farm CRM")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.secondaryLabel)
                         }
                     }
                 }
+                .padding(.horizontal, themeVM.theme.spacing.medium)
+                .padding(.top, themeVM.theme.spacing.small)
+                .padding(.bottom, themeVM.theme.spacing.small)
             }
-            .padding(Constants.Spacing.large)
+            .background(themeVM.theme.colors.cardBackground)
+            
+            Divider()
+                .background(themeVM.theme.colors.separator)
+            
+            // Navigation List with Sections
+            ScrollView {
+                VStack(spacing: 0) {
+                    // MAIN Section
+                    if !isCollapsed {
+                        SidebarSectionHeader(title: "MAIN")
+                    }
+                    
+                    SidebarTab(icon: "house", title: "Home", isSelected: selectedTab == .home) {
+                        selectedTab = .home
+                    }
+                    SidebarTab(icon: "person.2", title: "Contacts", isSelected: selectedTab == .contacts) {
+                        selectedTab = .contacts
+                    }
+                    SidebarTab(icon: "doc.text", title: "Documents", isSelected: selectedTab == .documents) {
+                        selectedTab = .documents
+                    }
+                    
+                    // TOOLS Section
+                    if !isCollapsed {
+                        SidebarSectionHeader(title: "TOOLS")
+                    }
+                    
+                    SidebarTab(icon: "checkmark.shield", title: "Data Quality", isSelected: selectedTab == .dataQuality) {
+                        selectedTab = .dataQuality
+                    }
+                    SidebarTab(icon: "square.and.arrow.up.on.square", title: "Import & Export", isSelected: selectedTab == .importExport) {
+                        selectedTab = .importExport
+                    }
+                    
+                    // SETTINGS Section
+                    if !isCollapsed {
+                        SidebarSectionHeader(title: "SETTINGS")
+                    }
+                    
+                    SidebarTab(icon: "gear", title: "Settings", isSelected: selectedTab == .settings) {
+                        selectedTab = .settings
+                    }
+                }
+                .padding(.vertical, themeVM.theme.spacing.small)
+            }
+            .background(themeVM.theme.colors.background)
+            
+            Spacer()
         }
-        .background(Color.appBackground)
-        .sheet(isPresented: $showingAddContact) {
-            ContactEditView(contact: nil)
+        .background(themeVM.theme.colors.background)
+        .frame(width: isCollapsed ? 60 : 220)
+        .animation(.easeInOut(duration: 0.3), value: isCollapsed)
+    }
+}
+
+// MARK: - Sidebar Section Header
+struct SidebarSectionHeader: View {
+    let title: String
+    @EnvironmentObject var themeVM: ThemeViewModel
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                .textCase(.uppercase)
+                .tracking(0.5)
+            Spacer()
         }
-        .sheet(isPresented: $showingAddDocument) {
-            DocumentEditorView(documentManager: DocumentManager(context: viewContext))
-                .environmentObject(themeVM)
+        .padding(.horizontal, themeVM.theme.spacing.medium)
+        .padding(.top, themeVM.theme.spacing.medium)
+        .padding(.bottom, themeVM.theme.spacing.small)
+    }
+}
+
+// MARK: - Home View
+struct HomeView: View {
+    let contacts: [FarmContact]
+    @Binding var showingAddContact: Bool
+    @Binding var showingAddDocument: Bool
+    @Binding var showingUnifiedImportExport: Bool
+    @Binding var showingPrintLabelsSheet: Bool
+    @Binding var selectedTab: NavigationTab?
+    @EnvironmentObject var themeVM: ThemeViewModel
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // TabHeader
+            TabHeader(icon: "house", logoName: nil, title: "Home", subtitle: "Welcome to your farm dashboard")
+            
+            ScrollView {
+                VStack(spacing: themeVM.theme.spacing.large) {
+                    quickActionsSection
+                    recentContactsSection
+                }
+                .padding(themeVM.theme.spacing.large)
+            }
         }
-        .sheet(isPresented: $showingUnifiedImportExport) {
-            UnifiedImportExportView(documentManager: DocumentManager(context: viewContext))
-                .environmentObject(themeVM)
+        .background(themeVM.theme.colors.background)
+    }
+    
+    private var quickActionsSection: some View {
+        VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+            Text("Quick Actions")
+                .font(themeVM.theme.fonts.titleFont)
+                .foregroundColor(themeVM.theme.colors.text)
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: themeVM.theme.spacing.medium) {
+                QuickActionCard(
+                    icon: "person.badge.plus",
+                    title: "Add Contact",
+                    subtitle: "Create a new farm contact",
+                    color: .blue
+                ) {
+                    showingAddContact = true
+                }
+                
+                QuickActionCard(
+                    icon: "doc.badge.plus",
+                    title: "Add Document",
+                    subtitle: "Create a new document",
+                    color: .green
+                ) {
+                    showingAddDocument = true
+                }
+                
+                QuickActionCard(
+                    icon: "square.and.arrow.up.on.square",
+                    title: "Import/Export",
+                    subtitle: "Manage your data",
+                    color: .orange
+                ) {
+                    showingUnifiedImportExport = true
+                }
+                
+                QuickActionCard(
+                    icon: "printer",
+                    title: "Print Labels",
+                    subtitle: "Print address labels",
+                    color: .purple
+                ) {
+                    showingPrintLabelsSheet = true
+                }
+            }
         }
-        .sheet(isPresented: $showingPrintLabelsSheet) {
-            PrintLabelsView(templateManager: LabelTemplateManager())
+        .padding(themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.cardBackground)
+        .cornerRadius(themeVM.theme.cornerRadius.medium)
+        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+    }
+    
+    private var recentContactsSection: some View {
+        VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+            HStack {
+                Text("Recent Contacts")
+                    .font(themeVM.theme.fonts.titleFont)
+                    .foregroundColor(themeVM.theme.colors.text)
+                
+                Spacer()
+                
+                Button("View All") {
+                    selectedTab = .contacts
+                }
+                .font(themeVM.theme.fonts.bodyFont)
+                .foregroundColor(themeVM.theme.colors.accent)
+            }
+            
+            if contacts.isEmpty {
+                emptyContactsView
+            } else {
+                contactsListView
+            }
+        }
+        .padding(themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.cardBackground)
+        .cornerRadius(themeVM.theme.cornerRadius.medium)
+        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+    }
+    
+    private var emptyContactsView: some View {
+        VStack(spacing: themeVM.theme.spacing.medium) {
+            Image(systemName: "person.2")
+                .font(.system(size: 40))
+                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+            
+            Text("No contacts yet")
+                .font(themeVM.theme.fonts.bodyFont)
+                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+            
+            Button("Add Your First Contact") {
+                showingAddContact = true
+            }
+            .font(themeVM.theme.fonts.buttonFont)
+            .foregroundColor(.white)
+            .padding(.horizontal, themeVM.theme.spacing.large)
+            .padding(.vertical, themeVM.theme.spacing.medium)
+            .background(themeVM.theme.colors.accent)
+            .cornerRadius(themeVM.theme.cornerRadius.medium)
+        }
+        .padding(themeVM.theme.spacing.large)
+    }
+    
+    private var contactsListView: some View {
+        LazyVStack(spacing: themeVM.theme.spacing.small) {
+            ForEach(Array(contacts.prefix(5)), id: \.self) { contact in
+                ContactRowView(
+                    contact: contact,
+                    isSelected: false,
+                    isSelectionMode: false
+                ) {
+                    // Handle contact selection
+                }
+            }
         }
     }
 }
 
+// MARK: - Quick Action Card
+struct QuickActionCard: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let color: Color
+    let action: () -> Void
+    @EnvironmentObject var themeVM: ThemeViewModel
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: themeVM.theme.spacing.small) {
+                HStack {
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .foregroundColor(color)
+                    
+                    Spacer()
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(themeVM.theme.fonts.headlineFont)
+                        .fontWeight(.semibold)
+                        .foregroundColor(themeVM.theme.colors.text)
+                    
+                    Text(subtitle)
+                        .font(themeVM.theme.fonts.captionFont)
+                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                }
+                
+                Spacer(minLength: 0)
+            }
+            .frame(minHeight: 100)
+            .padding(Constants.Spacing.medium)
+            .background(themeVM.theme.colors.cardBackground)
+            .cornerRadius(Constants.CornerRadius.medium)
+            .shadow(color: .black.opacity(0.1), radius: 3, x: 0, y: 2)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Contacts Master View
 struct ContactsMasterView: View {
     @Binding var selectedContact: FarmContact?
     @Binding var searchText: String
@@ -407,96 +610,188 @@ struct ContactsMasterView: View {
     @EnvironmentObject var accessibilityManager: AccessibilityManager
     @Environment(\.managedObjectContext) private var viewContext
     
+    private var filteredContacts: [FarmContact] {
+        let fetchRequest: NSFetchRequest<FarmContact> = FarmContact.fetchRequest()
+        
+        // Add search filter if searchText is not empty
+        if !searchText.isEmpty {
+            fetchRequest.predicate = NSPredicate(format: "firstName CONTAINS[cd] %@ OR lastName CONTAINS[cd] %@ OR farm CONTAINS[cd] %@ OR email1 CONTAINS[cd] %@ OR phoneNumber1 CONTAINS[cd] %@", searchText, searchText, searchText, searchText, searchText)
+        }
+        
+        // Add sort descriptor
+        switch sortOrder {
+        case .firstName:
+            fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \FarmContact.firstName, ascending: true)]
+        case .lastName:
+            fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \FarmContact.lastName, ascending: true)]
+        case .farm:
+            fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \FarmContact.farm, ascending: true)]
+        case .dateCreated:
+            fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \FarmContact.dateCreated, ascending: false)]
+        case .dateModified:
+            fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \FarmContact.dateModified, ascending: false)]
+        }
+        
+        do {
+            return try viewContext.fetch(fetchRequest)
+        } catch {
+            print("Error fetching contacts: \(error)")
+            return []
+        }
+    }
+    
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // Header
-                TabHeader(icon: "person.2", logoName: nil, title: "Contacts", subtitle: "Manage your farm contacts")
-                    .padding(.horizontal, Constants.Spacing.large)
-                    .padding(.top, Constants.Spacing.large)
+        VStack(spacing: 0) {
+            // TabHeader
+            TabHeader(icon: "person.2", logoName: nil, title: "Contacts", subtitle: "Manage your farm contacts")
+            
+            ScrollView {
+                VStack(spacing: Constants.Spacing.large) {
+                    searchAndSortSection
+                    contactsListSection
+                }
+                .padding(Constants.Spacing.large)
+            }
+        }
+        .background(themeVM.theme.colors.background)
+    }
+    
+    private var searchAndSortSection: some View {
+        VStack(spacing: Constants.Spacing.medium) {
+            // Search bar
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                TextField("Search contacts...", text: $searchText)
+                    .textFieldStyle(PlainTextFieldStyle())
                 
-                // Contact List
-                ContactListView(
-                    selectedContact: $selectedContact,
-                    searchText: $searchText,
-                    sortOrder: $sortOrder,
-                    showingAddContact: $showingAddContact,
-                    context: viewContext
-                )
-            }
-            .background(Color.appBackground)
-            .sheet(isPresented: $showingAddContact) {
-                ContactEditView(contact: nil)
-            }
-            .sheet(isPresented: $showingContactDetail, onDismiss: {
-                // Reset selectedContact when sheet is dismissed
-                selectedContact = nil
-            }) {
-                if let contact = selectedContact {
-                    ContactDetailView(contact: contact)
-                        .environmentObject(themeVM)
+                if !searchText.isEmpty {
+                    Button(action: { searchText = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                    }
                 }
             }
-            .onChange(of: selectedContact) { _, contact in
-                if contact != nil {
+            .padding(Constants.Spacing.medium)
+            .background(themeVM.theme.colors.cardBackground)
+            .cornerRadius(Constants.CornerRadius.medium)
+            
+            // Sort and Add Contact
+            HStack {
+                Menu {
+                    ForEach(SortOrder.allCases, id: \.self) { order in
+                        Button(order.displayName) {
+                            sortOrder = order
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.up.arrow.down")
+                        Text("Sort by: \(sortOrder.displayName)")
+                    }
+                    .font(themeVM.theme.fonts.bodyFont)
+                    .foregroundColor(themeVM.theme.colors.text)
+                }
+                
+                Spacer()
+                
+                Button(action: { showingAddContact = true }) {
+                    HStack {
+                        Image(systemName: "plus")
+                        Text("Add Contact")
+                    }
+                    .font(themeVM.theme.fonts.buttonFont)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, Constants.Spacing.medium)
+                    .padding(.vertical, Constants.Spacing.small)
+                    .background(themeVM.theme.colors.accent)
+                    .cornerRadius(Constants.CornerRadius.medium)
+                }
+            }
+        }
+        .padding(Constants.Spacing.large)
+        .background(themeVM.theme.colors.cardBackground)
+        .cornerRadius(Constants.CornerRadius.medium)
+        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+    }
+    
+    private var contactsListSection: some View {
+        LazyVStack(spacing: Constants.Spacing.small) {
+            ForEach(filteredContacts, id: \.self) { contact in
+                ContactRowView(
+                    contact: contact,
+                    isSelected: false,
+                    isSelectionMode: false
+                ) {
+                    selectedContact = contact
                     showingContactDetail = true
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationTitle("")
         }
     }
 }
 
+
+
+// MARK: - Import Export View
 struct ImportExportView: View {
-    @State private var showingUnifiedImportExport = false
-    @State private var showingPrintLabelsSheet = false
+    @Binding var showingUnifiedImportExport: Bool
+    @Binding var showingPrintLabelsSheet: Bool
     @EnvironmentObject var themeVM: ThemeViewModel
-    @StateObject private var documentManager = DocumentManager(context: PersistenceController.shared.container.viewContext)
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: Constants.Spacing.large) {
-                TabHeader(icon: "square.and.arrow.up.on.square", logoName: nil, title: "Import & Export", subtitle: "Unified data and document management")
-                
-                // Unified Import & Export Section
-                VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                    Text("Unified Operations")
-                        .font(themeVM.theme.fonts.titleFont)
-                        .foregroundColor(.primary)
-                    
-                    ActionCard(
-                        title: "Import & Export Hub",
-                        subtitle: "Contacts, documents, and mail merge",
-                        icon: "square.and.arrow.up.on.square",
-                        action: { showingUnifiedImportExport = true }
-                    )
+        VStack(spacing: 0) {
+            // TabHeader
+            TabHeader(icon: "square.and.arrow.up.on.square", logoName: nil, title: "Import & Export", subtitle: "Import contacts from files or export your data")
+            
+            ScrollView {
+                VStack(spacing: Constants.Spacing.large) {
+                    // Quick Actions
+                    LazyVGrid(columns: [
+                        GridItem(.flexible()),
+                        GridItem(.flexible())
+                    ], spacing: Constants.Spacing.medium) {
+                        QuickActionCard(
+                            icon: "square.and.arrow.down",
+                            title: "Import Data",
+                            subtitle: "Import contacts from CSV or Excel",
+                            color: .blue
+                        ) {
+                            showingUnifiedImportExport = true
+                        }
+                        
+                        QuickActionCard(
+                            icon: "square.and.arrow.up",
+                            title: "Export Data",
+                            subtitle: "Export contacts to various formats",
+                            color: .green
+                        ) {
+                            showingUnifiedImportExport = true
+                        }
+                        
+                        QuickActionCard(
+                            icon: "printer",
+                            title: "Print Labels",
+                            subtitle: "Print address labels for contacts",
+                            color: .orange
+                        ) {
+                            showingPrintLabelsSheet = true
+                        }
+                        
+                        QuickActionCard(
+                            icon: "doc.text",
+                            title: "Documents",
+                            subtitle: "Create and manage documents",
+                            color: .purple
+                        ) {
+                            // Navigate to documents
+                        }
+                    }
                 }
-                
-                // Print Labels Section
-                VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                    Text("Printing")
-                        .font(themeVM.theme.fonts.titleFont)
-                        .foregroundColor(.primary)
-                    
-                    ActionCard(
-                        title: "Print Labels",
-                        subtitle: "Generate mailing labels",
-                        icon: "printer",
-                        action: { showingPrintLabelsSheet = true }
-                    )
-                }
+                .padding(Constants.Spacing.large)
             }
-            .padding(Constants.Spacing.large)
         }
-        .background(Color.appBackground)
-        .sheet(isPresented: $showingUnifiedImportExport) {
-            UnifiedImportExportView(documentManager: documentManager)
-                .environmentObject(themeVM)
-        }
-        .sheet(isPresented: $showingPrintLabelsSheet) {
-            PrintLabelsView(templateManager: LabelTemplateManager())
-        }
+        .background(themeVM.theme.colors.background)
     }
 }
 
@@ -571,34 +866,29 @@ struct FarmsCard: View {
                         .fontWeight(.bold)
                         .foregroundColor(Color.textColor)
                     
-                    Text("Farms")
+                    Text("Unique Farms")
                         .font(Constants.Typography.captionFont)
                         .foregroundColor(Color.textColor.opacity(0.7))
                 }
                 
                 Spacer()
                 
-                // Right side - Farm names list
-                if !uniqueFarms.isEmpty {
-                    VStack(alignment: .trailing, spacing: 4) {
-                        ForEach(uniqueFarms.prefix(3), id: \.self) { farm in
-                            Text(farm)
-                                .font(Constants.Typography.captionFont)
-                                .foregroundColor(Color.textColor.opacity(0.7))
-                                .lineLimit(1)
-                                .multilineTextAlignment(.trailing)
-                        }
-                        
-                        if uniqueFarms.count > 3 {
-                            Text("+ \(uniqueFarms.count - 3) more")
-                                .font(Constants.Typography.captionFont)
-                                .foregroundColor(Color.textColor.opacity(0.5))
-                        }
+                // Right side - Farm list
+                VStack(alignment: .trailing, spacing: Constants.Spacing.small) {
+                    ForEach(uniqueFarms.prefix(3), id: \.self) { farm in
+                        Text(farm)
+                            .font(Constants.Typography.captionFont)
+                            .foregroundColor(Color.textColor.opacity(0.8))
+                            .lineLimit(1)
+                    }
+                    
+                    if uniqueFarms.count > 3 {
+                        Text("+\(uniqueFarms.count - 3) more")
+                            .font(Constants.Typography.captionFont)
+                            .foregroundColor(Color.textColor.opacity(0.6))
                     }
                 }
             }
-            
-            Spacer(minLength: 0)
         }
         .frame(minHeight: 120)
         .padding(Constants.Spacing.large)
@@ -612,163 +902,12 @@ struct FarmsCard: View {
     }
 }
 
-struct QuickActionCard: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: Constants.Spacing.small) {
-                Image(systemName: icon)
-                    .foregroundColor(Color.accentColor)
-                    .font(.title2)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(Constants.Typography.bodyFont)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
-                    
-                    Text(subtitle)
-                        .font(Constants.Typography.captionFont)
-                        .foregroundColor(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Constants.Spacing.medium)
-            .interactiveCardStyle()
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
 
-struct ActionCard: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                Image(systemName: icon)
-                    .foregroundColor(Color.accentColor)
-                    .font(.title)
-                
-                VStack(alignment: .leading, spacing: Constants.Spacing.small) {
-                    Text(title)
-                        .font(Constants.Typography.titleFont)
-                        .foregroundColor(.primary)
-                    
-                    Text(subtitle)
-                        .font(Constants.Typography.bodyFont)
-                        .foregroundColor(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Constants.Spacing.large)
-            .interactiveCardStyle()
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-struct RecentContactRow: View {
-    let contact: FarmContact
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: Constants.Spacing.medium) {
-                Circle()
-                    .fill(Color.accentColor)
-                    .frame(width: 40, height: 40)
-                    .overlay(
-                        Text(contact.fullName.prefix(2).uppercased())
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                    )
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(contact.fullName)
-                        .font(Constants.Typography.bodyFont)
-                        .foregroundColor(.primary)
-                    
-                    Text(contact.farm ?? "")
-                        .font(Constants.Typography.captionFont)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                Text(contact.dateCreated?.relativeTime ?? "")
-                    .font(Constants.Typography.captionFont)
-                    .foregroundColor(.tertiaryLabel)
-            }
-            .padding(Constants.Spacing.medium)
-            .interactiveCardStyle()
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-struct PlaceholderView: View {
-    let icon: String
-    let title: String
-    let message: String
-    
-    var body: some View {
-        VStack(spacing: Constants.Spacing.large) {
-            Image(systemName: icon)
-                .font(.system(size: 80))
-                .foregroundColor(.secondaryLabel)
-            
-            Text(title)
-                .font(Constants.Typography.titleFont)
-                .foregroundColor(.secondaryLabel)
-            
-            Text(message)
-                .font(Constants.Typography.bodyFont)
-                .foregroundColor(.tertiaryLabel)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Constants.Spacing.large)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.appBackground)
-    }
-}
-
-// MARK: - Theme Button
-struct ThemeButton: View {
-    let themeName: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        let theme = ThemeManager.themes[themeName]!
-        
-        Button(action: action) {
-            Text(themeName)
-                .font(.system(size: 12, weight: isSelected ? .bold : .regular))
-                .foregroundColor(isSelected ? .white : .primary)
-                .padding(.vertical, 6)
-                .padding(.horizontal, 12)
-                .frame(maxWidth: .infinity)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(isSelected ? theme.colors.primary : Color(.systemGray5))
-                )
-        }
-        .buttonStyle(PlainButtonStyle())
-        .scaleEffect(isSelected ? 1.05 : 1.0)
-        .animation(.easeInOut(duration: 0.2), value: isSelected)
-    }
-}
 
 #Preview {
     ContentView()
-        .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+        .environmentObject(ThemeViewModel())
+        .environmentObject(AccessibilityManager())
+        .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
 }
 

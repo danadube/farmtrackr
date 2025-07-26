@@ -54,7 +54,9 @@ extension Color {
             case .dark:
                 return UIColor.secondarySystemBackground
             default:
-                return UIColor.systemBackground
+                let themeName = UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green"
+                let theme = ThemeManager.theme(named: themeName)
+                return UIColor(theme.colors.cardBackground)
             }
         })
         #elseif os(macOS)
@@ -62,7 +64,9 @@ extension Color {
             if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
                 return NSColor.controlBackgroundColor
             } else {
-                return NSColor.controlBackgroundColor
+                let themeName = UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green"
+                let theme = ThemeManager.theme(named: themeName)
+                return NSColor(theme.colors.cardBackground)
             }
         })
         #endif
@@ -75,7 +79,9 @@ extension Color {
             case .dark:
                 return UIColor.systemBackground
             default:
-                return UIColor.systemBackground
+                let themeName = UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green"
+                let theme = ThemeManager.theme(named: themeName)
+                return UIColor(theme.colors.background)
             }
         })
         #elseif os(macOS)
@@ -83,7 +89,9 @@ extension Color {
             if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
                 return NSColor.controlBackgroundColor
             } else {
-                return NSColor.controlBackgroundColor
+                let themeName = UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green"
+                let theme = ThemeManager.theme(named: themeName)
+                return NSColor(theme.colors.background)
             }
         })
         #endif
@@ -96,7 +104,9 @@ extension Color {
             case .dark:
                 return UIColor.secondarySystemBackground
             default:
-                return UIColor.systemBackground
+                let themeName = UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green"
+                let theme = ThemeManager.theme(named: themeName)
+                return UIColor(theme.colors.cardBackground)
             }
         })
         #elseif os(macOS)
@@ -104,7 +114,9 @@ extension Color {
             if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
                 return NSColor.controlBackgroundColor
             } else {
-                return NSColor.controlBackgroundColor
+                let themeName = UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green"
+                let theme = ThemeManager.theme(named: themeName)
+                return NSColor(theme.colors.cardBackground)
             }
         })
         #endif

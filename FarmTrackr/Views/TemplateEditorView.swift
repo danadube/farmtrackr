@@ -76,7 +76,7 @@ struct TemplateEditorView: View {
     var body: some View {
         ZStack {
             // Background
-            Color.appBackground
+            themeVM.theme.colors.background
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {

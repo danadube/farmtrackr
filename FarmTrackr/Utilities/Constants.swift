@@ -488,6 +488,426 @@ struct ThemeManager {
                 semiboldFont: { .system(size: $0, weight: .semibold) },
                 mediumFont: { .system(size: $0, weight: .medium) }
             )
+        ),
+        "Slate Mist": Theme(
+            name: "Slate Mist",
+            colors: ThemeColors(
+                primary: Color(red: 46/255, green: 58/255, blue: 89/255), // Dark Slate #2E3A59
+                secondary: Color(red: 244/255, green: 247/255, blue: 250/255), // Soft White #F4F7FA
+                accent: Color(red: 140/255, green: 166/255, blue: 219/255), // Cool Indigo #8CA6DB
+                background: Color(red: 244/255, green: 247/255, blue: 250/255), // Soft White background
+                text: Color(red: 46/255, green: 58/255, blue: 89/255), // Dark Slate text
+                cardBackground: Color.white,
+                border: Color(red: 220/255, green: 225/255, blue: 235/255),
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color(red: 100/255, green: 110/255, blue: 130/255),
+                tertiary: Color(red: 150/255, green: 160/255, blue: 180/255),
+                backgroundSecondary: Color(red: 240/255, green: 243/255, blue: 246/255),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color(red: 220/255, green: 225/255, blue: 235/255),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "Inter",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
+        "Cypress Grove": Theme(
+            name: "Cypress Grove",
+            colors: ThemeColors(
+                primary: Color(red: 68/255, green: 98/255, blue: 74/255), // Dark Green #44624A
+                secondary: Color(red: 236/255, green: 237/255, blue: 231/255), // Eucalyptus White #ECEDE7
+                accent: Color(red: 143/255, green: 185/255, blue: 150/255), // Fresh Sage #8FB996
+                background: Color(red: 236/255, green: 237/255, blue: 231/255), // Eucalyptus White background
+                text: Color(red: 68/255, green: 98/255, blue: 74/255), // Dark Green text
+                cardBackground: Color.white,
+                border: Color(red: 200/255, green: 210/255, blue: 200/255),
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color(red: 100/255, green: 120/255, blue: 110/255),
+                tertiary: Color(red: 150/255, green: 170/255, blue: 160/255),
+                backgroundSecondary: Color(red: 230/255, green: 235/255, blue: 230/255),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color(red: 200/255, green: 210/255, blue: 200/255),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "Poppins",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
+        "Midnight Sand": Theme(
+            name: "Midnight Sand",
+            colors: ThemeColors(
+                primary: Color(red: 31/255, green: 41/255, blue: 55/255), // Charcoal #1F2937
+                secondary: Color(red: 243/255, green: 244/255, blue: 246/255), // Light Gray #F3F4F6
+                accent: Color(red: 217/255, green: 119/255, blue: 6/255), // Amber Gold #D97706
+                background: Color(red: 243/255, green: 244/255, blue: 246/255), // Light Gray background
+                text: Color(red: 31/255, green: 41/255, blue: 55/255), // Charcoal text
+                cardBackground: Color.white,
+                border: Color(red: 209/255, green: 213/255, blue: 219/255),
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color(red: 107/255, green: 114/255, blue: 128/255),
+                tertiary: Color(red: 156/255, green: 163/255, blue: 175/255),
+                backgroundSecondary: Color(red: 249/255, green: 250/255, blue: 251/255),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color(red: 209/255, green: 213/255, blue: 219/255),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "Roboto",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
+        "Stone & Brass": Theme(
+            name: "Stone & Brass",
+            colors: ThemeColors(
+                primary: Color(red: 94/255, green: 90/255, blue: 89/255), // Stone Gray #5E5A59
+                secondary: Color(red: 249/255, green: 248/255, blue: 246/255), // Ivory White #F9F8F6
+                accent: Color(red: 184/255, green: 142/255, blue: 47/255), // Antique Brass #B88E2F
+                background: Color(red: 249/255, green: 248/255, blue: 246/255), // Ivory White background
+                text: Color(red: 94/255, green: 90/255, blue: 89/255), // Stone Gray text
+                cardBackground: Color.white,
+                border: Color(red: 220/255, green: 215/255, blue: 210/255),
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color(red: 120/255, green: 115/255, blue: 110/255),
+                tertiary: Color(red: 160/255, green: 155/255, blue: 150/255),
+                backgroundSecondary: Color(red: 245/255, green: 244/255, blue: 242/255),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color(red: 220/255, green: 215/255, blue: 210/255),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "Cormorant Garamond",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
+        "Fog & Mint": Theme(
+            name: "Fog & Mint",
+            colors: ThemeColors(
+                primary: Color(red: 188/255, green: 204/255, blue: 220/255), // Blue Gray #BCCCDC
+                secondary: Color(red: 250/255, green: 250/255, blue: 250/255), // White Fog #FAFAFA
+                accent: Color(red: 159/255, green: 214/255, blue: 193/255), // Mint #9FD6C1
+                background: Color(red: 250/255, green: 250/255, blue: 250/255), // White Fog background
+                text: Color(red: 80/255, green: 100/255, blue: 120/255), // Dark Blue Gray text
+                cardBackground: Color.white,
+                border: Color(red: 220/255, green: 230/255, blue: 240/255),
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color(red: 120/255, green: 140/255, blue: 160/255),
+                tertiary: Color(red: 160/255, green: 180/255, blue: 200/255),
+                backgroundSecondary: Color(red: 245/255, green: 247/255, blue: 250/255),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color(red: 220/255, green: 230/255, blue: 240/255),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "Open Sans",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
+        "Dusty Rose": Theme(
+            name: "Dusty Rose",
+            colors: ThemeColors(
+                primary: Color(red: 115/255, green: 93/255, blue: 120/255), // Deep Mauve #735D78
+                secondary: Color(red: 245/255, green: 240/255, blue: 246/255), // Dusty Blush #F5F0F6
+                accent: Color(red: 196/255, green: 143/255, blue: 101/255), // Rose Gold #C48F65
+                background: Color(red: 245/255, green: 240/255, blue: 246/255), // Dusty Blush background
+                text: Color(red: 115/255, green: 93/255, blue: 120/255), // Deep Mauve text
+                cardBackground: Color.white,
+                border: Color(red: 220/255, green: 210/255, blue: 225/255),
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color(red: 140/255, green: 120/255, blue: 145/255),
+                tertiary: Color(red: 170/255, green: 150/255, blue: 175/255),
+                backgroundSecondary: Color(red: 240/255, green: 235/255, blue: 241/255),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color(red: 220/255, green: 210/255, blue: 225/255),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "Lora",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
+        "Urban Ink": Theme(
+            name: "Urban Ink",
+            colors: ThemeColors(
+                primary: Color(red: 51/255, green: 51/255, blue: 51/255), // Deep Graphite #333333
+                secondary: Color(red: 247/255, green: 247/255, blue: 247/255), // Paper White #F7F7F7
+                accent: Color(red: 156/255, green: 39/255, blue: 176/255), // Elegant Violet #9C27B0
+                background: Color(red: 247/255, green: 247/255, blue: 247/255), // Paper White background
+                text: Color(red: 51/255, green: 51/255, blue: 51/255), // Deep Graphite text
+                cardBackground: Color.white,
+                border: Color(red: 220/255, green: 220/255, blue: 220/255),
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color(red: 100/255, green: 100/255, blue: 100/255),
+                tertiary: Color(red: 150/255, green: 150/255, blue: 150/255),
+                backgroundSecondary: Color(red: 242/255, green: 242/255, blue: 242/255),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color(red: 220/255, green: 220/255, blue: 220/255),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "Nunito",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
+        "Olive Shadow": Theme(
+            name: "Olive Shadow",
+            colors: ThemeColors(
+                primary: Color(red: 62/255, green: 78/255, blue: 60/255), // Olive #3E4E3C
+                secondary: Color(red: 238/255, green: 237/255, blue: 233/255), // Bone #EEEDE9
+                accent: Color(red: 180/255, green: 184/255, blue: 171/255), // Muted Green #B4B8AB
+                background: Color(red: 238/255, green: 237/255, blue: 233/255), // Bone background
+                text: Color(red: 62/255, green: 78/255, blue: 60/255), // Olive text
+                cardBackground: Color.white,
+                border: Color(red: 200/255, green: 205/255, blue: 195/255),
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color(red: 100/255, green: 115/255, blue: 95/255),
+                tertiary: Color(red: 140/255, green: 155/255, blue: 135/255),
+                backgroundSecondary: Color(red: 233/255, green: 232/255, blue: 228/255),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color(red: 200/255, green: 205/255, blue: 195/255),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "Work Sans",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
+        "Pacific Blue": Theme(
+            name: "Pacific Blue",
+            colors: ThemeColors(
+                primary: Color(red: 38/255, green: 70/255, blue: 83/255), // Deep Teal #264653
+                secondary: Color(red: 233/255, green: 245/255, blue: 249/255), // Ice #E9F5F9
+                accent: Color(red: 42/255, green: 157/255, blue: 143/255), // Seafoam #2A9D8F
+                background: Color(red: 233/255, green: 245/255, blue: 249/255), // Ice background
+                text: Color(red: 38/255, green: 70/255, blue: 83/255), // Deep Teal text
+                cardBackground: Color.white,
+                border: Color(red: 200/255, green: 220/255, blue: 230/255),
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color(red: 80/255, green: 110/255, blue: 125/255),
+                tertiary: Color(red: 120/255, green: 150/255, blue: 165/255),
+                backgroundSecondary: Color(red: 225/255, green: 240/255, blue: 245/255),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color(red: 200/255, green: 220/255, blue: 230/255),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "Mulish",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
+        ),
+        "Steel & Sky": Theme(
+            name: "Steel & Sky",
+            colors: ThemeColors(
+                primary: Color(red: 60/255, green: 76/255, blue: 99/255), // Steel Blue #3C4C63
+                secondary: Color(red: 242/255, green: 244/255, blue: 248/255), // Cloud #F2F4F8
+                accent: Color(red: 124/255, green: 163/255, blue: 214/255), // Sky Accent #7CA3D6
+                background: Color(red: 242/255, green: 244/255, blue: 248/255), // Cloud background
+                text: Color(red: 60/255, green: 76/255, blue: 99/255), // Steel Blue text
+                cardBackground: Color.white,
+                border: Color(red: 210/255, green: 220/255, blue: 235/255),
+                error: .red,
+                success: .green,
+                warning: .orange,
+                secondaryLabel: Color(red: 100/255, green: 115/255, blue: 135/255),
+                tertiary: Color(red: 140/255, green: 155/255, blue: 175/255),
+                backgroundSecondary: Color(red: 235/255, green: 240/255, blue: 245/255),
+                disabled: Color.gray.opacity(0.3),
+                separator: Color(red: 210/255, green: 220/255, blue: 235/255),
+                red: .red,
+                systemGray6: Color(.systemGray6)
+            ),
+            font: "Source Sans Pro",
+            spacing: ThemeSpacing(
+                small: 8, medium: 16, large: 24, extraLarge: 32, cardSpacing: 8, buttonHeight: 44, listRowHeight: 60
+            ),
+            cornerRadius: ThemeCornerRadius(
+                small: 4, medium: 8, large: 12, extraLarge: 16
+            ),
+            fonts: ThemeFonts(
+                headerFont: .system(size: 24, weight: .bold),
+                titleFont: .system(size: 20, weight: .semibold),
+                bodyFont: .system(size: 16, weight: .regular),
+                captionFont: .system(size: 12, weight: .regular),
+                buttonFont: .system(size: 16, weight: .medium),
+                headlineFont: .system(size: 17, weight: .semibold),
+                subheadlineFont: .system(size: 15, weight: .regular),
+                title2: .system(size: 22, weight: .semibold),
+                title3: .system(size: 20, weight: .medium),
+                semiboldFont: { .system(size: $0, weight: .semibold) },
+                mediumFont: { .system(size: $0, weight: .medium) }
+            )
         )
     ]
 

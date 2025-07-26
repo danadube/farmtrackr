@@ -3,12 +3,24 @@ import CoreData
 import CloudKit
 
 let themeNames = [
+    "Modern Green",
     "Classic Green",
     "Sunset Soil", 
     "Blueprint Pro",
     "Harvest Luxe",
+    "High Contrast",
     "Fieldlight",
-    "Royal"
+    "Royal",
+    "Slate Mist",
+    "Cypress Grove",
+    "Midnight Sand",
+    "Stone & Brass",
+    "Fog & Mint",
+    "Dusty Rose",
+    "Urban Ink",
+    "Olive Shadow",
+    "Pacific Blue",
+    "Steel & Sky"
 ]
 
 struct SettingsView: View {
@@ -19,6 +31,7 @@ struct SettingsView: View {
     @State private var showingDeleteAlert = false
     @State private var showingUnifiedImportExport = false
     @State private var showingCleanupSheet = false
+    @State private var showingBackupSheet = false
     @State private var showingSyncAlert = false
     @State private var syncAlertMessage = ""
     @State private var cloudKitAvailable = false
@@ -27,20 +40,31 @@ struct SettingsView: View {
     @State private var showingGoogleSheetsPicker = false
     
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            // TabHeader
+            TabHeader(icon: "gear", logoName: nil, title: "Settings", subtitle: "Configure your app preferences")
+            
             ScrollView {
                 VStack(spacing: Constants.Spacing.large) {
-                    TabHeader(icon: "gearshape", logoName: nil, title: "Settings", subtitle: "Customize your experience")
-                    
-                    themeSection
-                    darkModeSection
-                    dataManagementSection
+                    // Accessibility Section
                     accessibilitySection
+                    
+                    // Theme Section
+                    themeSection
+                    
+                    // Dark Mode Section
+                    darkModeSection
+                    
+                    // Data Management Section
+                    dataManagementSection
+                    
+                    // Support Section
                     supportSection
                 }
                 .padding(Constants.Spacing.large)
             }
-            .background(Color.appBackground)
+        }
+        .background(themeVM.theme.colors.background)
             .alert("Delete All Data", isPresented: $showingDeleteAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Delete", role: .destructive) {
@@ -61,10 +85,12 @@ struct SettingsView: View {
             .sheet(isPresented: $showingCleanupSheet) {
                 DataCleanupView()
             }
+            .sheet(isPresented: $showingBackupSheet) {
+                BackupView()
+            }
             .onAppear {
                 checkCloudKitAvailability()
             }
-        }
     }
     
     private var accessibilitySection: some View {
@@ -74,111 +100,102 @@ struct SettingsView: View {
                 .foregroundColor(themeVM.theme.colors.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
-            VStack(spacing: Constants.Spacing.small) {
-                // System-controlled toggles (read-only, tap to open settings)
-                Toggle("VoiceOver", isOn: .constant(accessibilityManager.isVoiceOverRunning))
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .disabled(true)
-                    .accessibilityLabel("VoiceOver status")
-                    .accessibilityHint("Double tap to open system accessibility settings")
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                VStack(spacing: Constants.Spacing.small) {
+                    // System-controlled toggles (read-only, tap to open settings)
+                    HStack(spacing: Constants.Spacing.medium) {
+                        Image(systemName: "speaker.wave.3")
+                            .foregroundColor(.blue)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
+                        Text("VoiceOver")
+                            .font(themeVM.theme.fonts.bodyFont)
+                        Spacer()
+                        Text(accessibilityManager.isVoiceOverRunning ? "On" : "Off")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
+                    .background(Color(.systemBackground))
                     .onTapGesture {
                         openSystemAccessibilitySettings()
                     }
-                
-                Toggle("Reduce Motion", isOn: .constant(accessibilityManager.isReduceMotionEnabled))
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .disabled(true)
-                    .accessibilityLabel("Reduce Motion status")
-                    .accessibilityHint("Double tap to open system accessibility settings")
+                    
+                    Divider()
+                        .frame(height: 1)
+                        .background(Color(.separator))
+                        .padding(.horizontal, 8)
+                    
+                    HStack(spacing: Constants.Spacing.medium) {
+                        Image(systemName: "switch.2")
+                            .foregroundColor(.green)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
+                        Text("Switch Control")
+                            .font(themeVM.theme.fonts.bodyFont)
+                        Spacer()
+                        Text(accessibilityManager.isSwitchControlRunning ? "On" : "Off")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
+                    .background(Color(.systemBackground))
                     .onTapGesture {
                         openSystemAccessibilitySettings()
                     }
-                
-                Toggle("Bold Text", isOn: .constant(accessibilityManager.isBoldTextEnabled))
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .disabled(true)
-                    .accessibilityLabel("Bold Text status")
-                    .accessibilityHint("Double tap to open system accessibility settings")
+                    
+                    Divider()
+                        .frame(height: 1)
+                        .background(Color(.separator))
+                        .padding(.horizontal, 8)
+                    
+                    HStack(spacing: Constants.Spacing.medium) {
+                        Image(systemName: "hand.tap")
+                            .foregroundColor(.orange)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
+                        Text("Assistive Touch")
+                            .font(themeVM.theme.fonts.bodyFont)
+                        Spacer()
+                        Text(accessibilityManager.isAssistiveTouchRunning ? "On" : "Off")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
+                    .background(Color(.systemBackground))
                     .onTapGesture {
                         openSystemAccessibilitySettings()
                     }
-                
-                Toggle("Reduce Transparency", isOn: .constant(accessibilityManager.isReduceTransparencyEnabled))
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .disabled(true)
-                    .accessibilityLabel("Reduce Transparency status")
-                    .accessibilityHint("Double tap to open system accessibility settings")
-                    .onTapGesture {
-                        openSystemAccessibilitySettings()
+                    
+                    Divider()
+                        .frame(height: 1)
+                        .background(Color(.separator))
+                        .padding(.horizontal, 8)
+                    
+                    HStack(spacing: Constants.Spacing.medium) {
+                        Image(systemName: "circle.lefthalf.filled")
+                            .foregroundColor(.purple)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
+                        Text("High Contrast")
+                            .font(themeVM.theme.fonts.bodyFont)
+                        Spacer()
+                        Toggle("", isOn: $accessibilityManager.isHighContrastEnabled)
+                            .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
+                            .onChange(of: accessibilityManager.isHighContrastEnabled) { _, newValue in
+                                applyHighContrastSettings(enabled: newValue)
+                            }
                     }
-                
-                Toggle("Grayscale", isOn: .constant(accessibilityManager.isGrayscaleEnabled))
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .disabled(true)
-                    .accessibilityLabel("Grayscale status")
-                    .accessibilityHint("Double tap to open system accessibility settings")
-                    .onTapGesture {
-                        openSystemAccessibilitySettings()
-                    }
-                
-                Toggle("Invert Colors", isOn: .constant(accessibilityManager.isInvertColorsEnabled))
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .disabled(true)
-                    .accessibilityLabel("Invert Colors status")
-                    .accessibilityHint("Double tap to open system accessibility settings")
-                    .onTapGesture {
-                        openSystemAccessibilitySettings()
-                    }
-                
-                Toggle("Speak Screen", isOn: .constant(accessibilityManager.isSpeakScreenEnabled))
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .disabled(true)
-                    .accessibilityLabel("Speak Screen status")
-                    .accessibilityHint("Double tap to open system accessibility settings")
-                    .onTapGesture {
-                        openSystemAccessibilitySettings()
-                    }
-                
-                Toggle("Speak Selection", isOn: .constant(accessibilityManager.isSpeakSelectionEnabled))
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .disabled(true)
-                    .accessibilityLabel("Speak Selection status")
-                    .accessibilityHint("Double tap to open system accessibility settings")
-                    .onTapGesture {
-                        openSystemAccessibilitySettings()
-                    }
-                
-                Toggle("Switch Control", isOn: .constant(accessibilityManager.isSwitchControlRunning))
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .disabled(true)
-                    .accessibilityLabel("Switch Control status")
-                    .accessibilityHint("Double tap to open system accessibility settings")
-                    .onTapGesture {
-                        openSystemAccessibilitySettings()
-                    }
-                
-                Toggle("Assistive Touch", isOn: .constant(accessibilityManager.isAssistiveTouchRunning))
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .disabled(true)
-                    .accessibilityLabel("Assistive Touch status")
-                    .accessibilityHint("Double tap to open system accessibility settings")
-                    .onTapGesture {
-                        openSystemAccessibilitySettings()
-                    }
-                
-                // App-controlled toggle
-                Toggle("High Contrast", isOn: $accessibilityManager.isHighContrastEnabled)
-                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                    .accessibilityLabel("High Contrast mode")
-                    .accessibilityHint("Double tap to toggle high contrast mode for better visibility")
-                    .onChange(of: accessibilityManager.isHighContrastEnabled) { _, newValue in
-                        applyHighContrastSettings(enabled: newValue)
-                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
+                    .background(Color(.systemBackground))
+                }
             }
             .padding()
-            .background(Color.cardBackgroundAdaptive)
-            .cornerRadius(Constants.CornerRadius.medium)
-            .shadow(color: Color.adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
+            .interactiveCardStyle()
         }
     }
     
@@ -187,47 +204,52 @@ struct SettingsView: View {
             Text("Theme")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 32) {
-                    ForEach(themeNames, id: \.self) { themeName in
-                        let theme = ThemeManager.theme(named: themeName)
-                        Button(action: { themeVM.selectedTheme = themeName }) {
-                            VStack(spacing: 8) {
-                                ZStack {
-                                    Circle()
-                                        .fill(theme.colors.primary)
-                                        .frame(width: 44, height: 44)
-                                        .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
-                                        .overlay(
-                                            Circle()
-                                                .stroke(themeVM.selectedTheme == themeName ? theme.colors.accent : Color.clear, lineWidth: 3)
-                                        )
-                                    if themeVM.selectedTheme == themeName {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(theme.colors.accent)
-                                            .background(Circle().fill(Color.white).frame(width: 24, height: 24))
-                                            .offset(x: 14, y: 14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 32) {
+                        ForEach(themeNames, id: \.self) { themeName in
+                            let theme = ThemeManager.theme(named: themeName)
+                            Button(action: { themeVM.selectedTheme = themeName }) {
+                                VStack(spacing: 8) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(theme.colors.primary)
+                                            .frame(width: 44, height: 44)
+                                            .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(themeVM.selectedTheme == themeName ? theme.colors.accent : Color.clear, lineWidth: 3)
+                                            )
+                                        if themeVM.selectedTheme == themeName {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundColor(theme.colors.accent)
+                                                .background(Circle().fill(Color.white).frame(width: 24, height: 24))
+                                                .offset(x: 14, y: 14)
+                                        }
                                     }
+                                    Text(themeName)
+                                        .font(.caption)
+                                        .foregroundColor(.primary)
+                                        .frame(width: 80, alignment: .center)
+                                        .lineLimit(2)
+                                        .minimumScaleFactor(0.8)
                                 }
-                                Text(themeName)
-                                    .font(.caption)
-                                    .foregroundColor(.primary)
-                                    .frame(width: 80, alignment: .center)
-                                    .lineLimit(2)
-                                    .minimumScaleFactor(0.8)
+                                .padding(.vertical, 4)
+                                .frame(width: 90)
                             }
-                            .padding(.vertical, 4)
-                            .frame(width: 90)
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .buttonStyle(PlainButtonStyle())
                     }
+                    .padding(.horizontal, 8)
                 }
+                .padding(.vertical, 8)
                 .padding(.horizontal, 8)
+                .background(Color(.systemBackground))
             }
             .padding()
-            .background(Color.cardBackgroundAdaptive)
-            .cornerRadius(Constants.CornerRadius.medium)
-            .shadow(color: Color.adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
+            .interactiveCardStyle()
         }
     }
     
@@ -236,22 +258,36 @@ struct SettingsView: View {
             Text("Appearance")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
             
-            Toggle("Dark Mode", isOn: $themeVM.darkModeEnabled)
-                .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                .padding()
-                .background(Color.cardBackgroundAdaptive)
-                .cornerRadius(Constants.CornerRadius.medium)
-                .shadow(color: Color.adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                HStack(spacing: Constants.Spacing.medium) {
+                    Image(systemName: "moon.fill")
+                        .foregroundColor(.purple)
+                        .font(.system(size: 22, weight: .medium))
+                        .frame(width: 28, height: 28)
+                    Text("Dark Mode")
+                        .font(themeVM.theme.fonts.bodyFont)
+                    Spacer()
+                    Toggle("", isOn: $themeVM.darkModeEnabled)
+                        .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
+                }
+                .padding(.vertical, 8)
+                .padding(.horizontal, 8)
+                .background(Color(.systemBackground))
+            }
+            .padding()
+            .interactiveCardStyle()
         }
     }
     
     private var dataManagementSection: some View {
-        Group {
+        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
             Text("Data Management")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
+            
             VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
                 VStack(spacing: Constants.Spacing.small) {
                     // iCloud Sync row with trailing Sync Data button
@@ -331,56 +367,102 @@ struct SettingsView: View {
                     .background(Color(.systemBackground))
                 }
             }
-            .background(Color.cardBackgroundAdaptive)
-            .cornerRadius(Constants.CornerRadius.medium)
-            .shadow(color: Color.adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
-            VStack(spacing: 0) {
-                Button(action: { showingUnifiedImportExport = true }) {
-                    HStack {
+            .padding()
+            .interactiveCardStyle()
+            
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                VStack(spacing: Constants.Spacing.small) {
+                    HStack(spacing: Constants.Spacing.medium) {
                         Image(systemName: "square.and.arrow.up.on.square")
                             .foregroundColor(.blue)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
                         Text("Import & Export Hub")
+                            .font(themeVM.theme.fonts.bodyFont)
                         Spacer()
                         Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
                     }
-                    .padding()
-                }
-                .settingsButtonStyle()
-                Divider()
-                    .frame(height: 1)
-                    .background(Color(.separator))
+                    .padding(.vertical, 8)
                     .padding(.horizontal, 8)
-                Button(action: { showingCleanupSheet = true }) {
-                    HStack {
+                    .background(Color(.systemBackground))
+                    .onTapGesture {
+                        showingUnifiedImportExport = true
+                    }
+                    
+                    Divider()
+                        .frame(height: 1)
+                        .background(Color(.separator))
+                        .padding(.horizontal, 8)
+                    
+                    HStack(spacing: Constants.Spacing.medium) {
                         Image(systemName: "wrench.and.screwdriver")
                             .foregroundColor(.orange)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
                         Text("Data Cleanup")
+                            .font(themeVM.theme.fonts.bodyFont)
                         Spacer()
                         Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
                     }
-                    .padding()
-                }
-                .settingsButtonStyle()
-                Divider()
-                    .frame(height: 1)
-                    .background(Color(.separator))
+                    .padding(.vertical, 8)
                     .padding(.horizontal, 8)
-                Button(action: { showingDeleteAlert = true }) {
-                    HStack {
+                    .background(Color(.systemBackground))
+                    .onTapGesture {
+                        showingCleanupSheet = true
+                    }
+                    
+                    Divider()
+                        .frame(height: 1)
+                        .background(Color(.separator))
+                        .padding(.horizontal, 8)
+                    
+                    HStack(spacing: Constants.Spacing.medium) {
+                        Image(systemName: "icloud.and.arrow.up")
+                            .foregroundColor(.blue)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
+                        Text("Create Backup")
+                            .font(themeVM.theme.fonts.bodyFont)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
+                    .background(Color(.systemBackground))
+                    .onTapGesture {
+                        showingBackupSheet = true
+                    }
+                    
+                    Divider()
+                        .frame(height: 1)
+                        .background(Color(.separator))
+                        .padding(.horizontal, 8)
+                    
+                    HStack(spacing: Constants.Spacing.medium) {
                         Image(systemName: "trash")
                             .foregroundColor(.red)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
                         Text("Delete All Data")
+                            .font(themeVM.theme.fonts.bodyFont)
+                            .foregroundColor(.red)
                         Spacer()
                         Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
                     }
-                    .padding()
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
+                    .background(Color(.systemBackground))
+                    .onTapGesture {
+                        showingDeleteAlert = true
+                    }
                 }
-                .settingsButtonStyle()
-                .foregroundColor(.red)
             }
-            .background(Color.cardBackgroundAdaptive)
-            .cornerRadius(Constants.CornerRadius.medium)
-            .shadow(color: Color.adaptiveShadowColor.opacity(0.08), radius: 2, x: 0, y: 1)
+            .padding()
+            .interactiveCardStyle()
         }
     }
     
@@ -418,32 +500,56 @@ struct SettingsView: View {
     
     private var supportSection: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-            // Move the title outside the card
             Text("Support")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-            VStack(spacing: Constants.Spacing.small) {
-                Button(action: { openEmailSupport() }) {
-                    HStack {
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                VStack(spacing: Constants.Spacing.small) {
+                    HStack(spacing: Constants.Spacing.medium) {
                         Image(systemName: "envelope")
+                            .foregroundColor(.blue)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
                         Text("Contact Support")
+                            .font(themeVM.theme.fonts.bodyFont)
                         Spacer()
                         Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
                     }
-                    .padding()
-                }
-                .settingsButtonStyle()
-                Button(action: { openDocumentation() }) {
-                    HStack {
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
+                    .background(Color(.systemBackground))
+                    .onTapGesture {
+                        openEmailSupport()
+                    }
+                    
+                    Divider()
+                        .frame(height: 1)
+                        .background(Color(.separator))
+                        .padding(.horizontal, 8)
+                    
+                    HStack(spacing: Constants.Spacing.medium) {
                         Image(systemName: "book")
+                            .foregroundColor(.green)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 28, height: 28)
                         Text("Documentation")
+                            .font(themeVM.theme.fonts.bodyFont)
                         Spacer()
                         Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
                     }
-                    .padding()
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
+                    .background(Color(.systemBackground))
+                    .onTapGesture {
+                        openDocumentation()
+                    }
                 }
-                .settingsButtonStyle()
             }
+            .padding()
             .interactiveCardStyle()
         }
     }
@@ -605,6 +711,8 @@ struct ThemeOptionRow: View {
     
     private func themeDescription(for themeName: String) -> String {
         switch themeName {
+        case "Modern Green":
+            return "Clean and contemporary"
         case "Classic Green":
             return "Traditional farm colors"
         case "Sunset Soil":
@@ -613,8 +721,32 @@ struct ThemeOptionRow: View {
             return "Professional blue theme"
         case "Harvest Luxe":
             return "Elegant gold accents"
+        case "High Contrast":
+            return "Maximum accessibility"
         case "Fieldlight":
             return "Clean and modern"
+        case "Royal":
+            return "Purple and gold elegance"
+        case "Slate Mist":
+            return "Cool slate and indigo"
+        case "Cypress Grove":
+            return "Fresh sage and green"
+        case "Midnight Sand":
+            return "Charcoal and amber"
+        case "Stone & Brass":
+            return "Elegant stone and brass"
+        case "Fog & Mint":
+            return "Soft blue-gray and mint"
+        case "Dusty Rose":
+            return "Mauve and rose gold"
+        case "Urban Ink":
+            return "Graphite and violet"
+        case "Olive Shadow":
+            return "Muted olive tones"
+        case "Pacific Blue":
+            return "Deep teal and seafoam"
+        case "Steel & Sky":
+            return "Steel blue and sky"
         default:
             return "Custom theme"
         }
@@ -677,8 +809,7 @@ struct GoogleSheetsIntegrationSection: View {
             }
         }
         .padding()
-        .background(Color.cardBackgroundAdaptive)
-        .cornerRadius(Constants.CornerRadius.medium)
+        .interactiveCardStyle()
         .sheet(isPresented: $showingGoogleSheetsAuth) {
             GoogleSheetsAuthView(googleSheetsManager: googleSheetsManager)
         }
@@ -695,81 +826,78 @@ struct GoogleSheetsAuthView: View {
     @ObservedObject var googleSheetsManager: GoogleSheetsManager
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: Constants.Spacing.large) {
-                // Header
-                VStack(spacing: 8) {
-                    Image(systemName: "tablecells")
-                        .font(.system(size: 48))
-                        .foregroundColor(themeVM.theme.colors.primary)
-                    
-                    Text("Connect Google Sheets")
-                        .font(themeVM.theme.fonts.headerFont)
-                        .foregroundColor(themeVM.theme.colors.text)
-                    
-                    Text("Sign in to import and export your contacts with Google Sheets")
-                        .font(themeVM.theme.fonts.bodyFont)
-                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, 32)
+        VStack(spacing: Constants.Spacing.large) {
+            // Header
+            VStack(spacing: 8) {
+                Image(systemName: "tablecells")
+                    .font(.system(size: 48))
+                    .foregroundColor(themeVM.theme.colors.primary)
                 
-                // Benefits
-                VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                    Text("Benefits:")
-                        .font(themeVM.theme.fonts.titleFont)
-                        .foregroundColor(themeVM.theme.colors.text)
-                    
-                    VStack(alignment: .leading, spacing: Constants.Spacing.small) {
-                        BenefitRow(icon: "square.and.arrow.down", title: "Import Contacts", description: "Import contacts directly from Google Sheets")
-                        BenefitRow(icon: "square.and.arrow.up", title: "Export Data", description: "Export your contacts to Google Sheets")
-                        BenefitRow(icon: "icloud", title: "Cloud Sync", description: "Keep your data in sync across devices")
-                        BenefitRow(icon: "person.2", title: "Collaboration", description: "Share and collaborate with your team")
-                    }
-                }
-                .padding()
-                .background(Color.cardBackgroundAdaptive)
-                .cornerRadius(Constants.CornerRadius.medium)
+                Text("Connect Google Sheets")
+                    .font(themeVM.theme.fonts.headerFont)
+                    .foregroundColor(themeVM.theme.colors.text)
                 
-                Spacer()
-                
-                // Sign In Button
-                Button(action: {
-                    Task {
-                        await googleSheetsManager.authenticate()
-                    }
-                }) {
-                    HStack {
-                        if googleSheetsManager.isLoading {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                                .foregroundColor(.white)
-                        } else {
-                            Image(systemName: "link")
-                                .font(.system(size: 18, weight: .medium))
-                        }
-                        Text(googleSheetsManager.isLoading ? "Connecting..." : "Sign in with Google")
-                            .font(themeVM.theme.fonts.bodyFont)
-                            .fontWeight(.medium)
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(
-                        RoundedRectangle(cornerRadius: Constants.CornerRadius.medium)
-                            .fill(googleSheetsManager.isLoading ? Color.gray : themeVM.theme.colors.primary)
-                    )
-                }
-                .disabled(googleSheetsManager.isLoading)
-                .padding(.horizontal, Constants.Spacing.large)
-                .padding(.bottom, Constants.Spacing.large)
+                Text("Sign in to import and export your contacts with Google Sheets")
+                    .font(themeVM.theme.fonts.bodyFont)
+                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                    .multilineTextAlignment(.center)
             }
-            .navigationTitle("Google Sheets")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Cancel") {
-                dismiss()
-            })
+            .padding(.top, 32)
+            
+            // Benefits
+            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+                Text("Benefits:")
+                    .font(themeVM.theme.fonts.titleFont)
+                    .foregroundColor(themeVM.theme.colors.text)
+                
+                VStack(alignment: .leading, spacing: Constants.Spacing.small) {
+                    BenefitRow(icon: "square.and.arrow.down", title: "Import Contacts", description: "Import contacts directly from Google Sheets")
+                    BenefitRow(icon: "square.and.arrow.up", title: "Export Data", description: "Export your contacts to Google Sheets")
+                    BenefitRow(icon: "icloud", title: "Cloud Sync", description: "Keep your data in sync across devices")
+                    BenefitRow(icon: "person.2", title: "Collaboration", description: "Share and collaborate with your team")
+                }
+            }
+            .padding()
+            .interactiveCardStyle()
+            
+            Spacer()
+            
+            // Sign In Button
+            Button(action: {
+                Task {
+                    await googleSheetsManager.authenticate()
+                }
+            }) {
+                HStack {
+                    if googleSheetsManager.isLoading {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .foregroundColor(.white)
+                    } else {
+                        Image(systemName: "link")
+                            .font(.system(size: 18, weight: .medium))
+                    }
+                    Text(googleSheetsManager.isLoading ? "Connecting..." : "Sign in with Google")
+                        .font(themeVM.theme.fonts.bodyFont)
+                        .fontWeight(.medium)
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(
+                    RoundedRectangle(cornerRadius: Constants.CornerRadius.medium)
+                        .fill(googleSheetsManager.isLoading ? Color.gray : themeVM.theme.colors.primary)
+                )
+            }
+            .disabled(googleSheetsManager.isLoading)
+            .padding(.horizontal, Constants.Spacing.large)
+            .padding(.bottom, Constants.Spacing.large)
         }
+        .navigationTitle("Google Sheets")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarItems(trailing: Button("Cancel") {
+            dismiss()
+        })
         .onReceive(googleSheetsManager.$isAuthenticated) { isAuthenticated in
             if isAuthenticated {
                 dismiss()
@@ -789,104 +917,102 @@ struct GoogleSheetsPickerView: View {
     @State private var showingImportPreview = false
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: Constants.Spacing.large) {
-                // Header
-                VStack(spacing: 8) {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 36))
-                        .foregroundColor(themeVM.theme.colors.primary)
-                    
-                    Text("Import from Google Sheets")
-                        .font(themeVM.theme.fonts.headerFont)
-                        .foregroundColor(themeVM.theme.colors.text)
-                    
-                    Text("Select a Google Sheet to import your contacts")
-                        .font(themeVM.theme.fonts.bodyFont)
-                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, 16)
+        VStack(spacing: Constants.Spacing.large) {
+            // Header
+            VStack(spacing: 8) {
+                Image(systemName: "square.and.arrow.down")
+                    .font(.system(size: 36))
+                    .foregroundColor(themeVM.theme.colors.primary)
                 
-                // Pick from Drive Button
-                Button(action: { showingDrivePicker = true }) {
-                    HStack {
-                        Image(systemName: "folder")
-                            .font(.title2)
-                            .padding(.leading, 8)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Browse Google Drive")
-                                .font(.title3)
-                                .fontWeight(.semibold)
-                            Text("Select a Google Sheet to import")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                        Spacer(minLength: 8)
-                        Image(systemName: "chevron.right")
+                Text("Import from Google Sheets")
+                    .font(themeVM.theme.fonts.headerFont)
+                    .foregroundColor(themeVM.theme.colors.text)
+                
+                Text("Select a Google Sheet to import your contacts")
+                    .font(themeVM.theme.fonts.bodyFont)
+                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 16)
+            
+            // Pick from Drive Button
+            Button(action: { showingDrivePicker = true }) {
+                HStack {
+                    Image(systemName: "folder")
+                        .font(.title2)
+                        .padding(.leading, 8)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Browse Google Drive")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        Text("Select a Google Sheet to import")
                             .font(.caption)
-                            .padding(.trailing, 8)
+                            .foregroundColor(.white.opacity(0.8))
                     }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 60)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(themeVM.theme.colors.primary)
-                    )
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .padding(.trailing, 8)
                 }
-                .buttonStyle(PlainButtonStyle())
-                
-                // Selected File Display
-                if let selectedDriveFile = selectedDriveFile {
-                    VStack(spacing: Constants.Spacing.small) {
-                        HStack {
-                            Image(systemName: "doc.text")
-                                .foregroundColor(themeVM.theme.colors.accent)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Selected: \(selectedDriveFile.name)")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                Text("Ready to import")
-                                    .font(.caption)
-                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
-                            }
-                            Spacer()
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 60)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(themeVM.theme.colors.primary)
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // Selected File Display
+            if let selectedDriveFile = selectedDriveFile {
+                VStack(spacing: Constants.Spacing.small) {
+                    HStack {
+                        Image(systemName: "doc.text")
+                            .foregroundColor(themeVM.theme.colors.accent)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Selected: \(selectedDriveFile.name)")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            Text("Ready to import")
+                                .font(.caption)
+                                .foregroundColor(themeVM.theme.colors.secondaryLabel)
                         }
-                        .padding()
+                        Spacer()
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(themeVM.theme.colors.cardBackground)
+                    )
+                    
+                    Button(action: {
+                        googleSheetsManager.importSheet(withID: selectedDriveFile.id)
+                    }) {
+                        HStack {
+                            Image(systemName: "square.and.arrow.down")
+                            Text("Import this Sheet")
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 44)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(themeVM.theme.colors.cardBackground)
+                                .fill(themeVM.theme.colors.accent)
                         )
-                        
-                        Button(action: {
-                            googleSheetsManager.importSheet(withID: selectedDriveFile.id)
-                        }) {
-                            HStack {
-                                Image(systemName: "square.and.arrow.down")
-                                Text("Import this Sheet")
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(themeVM.theme.colors.accent)
-                            )
-                        }
-                        .buttonStyle(PlainButtonStyle())
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                
-                Spacer()
             }
-            .padding(.horizontal, Constants.Spacing.large)
-            .navigationTitle("Import from Google Sheets")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Done") {
+            
+            Spacer()
+        }
+        .padding(.horizontal, Constants.Spacing.large)
+        .navigationTitle("Import from Google Sheets")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarItems(trailing: Button("Done") {
                 dismiss()
             })
-        }
         .sheet(isPresented: $showingDrivePicker) {
             if let accessToken = googleSheetsManager.accessToken {
                 GoogleDrivePickerView(selectedFile: $selectedDriveFile, accessToken: accessToken)

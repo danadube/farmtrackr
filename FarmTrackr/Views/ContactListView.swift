@@ -62,7 +62,7 @@ struct ContactListView: View {
     
     var body: some View {
         ZStack {
-            Color.appBackground
+            themeVM.theme.colors.background
                 .ignoresSafeArea(.all, edges: .all)
             
             VStack(spacing: 0) {

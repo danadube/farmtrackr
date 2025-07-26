@@ -37,75 +37,78 @@ struct DocumentsView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: Constants.Spacing.large) {
-                TabHeader(icon: "doc.text", logoName: nil, title: "Documents", subtitle: "Create and manage your farm documents")
-                
-                // Search and view toggle
-                HStack {
-                    // Search bar
-                    SearchBar(text: $searchText, placeholder: "Search documents...")
-                    
-                    Button(action: { showingDocumentList.toggle() }) {
-                        Image(systemName: "list.bullet")
-                            .font(.title2)
-                            .foregroundColor(themeVM.theme.colors.accent)
-                    }
-                    .help("Toggle between grid and list view")
-                }
-                
-                // Quick actions
-                HStack(spacing: 16) {
-                    Button(action: createNewDocument) {
-                        HStack {
-                            Image(systemName: "doc.badge.plus")
-                            Text("New Document")
+        VStack(spacing: 0) {
+            // TabHeader
+            TabHeader(icon: "doc.text", logoName: nil, title: "Documents", subtitle: "Manage your farm documents")
+            
+            ScrollView {
+                VStack(spacing: Constants.Spacing.large) {
+                    // Search and view toggle
+                    HStack {
+                        // Search bar
+                        SearchBar(text: $searchText, placeholder: "Search documents...")
+                        
+                        Button(action: { showingDocumentList.toggle() }) {
+                            Image(systemName: "list.bullet")
+                                .font(.title2)
+                                .foregroundColor(themeVM.theme.colors.accent)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(themeVM.theme.colors.accent)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
+                        .help("Toggle between grid and list view")
                     }
-                    .help("Create a new document")
                     
-                    Button(action: { showingCreateTemplate = true }) {
-                        HStack {
-                            Image(systemName: "doc.text.below.ecg")
-                            Text("New Template")
+                    // Quick actions
+                    HStack(spacing: 16) {
+                        Button(action: createNewDocument) {
+                            HStack {
+                                Image(systemName: "doc.badge.plus")
+                                Text("New Document")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(themeVM.theme.colors.accent)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.cardBackgroundAdaptive)
-                        .foregroundColor(Color.textColor)
-                        .cornerRadius(12)
+                        .help("Create a new document")
+                        
+                        Button(action: { showingCreateTemplate = true }) {
+                            HStack {
+                                Image(systemName: "doc.text.below.ecg")
+                                Text("New Template")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.cardBackgroundAdaptive)
+                            .foregroundColor(Color.textColor)
+                            .cornerRadius(12)
+                        }
+                        .help("Create a new document template")
+                        
+                        Button(action: { showingMailMerge = true }) {
+                            HStack {
+                                Image(systemName: "envelope.badge")
+                                Text("Mail Merge")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.cardBackgroundAdaptive)
+                            .foregroundColor(Color.textColor)
+                            .cornerRadius(12)
+                        }
+                        .help("Create documents from templates and contact data")
                     }
-                    .help("Create a new document template")
                     
-                    Button(action: { showingMailMerge = true }) {
-                        HStack {
-                            Image(systemName: "envelope.badge")
-                            Text("Mail Merge")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.cardBackgroundAdaptive)
-                        .foregroundColor(Color.textColor)
-                        .cornerRadius(12)
+                    // Documents grid or list
+                    if showingDocumentList {
+                        documentListView
+                    } else {
+                        documentGridView
                     }
-                    .help("Create documents from templates and contact data")
                 }
-                
-                // Documents grid or list
-                if showingDocumentList {
-                    documentListView
-                } else {
-                    documentGridView
-                }
+                .padding(Constants.Spacing.large)
             }
-            .padding(Constants.Spacing.large)
         }
-        .background(Color.appBackground)
+        .background(themeVM.theme.colors.background)
         .fullScreenCover(isPresented: $showingCreateTemplate) {
             TemplateEditorView(documentManager: documentManager)
                 .environmentObject(themeVM)

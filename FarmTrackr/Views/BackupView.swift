@@ -20,8 +20,7 @@ struct BackupView: View {
     @State private var alertMessage = ""
     
     var body: some View {
-        NavigationView {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: themeVM.theme.spacing.large) {
                     // Header
                     VStack(spacing: themeVM.theme.spacing.medium) {
@@ -99,14 +98,6 @@ struct BackupView: View {
                 .padding(.bottom, themeVM.theme.spacing.large)
             }
             .background(Color(.systemBackground))
-            .navigationTitle("Backup")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-        }
         .sheet(isPresented: $showingShareSheet) {
             if let backupURL = backupURL {
                 ShareSheet(items: [backupURL])

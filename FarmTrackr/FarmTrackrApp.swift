@@ -11,6 +11,7 @@ import SwiftUI
 struct FarmTrackrApp: App {
     let persistenceController = PersistenceController.shared
     @StateObject private var themeVM = ThemeViewModel()
+    @StateObject private var accessibilityManager = AccessibilityManager()
     
     init() {
         print("[DEBUG] App launched")
@@ -21,6 +22,7 @@ struct FarmTrackrApp: App {
             ContentView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(themeVM)
+                .environmentObject(accessibilityManager)
                 .preferredColorScheme(themeVM.darkModeEnabled ? .dark : .light)
         }
         .defaultSize(width: 1100, height: 800)

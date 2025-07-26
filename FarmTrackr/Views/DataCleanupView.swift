@@ -7,8 +7,7 @@ struct DataCleanupView: View {
     @EnvironmentObject var themeVM: ThemeViewModel
     
     var body: some View {
-        NavigationView {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: themeVM.theme.spacing.large) {
                     TabHeader(
                         icon: "wrench.and.screwdriver",
@@ -103,8 +102,6 @@ struct DataCleanupView: View {
                 .padding(themeVM.theme.spacing.large)
             }
             .background(themeVM.theme.colors.background)
-            .navigationBarHidden(true)
-        }
     }
 }
 

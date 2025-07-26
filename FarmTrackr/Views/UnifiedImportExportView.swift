@@ -194,7 +194,7 @@ struct UnifiedImportExportView: View {
                     
                     VStack(spacing: 12) {
                         // Format detection info
-                        if let url = selectedFileURL {
+                        if selectedFileURL != nil {
                             HStack {
                                 Text("Detected Format:")
                                     .font(.subheadline)
@@ -278,7 +278,7 @@ struct UnifiedImportExportView: View {
                     
                     VStack(spacing: 12) {
                         // Format detection info
-                        if let url = selectedFileURL {
+                        if selectedFileURL != nil {
                             HStack {
                                 Text("Detected Format:")
                                     .font(.subheadline)
