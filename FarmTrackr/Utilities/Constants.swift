@@ -97,6 +97,7 @@ struct ThemeColors {
     let background: Color
     let text: Color
     let cardBackground: Color
+    let panelBackground: Color
     let border: Color
     let error: Color
     let success: Color
@@ -108,6 +109,7 @@ struct ThemeColors {
     let separator: Color
     let red: Color
     let systemGray6: Color
+    let shadow: Color
 }
 
 struct ThemeSpacing {
@@ -161,6 +163,7 @@ struct ThemeManager {
                 background: Color(red: 248/255, green: 252/255, blue: 248/255), // Very light green tint
                 text: Color(red: 27/255, green: 27/255, blue: 27/255),
                 cardBackground: Color(red: 242/255, green: 250/255, blue: 242/255), // Very light green
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Very light green tint
                 border: Color(red: 200/255, green: 220/255, blue: 200/255),
                 error: .red,
                 success: .green,
@@ -171,7 +174,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color.gray.opacity(0.3),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "SF Pro Display",
             spacing: ThemeSpacing(
@@ -203,6 +207,7 @@ struct ThemeManager {
                 background: Color(red: 240/255, green: 248/255, blue: 240/255), // Light green tint
                 text: Color(red: 27/255, green: 27/255, blue: 27/255),
                 cardBackground: Color.white,
+                panelBackground: Color(red: 240/255, green: 248/255, blue: 240/255), // Light green tint
                 border: Color(red: 200/255, green: 220/255, blue: 200/255),
                 error: .red,
                 success: .green,
@@ -213,7 +218,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color.gray.opacity(0.3),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Poppins",
             spacing: ThemeSpacing(
@@ -246,6 +252,7 @@ struct ThemeManager {
                 background: Color(red: 255/255, green: 248/255, blue: 235/255), // Warm cream
                 text: Color(red: 33/255, green: 33/255, blue: 33/255),
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 224/255, green: 224/255, blue: 224/255),
                 error: .red,
                 success: .green,
@@ -256,7 +263,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color.gray.opacity(0.3),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Montserrat",
             spacing: ThemeSpacing(
@@ -288,6 +296,7 @@ struct ThemeManager {
                 background: Color(red: 240/255, green: 245/255, blue: 250/255), // Cool blue-gray
                 text: Color(red: 13/255, green: 27/255, blue: 42/255),
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 224/255, green: 224/255, blue: 224/255),
                 error: .red,
                 success: .green,
@@ -298,7 +307,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color.gray.opacity(0.3),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Roboto",
             spacing: ThemeSpacing(
@@ -330,6 +340,7 @@ struct ThemeManager {
                 background: Color(red: 252/255, green: 250/255, blue: 245/255), // Warm ivory
                 text: Color(red: 26/255, green: 26/255, blue: 26/255),
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 224/255, green: 224/255, blue: 224/255),
                 error: .red,
                 success: .green,
@@ -340,7 +351,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color.gray.opacity(0.3),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Cormorant Garamond",
             spacing: ThemeSpacing(
@@ -372,6 +384,7 @@ struct ThemeManager {
                 background: Color.white,
                 text: Color.black,
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color.black,
                 error: Color.red,
                 success: Color.green,
@@ -382,7 +395,8 @@ struct ThemeManager {
                 disabled: Color.gray,
                 separator: Color.black,
                 red: Color.red,
-                systemGray6: Color.white
+                systemGray6: Color.white,
+                shadow: Color.black.opacity(0.1)
             ),
             font: "SF Pro Display",
             spacing: ThemeSpacing(
@@ -414,6 +428,7 @@ struct ThemeManager {
                 background: Color(red: 0.97, green: 0.98, blue: 1.0),
                 text: Color.black,
                 cardBackground: Color(red: 0.99, green: 0.99, blue: 1.0),
+                panelBackground: Color(red: 0.97, green: 0.98, blue: 1.0),
                 border: Color(red: 0.85, green: 0.92, blue: 0.98),
                 error: .red,
                 success: .green,
@@ -424,7 +439,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color.gray.opacity(0.3),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Open Sans",
             spacing: ThemeSpacing(
@@ -455,7 +471,8 @@ struct ThemeManager {
                 accent: Color(red: 255/255, green: 215/255, blue: 0/255), // Gold accent
                 background: Color(red: 0.98, green: 0.97, blue: 1.0), // Nearly white with faint purple hint
                 text: Color.black, // Pure black for all text
-                cardBackground: Color.white, // Pure white for max contrast
+                cardBackground: Color.white,
+                panelBackground: Color(red: 0.98, green: 0.97, blue: 1.0), // Nearly white with faint purple hint
                 border: Color(red: 88/255, green: 41/255, blue: 141/255), // Royal purple border
                 error: .red,
                 success: .green,
@@ -466,7 +483,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color(red: 200/255, green: 180/255, blue: 230/255),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Inter",
             spacing: ThemeSpacing(
@@ -498,6 +516,7 @@ struct ThemeManager {
                 background: Color(red: 244/255, green: 247/255, blue: 250/255), // Soft White background
                 text: Color(red: 46/255, green: 58/255, blue: 89/255), // Dark Slate text
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 220/255, green: 225/255, blue: 235/255),
                 error: .red,
                 success: .green,
@@ -508,7 +527,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color(red: 220/255, green: 225/255, blue: 235/255),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Inter",
             spacing: ThemeSpacing(
@@ -540,6 +560,7 @@ struct ThemeManager {
                 background: Color(red: 236/255, green: 237/255, blue: 231/255), // Eucalyptus White background
                 text: Color(red: 68/255, green: 98/255, blue: 74/255), // Dark Green text
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 200/255, green: 210/255, blue: 200/255),
                 error: .red,
                 success: .green,
@@ -550,7 +571,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color(red: 200/255, green: 210/255, blue: 200/255),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Poppins",
             spacing: ThemeSpacing(
@@ -582,6 +604,7 @@ struct ThemeManager {
                 background: Color(red: 243/255, green: 244/255, blue: 246/255), // Light Gray background
                 text: Color(red: 31/255, green: 41/255, blue: 55/255), // Charcoal text
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 209/255, green: 213/255, blue: 219/255),
                 error: .red,
                 success: .green,
@@ -592,7 +615,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color(red: 209/255, green: 213/255, blue: 219/255),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Roboto",
             spacing: ThemeSpacing(
@@ -624,6 +648,7 @@ struct ThemeManager {
                 background: Color(red: 249/255, green: 248/255, blue: 246/255), // Ivory White background
                 text: Color(red: 94/255, green: 90/255, blue: 89/255), // Stone Gray text
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 220/255, green: 215/255, blue: 210/255),
                 error: .red,
                 success: .green,
@@ -634,7 +659,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color(red: 220/255, green: 215/255, blue: 210/255),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Cormorant Garamond",
             spacing: ThemeSpacing(
@@ -666,6 +692,7 @@ struct ThemeManager {
                 background: Color(red: 250/255, green: 250/255, blue: 250/255), // White Fog background
                 text: Color(red: 80/255, green: 100/255, blue: 120/255), // Dark Blue Gray text
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 220/255, green: 230/255, blue: 240/255),
                 error: .red,
                 success: .green,
@@ -676,7 +703,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color(red: 220/255, green: 230/255, blue: 240/255),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Open Sans",
             spacing: ThemeSpacing(
@@ -708,6 +736,7 @@ struct ThemeManager {
                 background: Color(red: 245/255, green: 240/255, blue: 246/255), // Dusty Blush background
                 text: Color(red: 115/255, green: 93/255, blue: 120/255), // Deep Mauve text
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 220/255, green: 210/255, blue: 225/255),
                 error: .red,
                 success: .green,
@@ -718,7 +747,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color(red: 220/255, green: 210/255, blue: 225/255),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Lora",
             spacing: ThemeSpacing(
@@ -750,6 +780,7 @@ struct ThemeManager {
                 background: Color(red: 247/255, green: 247/255, blue: 247/255), // Paper White background
                 text: Color(red: 51/255, green: 51/255, blue: 51/255), // Deep Graphite text
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 220/255, green: 220/255, blue: 220/255),
                 error: .red,
                 success: .green,
@@ -760,7 +791,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color(red: 220/255, green: 220/255, blue: 220/255),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Nunito",
             spacing: ThemeSpacing(
@@ -792,6 +824,7 @@ struct ThemeManager {
                 background: Color(red: 238/255, green: 237/255, blue: 233/255), // Bone background
                 text: Color(red: 62/255, green: 78/255, blue: 60/255), // Olive text
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 200/255, green: 205/255, blue: 195/255),
                 error: .red,
                 success: .green,
@@ -802,7 +835,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color(red: 200/255, green: 205/255, blue: 195/255),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Work Sans",
             spacing: ThemeSpacing(
@@ -834,6 +868,7 @@ struct ThemeManager {
                 background: Color(red: 233/255, green: 245/255, blue: 249/255), // Ice background
                 text: Color(red: 38/255, green: 70/255, blue: 83/255), // Deep Teal text
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 200/255, green: 220/255, blue: 230/255),
                 error: .red,
                 success: .green,
@@ -844,7 +879,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color(red: 200/255, green: 220/255, blue: 230/255),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Mulish",
             spacing: ThemeSpacing(
@@ -876,6 +912,7 @@ struct ThemeManager {
                 background: Color(red: 242/255, green: 244/255, blue: 248/255), // Cloud background
                 text: Color(red: 60/255, green: 76/255, blue: 99/255), // Steel Blue text
                 cardBackground: Color.white,
+                panelBackground: Color(red: 248/255, green: 252/255, blue: 248/255), // Light background tint
                 border: Color(red: 210/255, green: 220/255, blue: 235/255),
                 error: .red,
                 success: .green,
@@ -886,7 +923,8 @@ struct ThemeManager {
                 disabled: Color.gray.opacity(0.3),
                 separator: Color(red: 210/255, green: 220/255, blue: 235/255),
                 red: .red,
-                systemGray6: Color(.systemGray6)
+                systemGray6: Color(.systemGray6),
+                shadow: Color.black.opacity(0.1)
             ),
             font: "Source Sans Pro",
             spacing: ThemeSpacing(

@@ -620,11 +620,13 @@ struct ContactRowView: View {
                     .accessibilityHidden(true)
             }
         }
-        .padding(Constants.Spacing.large)
-        .interactiveCardStyle()
+        .padding(themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.cardBackground)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
         .overlay(
-            RoundedRectangle(cornerRadius: Constants.CornerRadius.large)
-                .stroke(isSelected ? themeVM.theme.colors.primary : Color.clear, lineWidth: 2)
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(isSelected ? themeVM.theme.colors.primary : Color.black.opacity(0.1), lineWidth: isSelected ? 2 : 1)
         )
         .onTapGesture {
             onTap()

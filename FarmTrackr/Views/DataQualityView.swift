@@ -244,70 +244,33 @@ struct DataQualityView: View {
     }
     
     private var actionsSection: some View {
-        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-            Text("Quick Actions")
-                .font(themeVM.theme.fonts.titleFont)
-                .foregroundColor(.primary)
-            
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: Constants.Spacing.medium) {
-                QualityActionButton(
-                    title: "View Details",
-                    subtitle: "See validation issues",
-                    icon: "list.bullet",
-                    action: { showingIssueDetails = true }
-                )
-                
-                QualityActionButton(
-                    title: "Fix Duplicates",
-                    subtitle: "Resolve duplicate contacts",
-                    icon: "person.2.fill",
-                    action: { showingDuplicateResolution = true }
-                )
-                
-                QualityActionButton(
-                    title: "Add Test Data",
-                    subtitle: "Add sample duplicates",
-                    icon: "plus.circle",
-                    action: {
-                        TestDataHelper.addTestDuplicates(context: viewContext)
-                        loadQualityData()
-                    }
-                )
-                
-                QualityActionButton(
-                    title: "Export Report",
-                    subtitle: "Download quality report",
-                    icon: "square.and.arrow.up",
-                    action: exportQualityReport
-                )
-                
-                QualityActionButton(
-                    title: "Bulk Edit",
-                    subtitle: "Fix multiple issues",
-                    icon: "pencil.and.outline",
-                    action: bulkEditContacts
-                )
-                
-                QualityActionButton(
-                    title: "Refresh Data",
-                    subtitle: "Reassess quality",
-                    icon: "arrow.clockwise",
-                    action: loadQualityData
-                )
-                
-                QualityActionButton(
-                    title: "Cleanup Bad Data",
-                    subtitle: "Remove incorrect merges",
-                    icon: "trash",
-                    action: cleanupBadMergedContacts
-                )
-            }
-        }
-        .padding(Constants.Spacing.large)
-        .interactiveCardStyle()
+        ActionPanelView(
+            title: "Quick Actions",
+            actions: [
+                ActionCardData(icon: "list.bullet", title: "View Details", subtitle: "See validation issues") {
+                    showingIssueDetails = true
+                },
+                ActionCardData(icon: "person.2.fill", title: "Fix Duplicates", subtitle: "Resolve duplicate contacts") {
+                    showingDuplicateResolution = true
+                },
+                ActionCardData(icon: "plus.circle", title: "Add Test Data", subtitle: "Add sample duplicates") {
+                    TestDataHelper.addTestDuplicates(context: viewContext)
+                    loadQualityData()
+                },
+                ActionCardData(icon: "square.and.arrow.up", title: "Export Report", subtitle: "Download quality report") {
+                    exportQualityReport()
+                },
+                ActionCardData(icon: "pencil.and.outline", title: "Bulk Edit", subtitle: "Fix multiple issues") {
+                    bulkEditContacts()
+                },
+                ActionCardData(icon: "arrow.clockwise", title: "Refresh Data", subtitle: "Reassess quality") {
+                    loadQualityData()
+                },
+                ActionCardData(icon: "trash", title: "Cleanup Bad Data", subtitle: "Remove incorrect merges") {
+                    cleanupBadMergedContacts()
+                }
+            ]
+        )
     }
     
     // MARK: - Helper Methods
@@ -753,34 +716,4 @@ struct QualityCard: View {
     }
 }
 
-struct QualityActionButton: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: Constants.Spacing.small) {
-                Image(systemName: icon)
-                    .foregroundColor(Constants.Colors.primary)
-                    .font(.title2)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(Constants.Typography.bodyFont)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
-                    
-                    Text(subtitle)
-                        .font(Constants.Typography.captionFont)
-                        .foregroundColor(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Constants.Spacing.medium)
-            .interactiveCardStyle()
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-} 
+ 

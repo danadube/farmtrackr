@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContactDetailView: View {
     let contact: FarmContact
+    @Binding var selectedContact: FarmContact?
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var themeVM: ThemeViewModel
@@ -20,7 +21,7 @@ struct ContactDetailView: View {
             VStack {
                 // Main Card
                 VStack(alignment: .leading, spacing: 0) {
-                    HeaderSection(contact: contact, showingEditSheet: $showingEditSheet, showingDeleteAlert: $showingDeleteAlert)
+                    HeaderSection(contact: contact, selectedContact: $selectedContact, showingEditSheet: $showingEditSheet, showingDeleteAlert: $showingDeleteAlert)
                     Divider()
                     // Mailing and Site Address side by side
                     HStack(alignment: .top, spacing: 0) {
@@ -55,34 +56,21 @@ struct ContactDetailView: View {
                     // Record Info
                     RecordInfoSection(contact: contact)
                 }
-                .padding(.vertical, 32)
-                .padding(.horizontal, 24)
+                .padding(.vertical, themeVM.theme.spacing.large)
+                .padding(.horizontal, themeVM.theme.spacing.large)
                 .background(themeVM.theme.colors.cardBackground)
-                .cornerRadius(themeVM.theme.cornerRadius.large)
+                .cornerRadius(16)
+                .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
                 .overlay(
-                    RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.large)
-                        .stroke(themeVM.theme.colors.secondary.opacity(0.3), lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.black.opacity(0.1), lineWidth: 1)
                 )
-                .shadow(color: themeVM.theme.colors.secondary.opacity(0.06), radius: 16, x: 0, y: 4)
             }
             .padding(.bottom, 32)
+            .padding(.horizontal, themeVM.theme.spacing.large)
         }
         .background(themeVM.theme.colors.background.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Menu {
-                    Button("Edit Contact") {
-                        showingEditSheet = true
-                    }
-                    Button("Delete Contact", role: .destructive) {
-                        showingDeleteAlert = true
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                }
-            }
-        }
         .sheet(isPresented: $showingEditSheet) {
             ContactEditView(contact: contact)
         }
@@ -100,38 +88,68 @@ struct ContactDetailView: View {
     
     private struct HeaderSection: View {
         let contact: FarmContact
+        @Binding var selectedContact: FarmContact?
         @Binding var showingEditSheet: Bool
         @Binding var showingDeleteAlert: Bool
         @EnvironmentObject var themeVM: ThemeViewModel
         
         var body: some View {
-            HStack(alignment: .center, spacing: themeVM.theme.spacing.large) {
-                Image(systemName: "house.fill")
-                    .resizable()
-                    .frame(width: 48, height: 48)
-                    .foregroundColor(themeVM.theme.colors.primary)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(contact.fullName)
-                        .font(themeVM.theme.fonts.titleFont)
-                        .foregroundColor(themeVM.theme.colors.text)
-                    if let farm = contact.farm, !farm.isEmpty {
-                        Text(farm)
-                            .font(themeVM.theme.fonts.captionFont)
-                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
-                            .italic()
+            VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+                // Back button and title row
+                HStack {
+                    Button(action: { selectedContact = nil }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .medium))
+                            Text("Back to Contacts")
+                                .font(.system(size: 16, weight: .medium))
+                        }
+                        .foregroundColor(themeVM.theme.colors.primary)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    Spacer()
+                    
+                    HStack(spacing: 16) {
+                        Button(action: { showingEditSheet = true }) {
+                            Image(systemName: "square.and.pencil")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.primary)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Button(action: { showingDeleteAlert = true }) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.red)
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
-                Spacer()
-                HStack(spacing: 16) {
-                    Button(action: { showingEditSheet = true }) {
-                        Image(systemName: "square.and.pencil")
-                            .font(themeVM.theme.fonts.title2)
+                
+                // Contact info row
+                HStack(alignment: .center, spacing: themeVM.theme.spacing.large) {
+                    Circle()
+                        .fill(themeVM.theme.colors.primary.opacity(0.2))
+                        .frame(width: 60, height: 60)
+                        .overlay(
+                            Text(contact.initials)
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(themeVM.theme.colors.primary)
+                        )
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(contact.fullName)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(themeVM.theme.colors.text)
+                        if let farm = contact.farm, !farm.isEmpty {
+                            Text(farm)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        }
                     }
-                    Button(action: { showingDeleteAlert = true }) {
-                        Image(systemName: "trash")
-                            .font(themeVM.theme.fonts.title2)
-                            .foregroundColor(themeVM.theme.colors.red)
-                    }
+                    
+                    Spacer()
                 }
             }
             .padding(.bottom, themeVM.theme.spacing.large)

@@ -94,16 +94,16 @@ struct SettingsView: View {
     }
     
     private var accessibilitySection: some View {
-        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+        VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
             Text("Accessibility")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, themeVM.theme.spacing.large)
             
-            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                VStack(spacing: Constants.Spacing.small) {
+            VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+                VStack(spacing: themeVM.theme.spacing.small) {
                     // System-controlled toggles (read-only, tap to open settings)
-                    HStack(spacing: Constants.Spacing.medium) {
+                    HStack(spacing: themeVM.theme.spacing.medium) {
                         Image(systemName: "speaker.wave.3")
                             .foregroundColor(.blue)
                             .font(.system(size: 22, weight: .medium))
@@ -117,7 +117,7 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
+                    .background(themeVM.theme.colors.cardBackground)
                     .onTapGesture {
                         openSystemAccessibilitySettings()
                     }
@@ -127,7 +127,7 @@ struct SettingsView: View {
                         .background(Color(.separator))
                         .padding(.horizontal, 8)
                     
-                    HStack(spacing: Constants.Spacing.medium) {
+                    HStack(spacing: themeVM.theme.spacing.medium) {
                         Image(systemName: "switch.2")
                             .foregroundColor(.green)
                             .font(.system(size: 22, weight: .medium))
@@ -141,7 +141,7 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
+                    .background(themeVM.theme.colors.cardBackground)
                     .onTapGesture {
                         openSystemAccessibilitySettings()
                     }
@@ -151,7 +151,7 @@ struct SettingsView: View {
                         .background(Color(.separator))
                         .padding(.horizontal, 8)
                     
-                    HStack(spacing: Constants.Spacing.medium) {
+                    HStack(spacing: themeVM.theme.spacing.medium) {
                         Image(systemName: "hand.tap")
                             .foregroundColor(.orange)
                             .font(.system(size: 22, weight: .medium))
@@ -165,7 +165,7 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
+                    .background(themeVM.theme.colors.cardBackground)
                     .onTapGesture {
                         openSystemAccessibilitySettings()
                     }
@@ -175,7 +175,7 @@ struct SettingsView: View {
                         .background(Color(.separator))
                         .padding(.horizontal, 8)
                     
-                    HStack(spacing: Constants.Spacing.medium) {
+                    HStack(spacing: themeVM.theme.spacing.medium) {
                         Image(systemName: "circle.lefthalf.filled")
                             .foregroundColor(.purple)
                             .font(.system(size: 22, weight: .medium))
@@ -191,22 +191,30 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
+                    .background(themeVM.theme.colors.cardBackground)
                 }
             }
-            .padding()
-            .interactiveCardStyle()
+            .padding(.horizontal, themeVM.theme.spacing.large)
+            .padding(.vertical, themeVM.theme.spacing.medium)
         }
+        .padding(.vertical, themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.panelBackground)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.black.opacity(0.1), lineWidth: 1)
+        )
     }
     
     private var themeSection: some View {
-        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+        VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
             Text("Theme")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, themeVM.theme.spacing.large)
             
-            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+            VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 32) {
                         ForEach(themeNames, id: \.self) { themeName in
@@ -246,22 +254,30 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 8)
                 .padding(.horizontal, 8)
-                .background(Color(.systemBackground))
+                .background(themeVM.theme.colors.cardBackground)
             }
-            .padding()
-            .interactiveCardStyle()
+            .padding(.horizontal, themeVM.theme.spacing.large)
+            .padding(.vertical, themeVM.theme.spacing.medium)
         }
+        .padding(.vertical, themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.panelBackground)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.black.opacity(0.1), lineWidth: 1)
+        )
     }
     
     private var darkModeSection: some View {
-        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+        VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
             Text("Appearance")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, themeVM.theme.spacing.large)
             
-            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                HStack(spacing: Constants.Spacing.medium) {
+            VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+                HStack(spacing: themeVM.theme.spacing.medium) {
                     Image(systemName: "moon.fill")
                         .foregroundColor(.purple)
                         .font(.system(size: 22, weight: .medium))
@@ -274,85 +290,46 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 8)
                 .padding(.horizontal, 8)
-                .background(Color(.systemBackground))
+                .background(themeVM.theme.colors.cardBackground)
             }
-            .padding()
-            .interactiveCardStyle()
+            .padding(.horizontal, themeVM.theme.spacing.large)
+            .padding(.vertical, themeVM.theme.spacing.medium)
         }
+        .padding(.vertical, themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.panelBackground)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.black.opacity(0.1), lineWidth: 1)
+        )
     }
     
     private var dataManagementSection: some View {
-        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-            Text("Data Management")
-                .font(themeVM.theme.fonts.titleFont)
-                .foregroundColor(themeVM.theme.colors.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                VStack(spacing: Constants.Spacing.small) {
-                    // iCloud Sync row with trailing Sync Data button
-                    HStack(spacing: Constants.Spacing.medium) {
-                        Image(systemName: "icloud")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("iCloud Sync")
-                            .font(themeVM.theme.fonts.bodyFont)
-                        Spacer()
-                        Text(cloudKitAvailable ? "Available" : "Unavailable")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Button(action: performManualSync) {
-                            Text("Sync Data")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.black)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color(.systemGray5))
-                                .cornerRadius(8)
-                        }
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
-                    // Divider between rows
-                    Divider()
-                        .frame(height: 1)
-                        .background(Color(.separator))
-                        .padding(.horizontal, 8)
-                    HStack(spacing: Constants.Spacing.medium) {
-                        Image(systemName: "tablecells.badge.ellipsis")
-                            .foregroundColor(.green)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("Google Sheets")
-                            .font(themeVM.theme.fonts.bodyFont)
-                        Spacer()
-                        Text(googleSheetsManager.isAuthenticated ? "Connected" : "Not Connected")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        if googleSheetsManager.isAuthenticated {
-                            Button(action: { showingGoogleSheetsPicker = true }) {
-                                Text("Import")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.black)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Color(.systemGray5))
-                                    .cornerRadius(8)
-                            }
-                            Button(action: { googleSheetsManager.logout() }) {
-                                Text("Disconnect")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.black)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Color(.systemGray5))
-                                    .cornerRadius(8)
-                            }
-                        } else {
-                            Button(action: { showingGoogleSheetsAuth = true }) {
-                                Text("Connect")
+        VStack(spacing: themeVM.theme.spacing.large) {
+            // Data Management Card
+            VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
+                Text("Data Management")
+                    .font(themeVM.theme.fonts.titleFont)
+                    .foregroundColor(themeVM.theme.colors.text)
+                    .padding(.horizontal, themeVM.theme.spacing.large)
+                
+                VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+                    VStack(spacing: themeVM.theme.spacing.small) {
+                        // iCloud Sync row with trailing Sync Data button
+                        HStack(spacing: themeVM.theme.spacing.medium) {
+                            Image(systemName: "icloud")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 22, weight: .medium))
+                                .frame(width: 28, height: 28)
+                            Text("iCloud Sync")
+                                .font(themeVM.theme.fonts.bodyFont)
+                            Spacer()
+                            Text(cloudKitAvailable ? "Available" : "Unavailable")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Button(action: performManualSync) {
+                                Text("Sync Data")
                                     .font(.system(size: 15, weight: .semibold))
                                     .foregroundColor(.black)
                                     .padding(.horizontal, 12)
@@ -361,108 +338,182 @@ struct SettingsView: View {
                                     .cornerRadius(8)
                             }
                         }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 8)
+                        .background(themeVM.theme.colors.cardBackground)
+                        // Divider between rows
+                        Divider()
+                            .frame(height: 1)
+                            .background(Color(.separator))
+                            .padding(.horizontal, 8)
+                        HStack(spacing: themeVM.theme.spacing.medium) {
+                            Image(systemName: "tablecells.badge.ellipsis")
+                                .foregroundColor(.green)
+                                .font(.system(size: 22, weight: .medium))
+                                .frame(width: 28, height: 28)
+                            Text("Google Sheets")
+                                .font(themeVM.theme.fonts.bodyFont)
+                            Spacer()
+                            Text(googleSheetsManager.isAuthenticated ? "Connected" : "Not Connected")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            if googleSheetsManager.isAuthenticated {
+                                Button(action: { showingGoogleSheetsPicker = true }) {
+                                    Text("Import")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(.black)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color(.systemGray5))
+                                        .cornerRadius(8)
+                                }
+                                Button(action: { googleSheetsManager.logout() }) {
+                                    Text("Disconnect")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(.black)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color(.systemGray5))
+                                        .cornerRadius(8)
+                                }
+                            } else {
+                                Button(action: { showingGoogleSheetsAuth = true }) {
+                                    Text("Connect")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(.black)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color(.systemGray5))
+                                        .cornerRadius(8)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 8)
+                        .background(themeVM.theme.colors.cardBackground)
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
                 }
+                .padding(.horizontal, themeVM.theme.spacing.large)
+                .padding(.vertical, themeVM.theme.spacing.medium)
             }
-            .padding()
-            .interactiveCardStyle()
+            .padding(.vertical, themeVM.theme.spacing.large)
+            .background(themeVM.theme.colors.panelBackground)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
+            )
             
-            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                VStack(spacing: Constants.Spacing.small) {
-                    HStack(spacing: Constants.Spacing.medium) {
-                        Image(systemName: "square.and.arrow.up.on.square")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("Import & Export Hub")
-                            .font(themeVM.theme.fonts.bodyFont)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
-                    .onTapGesture {
-                        showingUnifiedImportExport = true
-                    }
-                    
-                    Divider()
-                        .frame(height: 1)
-                        .background(Color(.separator))
+            // Data Tools Card
+            VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
+                Text("Data Tools")
+                    .font(themeVM.theme.fonts.titleFont)
+                    .foregroundColor(themeVM.theme.colors.text)
+                    .padding(.horizontal, themeVM.theme.spacing.large)
+                
+                VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+                    VStack(spacing: themeVM.theme.spacing.small) {
+                        HStack(spacing: themeVM.theme.spacing.medium) {
+                            Image(systemName: "square.and.arrow.up.on.square")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 22, weight: .medium))
+                                .frame(width: 28, height: 28)
+                            Text("Import & Export Hub")
+                                .font(themeVM.theme.fonts.bodyFont)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 8)
                         .padding(.horizontal, 8)
-                    
-                    HStack(spacing: Constants.Spacing.medium) {
-                        Image(systemName: "wrench.and.screwdriver")
-                            .foregroundColor(.orange)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("Data Cleanup")
-                            .font(themeVM.theme.fonts.bodyFont)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
-                    .onTapGesture {
-                        showingCleanupSheet = true
-                    }
-                    
-                    Divider()
-                        .frame(height: 1)
-                        .background(Color(.separator))
+                        .background(themeVM.theme.colors.cardBackground)
+                        .onTapGesture {
+                            showingUnifiedImportExport = true
+                        }
+                        
+                        Divider()
+                            .frame(height: 1)
+                            .background(Color(.separator))
+                            .padding(.horizontal, 8)
+                        
+                        HStack(spacing: themeVM.theme.spacing.medium) {
+                            Image(systemName: "wrench.and.screwdriver")
+                                .foregroundColor(.orange)
+                                .font(.system(size: 22, weight: .medium))
+                                .frame(width: 28, height: 28)
+                            Text("Data Cleanup")
+                                .font(themeVM.theme.fonts.bodyFont)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 8)
                         .padding(.horizontal, 8)
-                    
-                    HStack(spacing: Constants.Spacing.medium) {
-                        Image(systemName: "icloud.and.arrow.up")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("Create Backup")
-                            .font(themeVM.theme.fonts.bodyFont)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
-                    .onTapGesture {
-                        showingBackupSheet = true
-                    }
-                    
-                    Divider()
-                        .frame(height: 1)
-                        .background(Color(.separator))
+                        .background(themeVM.theme.colors.cardBackground)
+                        .onTapGesture {
+                            showingCleanupSheet = true
+                        }
+                        
+                        Divider()
+                            .frame(height: 1)
+                            .background(Color(.separator))
+                            .padding(.horizontal, 8)
+                        
+                        HStack(spacing: themeVM.theme.spacing.medium) {
+                            Image(systemName: "icloud.and.arrow.up")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 22, weight: .medium))
+                                .frame(width: 28, height: 28)
+                            Text("Create Backup")
+                                .font(themeVM.theme.fonts.bodyFont)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 8)
                         .padding(.horizontal, 8)
-                    
-                    HStack(spacing: Constants.Spacing.medium) {
-                        Image(systemName: "trash")
-                            .foregroundColor(.red)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("Delete All Data")
-                            .font(themeVM.theme.fonts.bodyFont)
-                            .foregroundColor(.red)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
-                    .onTapGesture {
-                        showingDeleteAlert = true
+                        .background(themeVM.theme.colors.cardBackground)
+                        .onTapGesture {
+                            showingBackupSheet = true
+                        }
+                        
+                        Divider()
+                            .frame(height: 1)
+                            .background(Color(.separator))
+                            .padding(.horizontal, 8)
+                        
+                        HStack(spacing: themeVM.theme.spacing.medium) {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                                .font(.system(size: 22, weight: .medium))
+                                .frame(width: 28, height: 28)
+                            Text("Delete All Data")
+                                .font(themeVM.theme.fonts.bodyFont)
+                                .foregroundColor(.red)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 8)
+                        .background(themeVM.theme.colors.cardBackground)
+                        .onTapGesture {
+                            showingDeleteAlert = true
+                        }
                     }
                 }
+                .padding(.horizontal, themeVM.theme.spacing.large)
+                .padding(.vertical, themeVM.theme.spacing.medium)
             }
-            .padding()
-            .interactiveCardStyle()
+            .padding(.vertical, themeVM.theme.spacing.large)
+            .background(themeVM.theme.colors.panelBackground)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
+            )
         }
     }
     
@@ -499,15 +550,15 @@ struct SettingsView: View {
     }
     
     private var supportSection: some View {
-        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+        VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
             Text("Support")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, themeVM.theme.spacing.large)
             
-            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
-                VStack(spacing: Constants.Spacing.small) {
-                    HStack(spacing: Constants.Spacing.medium) {
+            VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+                VStack(spacing: themeVM.theme.spacing.small) {
+                    HStack(spacing: themeVM.theme.spacing.medium) {
                         Image(systemName: "envelope")
                             .foregroundColor(.blue)
                             .font(.system(size: 22, weight: .medium))
@@ -520,7 +571,7 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
+                    .background(themeVM.theme.colors.cardBackground)
                     .onTapGesture {
                         openEmailSupport()
                     }
@@ -530,7 +581,7 @@ struct SettingsView: View {
                         .background(Color(.separator))
                         .padding(.horizontal, 8)
                     
-                    HStack(spacing: Constants.Spacing.medium) {
+                    HStack(spacing: themeVM.theme.spacing.medium) {
                         Image(systemName: "book")
                             .foregroundColor(.green)
                             .font(.system(size: 22, weight: .medium))
@@ -543,15 +594,23 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 8)
-                    .background(Color(.systemBackground))
+                    .background(themeVM.theme.colors.cardBackground)
                     .onTapGesture {
                         openDocumentation()
                     }
                 }
             }
-            .padding()
-            .interactiveCardStyle()
+            .padding(.horizontal, themeVM.theme.spacing.large)
+            .padding(.vertical, themeVM.theme.spacing.medium)
         }
+        .padding(.vertical, themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.panelBackground)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.black.opacity(0.1), lineWidth: 1)
+        )
     }
     
     private func deleteAllData() {
@@ -1066,4 +1125,4 @@ struct BenefitRow: View {
         .environmentObject(ThemeViewModel())
         .environmentObject(AccessibilityManager())
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
-} 
+}

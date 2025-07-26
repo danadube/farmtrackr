@@ -71,6 +71,16 @@ struct DocumentsView: View {
             MailMergeView(documentManager: documentManager)
                 .environmentObject(themeVM)
         }
+        .sheet(isPresented: $showingDocumentPicker) {
+            // Placeholder for document picker
+            Text("Document Import")
+                .padding()
+        }
+        .sheet(isPresented: $showingGoogleDrivePicker) {
+            // Placeholder for Google Drive picker
+            Text("Google Drive Import")
+                .padding()
+        }
         .alert("Delete Document?", isPresented: $showingDeleteDialog) {
             Button("Delete", role: .destructive) {
                 if let document = documentToDelete {
@@ -84,13 +94,13 @@ struct DocumentsView: View {
     }
     
     private var searchAndActionsSection: some View {
-        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+        VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
             Text("Document Management")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, themeVM.theme.spacing.large)
             
-            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+            VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
                 // Search and view toggle
                 HStack {
                     // Search bar
@@ -108,7 +118,7 @@ struct DocumentsView: View {
                 }
                 
                 // Action buttons
-                HStack(spacing: Constants.Spacing.medium) {
+                HStack(spacing: themeVM.theme.spacing.medium) {
                     Button(action: { showingCreateTemplate = true }) {
                         HStack {
                             Image(systemName: "plus")
@@ -116,10 +126,36 @@ struct DocumentsView: View {
                         }
                         .font(themeVM.theme.fonts.buttonFont)
                         .foregroundColor(.white)
-                        .padding(.horizontal, Constants.Spacing.medium)
-                        .padding(.vertical, Constants.Spacing.small)
+                        .padding(.horizontal, themeVM.theme.spacing.medium)
+                        .padding(.vertical, themeVM.theme.spacing.small)
                         .background(themeVM.theme.colors.primary)
-                        .cornerRadius(Constants.CornerRadius.medium)
+                        .cornerRadius(themeVM.theme.cornerRadius.medium)
+                    }
+                    
+                    Button(action: { showingDocumentPicker = true }) {
+                        HStack {
+                            Image(systemName: "doc.badge.plus")
+                            Text("Import Document")
+                        }
+                        .font(themeVM.theme.fonts.buttonFont)
+                        .foregroundColor(themeVM.theme.colors.primary)
+                        .padding(.horizontal, themeVM.theme.spacing.medium)
+                        .padding(.vertical, themeVM.theme.spacing.small)
+                        .background(themeVM.theme.colors.primary.opacity(0.1))
+                        .cornerRadius(themeVM.theme.cornerRadius.medium)
+                    }
+                    
+                    Button(action: { showingGoogleDrivePicker = true }) {
+                        HStack {
+                            Image(systemName: "externaldrive")
+                            Text("Import from Drive")
+                        }
+                        .font(themeVM.theme.fonts.buttonFont)
+                        .foregroundColor(themeVM.theme.colors.primary)
+                        .padding(.horizontal, themeVM.theme.spacing.medium)
+                        .padding(.vertical, themeVM.theme.spacing.small)
+                        .background(themeVM.theme.colors.primary.opacity(0.1))
+                        .cornerRadius(themeVM.theme.cornerRadius.medium)
                     }
                     
                     Button(action: { showingMailMerge = true }) {
@@ -129,39 +165,57 @@ struct DocumentsView: View {
                         }
                         .font(themeVM.theme.fonts.buttonFont)
                         .foregroundColor(themeVM.theme.colors.primary)
-                        .padding(.horizontal, Constants.Spacing.medium)
-                        .padding(.vertical, Constants.Spacing.small)
+                        .padding(.horizontal, themeVM.theme.spacing.medium)
+                        .padding(.vertical, themeVM.theme.spacing.small)
                         .background(themeVM.theme.colors.primary.opacity(0.1))
-                        .cornerRadius(Constants.CornerRadius.medium)
+                        .cornerRadius(themeVM.theme.cornerRadius.medium)
                     }
                     
                     Spacer()
                 }
             }
-            .interactiveCardStyle()
+            .padding(.horizontal, themeVM.theme.spacing.large)
+            .padding(.vertical, themeVM.theme.spacing.medium)
         }
+        .padding(.vertical, themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.panelBackground)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.black.opacity(0.1), lineWidth: 1)
+        )
     }
     
     private var documentsSection: some View {
-        VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+        VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
             Text("Documents")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, themeVM.theme.spacing.large)
             
-            VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
+            VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
                 if filteredDocuments.isEmpty {
                     emptyDocumentsView
                 } else {
                     documentsContentView
                 }
             }
-            .interactiveCardStyle()
+            .padding(.horizontal, themeVM.theme.spacing.large)
+            .padding(.vertical, themeVM.theme.spacing.medium)
         }
+        .padding(.vertical, themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.panelBackground)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.black.opacity(0.1), lineWidth: 1)
+        )
     }
     
     private var emptyDocumentsView: some View {
-        VStack(spacing: Constants.Spacing.small) {
+        VStack(spacing: themeVM.theme.spacing.small) {
             Image(systemName: "doc.text")
                 .font(.system(size: 40))
                 .foregroundColor(themeVM.theme.colors.secondaryLabel)
@@ -174,13 +228,13 @@ struct DocumentsView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(Constants.Spacing.large)
+        .padding(themeVM.theme.spacing.large)
     }
     
     private var documentsContentView: some View {
         Group {
             if viewMode == .list {
-                LazyVStack(spacing: Constants.Spacing.small) {
+                LazyVStack(spacing: themeVM.theme.spacing.small) {
                     ForEach(filteredDocuments, id: \.self) { document in
                         DocumentRowView(
                             document: document,
@@ -197,35 +251,30 @@ struct DocumentsView: View {
                                 showingDeleteDialog = true
                             }
                         )
-                        
-                        if document != filteredDocuments.last {
-                            Divider()
-                                .background(Color(.separator))
-                        }
                     }
                 }
             } else {
                 LazyVGrid(columns: [
                     GridItem(.flexible()),
                     GridItem(.flexible())
-                ], spacing: Constants.Spacing.medium) {
-                                    ForEach(filteredDocuments, id: \.self) { document in
-                    DocumentCardView(
-                        document: document,
-                        onTap: {
-                            selectedDocument = document
-                            showingDocumentDetail = true
-                        },
-                        onEdit: {
-                            documentToEdit = document
-                            showingDocumentEditor = true
-                        },
-                        onDelete: {
-                            documentToDelete = document
-                            showingDeleteDialog = true
-                        }
-                    )
-                }
+                ], spacing: themeVM.theme.spacing.medium) {
+                    ForEach(filteredDocuments, id: \.self) { document in
+                        DocumentCardView(
+                            document: document,
+                            onTap: {
+                                selectedDocument = document
+                                showingDocumentDetail = true
+                            },
+                            onEdit: {
+                                documentToEdit = document
+                                showingDocumentEditor = true
+                            },
+                            onDelete: {
+                                documentToDelete = document
+                                showingDeleteDialog = true
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -341,12 +390,12 @@ struct DocumentCardView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(themeVM.theme.colors.cardBackground)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                .stroke(Color.black.opacity(0.1), lineWidth: 1)
         )
     }
 }
@@ -442,12 +491,12 @@ struct DocumentRowView: View {
                 onTap()
             }
         }
-        .background(Color.white)
+        .background(themeVM.theme.colors.cardBackground)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                .stroke(Color.black.opacity(0.1), lineWidth: 1)
         )
     }
 }
