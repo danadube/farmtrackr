@@ -143,9 +143,9 @@ struct TabHeader: View {
         .background(
             LinearGradient(
                 gradient: Gradient(colors: [
-                    themeVM.theme.colors.primary.opacity(0.15),
-                    themeVM.theme.colors.cardBackground,
-                    themeVM.theme.colors.cardBackground.opacity(0.9)
+                    themeVM.theme.colors.primary.opacity(0.2),
+                    themeVM.theme.colors.primary.opacity(0.1),
+                    themeVM.theme.colors.primary.opacity(0.3)
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -155,7 +155,7 @@ struct TabHeader: View {
         .shadow(color: .black.opacity(0.25), radius: 15, x: 0, y: 6)
         .overlay(
             RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.large)
-                .stroke(themeVM.theme.colors.primary.opacity(0.3), lineWidth: 2.5)
+                .stroke(themeVM.theme.colors.primary.opacity(0.2), lineWidth: 1.5)
         )
         .padding(.horizontal, themeVM.theme.spacing.large)
         .padding(.bottom, themeVM.theme.spacing.medium)

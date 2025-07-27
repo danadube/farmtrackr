@@ -3,24 +3,9 @@ import CoreData
 import CloudKit
 
 let themeNames = [
-    "Modern Green",
     "Classic Green",
-    "Sunset Soil", 
-    "Blueprint Pro",
-    "Harvest Luxe",
-    "High Contrast",
-    "Fieldlight",
-    "Royal",
-    "Slate Mist",
-    "Cypress Grove",
-    "Midnight Sand",
-    "Stone & Brass",
-    "Fog & Mint",
-    "Dusty Rose",
-    "Urban Ink",
-    "Olive Shadow",
-    "Pacific Blue",
-    "Steel & Sky"
+    "Harvest Gold",
+    "Pacific Blue"
 ]
 
 struct SettingsView: View {
@@ -38,6 +23,8 @@ struct SettingsView: View {
     @StateObject private var googleSheetsManager = GoogleSheetsManager()
     @State private var showingGoogleSheetsAuth = false
     @State private var showingGoogleSheetsPicker = false
+    @State private var showingTestAlert = false
+    @State private var testResult = ""
     
     var body: some View {
         VStack(spacing: 0) {
@@ -46,14 +33,11 @@ struct SettingsView: View {
             
             ScrollView {
                 VStack(spacing: Constants.Spacing.large) {
+                    // Theme & Appearance Section
+                    themeAndAppearanceSection
+                    
                     // Accessibility Section
                     accessibilitySection
-                    
-                    // Theme Section
-                    themeSection
-                    
-                    // Dark Mode Section
-                    darkModeSection
                     
                     // Data Management Section
                     dataManagementSection
@@ -78,6 +62,11 @@ struct SettingsView: View {
             } message: {
                 Text(syncAlertMessage)
             }
+            .alert("Excel Import Test", isPresented: $showingTestAlert) {
+                Button("OK") { }
+            } message: {
+                Text(testResult)
+            }
             .sheet(isPresented: $showingUnifiedImportExport) {
                 UnifiedImportExportView(documentManager: DocumentManager(context: viewContext))
                     .environmentObject(themeVM)
@@ -95,192 +84,244 @@ struct SettingsView: View {
     
     private var accessibilitySection: some View {
         VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
+            // Section Title
             Text("Accessibility")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-                .padding(.horizontal, themeVM.theme.spacing.large)
             
-            VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
-                VStack(spacing: themeVM.theme.spacing.small) {
-                    // System-controlled toggles (read-only, tap to open settings)
-                    HStack(spacing: themeVM.theme.spacing.medium) {
-                        Image(systemName: "speaker.wave.3")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("VoiceOver")
-                            .font(themeVM.theme.fonts.bodyFont)
-                        Spacer()
-                        Text(accessibilityManager.isVoiceOverRunning ? "On" : "Off")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
-                    .background(themeVM.theme.colors.cardBackground)
-                    .onTapGesture {
-                        openSystemAccessibilitySettings()
-                    }
-                    
-                    Divider()
-                        .frame(height: 1)
-                        .background(Color(.separator))
-                        .padding(.horizontal, 8)
-                    
-                    HStack(spacing: themeVM.theme.spacing.medium) {
-                        Image(systemName: "switch.2")
-                            .foregroundColor(.green)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("Switch Control")
-                            .font(themeVM.theme.fonts.bodyFont)
-                        Spacer()
-                        Text(accessibilityManager.isSwitchControlRunning ? "On" : "Off")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
-                    .background(themeVM.theme.colors.cardBackground)
-                    .onTapGesture {
-                        openSystemAccessibilitySettings()
-                    }
-                    
-                    Divider()
-                        .frame(height: 1)
-                        .background(Color(.separator))
-                        .padding(.horizontal, 8)
-                    
-                    HStack(spacing: themeVM.theme.spacing.medium) {
-                        Image(systemName: "hand.tap")
-                            .foregroundColor(.orange)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("Assistive Touch")
-                            .font(themeVM.theme.fonts.bodyFont)
-                        Spacer()
-                        Text(accessibilityManager.isAssistiveTouchRunning ? "On" : "Off")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
-                    .background(themeVM.theme.colors.cardBackground)
-                    .onTapGesture {
-                        openSystemAccessibilitySettings()
-                    }
-                    
-                    Divider()
-                        .frame(height: 1)
-                        .background(Color(.separator))
-                        .padding(.horizontal, 8)
-                    
-                    HStack(spacing: themeVM.theme.spacing.medium) {
-                        Image(systemName: "circle.lefthalf.filled")
-                            .foregroundColor(.purple)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("High Contrast")
-                            .font(themeVM.theme.fonts.bodyFont)
-                        Spacer()
-                        Toggle("", isOn: $accessibilityManager.isHighContrastEnabled)
-                            .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
-                            .onChange(of: accessibilityManager.isHighContrastEnabled) { _, newValue in
-                                applyHighContrastSettings(enabled: newValue)
+            // Card Container
+            VStack(spacing: themeVM.theme.spacing.medium) {
+                // VoiceOver Card
+                Button(action: {
+                    openSystemAccessibilitySettings()
+                }) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("VoiceOver")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(themeVM.theme.colors.text)
+                                    .lineLimit(2)
+                                
+                                Text(accessibilityManager.isVoiceOverRunning ? "On" : "Off")
+                                    .font(.system(size: 13, weight: .regular))
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .lineLimit(2)
                             }
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
-                    .background(themeVM.theme.colors.cardBackground)
-                }
-            }
-            .padding(.horizontal, themeVM.theme.spacing.large)
-            .padding(.vertical, themeVM.theme.spacing.medium)
-        }
-        .padding(.vertical, themeVM.theme.spacing.large)
-        .background(themeVM.theme.colors.panelBackground)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.black.opacity(0.1), lineWidth: 1)
-        )
-    }
-    
-    private var themeSection: some View {
-        VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
-            Text("Theme")
-                .font(themeVM.theme.fonts.titleFont)
-                .foregroundColor(themeVM.theme.colors.text)
-                .padding(.horizontal, themeVM.theme.spacing.large)
-            
-            VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 32) {
-                        ForEach(themeNames, id: \.self) { themeName in
-                            let theme = ThemeManager.theme(named: themeName)
-                            Button(action: { themeVM.selectedTheme = themeName }) {
-                                VStack(spacing: 8) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(theme.colors.primary)
-                                            .frame(width: 44, height: 44)
-                                            .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
-                                            .overlay(
-                                                Circle()
-                                                    .stroke(themeVM.selectedTheme == themeName ? theme.colors.accent : Color.clear, lineWidth: 3)
-                                            )
-                                        if themeVM.selectedTheme == themeName {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundColor(theme.colors.accent)
-                                                .background(Circle().fill(Color.white).frame(width: 24, height: 24))
-                                                .offset(x: 14, y: 14)
-                                        }
-                                    }
-                                    Text(themeName)
-                                        .font(.caption)
-                                        .foregroundColor(.primary)
-                                        .frame(width: 80, alignment: .center)
-                                        .lineLimit(2)
-                                        .minimumScaleFactor(0.8)
-                                }
-                                .padding(.vertical, 4)
-                                .frame(width: 90)
-                            }
-                            .buttonStyle(PlainButtonStyle())
+                            
+                            Spacer()
+                            
+                            Image(systemName: "speaker.wave.3")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.primary)
+                                .frame(width: 32, height: 32)
                         }
                     }
-                    .padding(.horizontal, 8)
+                    .padding(themeVM.theme.spacing.small)
+                    .frame(maxWidth: .infinity, minHeight: 80)
+                    .background(themeVM.theme.colors.cardBackground)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                    )
                 }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 8)
+                .buttonStyle(PlainButtonStyle())
+                
+                // Switch Control Card
+                Button(action: {
+                    openSystemAccessibilitySettings()
+                }) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Switch Control")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(themeVM.theme.colors.text)
+                                    .lineLimit(2)
+                                
+                                Text(accessibilityManager.isSwitchControlRunning ? "On" : "Off")
+                                    .font(.system(size: 13, weight: .regular))
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .lineLimit(2)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "switch.2")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.secondary)
+                                .frame(width: 32, height: 32)
+                        }
+                    }
+                    .padding(themeVM.theme.spacing.small)
+                    .frame(maxWidth: .infinity, minHeight: 80)
+                    .background(themeVM.theme.colors.cardBackground)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Assistive Touch Card
+                Button(action: {
+                    openSystemAccessibilitySettings()
+                }) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Assistive Touch")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(themeVM.theme.colors.text)
+                                    .lineLimit(2)
+                                
+                                Text(accessibilityManager.isAssistiveTouchRunning ? "On" : "Off")
+                                    .font(.system(size: 13, weight: .regular))
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .lineLimit(2)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "hand.tap")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.accent)
+                                .frame(width: 32, height: 32)
+                        }
+                    }
+                    .padding(themeVM.theme.spacing.small)
+                    .frame(maxWidth: .infinity, minHeight: 80)
+                    .background(themeVM.theme.colors.cardBackground)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // High Contrast Card
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "circle.lefthalf.filled")
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundColor(themeVM.theme.colors.accent)
+                            .frame(width: 32, height: 32)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("High Contrast")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(themeVM.theme.colors.text)
+                                .lineLimit(2)
+                            
+                            HStack {
+                                Text(accessibilityManager.isHighContrastEnabled ? "Enabled" : "Disabled")
+                                    .font(.system(size: 13, weight: .regular))
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .lineLimit(2)
+                                
+                                Spacer()
+                                
+                                Toggle("", isOn: $accessibilityManager.isHighContrastEnabled)
+                                    .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
+                                    .onChange(of: accessibilityManager.isHighContrastEnabled) { _, newValue in
+                                        applyHighContrastSettings(enabled: newValue)
+                                    }
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                }
+                .padding(themeVM.theme.spacing.small)
+                .frame(maxWidth: .infinity, minHeight: 80)
                 .background(themeVM.theme.colors.cardBackground)
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                )
             }
             .padding(.horizontal, themeVM.theme.spacing.large)
-            .padding(.vertical, themeVM.theme.spacing.medium)
+            .padding(.vertical, themeVM.theme.spacing.large)
+            .background(themeVM.theme.colors.panelBackground)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.black.opacity(0.1), lineWidth: 1))
         }
-        .padding(.vertical, themeVM.theme.spacing.large)
-        .background(themeVM.theme.colors.panelBackground)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.black.opacity(0.1), lineWidth: 1)
-        )
     }
     
-    private var darkModeSection: some View {
+    private var themeAndAppearanceSection: some View {
         VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
-            Text("Appearance")
+            // Section Title
+            Text("Theme & Appearance")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-                .padding(.horizontal, themeVM.theme.spacing.large)
             
-            VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
+            // Card Container
+            VStack(spacing: themeVM.theme.spacing.medium) {
+                // Theme Options Card
+                VStack(alignment: .leading, spacing: themeVM.theme.spacing.small) {
+                    Text("Theme Options")
+                        .font(themeVM.theme.fonts.captionFont)
+                        .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                        .padding(.horizontal, themeVM.theme.spacing.medium)
+                        .padding(.top, themeVM.theme.spacing.medium)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 32) {
+                            ForEach(themeNames, id: \.self) { themeName in
+                                let theme = ThemeManager.theme(named: themeName)
+                                Button(action: { themeVM.selectedTheme = themeName }) {
+                                    VStack(spacing: 8) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(theme.colors.primary)
+                                                .frame(width: 44, height: 44)
+                                                .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+                                                .overlay(
+                                                    Circle()
+                                                        .stroke(themeVM.selectedTheme == themeName ? theme.colors.accent : Color.clear, lineWidth: 3)
+                                                )
+                                            if themeVM.selectedTheme == themeName {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .foregroundColor(theme.colors.accent)
+                                                    .background(Circle().fill(Color.white).frame(width: 24, height: 24))
+                                                    .offset(x: 14, y: 14)
+                                            }
+                                        }
+                                        Text(themeName)
+                                            .font(themeVM.theme.fonts.captionFont)
+                                            .foregroundColor(themeVM.theme.colors.text)
+                                            .frame(width: 80, alignment: .center)
+                                            .lineLimit(2)
+                                            .minimumScaleFactor(0.8)
+                                    }
+                                    .padding(.vertical, 4)
+                                    .frame(width: 90)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                    }
+                    .padding(.bottom, themeVM.theme.spacing.medium)
+                }
+                .background(themeVM.theme.colors.cardBackground)
+                .cornerRadius(themeVM.theme.cornerRadius.medium)
+                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                
+                // Dark Mode Card
                 HStack(spacing: themeVM.theme.spacing.medium) {
                     Image(systemName: "moon.fill")
-                        .foregroundColor(.purple)
-                        .font(.system(size: 22, weight: .medium))
+                        .foregroundColor(themeVM.theme.colors.accent)
+                        .font(themeVM.theme.fonts.title3)
                         .frame(width: 28, height: 28)
                     Text("Dark Mode")
                         .font(themeVM.theme.fonts.bodyFont)
@@ -288,233 +329,323 @@ struct SettingsView: View {
                     Toggle("", isOn: $themeVM.darkModeEnabled)
                         .toggleStyle(SwitchToggleStyle(tint: themeVM.theme.colors.primary))
                 }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 8)
+                .padding(themeVM.theme.spacing.large)
                 .background(themeVM.theme.colors.cardBackground)
+                .cornerRadius(themeVM.theme.cornerRadius.medium)
+                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
             }
             .padding(.horizontal, themeVM.theme.spacing.large)
-            .padding(.vertical, themeVM.theme.spacing.medium)
+            .padding(.vertical, themeVM.theme.spacing.large)
+            .background(themeVM.theme.colors.panelBackground)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.black.opacity(0.1), lineWidth: 1))
         }
-        .padding(.vertical, themeVM.theme.spacing.large)
-        .background(themeVM.theme.colors.panelBackground)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.black.opacity(0.1), lineWidth: 1)
-        )
     }
+    
+
     
     private var dataManagementSection: some View {
         VStack(spacing: themeVM.theme.spacing.large) {
-            // Data Management Card
-            VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
-                Text("Data Management")
-                    .font(themeVM.theme.fonts.titleFont)
-                    .foregroundColor(themeVM.theme.colors.text)
-                    .padding(.horizontal, themeVM.theme.spacing.large)
-                
-                VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
-                    VStack(spacing: themeVM.theme.spacing.small) {
-                        // iCloud Sync row with trailing Sync Data button
-                        HStack(spacing: themeVM.theme.spacing.medium) {
-                            Image(systemName: "icloud")
-                                .foregroundColor(.blue)
-                                .font(.system(size: 22, weight: .medium))
-                                .frame(width: 28, height: 28)
-                            Text("iCloud Sync")
-                                .font(themeVM.theme.fonts.bodyFont)
-                            Spacer()
-                            Text(cloudKitAvailable ? "Available" : "Unavailable")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Button(action: performManualSync) {
-                                Text("Sync Data")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.black)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Color(.systemGray5))
-                                    .cornerRadius(8)
-                            }
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 8)
-                        .background(themeVM.theme.colors.cardBackground)
-                        // Divider between rows
-                        Divider()
-                            .frame(height: 1)
-                            .background(Color(.separator))
-                            .padding(.horizontal, 8)
-                        HStack(spacing: themeVM.theme.spacing.medium) {
-                            Image(systemName: "tablecells.badge.ellipsis")
-                                .foregroundColor(.green)
-                                .font(.system(size: 22, weight: .medium))
-                                .frame(width: 28, height: 28)
-                            Text("Google Sheets")
-                                .font(themeVM.theme.fonts.bodyFont)
-                            Spacer()
-                            Text(googleSheetsManager.isAuthenticated ? "Connected" : "Not Connected")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            if googleSheetsManager.isAuthenticated {
-                                Button(action: { showingGoogleSheetsPicker = true }) {
-                                    Text("Import")
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .foregroundColor(.black)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(Color(.systemGray5))
-                                        .cornerRadius(8)
-                                }
-                                Button(action: { googleSheetsManager.logout() }) {
-                                    Text("Disconnect")
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .foregroundColor(.black)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(Color(.systemGray5))
-                                        .cornerRadius(8)
-                                }
-                            } else {
-                                Button(action: { showingGoogleSheetsAuth = true }) {
-                                    Text("Connect")
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .foregroundColor(.black)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(Color(.systemGray5))
-                                        .cornerRadius(8)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 8)
-                        .background(themeVM.theme.colors.cardBackground)
-                    }
-                }
-                .padding(.horizontal, themeVM.theme.spacing.large)
-                .padding(.vertical, themeVM.theme.spacing.medium)
-            }
-            .padding(.vertical, themeVM.theme.spacing.large)
-            .background(themeVM.theme.colors.panelBackground)
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
-            )
-            
-            // Data Tools Card
-            VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
-                Text("Data Tools")
-                    .font(themeVM.theme.fonts.titleFont)
-                    .foregroundColor(themeVM.theme.colors.text)
-                    .padding(.horizontal, themeVM.theme.spacing.large)
-                
-                VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
-                    VStack(spacing: themeVM.theme.spacing.small) {
-                        HStack(spacing: themeVM.theme.spacing.medium) {
-                            Image(systemName: "square.and.arrow.up.on.square")
-                                .foregroundColor(.blue)
-                                .font(.system(size: 22, weight: .medium))
-                                .frame(width: 28, height: 28)
-                            Text("Import & Export Hub")
-                                .font(themeVM.theme.fonts.bodyFont)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 8)
-                        .background(themeVM.theme.colors.cardBackground)
-                        .onTapGesture {
-                            showingUnifiedImportExport = true
-                        }
-                        
-                        Divider()
-                            .frame(height: 1)
-                            .background(Color(.separator))
-                            .padding(.horizontal, 8)
-                        
-                        HStack(spacing: themeVM.theme.spacing.medium) {
-                            Image(systemName: "wrench.and.screwdriver")
-                                .foregroundColor(.orange)
-                                .font(.system(size: 22, weight: .medium))
-                                .frame(width: 28, height: 28)
-                            Text("Data Cleanup")
-                                .font(themeVM.theme.fonts.bodyFont)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 8)
-                        .background(themeVM.theme.colors.cardBackground)
-                        .onTapGesture {
-                            showingCleanupSheet = true
-                        }
-                        
-                        Divider()
-                            .frame(height: 1)
-                            .background(Color(.separator))
-                            .padding(.horizontal, 8)
-                        
-                        HStack(spacing: themeVM.theme.spacing.medium) {
-                            Image(systemName: "icloud.and.arrow.up")
-                                .foregroundColor(.blue)
-                                .font(.system(size: 22, weight: .medium))
-                                .frame(width: 28, height: 28)
-                            Text("Create Backup")
-                                .font(themeVM.theme.fonts.bodyFont)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 8)
-                        .background(themeVM.theme.colors.cardBackground)
-                        .onTapGesture {
-                            showingBackupSheet = true
-                        }
-                        
-                        Divider()
-                            .frame(height: 1)
-                            .background(Color(.separator))
-                            .padding(.horizontal, 8)
-                        
-                        HStack(spacing: themeVM.theme.spacing.medium) {
-                            Image(systemName: "trash")
-                                .foregroundColor(.red)
-                                .font(.system(size: 22, weight: .medium))
-                                .frame(width: 28, height: 28)
-                            Text("Delete All Data")
-                                .font(themeVM.theme.fonts.bodyFont)
-                                .foregroundColor(.red)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 8)
-                        .background(themeVM.theme.colors.cardBackground)
-                        .onTapGesture {
-                            showingDeleteAlert = true
-                        }
-                    }
-                }
-                .padding(.horizontal, themeVM.theme.spacing.large)
-                .padding(.vertical, themeVM.theme.spacing.medium)
-            }
-            .padding(.vertical, themeVM.theme.spacing.large)
-            .background(themeVM.theme.colors.panelBackground)
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
-            )
+            dataManagementCards
+            dataToolsCards
         }
+    }
+    
+    private var dataManagementCards: some View {
+        VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
+            // Section Title
+            Text("Data Management")
+                .font(themeVM.theme.fonts.titleFont)
+                .foregroundColor(themeVM.theme.colors.text)
+            
+            // Card Container
+            VStack(spacing: themeVM.theme.spacing.medium) {
+                iCloudSyncCard
+                googleSheetsCard
+                excelImportTestCard
+            }
+            .padding(.horizontal, themeVM.theme.spacing.large)
+            .padding(.vertical, themeVM.theme.spacing.large)
+            .background(themeVM.theme.colors.panelBackground)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.black.opacity(0.1), lineWidth: 1))
+        }
+    }
+    
+    private var dataToolsCards: some View {
+        VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
+            // Section Title
+            Text("Data Tools")
+                .font(themeVM.theme.fonts.titleFont)
+                .foregroundColor(themeVM.theme.colors.text)
+            
+            // Card Container
+            VStack(spacing: themeVM.theme.spacing.medium) {
+                // Import & Export Hub Card
+                Button(action: {
+                    showingUnifiedImportExport = true
+                }) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Import & Export Hub")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(themeVM.theme.colors.text)
+                                    .lineLimit(2)
+                                
+                                Text("Import contacts from file or export data")
+                                    .font(.system(size: 13, weight: .regular))
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .lineLimit(2)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "square.and.arrow.up.on.square")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.primary)
+                                .frame(width: 32, height: 32)
+                        }
+                    }
+                    .padding(themeVM.theme.spacing.small)
+                    .frame(maxWidth: .infinity, minHeight: 80)
+                    .background(themeVM.theme.colors.cardBackground)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Data Cleanup Card
+                Button(action: {
+                    showingCleanupSheet = true
+                }) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Data Cleanup")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(themeVM.theme.colors.text)
+                                    .lineLimit(2)
+                                
+                                Text("Clean and organize your data")
+                                    .font(.system(size: 13, weight: .regular))
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .lineLimit(2)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "wrench.and.screwdriver")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.accent)
+                                .frame(width: 32, height: 32)
+                        }
+                    }
+                    .padding(themeVM.theme.spacing.small)
+                    .frame(maxWidth: .infinity, minHeight: 80)
+                    .background(themeVM.theme.colors.cardBackground)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Create Backup Card
+                Button(action: {
+                    showingBackupSheet = true
+                }) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Create Backup")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(themeVM.theme.colors.text)
+                                    .lineLimit(2)
+                                
+                                Text("Backup your data for safekeeping")
+                                    .font(.system(size: 13, weight: .regular))
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .lineLimit(2)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "icloud.and.arrow.up")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.primary)
+                                .frame(width: 32, height: 32)
+                        }
+                    }
+                    .padding(themeVM.theme.spacing.small)
+                    .frame(maxWidth: .infinity, minHeight: 80)
+                    .background(themeVM.theme.colors.cardBackground)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Delete All Data Card
+                Button(action: {
+                    showingDeleteAlert = true
+                }) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Delete All Data")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(themeVM.theme.colors.error)
+                                    .lineLimit(2)
+                                
+                                Text("Permanently delete all contacts")
+                                    .font(.system(size: 13, weight: .regular))
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .lineLimit(2)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "trash")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.error)
+                                .frame(width: 32, height: 32)
+                        }
+                    }
+                    .padding(themeVM.theme.spacing.small)
+                    .frame(maxWidth: .infinity, minHeight: 80)
+                    .background(themeVM.theme.colors.cardBackground)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, themeVM.theme.spacing.large)
+            .padding(.vertical, themeVM.theme.spacing.large)
+            .background(themeVM.theme.colors.panelBackground)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.black.opacity(0.1), lineWidth: 1))
+        }
+    }
+    
+    // MARK: - Individual Card Components
+    
+    private var iCloudSyncCard: some View {
+        HStack(spacing: themeVM.theme.spacing.medium) {
+            Image(systemName: "icloud")
+                .foregroundColor(themeVM.theme.colors.primary)
+                .font(themeVM.theme.fonts.title3)
+                .frame(width: 28, height: 28)
+            Text("iCloud Sync")
+                .font(themeVM.theme.fonts.bodyFont)
+            Spacer()
+            Text(cloudKitAvailable ? "Available" : "Unavailable")
+                .font(themeVM.theme.fonts.captionFont)
+                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+            Button(action: performManualSync) {
+                Text("Sync Data")
+                    .font(themeVM.theme.fonts.captionFont)
+                    .foregroundColor(themeVM.theme.colors.text)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(themeVM.theme.colors.backgroundSecondary)
+                    .cornerRadius(themeVM.theme.cornerRadius.small)
+            }
+        }
+        .padding(themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.cardBackground)
+        .cornerRadius(themeVM.theme.cornerRadius.medium)
+        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+    }
+    
+    private var googleSheetsCard: some View {
+        HStack(spacing: themeVM.theme.spacing.medium) {
+            Image(systemName: "tablecells.badge.ellipsis")
+                .foregroundColor(themeVM.theme.colors.secondary)
+                .font(themeVM.theme.fonts.title3)
+                .frame(width: 28, height: 28)
+            Text("Google Sheets")
+                .font(themeVM.theme.fonts.bodyFont)
+            Spacer()
+            Text(googleSheetsManager.isAuthenticated ? "Connected" : "Not Connected")
+                .font(themeVM.theme.fonts.captionFont)
+                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+            if googleSheetsManager.isAuthenticated {
+                Button(action: { showingGoogleSheetsPicker = true }) {
+                    Text("Import")
+                        .font(themeVM.theme.fonts.captionFont)
+                        .foregroundColor(themeVM.theme.colors.text)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(themeVM.theme.colors.backgroundSecondary)
+                        .cornerRadius(themeVM.theme.cornerRadius.small)
+                }
+                Button(action: { googleSheetsManager.logout() }) {
+                    Text("Disconnect")
+                        .font(themeVM.theme.fonts.captionFont)
+                        .foregroundColor(themeVM.theme.colors.text)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(themeVM.theme.colors.backgroundSecondary)
+                        .cornerRadius(themeVM.theme.cornerRadius.small)
+                }
+            } else {
+                Button(action: { showingGoogleSheetsAuth = true }) {
+                    Text("Connect")
+                        .font(themeVM.theme.fonts.captionFont)
+                        .foregroundColor(themeVM.theme.colors.text)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(themeVM.theme.colors.backgroundSecondary)
+                        .cornerRadius(themeVM.theme.cornerRadius.small)
+                }
+            }
+        }
+        .padding(themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.cardBackground)
+        .cornerRadius(themeVM.theme.cornerRadius.medium)
+        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+    }
+    
+    private var excelImportTestCard: some View {
+        HStack(spacing: themeVM.theme.spacing.medium) {
+            Image(systemName: "tablecells")
+                .foregroundColor(themeVM.theme.colors.accent)
+                .font(themeVM.theme.fonts.title3)
+                .frame(width: 28, height: 28)
+            Text("Excel Import Test")
+                .font(themeVM.theme.fonts.bodyFont)
+            Spacer()
+            Button(action: testExcelImport) {
+                Text("Test")
+                    .font(themeVM.theme.fonts.captionFont)
+                    .foregroundColor(themeVM.theme.colors.text)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(themeVM.theme.colors.backgroundSecondary)
+                    .cornerRadius(themeVM.theme.cornerRadius.medium)
+            }
+        }
+        .padding(themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.cardBackground)
+        .cornerRadius(themeVM.theme.cornerRadius.medium)
+        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Helper Methods
@@ -549,68 +680,109 @@ struct SettingsView: View {
         }
     }
     
+    private func testExcelImport() {
+        Task {
+            let dataImportManager = DataImportManager()
+            let result = await dataImportManager.testExcelImportFromUI()
+            await MainActor.run {
+                testResult = result
+                showingTestAlert = true
+            }
+        }
+    }
+    
     private var supportSection: some View {
         VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
+            // Section Title
             Text("Support")
                 .font(themeVM.theme.fonts.titleFont)
                 .foregroundColor(themeVM.theme.colors.text)
-                .padding(.horizontal, themeVM.theme.spacing.large)
             
-            VStack(alignment: .leading, spacing: themeVM.theme.spacing.medium) {
-                VStack(spacing: themeVM.theme.spacing.small) {
-                    HStack(spacing: themeVM.theme.spacing.medium) {
-                        Image(systemName: "envelope")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("Contact Support")
-                            .font(themeVM.theme.fonts.bodyFont)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
+            // Card Container
+            VStack(spacing: themeVM.theme.spacing.medium) {
+                // Contact Support Card
+                Button(action: {
+                    openEmailSupport()
+                }) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Contact Support")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(themeVM.theme.colors.text)
+                                    .lineLimit(2)
+                                
+                                Text("Get help and support")
+                                    .font(.system(size: 13, weight: .regular))
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .lineLimit(2)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "envelope")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.primary)
+                                .frame(width: 32, height: 32)
+                        }
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
+                    .padding(themeVM.theme.spacing.small)
+                    .frame(maxWidth: .infinity, minHeight: 80)
                     .background(themeVM.theme.colors.cardBackground)
-                    .onTapGesture {
-                        openEmailSupport()
-                    }
-                    
-                    Divider()
-                        .frame(height: 1)
-                        .background(Color(.separator))
-                        .padding(.horizontal, 8)
-                    
-                    HStack(spacing: themeVM.theme.spacing.medium) {
-                        Image(systemName: "book")
-                            .foregroundColor(.green)
-                            .font(.system(size: 22, weight: .medium))
-                            .frame(width: 28, height: 28)
-                        Text("Documentation")
-                            .font(themeVM.theme.fonts.bodyFont)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 8)
-                    .background(themeVM.theme.colors.cardBackground)
-                    .onTapGesture {
-                        openDocumentation()
-                    }
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                    )
                 }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Documentation Card
+                Button(action: {
+                    openDocumentation()
+                }) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Documentation")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(themeVM.theme.colors.text)
+                                    .lineLimit(2)
+                                
+                                Text("View app documentation and guides")
+                                    .font(.system(size: 13, weight: .regular))
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .lineLimit(2)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "book")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(themeVM.theme.colors.secondary)
+                                .frame(width: 32, height: 32)
+                        }
+                    }
+                    .padding(themeVM.theme.spacing.small)
+                    .frame(maxWidth: .infinity, minHeight: 80)
+                    .background(themeVM.theme.colors.cardBackground)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal, themeVM.theme.spacing.large)
-            .padding(.vertical, themeVM.theme.spacing.medium)
+            .padding(.vertical, themeVM.theme.spacing.large)
+            .background(themeVM.theme.colors.panelBackground)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.black.opacity(0.1), lineWidth: 1))
         }
-        .padding(.vertical, themeVM.theme.spacing.large)
-        .background(themeVM.theme.colors.panelBackground)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.black.opacity(0.1), lineWidth: 1)
-        )
     }
     
     private func deleteAllData() {

@@ -269,14 +269,25 @@ class GoogleSheetsManager: ObservableObject {
         let lastName = getFirstNonEmpty(["lastname", "last_name", "last name"])
         let mailingAddress = getFirstNonEmpty(["address", "mailingaddress", "mailing_address", "street address"])
         let city = getValue("city")
-        let zipCode = getIntValue("zipcode")
-        let siteZipCode = getIntValue("sitezipcode")
-        let phoneNumber1 = getFirstNonEmpty(["phone", "phone1", "phonenumber1", "phone number 1", "telephone"]).cleanedPhoneNumber
-        let phoneNumber2 = getFirstNonEmpty(["phone2", "phone number 2", "mobile", "cell", "cell phone", "phone 2"]).cleanedPhoneNumber
-        let phoneNumber3 = getFirstNonEmpty(["phone3", "phone number 3", "work phone", "phone 3"]).cleanedPhoneNumber
-        let phoneNumber4 = getFirstNonEmpty(["phone4", "phone number 4", "home phone", "phone 4"]).cleanedPhoneNumber
-        let phoneNumber5 = getFirstNonEmpty(["phone5", "phone number 5", "phone 5"]).cleanedPhoneNumber
-        let phoneNumber6 = getFirstNonEmpty(["phone6", "phone number 6", "phone 6"]).cleanedPhoneNumber
+        let zipCodeString = getValue("zipcode").cleanedZipCode
+        let siteZipCodeString = getValue("sitezipcode").cleanedZipCode
+        
+        // Debug: Print zip code processing
+        if !zipCodeString.isEmpty {
+            print("[GoogleSheetsManager] Zip code processing - Original: '\(getValue("zipcode"))', Cleaned: '\(zipCodeString)'")
+        }
+        if !siteZipCodeString.isEmpty {
+            print("[GoogleSheetsManager] Site zip code processing - Original: '\(getValue("sitezipcode"))', Cleaned: '\(siteZipCodeString)'")
+        }
+        
+        let zipCode = Int32(zipCodeString) ?? 0
+        let siteZipCode = Int32(siteZipCodeString) ?? 0
+        let phoneNumber1 = formatPhoneNumberForImport(getFirstNonEmpty(["phone", "phone1", "phonenumber1", "phone number 1", "telephone"]))
+        let phoneNumber2 = formatPhoneNumberForImport(getFirstNonEmpty(["phone2", "phone number 2", "mobile", "cell", "cell phone", "phone 2"]))
+        let phoneNumber3 = formatPhoneNumberForImport(getFirstNonEmpty(["phone3", "phone number 3", "work phone", "phone 3"]))
+        let phoneNumber4 = formatPhoneNumberForImport(getFirstNonEmpty(["phone4", "phone number 4", "home phone", "phone 4"]))
+        let phoneNumber5 = formatPhoneNumberForImport(getFirstNonEmpty(["phone5", "phone number 5", "phone 5"]))
+        let phoneNumber6 = formatPhoneNumberForImport(getFirstNonEmpty(["phone6", "phone number 6", "phone 6"]))
         let siteMailingAddress = getFirstNonEmpty(["siteaddress", "site_address", "site address", "site addr", "service address", "location address"])
         let siteCity = getFirstNonEmpty(["sitecity", "site_city", "site city"])
         let siteState = getFirstNonEmpty(["sitestate", "site_state", "site state"])
@@ -392,6 +403,54 @@ class GoogleSheetsManager: ObservableObject {
     
     func logout() {
         oauthManager.logout()
+    }
+    
+    // MARK: - Formatting Helper Methods
+    
+    private func formatPhoneNumberForImport(_ phone: String?) -> String? {
+        guard let phone = phone, !phone.isEmpty else { return nil }
+        
+        // Remove all non-digit characters
+        let digits = phone.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        
+        // Handle scientific notation (e.g., 1.5551234567e+10)
+        if phone.contains("e") || phone.contains("E") {
+            if let doubleValue = Double(phone) {
+                let noExp = String(format: "%.0f", doubleValue)
+                if noExp.count >= 10 {
+                    return formatPhoneNumber(noExp)
+                }
+            }
+        }
+        
+        // If it's 10 digits, format it properly
+        if digits.count == 10 {
+            return formatPhoneNumber(digits)
+        }
+        
+        // If it's 11 digits and starts with 1, remove the 1 and format
+        if digits.count == 11 && digits.hasPrefix("1") {
+            let withoutOne = String(digits.dropFirst())
+            return formatPhoneNumber(withoutOne)
+        }
+        
+        // For other valid lengths, return cleaned digits
+        if digits.count >= 10 && digits.count <= 15 {
+            return digits
+        }
+        
+        // Return original if we can't process it
+        return phone
+    }
+    
+    private func formatPhoneNumber(_ digits: String) -> String {
+        if digits.count == 10 {
+            let area = digits.prefix(3)
+            let mid = digits.dropFirst(3).prefix(3)
+            let last = digits.suffix(4)
+            return "(\(area)) \(mid)-\(last)"
+        }
+        return digits
     }
 }
 

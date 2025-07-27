@@ -146,12 +146,44 @@ struct BackupView: View {
                     color: themeVM.theme.colors.primary
                 )
                 
-                DataSummaryRow(
-                    icon: "building.2",
-                    title: "Unique Farms",
-                    value: "\(metadata.uniqueFarms)",
-                    color: themeVM.theme.colors.secondary
-                )
+                VStack(alignment: .leading, spacing: themeVM.theme.spacing.small) {
+                    HStack(spacing: themeVM.theme.spacing.medium) {
+                        Image(systemName: "building.2")
+                            .foregroundColor(themeVM.theme.colors.secondary)
+                            .frame(width: 24)
+                            .accessibilityHidden(true)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Unique Farms (\(metadata.uniqueFarms))")
+                                .font(themeVM.theme.fonts.captionFont)
+                                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                            
+                            if metadata.farmNames.isEmpty {
+                                Text("No farms assigned")
+                                    .font(themeVM.theme.fonts.bodyFont)
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .italic()
+                            } else {
+                                VStack(alignment: .leading, spacing: 1) {
+                                    ForEach(metadata.farmNames.prefix(3), id: \.self) { farmName in
+                                        Text(farmName)
+                                            .font(themeVM.theme.fonts.bodyFont)
+                                            .foregroundColor(themeVM.theme.colors.text)
+                                    }
+                                    
+                                    if metadata.farmNames.count > 3 {
+                                        Text("+ \(metadata.farmNames.count - 3) more")
+                                            .font(themeVM.theme.fonts.captionFont)
+                                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                            .italic()
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                }
                 
                 DataSummaryRow(
                     icon: "calendar",
@@ -372,12 +404,14 @@ struct BackupView: View {
         let fetchRequest: NSFetchRequest<FarmContact> = FarmContact.fetchRequest()
         let contacts = try viewContext.fetch(fetchRequest)
         
-        let uniqueFarms = Set(contacts.compactMap { $0.farm }).count
+        let farmNames = Set(contacts.compactMap { $0.farm }).sorted()
+        let uniqueFarms = farmNames.count
         let lastModified = contacts.map { $0.dateModified ?? $0.dateCreated ?? Date() }.max() ?? Date()
         
         return BackupMetadata(
             contactCount: contacts.count,
             uniqueFarms: uniqueFarms,
+            farmNames: Array(farmNames),
             lastModifiedDate: DateFormatter.backupDate.string(from: lastModified),
             estimatedSize: "\(contacts.count * 500) bytes" // Rough estimate
         )
@@ -470,6 +504,7 @@ struct DataSummaryRow: View {
 struct BackupMetadata {
     let contactCount: Int
     let uniqueFarms: Int
+    let farmNames: [String]
     let lastModifiedDate: String
     let estimatedSize: String
 }

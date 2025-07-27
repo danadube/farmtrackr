@@ -15,7 +15,7 @@ class ThemeViewModel: ObservableObject {
     var theme: Theme { ThemeManager.theme(named: selectedTheme) }
     @AppStorage("darkModeEnabled") var darkModeEnabled: Bool = false
     init() {
-        self.selectedTheme = UserDefaults.standard.string(forKey: "selectedTheme") ?? "Modern Green"
+        self.selectedTheme = UserDefaults.standard.string(forKey: "selectedTheme") ?? "Classic Green"
     }
 }
 
@@ -29,7 +29,7 @@ struct ContentView: View {
     @State private var showingAddDocument = false
     @State private var showingUnifiedImportExport = false
     @State private var showingPrintLabelsSheet = false
-    @State private var hasSeenWelcome = false
+    @State private var hasSeenWelcome = true
     @EnvironmentObject var themeVM: ThemeViewModel
     @EnvironmentObject var accessibilityManager: AccessibilityManager
     @Environment(\.managedObjectContext) private var viewContext
@@ -59,8 +59,12 @@ struct ContentView: View {
             ZStack {
                 themeVM.theme.colors.background.ignoresSafeArea()
                 
-                NavigationSplitView {
+                NavigationSplitView(columnVisibility: .constant(.all)) {
                     SidebarView(selectedTab: $selectedTab)
+                        .padding(.horizontal, themeVM.theme.spacing.large) // Added horizontal padding on both sides
+                        .padding(.top, themeVM.theme.spacing.small)
+                        .padding(.bottom, themeVM.theme.spacing.small)
+                        .frame(minWidth: 280, idealWidth: 320, maxWidth: 360)
                 } detail: {
                     switch selectedTab {
                     case .home:
@@ -73,9 +77,11 @@ struct ContentView: View {
                             showingPrintLabelsSheet: $showingPrintLabelsSheet,
                             selectedTab: $selectedTab
                         )
+                        .padding(.trailing, themeVM.theme.spacing.extraLarge)
                     case .contacts:
                         if let contact = selectedContact {
                             ContactDetailView(contact: contact, selectedContact: $selectedContact)
+                                .padding(.trailing, themeVM.theme.spacing.extraLarge)
                         } else {
                             ContactsMasterView(
                                 selectedContact: $selectedContact,
@@ -84,19 +90,24 @@ struct ContentView: View {
                                 showingAddContact: $showingAddContact,
                                 showingContactDetail: $showingContactDetail
                             )
+                            .padding(.trailing, themeVM.theme.spacing.extraLarge)
                         }
                     case .documents:
                         DocumentsView(context: viewContext)
+                            .padding(.trailing, themeVM.theme.spacing.extraLarge)
                     case .dataQuality:
                         DataQualityView()
+                            .padding(.trailing, themeVM.theme.spacing.extraLarge)
                     case .importExport:
                         ImportExportView(
                             showingUnifiedImportExport: $showingUnifiedImportExport,
                             showingPrintLabelsSheet: $showingPrintLabelsSheet,
                             selectedTab: $selectedTab
                         )
+                        .padding(.trailing, themeVM.theme.spacing.extraLarge)
                     case .settings:
                         SettingsView()
+                            .padding(.trailing, themeVM.theme.spacing.extraLarge)
                     case .none:
                         HomeView(
                             contacts: contacts,
@@ -107,6 +118,7 @@ struct ContentView: View {
                             showingPrintLabelsSheet: $showingPrintLabelsSheet,
                             selectedTab: $selectedTab
                         )
+                        .padding(.trailing, themeVM.theme.spacing.extraLarge)
                     }
                 }
                 .navigationSplitViewStyle(.balanced)
@@ -190,8 +202,8 @@ struct WelcomeScreen: View {
                                 .stroke(
                                     LinearGradient(
                                         colors: [
-                                            themeVM.theme.colors.accent.opacity(0.3),
-                                            themeVM.theme.colors.accent.opacity(0.1)
+                                            Color.black.opacity(0.1),
+                                            Color.black.opacity(0.05)
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -201,7 +213,7 @@ struct WelcomeScreen: View {
                         )
                 )
                 .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 6)
-                .shadow(color: themeVM.theme.colors.primary.opacity(0.1), radius: 20, x: 0, y: 10)
+                .shadow(color: Color.black.opacity(0.05), radius: 20, x: 0, y: 10)
                 .frame(maxWidth: 500) // Limit width for better appearance
             }
             .padding(.top, themeVM.theme.spacing.extraLarge * 3) // Increased top padding for more separation
@@ -355,105 +367,173 @@ struct SidebarView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Logo and App Name Section
-            VStack(spacing: themeVM.theme.spacing.small) {
-                // Logo above title
-                VStack(spacing: themeVM.theme.spacing.small) {
+            VStack(spacing: themeVM.theme.spacing.large) {
+                // Logo and App Name Section
+                VStack(spacing: themeVM.theme.spacing.medium) {
                     Image("farmtrackr_logo_TB 1024")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 125, height: 125) // 25% larger
-                        .shadow(color: themeVM.theme.colors.primary.opacity(0.3), radius: 8, x: 0, y: 4)
+                        .frame(width: 160, height: 160) // Larger logo for wider space
+                        .shadow(color: themeVM.theme.colors.primary.opacity(0.4), radius: 12, x: 0, y: 6)
+                        .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 3)
                         .overlay(
                             RoundedRectangle(cornerRadius: 20)
                                 .stroke(
                                     LinearGradient(
                                         colors: [
-                                            themeVM.theme.colors.primary.opacity(0.6),
-                                            themeVM.theme.colors.primary.opacity(0.2)
+                                            themeVM.theme.colors.primary.opacity(0.4),
+                                            themeVM.theme.colors.secondary.opacity(0.3),
+                                            Color.black.opacity(0.1)
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ),
-                                    lineWidth: 2
+                                    lineWidth: 2.5
                                 )
                         )
                     
                     if !isCollapsed {
-                        VStack(alignment: .center, spacing: 4) {
+                        VStack(alignment: .center, spacing: 6) {
                             Text("FarmTrackr")
-                                .font(.system(size: 22, weight: .bold)) // Larger title
+                                .font(.system(size: 26, weight: .bold)) // Larger title for wider space
                                 .foregroundColor(themeVM.theme.colors.text)
-                                .shadow(color: themeVM.theme.colors.primary.opacity(0.2), radius: 2, x: 0, y: 1)
+                                .shadow(color: themeVM.theme.colors.primary.opacity(0.3), radius: 3, x: 0, y: 2)
+                                .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
                             Text("Farm CRM")
-                                .font(.system(size: 14, weight: .medium)) // Slightly larger subtitle
+                                .font(.system(size: 16, weight: .medium)) // Larger subtitle
                                 .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                .shadow(color: themeVM.theme.colors.primary.opacity(0.2), radius: 2, x: 0, y: 1)
                         }
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(themeVM.theme.spacing.medium)
+                .padding(themeVM.theme.spacing.large) // More padding for wider space
                 .background(
                     RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.medium)
-                        .fill(themeVM.theme.colors.cardBackground)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    themeVM.theme.colors.cardBackground,
+                                    themeVM.theme.colors.primary.opacity(0.1),
+                                    themeVM.theme.colors.secondary.opacity(0.05)
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                         .overlay(
                             RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.medium)
-                                .stroke(themeVM.theme.colors.border, lineWidth: 0.5)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            themeVM.theme.colors.primary.opacity(0.3),
+                                            themeVM.theme.colors.secondary.opacity(0.2),
+                                            themeVM.theme.colors.border
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1.5
+                                )
                         )
                 )
-                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .shadow(color: themeVM.theme.colors.primary.opacity(0.2), radius: 8, x: 0, y: 4)
+                .shadow(color: .black.opacity(0.1), radius: 3, x: 0, y: 2)
             }
-            .padding(.bottom, themeVM.theme.spacing.medium)
+            .padding(.bottom, themeVM.theme.spacing.large) // More bottom padding
             
             Divider()
                 .background(Color(.separator))
             
             // Navigation List with Sections
             ScrollView {
-                VStack(spacing: 0) {
+                VStack(spacing: themeVM.theme.spacing.small) { // Reduced from 0 to small for closer sections
                     // MAIN Section
                     if !isCollapsed {
                         SidebarSectionHeader(title: "MAIN")
                     }
                     
-                    SidebarTab(icon: "house", title: "Home", isSelected: selectedTab == .home) {
-                        selectedTab = .home
+                    // Navigation Items
+                    VStack(spacing: themeVM.theme.spacing.small) { // Reduced spacing from medium to small
+                        SidebarTab(
+                            icon: "house",
+                            title: "Home",
+                            isSelected: selectedTab == .home,
+                            action: { selectedTab = .home }
+                        )
+                        
+                        SidebarTab(
+                            icon: "person.2",
+                            title: "Contacts",
+                            isSelected: selectedTab == .contacts,
+                            action: { selectedTab = .contacts }
+                        )
+                        
+                        SidebarTab(
+                            icon: "doc.text",
+                            title: "Documents",
+                            isSelected: selectedTab == .documents,
+                            action: { selectedTab = .documents }
+                        )
                     }
-                    SidebarTab(icon: "person.2", title: "Contacts", isSelected: selectedTab == .contacts) {
-                        selectedTab = .contacts
-                    }
-                    SidebarTab(icon: "doc.text", title: "Documents", isSelected: selectedTab == .documents) {
-                        selectedTab = .documents
-                    }
+                    .padding(.horizontal, themeVM.theme.spacing.medium)
+                    .padding(.vertical, themeVM.theme.spacing.small) // Reduced from medium to small
                     
                     // TOOLS Section
                     if !isCollapsed {
                         SidebarSectionHeader(title: "TOOLS")
                     }
                     
-                    SidebarTab(icon: "checkmark.shield", title: "Data Quality", isSelected: selectedTab == .dataQuality) {
-                        selectedTab = .dataQuality
+                    VStack(spacing: themeVM.theme.spacing.small) { // Added VStack with small spacing
+                        SidebarTab(
+                            icon: "checkmark.shield",
+                            title: "Data Quality",
+                            isSelected: selectedTab == .dataQuality,
+                            action: { selectedTab = .dataQuality }
+                        )
+                        
+                        SidebarTab(
+                            icon: "square.and.arrow.up.on.square",
+                            title: "Import & Export",
+                            isSelected: selectedTab == .importExport,
+                            action: { selectedTab = .importExport }
+                        )
                     }
-                    SidebarTab(icon: "square.and.arrow.up.on.square", title: "Import & Export", isSelected: selectedTab == .importExport) {
-                        selectedTab = .importExport
-                    }
+                    .padding(.horizontal, themeVM.theme.spacing.medium)
+                    .padding(.vertical, themeVM.theme.spacing.small) // Reduced from medium to small
                     
                     // SETTINGS Section
                     if !isCollapsed {
                         SidebarSectionHeader(title: "SETTINGS")
                     }
                     
-                    SidebarTab(icon: "gear", title: "Settings", isSelected: selectedTab == .settings) {
-                        selectedTab = .settings
+                    VStack(spacing: themeVM.theme.spacing.small) { // Added VStack with small spacing
+                        SidebarTab(
+                            icon: "gear",
+                            title: "Settings",
+                            isSelected: selectedTab == .settings,
+                            action: { selectedTab = .settings }
+                        )
                     }
+                    .padding(.horizontal, themeVM.theme.spacing.medium)
+                    .padding(.vertical, themeVM.theme.spacing.small) // Reduced from medium to small
                 }
                 .padding(.vertical, themeVM.theme.spacing.small)
             }
-            .background(Color(.systemBackground))
             
             Spacer()
         }
-        .background(Color(.systemBackground))
-        .frame(width: isCollapsed ? 60 : 220)
+        .padding(.horizontal, themeVM.theme.spacing.medium)
+        .padding(.vertical, themeVM.theme.spacing.medium)
+        .background(
+            RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.large)
+                .fill(themeVM.theme.colors.cardBackground)
+                .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.large)
+                        .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                )
+        )
         .animation(.easeInOut(duration: 0.3), value: isCollapsed)
     }
 }
@@ -474,7 +554,7 @@ struct SidebarSectionHeader: View {
         }
         .padding(.horizontal, themeVM.theme.spacing.medium)
         .padding(.top, themeVM.theme.spacing.medium)
-        .padding(.bottom, themeVM.theme.spacing.small)
+        .padding(.bottom, 4) // Reduced from small to 4 points for closer proximity
     }
 }
 
@@ -487,7 +567,44 @@ struct HomeView: View {
     @Binding var showingUnifiedImportExport: Bool
     @Binding var showingPrintLabelsSheet: Bool
     @Binding var selectedTab: NavigationTab?
+    @State private var showingImportTemplates = false
+    @State private var showingExportReports = false
     @EnvironmentObject var themeVM: ThemeViewModel
+    @Environment(\.managedObjectContext) private var viewContext
+    
+    private var totalContacts: Int {
+        let fetchRequest: NSFetchRequest<FarmContact> = FarmContact.fetchRequest()
+        do {
+            return try viewContext.count(for: fetchRequest)
+        } catch {
+            print("Error fetching total contacts: \(error)")
+            return 0
+        }
+    }
+    
+    private var uniqueFarms: Int {
+        let fetchRequest: NSFetchRequest<FarmContact> = FarmContact.fetchRequest()
+        do {
+            let contacts = try viewContext.fetch(fetchRequest)
+            let farms = contacts.compactMap { $0.farm }.filter { !$0.isEmpty }
+            return Set(farms).count
+        } catch {
+            print("Error fetching unique farms: \(error)")
+            return 0
+        }
+    }
+    
+    private var farmNames: [String] {
+        let fetchRequest: NSFetchRequest<FarmContact> = FarmContact.fetchRequest()
+        do {
+            let contacts = try viewContext.fetch(fetchRequest)
+            let farms = contacts.compactMap { $0.farm }.filter { !$0.isEmpty }
+            return Array(Set(farms)).sorted()
+        } catch {
+            print("Error fetching farm names: \(error)")
+            return []
+        }
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -497,12 +614,19 @@ struct HomeView: View {
             ScrollView {
                 VStack(spacing: themeVM.theme.spacing.large) {
                     quickActionsSection
+                    statisticsSection
                     recentContactsSection
                 }
                 .padding(themeVM.theme.spacing.large)
             }
         }
         .background(themeVM.theme.colors.background)
+        .sheet(isPresented: $showingImportTemplates) {
+            CSVImportTemplatesView()
+        }
+        .sheet(isPresented: $showingExportReports) {
+            ExportReportsView()
+        }
     }
     
     private var quickActionsSection: some View {
@@ -523,6 +647,109 @@ struct HomeView: View {
                 }
             ]
         )
+    }
+    
+    private var statisticsSection: some View {
+        VStack(alignment: .leading, spacing: themeVM.theme.spacing.large) {
+            // Panel Title
+            Text("Statistics")
+                .font(themeVM.theme.fonts.titleFont)
+                .fontWeight(.bold)
+                .foregroundColor(themeVM.theme.colors.text)
+                .padding(.horizontal, themeVM.theme.spacing.large)
+            
+            // Card Container
+            VStack(spacing: themeVM.theme.spacing.medium) {
+                HStack(spacing: themeVM.theme.spacing.medium) {
+                    // Total Contacts Card
+                    VStack(alignment: .leading, spacing: themeVM.theme.spacing.small) {
+                        HStack(alignment: .center) {
+                            Image(systemName: "person.2")
+                                .foregroundColor(themeVM.theme.colors.primary)
+                                .font(.system(size: 20, weight: .medium))
+                            Text("Total Contacts")
+                                .font(themeVM.theme.fonts.bodyFont)
+                                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                            
+                            Spacer()
+                            
+                            Text("\(totalContacts)")
+                                .font(.system(size: 32, weight: .bold))
+                                .foregroundColor(themeVM.theme.colors.text)
+                        }
+                        
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
+                    .padding(themeVM.theme.spacing.large)
+                    .background(themeVM.theme.colors.cardBackground)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    
+                    // Unique Farms Card
+                    VStack(alignment: .leading, spacing: themeVM.theme.spacing.small) {
+                        HStack(alignment: .center) {
+                            Image(systemName: "building.2")
+                                .foregroundColor(themeVM.theme.colors.secondary)
+                                .font(.system(size: 20, weight: .medium))
+                            Text("Unique Farms")
+                                .font(themeVM.theme.fonts.bodyFont)
+                                .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                            
+                            Spacer()
+                            
+                            Text("\(uniqueFarms)")
+                                .font(.system(size: 32, weight: .bold))
+                                .foregroundColor(themeVM.theme.colors.text)
+                        }
+                        
+                        VStack(alignment: .trailing, spacing: 2) {
+                            if farmNames.isEmpty {
+                                Text("No farms assigned")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                    .italic()
+                            } else {
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    ForEach(farmNames.prefix(3), id: \.self) { farmName in
+                                        Text(farmName)
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(themeVM.theme.colors.text)
+                                            .lineLimit(1)
+                                    }
+                                    
+                                    if farmNames.count > 3 {
+                                        Text("+ \(farmNames.count - 3) more")
+                                            .font(.system(size: 14, weight: .regular))
+                                            .foregroundColor(themeVM.theme.colors.secondaryLabel)
+                                            .italic()
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
+                    .padding(themeVM.theme.spacing.large)
+                    .background(themeVM.theme.colors.cardBackground)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                }
+            }
+            .padding(.horizontal, themeVM.theme.spacing.large)
+            .padding(.vertical, themeVM.theme.spacing.medium)
+        }
+        .padding(.vertical, themeVM.theme.spacing.large)
+        .background(themeVM.theme.colors.panelBackground)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.black.opacity(0.1), lineWidth: 1)
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Statistics panel")
     }
     
     private var recentContactsSection: some View {
@@ -914,6 +1141,9 @@ struct ImportExportView: View {
     @Binding var showingUnifiedImportExport: Bool
     @Binding var showingPrintLabelsSheet: Bool
     @Binding var selectedTab: NavigationTab?
+    @State private var showingImportTemplates = false
+    @State private var showingExportReports = false
+    @State private var showingGoogleSheets = false
     @EnvironmentObject var themeVM: ThemeViewModel
     
     var body: some View {
@@ -930,7 +1160,7 @@ struct ImportExportView: View {
                                 showingUnifiedImportExport = true
                             },
                             ActionCardData(icon: "tablecells", title: "Google Sheets", subtitle: "Import/export from Google Sheets") {
-                                // TODO: Add Google Sheets functionality
+                                showingGoogleSheets = true
                             },
                             ActionCardData(icon: "doc.text", title: "Import Documents", subtitle: "Import PDFs and files") {
                                 selectedTab = .documents
@@ -942,13 +1172,13 @@ struct ImportExportView: View {
                                 // TODO: Add backup/restore functionality
                             },
                             ActionCardData(icon: "doc.on.doc", title: "Import Templates", subtitle: "Manage import configurations") {
-                                // TODO: Add import templates functionality
+                                showingImportTemplates = true
                             },
                             ActionCardData(icon: "square.and.arrow.up", title: "Export Reports", subtitle: "Export data quality reports") {
-                                // TODO: Add export reports functionality
+                                showingExportReports = true
                             },
                             ActionCardData(icon: "externaldrive", title: "Cloud Sync", subtitle: "Sync with iCloud and other services") {
-                                // TODO: Add cloud sync functionality
+                                selectedTab = .settings
                             }
                         ]
                     )
@@ -957,6 +1187,15 @@ struct ImportExportView: View {
             }
         }
         .background(themeVM.theme.colors.background)
+        .sheet(isPresented: $showingImportTemplates) {
+            CSVImportTemplatesView()
+        }
+        .sheet(isPresented: $showingExportReports) {
+            ExportReportsView()
+        }
+        .sheet(isPresented: $showingGoogleSheets) {
+            GoogleSheetsView()
+        }
     }
 }
 

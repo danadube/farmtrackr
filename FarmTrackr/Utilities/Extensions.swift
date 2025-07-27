@@ -466,6 +466,50 @@ extension String {
         return self
     }
     
+    var cleanedZipCode: String {
+        // Remove all non-digit characters
+        let digits = self.filter { $0.isNumber }
+        
+        // Handle scientific notation (e.g., 1.23456e+05)
+        if self.contains("e") || self.contains("E") {
+            if let doubleValue = Double(self) {
+                let result = String(format: "%.0f", doubleValue)
+                // Ensure we don't exceed 9 digits for ZIP+4
+                return result.count > 9 ? String(result.prefix(9)) : result
+            }
+        }
+        
+        // If it's already 5 digits, return as is
+        if digits.count == 5 {
+            return digits
+        }
+        
+        // If it's 9 digits, return as is (ZIP+4 format)
+        if digits.count == 9 {
+            return digits
+        }
+        
+        // If it's 6 digits, truncate to 5 (common issue with Excel imports)
+        if digits.count == 6 {
+            return String(digits.prefix(5))
+        }
+        
+        // If it's more than 9 digits, truncate to first 9
+        if digits.count > 9 {
+            return String(digits.prefix(9))
+        }
+        
+        // If it's less than 5 digits and not empty, pad with zeros
+        if digits.count < 5 && digits.count > 0 {
+            let padded = String(format: "%05d", Int(digits) ?? 0)
+            // Ensure we don't create a 6-digit number by padding
+            return padded.count == 5 ? padded : digits
+        }
+        
+        // For any other case, return the digits as they are
+        return digits
+    }
+    
     var isValidZipCode: Bool {
         let zipRegex = "^[0-9]{5}(-[0-9]{4})?$"
         let zipPredicate = NSPredicate(format: "SELF MATCHES %@", zipRegex)
@@ -526,9 +570,21 @@ extension Array where Element: Hashable {
 
 extension Int32 {
     var formattedZipCode: String {
-        String(self).count == 9 ? 
-            "\(String(self).prefix(5))-\(String(self).dropFirst(5))" : 
-            String(self)
+        let zipString = String(self)
+        
+        // Handle 6-digit zip codes by truncating to 5 digits
+        if zipString.count == 6 {
+            let fiveDigitZip = String(zipString.prefix(5))
+            return fiveDigitZip
+        }
+        
+        // Handle 9-digit ZIP+4 format
+        if zipString.count == 9 {
+            return "\(zipString.prefix(5))-\(zipString.dropFirst(5))"
+        }
+        
+        // Return as is for 5-digit zip codes
+        return zipString
     }
 }
 

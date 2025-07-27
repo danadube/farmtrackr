@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreData
+import CoreXLSX
 
 class DataImportManager: ObservableObject {
     @Published var importProgress: Double = 0
@@ -59,9 +60,128 @@ class DataImportManager: ObservableObject {
     }
     
     func importExcel(from url: URL) async throws -> [ContactRecord] {
-        // For now, we'll implement a basic Excel parser
-        // In a real implementation, you'd use a library like CoreXLSX
-        throw ImportError.excelNotSupported
+        print("[DataImportManager] Starting Excel import from: \(url.path)")
+        
+        // Implement Excel import directly using CoreXLSX
+        await MainActor.run {
+            importProgress = 0.1
+            importStatus = "Reading Excel file..."
+        }
+        
+        guard let xlsx = try? XLSXFile(filepath: url.path) else {
+            print("[DataImportManager] Failed to open XLSX file")
+            throw ImportError.invalidFileFormat
+        }
+        
+        print("[DataImportManager] Successfully opened XLSX file")
+        
+        await MainActor.run {
+            importProgress = 0.3
+            importStatus = "Parsing worksheet..."
+        }
+        
+        // Load shared strings
+        guard let sharedStrings = try? xlsx.parseSharedStrings() else {
+            print("[DataImportManager] Failed to parse shared strings")
+            throw ImportError.invalidFileFormat
+        }
+        
+        // List available worksheets
+        let worksheetPaths = try? xlsx.parseWorksheetPaths() ?? []
+        print("[DataImportManager] Available worksheets: \(worksheetPaths)")
+        
+        // Try different worksheet paths
+        var worksheet: Worksheet?
+        var worksheetPath = ""
+        
+        // Try common worksheet paths
+        let possiblePaths = [
+            "xl/worksheets/sheet1.xml",
+            "xl/worksheets/sheet2.xml", 
+            "xl/worksheets/sheet3.xml",
+            "xl/worksheets/Sheet1.xml",
+            "xl/worksheets/Sheet2.xml",
+            "xl/worksheets/Sheet3.xml"
+        ]
+        
+        for path in possiblePaths {
+            if let ws = try? xlsx.parseWorksheet(at: path) {
+                worksheet = ws
+                worksheetPath = path
+                print("[DataImportManager] Successfully found worksheet at: \(path)")
+                break
+            }
+        }
+        
+        guard let worksheet = worksheet else {
+            print("[DataImportManager] Failed to parse any worksheet. Tried paths: \(possiblePaths)")
+            throw ImportError.invalidFileFormat
+        }
+        
+        print("[DataImportManager] Successfully parsed worksheet")
+        
+        await MainActor.run {
+            importProgress = 0.5
+            importStatus = "Processing data..."
+        }
+        
+        // Get all rows from the worksheet
+        let rows = worksheet.data?.rows ?? []
+        print("[DataImportManager] Found \(rows.count) rows in worksheet")
+        
+        if rows.isEmpty {
+            print("[DataImportManager] No rows found in worksheet")
+            throw ImportError.emptyFile
+        }
+        
+        if rows.count == 1 {
+            print("[DataImportManager] Only 1 row found (likely just header)")
+            throw ImportError.emptyFile
+        }
+        
+        // Parse header row
+        let headerRow = rows[0]
+        let header = headerRow.cells.map { $0.stringValue(sharedStrings) ?? "" }
+        print("[DataImportManager] Header row: \(header)")
+        
+        let columnMapping = createColumnMapping(from: header)
+        
+        await MainActor.run {
+            importProgress = 0.7
+            importStatus = "Creating contacts..."
+        }
+        
+        // Process data rows
+        var contacts: [ContactRecord] = []
+        let dataRows = Array(rows.dropFirst())
+        print("[DataImportManager] Processing \(dataRows.count) data rows")
+        
+        for (index, row) in dataRows.enumerated() {
+            let values = row.cells.map { $0.stringValue(sharedStrings) ?? "" }
+            print("[DataImportManager] Row \(index + 1) values: \(values)")
+            
+            // Skip empty rows
+            if values.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+                print("[DataImportManager] Skipping empty row \(index + 1)")
+                continue
+            }
+            
+            if let contact = createContactRecord(from: values, mapping: columnMapping) {
+                print("[DataImportManager] Created contact: \(contact.firstName) \(contact.lastName)")
+                contacts.append(contact)
+            } else {
+                print("[DataImportManager] Failed to create contact from row \(index + 1)")
+            }
+            
+            // Update progress
+            await MainActor.run {
+                importProgress = 0.7 + (Double(index) / Double(dataRows.count)) * 0.3
+                importStatus = "Processed \(index + 1) of \(dataRows.count) rows..."
+            }
+        }
+        
+        print("[DataImportManager] Excel import completed. Created \(contacts.count) contacts")
+        return contacts
     }
     
     func validateData(_ records: [ContactRecord]) -> [ValidationError] {
@@ -232,19 +352,19 @@ class DataImportManager: ObservableObject {
                 contact.mailingAddress = record.mailingAddress
                 contact.city = record.city
                 contact.state = record.state
-                contact.zipCode = record.zipCode
+                contact.zipCode = formatZipCodeForImport(record.zipCode)
                 contact.email1 = record.email1
                 contact.email2 = record.email2
-                contact.phoneNumber1 = record.phoneNumber1
-                contact.phoneNumber2 = record.phoneNumber2
-                contact.phoneNumber3 = record.phoneNumber3
-                contact.phoneNumber4 = record.phoneNumber4
-                contact.phoneNumber5 = record.phoneNumber5
-                contact.phoneNumber6 = record.phoneNumber6
+                contact.phoneNumber1 = formatPhoneNumberForImport(record.phoneNumber1)
+                contact.phoneNumber2 = formatPhoneNumberForImport(record.phoneNumber2)
+                contact.phoneNumber3 = formatPhoneNumberForImport(record.phoneNumber3)
+                contact.phoneNumber4 = formatPhoneNumberForImport(record.phoneNumber4)
+                contact.phoneNumber5 = formatPhoneNumberForImport(record.phoneNumber5)
+                contact.phoneNumber6 = formatPhoneNumberForImport(record.phoneNumber6)
                 contact.siteMailingAddress = record.siteMailingAddress
                 contact.siteCity = record.siteCity
                 contact.siteState = record.siteState
-                contact.siteZipCode = record.siteZipCode
+                contact.siteZipCode = formatZipCodeForImport(record.siteZipCode)
                 contact.notes = record.notes
                 contact.farm = record.farm
                 contact.dateCreated = Date()
@@ -285,24 +405,118 @@ class DataImportManager: ObservableObject {
             contact.mailingAddress = record.mailingAddress
             contact.city = record.city
             contact.state = record.state
-            contact.zipCode = record.zipCode
+            contact.zipCode = formatZipCodeForImport(record.zipCode)
             contact.email1 = record.email1
             contact.email2 = record.email2
-            contact.phoneNumber1 = record.phoneNumber1
-            contact.phoneNumber2 = record.phoneNumber2
-            contact.phoneNumber3 = record.phoneNumber3
-            contact.phoneNumber4 = record.phoneNumber4
-            contact.phoneNumber5 = record.phoneNumber5
-            contact.phoneNumber6 = record.phoneNumber6
+            contact.phoneNumber1 = formatPhoneNumberForImport(record.phoneNumber1)
+            contact.phoneNumber2 = formatPhoneNumberForImport(record.phoneNumber2)
+            contact.phoneNumber3 = formatPhoneNumberForImport(record.phoneNumber3)
+            contact.phoneNumber4 = formatPhoneNumberForImport(record.phoneNumber4)
+            contact.phoneNumber5 = formatPhoneNumberForImport(record.phoneNumber5)
+            contact.phoneNumber6 = formatPhoneNumberForImport(record.phoneNumber6)
             contact.siteMailingAddress = record.siteMailingAddress
             contact.siteCity = record.siteCity
             contact.siteState = record.siteState
-            contact.siteZipCode = record.siteZipCode
+            contact.siteZipCode = formatZipCodeForImport(record.siteZipCode)
             contact.notes = record.notes
             contact.farm = record.farm
             contact.dateCreated = Date()
             contact.dateModified = Date()
         }
+    }
+    
+    // MARK: - Test Functions
+    
+    func testExcelImport() {
+        print("[DataImportManager] TEST: testExcelImport() called\n", terminator: ""); fflush(stdout)
+        
+        let testFilePath = "/Users/danadube/Desktop/FarmTrackr-old/FarmTrackr/Resources/Farm Tables San Marino.xlsx"
+        let testURL = URL(fileURLWithPath: testFilePath)
+        print("[DataImportManager] TEST: Using file: \(testURL.path)\n", terminator: ""); fflush(stdout)
+        
+        do {
+            guard let xlsx = try? XLSXFile(filepath: testURL.path) else {
+                print("[DataImportManager] TEST: Failed to open XLSX file\n", terminator: ""); fflush(stdout)
+                return
+            }
+            let worksheetPaths = (try? xlsx.parseWorksheetPaths()) ?? []
+            print("[DataImportManager] TEST: Worksheet paths: \(worksheetPaths)\n", terminator: ""); fflush(stdout)
+            
+            // Load shared strings
+            guard let sharedStrings = try? xlsx.parseSharedStrings() else {
+                print("[DataImportManager] TEST: Failed to parse shared strings\n", terminator: ""); fflush(stdout)
+                return
+            }
+            
+            var foundRows = false
+            for path in worksheetPaths {
+                print("[DataImportManager] TEST: Trying worksheet path: \(path)\n", terminator: ""); fflush(stdout)
+                guard let worksheet = try? xlsx.parseWorksheet(at: path) else {
+                    print("[DataImportManager] TEST: Failed to parse worksheet at \(path)\n", terminator: ""); fflush(stdout)
+                    continue
+                }
+                let rows = worksheet.data?.rows ?? []
+                print("[DataImportManager] TEST: Found \(rows.count) rows in \(path)\n", terminator: ""); fflush(stdout)
+                if rows.isEmpty { continue }
+                foundRows = true
+                // Print header row
+                if let headerRow = rows.first {
+                    let headerValues = headerRow.cells.map { $0.stringValue(sharedStrings) ?? "" }
+                    print("[DataImportManager] TEST: Header: \(headerValues)\n", terminator: ""); fflush(stdout)
+                }
+                // Print first 3 data rows
+                for (i, row) in rows.dropFirst().prefix(3).enumerated() {
+                    let values = row.cells.map { $0.stringValue(sharedStrings) ?? "" }
+                    print("[DataImportManager] TEST: Row \(i+1): \(values)\n", terminator: ""); fflush(stdout)
+                }
+                break // Only process the first worksheet with data
+            }
+            if !foundRows {
+                print("[DataImportManager] TEST: No rows found in any worksheet\n", terminator: ""); fflush(stdout)
+            }
+        } catch {
+            print("[DataImportManager] TEST: Error: \(error.localizedDescription)\n", terminator: ""); fflush(stdout)
+        }
+    }
+    
+    // MARK: - UI Test Function
+    
+    func testExcelImportFromUI() async -> String {
+        var result = "=== EXCEL IMPORT TEST ===\n"
+        
+        let testFilePath = "/Users/danadube/Desktop/FarmTrackr-old/FarmTrackr/Resources/Farm Tables San Marino.xlsx"
+        let testURL = URL(fileURLWithPath: testFilePath)
+        
+        result += "File path: \(testFilePath)\n"
+        
+        // Check if file exists
+        let fileManager = FileManager.default
+        if !fileManager.fileExists(atPath: testFilePath) {
+            result += "❌ File does not exist!\n"
+            return result
+        }
+        result += "✅ File exists\n"
+        
+        // Now try the actual import
+        result += "\n--- TRYING ACTUAL IMPORT ---\n"
+        do {
+            let contacts = try await importExcel(from: testURL)
+            result += "✅ Import completed with \(contacts.count) contacts\n"
+            
+            if contacts.isEmpty {
+                result += "⚠️ No contacts found - this might indicate an issue with parsing\n"
+            } else {
+                result += "📋 First few contacts:\n"
+                for (index, contact) in contacts.prefix(3).enumerated() {
+                    let contactInfo = "  \(index + 1). \(contact.firstName) \(contact.lastName) - \(contact.farm)"
+                    result += contactInfo + "\n"
+                }
+            }
+        } catch {
+            result += "❌ Import failed with error: \(error.localizedDescription)\n"
+        }
+        
+        return result
     }
     
     // MARK: - Private Methods
@@ -335,15 +549,18 @@ class DataImportManager: ObservableObject {
     private func createColumnMapping(from header: [String]) -> [String: Int] {
         var mapping: [String: Int] = [:]
         
+        print("[DataImportManager] DEBUG: Creating column mapping from header: \(header)")
+        
         for (index, column) in header.enumerated() {
             let normalizedColumn = column.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
             mapping[normalizedColumn] = index
+            print("[DataImportManager] DEBUG: Column \(index): '\(column)' -> normalized: '\(normalizedColumn)'")
         }
         
-        // Debug: Print the column mapping
-        print("Column mapping:")
-        for (key, value) in mapping {
-            print("  '\(key)' -> column \(value)")
+        // Debug: Print the final column mapping
+        print("[DataImportManager] DEBUG: Final column mapping:")
+        for (key, value) in mapping.sorted(by: { $0.key < $1.key }) {
+            print("[DataImportManager] DEBUG:   '\(key)' -> column \(value)")
         }
         
         return mapping
@@ -351,8 +568,13 @@ class DataImportManager: ObservableObject {
     
     private func createContactRecord(from values: [String], mapping: [String: Int]) -> ContactRecord? {
         func getValue(_ key: String) -> String {
-            guard let index = mapping[key], index < values.count else { return "" }
-            return values[index]
+            guard let index = mapping[key], index < values.count else { 
+                print("[DataImportManager] DEBUG: Key '\(key)' not found in mapping or index out of bounds")
+                return "" 
+            }
+            let value = values[index]
+            print("[DataImportManager] DEBUG: Found value '\(value)' for key '\(key)' at index \(index)")
+            return value
         }
         
         func getIntValue(_ key: String) -> Int32 {
@@ -376,45 +598,148 @@ class DataImportManager: ObservableObject {
             }
             return 0
         }
-        // Get the best available value for each field
-        let firstName = getFirstNonEmpty(["firstname", "first_name", "first name"])
-        let lastName = getFirstNonEmpty(["lastname", "last_name", "last name"])
-        let mailingAddress = getFirstNonEmpty(["address", "mailingaddress", "mailing_address", "street address"])
-        let city = getValue("city")
-        let zipCode = getFirstNonZeroInt(["zipcode", "zip", "zip_code", "postal code"])
-        let siteZipCode = getFirstNonZeroInt(["sitezipcode", "site_zipcode", "site zip", "site zip code"])
-        let phoneNumber1 = getFirstNonEmpty(["phone", "phone1", "phonenumber1", "phone number 1", "telephone"]).cleanedPhoneNumber
-        let phoneNumber2 = getFirstNonEmpty(["phone2", "phone number 2", "mobile", "cell", "cell phone", "phone 2"]).cleanedPhoneNumber
-        let phoneNumber3 = getFirstNonEmpty(["phone3", "phone number 3", "work phone", "phone 3"]).cleanedPhoneNumber
-        let phoneNumber4 = getFirstNonEmpty(["phone4", "phone number 4", "home phone", "phone 4"]).cleanedPhoneNumber
-        let phoneNumber5 = getFirstNonEmpty(["phone5", "phone number 5", "phone 5"]).cleanedPhoneNumber
-        let phoneNumber6 = getFirstNonEmpty(["phone6", "phone number 6", "phone 6"]).cleanedPhoneNumber
+        
+        // Debug: Print what we're looking for
+        print("[DataImportManager] Looking for columns in mapping: \(mapping.keys.sorted())")
+        
+        // Get the best available value for each field - updated to match actual Excel column names
+        let firstName = getFirstNonEmpty(["first name", "firstname", "first_name", "First Name"])
+        let lastName = getFirstNonEmpty(["last name", "lastname", "last_name", "Last Name"])
+        let mailingAddress = getFirstNonEmpty(["mailing address", "address", "mailingaddress", "mailing_address", "street address", "Mailing Address"])
+        let city = getFirstNonEmpty(["city", "City"])
+        let state = getFirstNonEmpty(["state", "State"])
+        let zipCodeString = getFirstNonEmpty(["zip code", "zipcode", "zip", "zip_code", "postal code", "Zip Code"]).cleanedZipCode
+        let siteZipCodeString = getFirstNonEmpty(["site zip code", "sitezipcode", "site_zipcode", "site zip", "Site Zip Code"]).cleanedZipCode
+        
+        // Debug: Print zip code processing
+        if !zipCodeString.isEmpty {
+            print("[DataImportManager] Zip code processing - Original: '\(getFirstNonEmpty(["zip code", "zipcode", "zip", "zip_code", "postal code", "Zip Code"]))', Cleaned: '\(zipCodeString)'")
+        }
+        if !siteZipCodeString.isEmpty {
+            print("[DataImportManager] Site zip code processing - Original: '\(getFirstNonEmpty(["site zip code", "sitezipcode", "site_zipcode", "site zip", "Site Zip Code"]))', Cleaned: '\(siteZipCodeString)'")
+        }
+        
+        let zipCode = Int32(zipCodeString) ?? 0
+        let siteZipCode = Int32(siteZipCodeString) ?? 0
+        let phoneNumber1 = formatPhoneNumberForImport(getFirstNonEmpty(["phone number 1", "phone", "phone1", "phonenumber1", "telephone", "Phone Number 1"]))
+        let phoneNumber2 = formatPhoneNumberForImport(getFirstNonEmpty(["phone number 2", "phone2", "mobile", "cell", "cell phone", "phone 2", "Phone Number 2"]))
+        let phoneNumber3 = formatPhoneNumberForImport(getFirstNonEmpty(["phone number 3", "phone3", "work phone", "phone 3", "Phone Number 3"]))
+        let phoneNumber4 = formatPhoneNumberForImport(getFirstNonEmpty(["phone number 4", "phone4", "home phone", "phone 4", "Phone Number 4"]))
+        let phoneNumber5 = formatPhoneNumberForImport(getFirstNonEmpty(["phone number 5", "phone5", "phone 5", "Phone Number 5"]))
+        let phoneNumber6 = formatPhoneNumberForImport(getFirstNonEmpty(["phone number 6", "phone6", "phone 6", "Phone Number 6"]))
         // Site address fields
-        let siteMailingAddress = getFirstNonEmpty(["siteaddress", "site_address", "site address", "site addr", "service address", "location address"])
-        let siteCity = getFirstNonEmpty(["sitecity", "site_city", "site city"])
-        let siteState = getFirstNonEmpty(["sitestate", "site_state", "site state"])
+        let siteMailingAddress = getFirstNonEmpty(["site mailing address", "siteaddress", "site_address", "site address", "site addr", "service address", "location address", "Site Mailing Address"])
+        let siteCity = getFirstNonEmpty(["site city", "sitecity", "site_city", "Site City"])
+        let siteState = getFirstNonEmpty(["site state", "sitestate", "site_state", "Site State"])
+        let email1 = getFirstNonEmpty(["email 1", "email", "email1", "Email 1"])
+        let email2 = getFirstNonEmpty(["email 2", "email2", "Email 2"])
+        let notes = getFirstNonEmpty(["notes", "Notes"])
+        let farm = getFirstNonEmpty(["farm", "Farm"])
+        
+        // Debug: Print what we found
+        print("[DataImportManager] Found values - firstName: '\(firstName)', lastName: '\(lastName)', city: '\(city)', state: '\(state)'")
+        
+        // Check if we have at least some basic data
+        if firstName.isEmpty && lastName.isEmpty {
+            print("[DataImportManager] Both firstName and lastName are empty, skipping contact")
+            return nil
+        }
+        
         return ContactRecord(
             firstName: firstName,
             lastName: lastName,
             mailingAddress: mailingAddress,
             city: city,
-            state: getValue("state"),
+            state: state,
             zipCode: zipCode,
-            email1: getFirstNonEmpty(["email", "email1"]),
-            email2: getValue("email2"),
+            email1: email1.isEmpty ? nil : email1,
+            email2: email2.isEmpty ? nil : email2,
             phoneNumber1: phoneNumber1,
             phoneNumber2: phoneNumber2,
             phoneNumber3: phoneNumber3,
             phoneNumber4: phoneNumber4,
             phoneNumber5: phoneNumber5,
             phoneNumber6: phoneNumber6,
-            siteMailingAddress: siteMailingAddress,
-            siteCity: siteCity,
-            siteState: siteState,
+            siteMailingAddress: siteMailingAddress.isEmpty ? nil : siteMailingAddress,
+            siteCity: siteCity.isEmpty ? nil : siteCity,
+            siteState: siteState.isEmpty ? nil : siteState,
             siteZipCode: siteZipCode,
-            notes: getValue("notes"),
-            farm: getValue("farm")
+            notes: notes.isEmpty ? nil : notes,
+            farm: farm
         )
+    }
+    
+    // MARK: - Formatting Helper Methods
+    
+    private func formatPhoneNumberForImport(_ phone: String?) -> String? {
+        guard let phone = phone, !phone.isEmpty else { return nil }
+        
+        // Remove all non-digit characters
+        let digits = phone.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        
+        // Handle scientific notation (e.g., 1.5551234567e+10)
+        if phone.contains("e") || phone.contains("E") {
+            if let doubleValue = Double(phone) {
+                let noExp = String(format: "%.0f", doubleValue)
+                if noExp.count >= 10 {
+                    return formatPhoneNumber(noExp)
+                }
+            }
+        }
+        
+        // Apply formatting based on digit count
+        if digits.count == 10 {
+            return formatPhoneNumber(digits)
+        } else if digits.count == 11 && digits.hasPrefix("1") {
+            // For 11-digit numbers starting with '1' (e.g., US country code)
+            let tenDigits = String(digits.dropFirst())
+            return formatPhoneNumber(tenDigits)
+        } else if digits.count > 0 {
+            // If it has digits but doesn't fit standard formats, return cleaned digits
+            return digits
+        }
+        
+        return nil // Return nil if no digits or empty
+    }
+    
+    private func formatPhoneNumber(_ digits: String) -> String {
+        if digits.count == 10 {
+            let area = digits.prefix(3)
+            let mid = digits.dropFirst(3).prefix(3)
+            let last = digits.suffix(4)
+            return "(\(area)) \(mid)-\(last)"
+        }
+        return digits
+    }
+    
+    private func formatZipCodeForImport(_ zipCode: Int32) -> Int32 {
+        if zipCode <= 0 { return 0 }
+        
+        let zipString = String(zipCode)
+        
+        // If it's already 5 digits, return as is
+        if zipString.count == 5 {
+            return zipCode
+        }
+        
+        // If it's 9 digits, return as is (ZIP+4 format)
+        if zipString.count == 9 {
+            return zipCode
+        }
+        
+        // If it's more than 9 digits, truncate to first 9
+        if zipString.count > 9 {
+            let truncated = String(zipString.prefix(9))
+            return Int32(truncated) ?? zipCode
+        }
+        
+        // If it's less than 5 digits, pad with zeros
+        if zipString.count < 5 {
+            let padded = String(format: "%05d", zipCode)
+            return Int32(padded) ?? zipCode
+        }
+        
+        return zipCode
     }
 }
 
@@ -454,6 +779,7 @@ enum ImportError: LocalizedError {
     case invalidEncoding
     case emptyFile
     case excelNotSupported
+    case invalidFileFormat
     case saveFailed(Error)
     case timeout
     
@@ -465,6 +791,8 @@ enum ImportError: LocalizedError {
             return "The file is empty or contains no data."
         case .excelNotSupported:
             return "Excel file import is not yet supported. Please use CSV format."
+        case .invalidFileFormat:
+            return "The file format is not supported or the file is corrupted."
         case .saveFailed(let error):
             return "Failed to save contacts: \(error.localizedDescription)"
         case .timeout:

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 @main
 struct FarmTrackrApp: App {
@@ -23,6 +24,7 @@ struct FarmTrackrApp: App {
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(themeVM)
                 .environmentObject(accessibilityManager)
+
                 .preferredColorScheme(themeVM.darkModeEnabled ? .dark : .light)
         }
         .defaultSize(width: 1100, height: 800)

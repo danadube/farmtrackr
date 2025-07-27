@@ -232,9 +232,21 @@ class UnifiedImportExportManager: ObservableObject {
     }
     
     private func importContactsFromExcel(from url: URL) async throws -> [ContactRecord] {
-        // For now, return empty array as Excel import is handled by ExcelImportManager
-        // In a production app, you'd implement proper Excel parsing here
-        return []
+        await MainActor.run {
+            importProgress = 0.2
+            importStatus = "Reading Excel file..."
+        }
+        
+        // Use the working DataImportManager for Excel imports
+        let dataImportManager = DataImportManager()
+        let contacts = try await dataImportManager.importExcel(from: url)
+        
+        await MainActor.run {
+            importProgress = 1.0
+            importStatus = "Excel import completed successfully"
+        }
+        
+        return contacts
     }
     
     private func importContactsFromJSON(from url: URL) async throws -> [ContactRecord] {

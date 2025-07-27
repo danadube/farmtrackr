@@ -182,12 +182,13 @@ struct FarmTrackrTests {
             #expect(themes.count > 0)
             
             // Test that we can get a theme by name
-            let modernGreenTheme = ThemeManager.theme(named: "Modern Green")
-            #expect(modernGreenTheme.name == "Modern Green")
+            let classicGreenTheme = ThemeManager.theme(named: "Classic Green")
+            #expect(classicGreenTheme.name == "Classic Green")
             
             // Test fallback to default theme
             let nonExistentTheme = ThemeManager.theme(named: "NonExistent")
             #expect(nonExistentTheme != nil)
+            #expect(nonExistentTheme.name == "Classic Green") // Should fallback to Classic Green
         }
     }
     

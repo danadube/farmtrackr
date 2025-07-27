@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreData
+import UniformTypeIdentifiers
 
 struct DocumentsView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -25,6 +26,8 @@ struct DocumentsView: View {
     @State private var selectedDocument: Document?
     @State private var showingDocumentDetail = false
     @State private var viewMode: ViewMode = .list
+    @State private var selectedDriveFile: GoogleDriveFile?
+    @State private var googleSheetsManager: GoogleSheetsManager?
     
     enum ViewMode {
         case list, grid
@@ -42,6 +45,32 @@ struct DocumentsView: View {
                 document.name?.localizedCaseInsensitiveContains(searchText) == true ||
                 document.content?.localizedCaseInsensitiveContains(searchText) == true
             }
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func handleDocumentImport(url: URL) {
+        do {
+            let data = try Data(contentsOf: url)
+            let fileName = url.lastPathComponent
+            let documentName = fileName.replacingOccurrences(of: ".\(url.pathExtension)", with: "")
+            
+            // Create a new document
+            let newDocument = Document(context: viewContext)
+            newDocument.id = UUID()
+            newDocument.name = documentName
+            newDocument.content = String(data: data, encoding: .utf8) ?? ""
+            newDocument.createdDate = Date()
+            newDocument.modifiedDate = Date()
+            
+            try viewContext.save()
+            
+            // Refresh the document manager
+            documentManager.loadDocuments()
+            
+        } catch {
+            print("Error importing document: \(error)")
         }
     }
     
@@ -72,14 +101,30 @@ struct DocumentsView: View {
                 .environmentObject(themeVM)
         }
         .sheet(isPresented: $showingDocumentPicker) {
-            // Placeholder for document picker
-            Text("Document Import")
-                .padding()
+            DocumentPicker(types: [.text, .plainText, .rtf, .pdf, UTType("org.openxmlformats.wordprocessingml.document")!]) { url in
+                handleDocumentImport(url: url)
+            }
         }
         .sheet(isPresented: $showingGoogleDrivePicker) {
-            // Placeholder for Google Drive picker
-            Text("Google Drive Import")
+            if let accessToken = googleSheetsManager?.accessToken {
+                GoogleDrivePickerView(selectedFile: $selectedDriveFile, accessToken: accessToken)
+            } else {
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.title)
+                        .foregroundColor(.orange)
+                    Text("Google Drive Not Connected")
+                        .font(.headline)
+                    Text("Please connect to Google Drive first in the Import & Export section.")
+                        .font(.body)
+                        .multilineTextAlignment(.center)
+                    Button("OK") {
+                        showingGoogleDrivePicker = false
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
                 .padding()
+            }
         }
         .alert("Delete Document?", isPresented: $showingDeleteDialog) {
             Button("Delete", role: .destructive) {
@@ -148,7 +193,7 @@ struct DocumentsView: View {
                     Button(action: { showingGoogleDrivePicker = true }) {
                         HStack {
                             Image(systemName: "externaldrive")
-                            Text("Import from Drive")
+                            Text("Google Drive Import")
                         }
                         .font(themeVM.theme.fonts.buttonFont)
                         .foregroundColor(themeVM.theme.colors.primary)
