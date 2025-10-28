@@ -174,39 +174,211 @@ struct SidebarTab: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
+                // Icon with enhanced hover effects
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(isSelected ? themeVM.theme.colors.accent : (isHovered ? Color(.label) : Color(.secondaryLabel)))
-                    .frame(width: 20, height: 20, alignment: .center)
-                    .padding(.leading, 12)
+                    .foregroundColor(isSelected ? themeVM.theme.colors.accent : (isHovered ? themeVM.theme.colors.primary : Color(.secondaryLabel)))
+                    .frame(width: 20, height: 20)
+                    .scaleEffect(isHovered ? 1.1 : 1.0)
+                    .shadow(color: isHovered ? themeVM.theme.colors.primary.opacity(0.4) : Color.clear, radius: 4, x: 0, y: 2)
+                    .animation(.easeInOut(duration: 0.2), value: isHovered)
                 
                 Text(title)
-                    .font(.system(size: 15, weight: isSelected ? .semibold : .medium))
-                    .foregroundColor(isSelected ? themeVM.theme.colors.accent : (isHovered ? Color(.label) : Color(.label)))
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(isSelected ? themeVM.theme.colors.accent : (isHovered ? themeVM.theme.colors.primary : Color(.secondaryLabel)))
+                    .animation(.easeInOut(duration: 0.2), value: isHovered)
+                
                 Spacer()
             }
+            .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(
-                        isSelected ? 
-                        themeVM.theme.colors.accent.opacity(0.15) : 
-                        (isHovered ? Color(.secondarySystemBackground) : Color.clear)
-                    )
+                ZStack {
+                    // Main background
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            isSelected ? 
+                            AnyShapeStyle(themeVM.theme.colors.accent.opacity(0.15)) : 
+                            (isHovered ? 
+                                AnyShapeStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            themeVM.theme.colors.primary.opacity(0.1),
+                                            themeVM.theme.colors.secondary.opacity(0.05)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                ) : AnyShapeStyle(Color.clear))
+                        )
+                    
+                    // Left border animation
+                    HStack {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(
+                                LinearGradient(
+                                    colors: [themeVM.theme.colors.primary, themeVM.theme.colors.secondary],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .frame(width: 4)
+                            .scaleEffect(y: isHovered ? 1.0 : 0.0, anchor: .center)
+                            .animation(.easeInOut(duration: 0.2), value: isHovered)
+                        
+                        Spacer()
+                    }
+                }
+            )
+            .offset(x: isHovered ? 4 : 0)
+            .animation(.easeInOut(duration: 0.2), value: isHovered)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = true
+            }
+            // Reset hover state after a short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isHovered = false
+                }
+            }
+            action()
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityHint(isSelected ? "Selected" : "Tap to select")
+    }
+}
+
+// MARK: - Hover Button Component
+struct HoverButton: View {
+    let title: String
+    let action: () -> Void
+    let icon: String?
+    let style: HoverButtonStyle
+    @EnvironmentObject var themeVM: ThemeViewModel
+    @State private var isHovered = false
+    
+    enum HoverButtonStyle {
+        case primary
+        case secondary
+        case tertiary
+        case danger
+    }
+    
+    init(
+        title: String,
+        icon: String? = nil,
+        style: HoverButtonStyle = .secondary,
+        action: @escaping () -> Void
+    ) {
+        self.title = title
+        self.icon = icon
+        self.style = style
+        self.action = action
+    }
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                if let icon = icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 12, weight: .medium))
+                }
+                Text(title)
+                    .font(themeVM.theme.fonts.captionFont)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(foregroundColor)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.small)
+                    .fill(backgroundColor)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(
-                        isSelected ? themeVM.theme.colors.accent.opacity(0.3) : Color.clear,
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: themeVM.theme.cornerRadius.small)
+                    .stroke(borderColor, lineWidth: borderWidth)
             )
         }
         .buttonStyle(PlainButtonStyle())
-        .onHover { hovering in
+        .scaleEffect(isHovered ? 1.05 : 1.0)
+        .shadow(
+            color: isHovered ? shadowColor : Color.clear,
+            radius: isHovered ? 4 : 0,
+            x: 0,
+            y: isHovered ? 2 : 0
+        )
+        .animation(.easeInOut(duration: 0.2), value: isHovered)
+        .onTapGesture {
             withAnimation(.easeInOut(duration: 0.2)) {
-                isHovered = hovering
+                isHovered = true
             }
+            // Reset hover state after a short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isHovered = false
+                }
+            }
+            action()
+        }
+    }
+    
+    private var foregroundColor: Color {
+        switch style {
+        case .primary:
+            return .white
+        case .secondary:
+            return isHovered ? themeVM.theme.colors.primary : themeVM.theme.colors.text
+        case .tertiary:
+            return isHovered ? themeVM.theme.colors.accent : themeVM.theme.colors.text
+        case .danger:
+            return isHovered ? .white : .red
+        }
+    }
+    
+    private var backgroundColor: Color {
+        switch style {
+        case .primary:
+            return isHovered ? themeVM.theme.colors.primary.opacity(0.9) : themeVM.theme.colors.primary
+        case .secondary:
+            return isHovered ? themeVM.theme.colors.primary.opacity(0.1) : themeVM.theme.colors.backgroundSecondary
+        case .tertiary:
+            return isHovered ? themeVM.theme.colors.accent.opacity(0.1) : themeVM.theme.colors.backgroundSecondary
+        case .danger:
+            return isHovered ? .red : .red.opacity(0.1)
+        }
+    }
+    
+    private var borderColor: Color {
+        switch style {
+        case .primary:
+            return Color.clear
+        case .secondary:
+            return isHovered ? themeVM.theme.colors.primary.opacity(0.3) : Color.clear
+        case .tertiary:
+            return isHovered ? themeVM.theme.colors.accent.opacity(0.3) : Color.clear
+        case .danger:
+            return isHovered ? .red : .red.opacity(0.3)
+        }
+    }
+    
+    private var borderWidth: CGFloat {
+        return isHovered ? 1.5 : 0
+    }
+    
+    private var shadowColor: Color {
+        switch style {
+        case .primary:
+            return themeVM.theme.colors.primary.opacity(0.4)
+        case .secondary:
+            return themeVM.theme.colors.primary.opacity(0.2)
+        case .tertiary:
+            return themeVM.theme.colors.accent.opacity(0.2)
+        case .danger:
+            return .red.opacity(0.3)
         }
     }
 } 

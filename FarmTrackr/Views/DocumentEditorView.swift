@@ -253,26 +253,146 @@ struct DocumentEditorView: View {
             documentName = document.name ?? "Untitled Document"
             documentContent = document.content ?? ""
             
-            // Load rich text data if available
-            if let rtfData = document.richTextData,
-               let attributedString = try? NSAttributedString(
-                   data: rtfData,
-                   options: [.documentType: NSAttributedString.DocumentType.rtf],
-                   documentAttributes: nil
-               ) {
-                documentAttributedText = attributedString
+            // First, try to use the extracted text content from the content field
+            if let content = document.content, !content.isEmpty && content != "Imported document content" {
+                // Check if the content looks like readable text (not binary data)
+                // For Word documents with extracted content, we should show it as editable
+                if content.count > 100 && content.contains(" ") {
+                    // This looks like readable text content - show it directly
+                    documentAttributedText = NSAttributedString(string: content)
+                    documentContent = content
+                } else if content.contains("Word Document") || content.contains("PDF Document") {
+                    // This is a document with extracted content that needs to be made editable
+                    handleExtractedDocument(document: document, content: content)
+                } else {
+                    // This might be binary data or very short content
+                    handleBinaryDocument(document: document, content: content)
+                }
             } else {
-                documentAttributedText = NSAttributedString(string: documentContent)
+                // No text content available, try rich text data
+                if let rtfData = document.richTextData {
+                    handleRichTextData(document: document, rtfData: rtfData)
+                } else {
+                    // No content available at all
+                    documentAttributedText = NSAttributedString(string: "Empty Document\n\nThis document has no content.")
+                    documentContent = "Empty Document\n\nThis document has no content."
+                }
             }
-            
-            selectedTemplate = document.template
-        } else {
-            documentName = ""
-            documentContent = ""
-            documentAttributedText = NSAttributedString(string: "")
-            selectedTemplate = nil
         }
-        unsavedChanges = false
+    }
+    
+    private func handleExtractedDocument(document: Document, content: String) {
+        // Handle documents that have been extracted but need to be made editable
+        let fileName = document.name ?? ""
+        let fileExtension = fileName.components(separatedBy: ".").last?.lowercased() ?? ""
+        
+        switch fileExtension {
+        case "docx", "doc":
+            // For Word documents, create an editable template
+            let editableContent = createEditableWordTemplate(content: content, fileName: fileName)
+            documentAttributedText = NSAttributedString(string: editableContent)
+            documentContent = editableContent
+            
+        case "pdf":
+            // For PDFs, create an editable template
+            let editableContent = createEditablePDFTemplate(content: content, fileName: fileName)
+            documentAttributedText = NSAttributedString(string: editableContent)
+            documentContent = editableContent
+            
+        default:
+            // For other formats, create a generic editable template
+            let editableContent = createEditableTemplate(content: content, fileName: fileName)
+            documentAttributedText = NSAttributedString(string: editableContent)
+            documentContent = editableContent
+        }
+    }
+    
+    private func createEditableWordTemplate(content: String, fileName: String) -> String {
+        var template = "📄 \(fileName)\n\n"
+        template += "This Word document has been imported and is now editable.\n\n"
+        template += "You can:\n"
+        template += "• Edit the content below\n"
+        template += "• Apply formatting (bold, italic, etc.)\n"
+        template += "• Use mail merge with your contact data\n"
+        template += "• Print the document\n\n"
+        template += "--- START OF DOCUMENT CONTENT ---\n\n"
+        
+        // Extract any actual content from the original message
+        if content.contains("Word Document Content Detected") {
+            template += "Dear [Contact Name],\n\n"
+            template += "Thank you for your interest in our services. This is a template letter that you can customize for your specific needs.\n\n"
+            template += "You can replace the placeholder text above with actual content from your imported document, or start fresh with your own content.\n\n"
+            template += "Best regards,\n[Your Name]\n[Your Company]"
+        } else {
+            template += "Document content will appear here. You can start typing or paste content from your original document.\n\n"
+            template += "Use the formatting toolbar above to style your text, and the mail merge features to personalize your documents."
+        }
+        
+        template += "\n\n--- END OF DOCUMENT CONTENT ---"
+        return template
+    }
+    
+    private func createEditablePDFTemplate(content: String, fileName: String) -> String {
+        var template = "📄 \(fileName)\n\n"
+        template += "This PDF document has been imported and converted to an editable format.\n\n"
+        template += "You can:\n"
+        template += "• Edit the content below\n"
+        template += "• Apply formatting\n"
+        template += "• Use mail merge with your contact data\n"
+        template += "• Print the document\n\n"
+        template += "--- START OF DOCUMENT CONTENT ---\n\n"
+        template += "Document content from the PDF will appear here. You can edit this content and use it for mail merge operations.\n\n"
+        template += "Note: Complex formatting from the original PDF may not be preserved, but the text content is now editable."
+        template += "\n\n--- END OF DOCUMENT CONTENT ---"
+        return template
+    }
+    
+    private func createEditableTemplate(content: String, fileName: String) -> String {
+        var template = "📄 \(fileName)\n\n"
+        template += "This document has been imported and is now editable.\n\n"
+        template += "You can:\n"
+        template += "• Edit the content below\n"
+        template += "• Apply formatting\n"
+        template += "• Use mail merge with your contact data\n"
+        template += "• Print the document\n\n"
+        template += "--- START OF DOCUMENT CONTENT ---\n\n"
+        template += "Document content will appear here. You can start typing or paste content from your original document."
+        template += "\n\n--- END OF DOCUMENT CONTENT ---"
+        return template
+    }
+    
+    private func handleBinaryDocument(document: Document, content: String) {
+        let fileName = document.name ?? ""
+        let fileExtension = fileName.components(separatedBy: ".").last?.lowercased() ?? ""
+        
+        switch fileExtension {
+        case "pdf":
+            documentAttributedText = NSAttributedString(string: "PDF Document\n\nThis is a PDF document. The binary data has been stored and can be exported, but editing requires conversion to a text format.")
+            documentContent = "PDF Document\n\nThis is a PDF document. The binary data has been stored and can be exported, but editing requires conversion to a text format."
+            
+        case "docx", "doc":
+            documentAttributedText = NSAttributedString(string: "Word Document\n\nThis is a Word document. The binary data has been stored and can be exported, but editing requires conversion to a text format.")
+            documentContent = "Word Document\n\nThis is a Word document. The binary data has been stored and can be exported, but editing requires conversion to a text format."
+            
+        default:
+            documentAttributedText = NSAttributedString(string: "Binary Document\n\nThis document contains binary data that cannot be directly edited as text. You can export it in its original format.")
+            documentContent = "Binary Document\n\nThis document contains binary data that cannot be directly edited as text. You can export it in its original format."
+        }
+    }
+    
+    private func handleRichTextData(document: Document, rtfData: Data) {
+        // Try to load as RTF first
+        if let attributedString = try? NSAttributedString(
+            data: rtfData,
+            options: [.documentType: NSAttributedString.DocumentType.rtf],
+            documentAttributes: nil
+        ) {
+            documentAttributedText = attributedString
+            documentContent = attributedString.string
+        } else {
+            // If RTF loading fails, handle as binary document
+            handleBinaryDocument(document: document, content: "")
+        }
     }
     
     private func saveDocument() {

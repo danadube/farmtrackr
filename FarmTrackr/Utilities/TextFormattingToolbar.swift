@@ -313,7 +313,9 @@ struct TextFormattingToolbar: View {
             mutableText.addAttribute(.font, value: font, range: NSRange(location: 0, length: mutableText.length))
         }
         
-        attributedText = mutableText
+        DispatchQueue.main.async {
+            attributedText = mutableText
+        }
     }
     
     private func applyFontSize(_ size: CGFloat) {
@@ -327,7 +329,9 @@ struct TextFormattingToolbar: View {
             mutableText.addAttribute(.font, value: font, range: NSRange(location: 0, length: mutableText.length))
         }
         
-        attributedText = mutableText
+        DispatchQueue.main.async {
+            attributedText = mutableText
+        }
     }
     
     private func toggleBold() {
@@ -349,7 +353,9 @@ struct TextFormattingToolbar: View {
             }
         }
         
-        attributedText = mutableText
+        DispatchQueue.main.async {
+            attributedText = mutableText
+        }
     }
     
     private func toggleItalic() {
@@ -371,7 +377,9 @@ struct TextFormattingToolbar: View {
             }
         }
         
-        attributedText = mutableText
+        DispatchQueue.main.async {
+            attributedText = mutableText
+        }
     }
     
     private func toggleUnderline() {
@@ -382,7 +390,9 @@ struct TextFormattingToolbar: View {
             mutableText.addAttribute(.underlineStyle, value: underlineValue, range: selectedRange)
         }
         
-        attributedText = mutableText
+        DispatchQueue.main.async {
+            attributedText = mutableText
+        }
     }
     
     private func toggleStrikethrough() {
@@ -393,7 +403,9 @@ struct TextFormattingToolbar: View {
             mutableText.addAttribute(.strikethroughStyle, value: strikethroughValue, range: selectedRange)
         }
         
-        attributedText = mutableText
+        DispatchQueue.main.async {
+            attributedText = mutableText
+        }
     }
     
     private func applyAlignment(_ alignment: NSTextAlignment) {
@@ -408,7 +420,9 @@ struct TextFormattingToolbar: View {
             mutableText.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: mutableText.length))
         }
         
-        attributedText = mutableText
+        DispatchQueue.main.async {
+            attributedText = mutableText
+        }
     }
     
     private func applyTextColor(_ color: PlatformColor) {
@@ -421,7 +435,9 @@ struct TextFormattingToolbar: View {
             mutableText.addAttribute(.foregroundColor, value: color, range: NSRange(location: 0, length: mutableText.length))
         }
         
-        attributedText = mutableText
+        DispatchQueue.main.async {
+            attributedText = mutableText
+        }
     }
     
     private func applyBackgroundColor(_ color: PlatformColor) {
@@ -434,7 +450,9 @@ struct TextFormattingToolbar: View {
             mutableText.addAttribute(.backgroundColor, value: color, range: NSRange(location: 0, length: mutableText.length))
         }
         
-        attributedText = mutableText
+        DispatchQueue.main.async {
+            attributedText = mutableText
+        }
     }
 }
 

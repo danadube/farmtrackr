@@ -424,11 +424,144 @@ extension View {
         self
             .background(Color.cardBackgroundColor)
             .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.3), radius: 12, x: 0, y: 6)
+            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.black.opacity(0.12), lineWidth: 1)
+                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
             )
+    }
+    
+    // MARK: - Enhanced Hover Effects
+    
+    func enhancedHoverEffect(
+        primaryColor: Color,
+        secondaryColor: Color,
+        isHovered: Bool,
+        scale: CGFloat = 1.02,
+        lift: CGFloat = -4
+    ) -> some View {
+        self
+            .scaleEffect(isHovered ? scale : 1.0)
+            .offset(y: isHovered ? lift : 0)
+            .shadow(
+                color: isHovered ? Color.black.opacity(0.35) : Color.black.opacity(0.25),
+                radius: isHovered ? 16 : 12,
+                x: 0,
+                y: isHovered ? 8 : 6
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        isHovered ? primaryColor.opacity(0.3) : Color.black.opacity(0.1),
+                        lineWidth: isHovered ? 1.5 : 1
+                    )
+            )
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(
+                        isHovered ? 
+                        AnyShapeStyle(
+                            LinearGradient(
+                                colors: [
+                                    Color.cardBackgroundColor,
+                                    primaryColor.opacity(0.05),
+                                    secondaryColor.opacity(0.03)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        ) : AnyShapeStyle(Color.cardBackgroundColor)
+                    )
+            )
+            .animation(.easeInOut(duration: 0.2), value: isHovered)
+    }
+    
+    func iconHoverEffect(
+        primaryColor: Color,
+        isHovered: Bool,
+        scale: CGFloat = 1.1
+    ) -> some View {
+        self
+            .scaleEffect(isHovered ? scale : 1.0)
+            .shadow(
+                color: isHovered ? primaryColor.opacity(0.4) : Color.clear,
+                radius: 4,
+                x: 0,
+                y: 2
+            )
+            .animation(.easeInOut(duration: 0.2), value: isHovered)
+    }
+    
+    func buttonHoverEffect(
+        primaryColor: Color,
+        isHovered: Bool,
+        scale: CGFloat = 1.05
+    ) -> some View {
+        self
+            .scaleEffect(isHovered ? scale : 1.0)
+            .shadow(
+                color: isHovered ? primaryColor.opacity(0.3) : Color.black.opacity(0.2),
+                radius: isHovered ? 8 : 4,
+                x: 0,
+                y: isHovered ? 4 : 2
+            )
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(
+                        isHovered ? 
+                        AnyShapeStyle(
+                            LinearGradient(
+                                colors: [
+                                    primaryColor.opacity(0.1),
+                                    primaryColor.opacity(0.05)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        ) : AnyShapeStyle(Color.clear)
+                    )
+            )
+            .animation(.easeInOut(duration: 0.2), value: isHovered)
+    }
+    
+    func cardLiftEffect(
+        isHovered: Bool,
+        lift: CGFloat = -8,
+        shadowRadius: CGFloat = 20
+    ) -> some View {
+        self
+            .offset(y: isHovered ? lift : 0)
+            .shadow(
+                color: isHovered ? Color.black.opacity(0.4) : Color.black.opacity(0.25),
+                radius: isHovered ? shadowRadius : 12,
+                x: 0,
+                y: isHovered ? 12 : 6
+            )
+            .animation(.easeInOut(duration: 0.3), value: isHovered)
+    }
+    
+    func slideEffect(
+        isHovered: Bool,
+        offset: CGFloat = 4
+    ) -> some View {
+        self
+            .offset(x: isHovered ? offset : 0)
+            .animation(.easeInOut(duration: 0.2), value: isHovered)
+    }
+    
+    func glowEffect(
+        color: Color,
+        isHovered: Bool,
+        radius: CGFloat = 8
+    ) -> some View {
+        self
+            .shadow(
+                color: isHovered ? color.opacity(0.6) : color.opacity(0.3),
+                radius: isHovered ? radius : radius * 0.5,
+                x: 0,
+                y: isHovered ? radius * 0.5 : radius * 0.25
+            )
+            .animation(.easeInOut(duration: 0.3), value: isHovered)
     }
     
     #if os(macOS)

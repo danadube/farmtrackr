@@ -363,6 +363,7 @@ struct SidebarView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var themeVM: ThemeViewModel
     @State private var isCollapsed = false
+    @State private var isLogoHovered = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -374,15 +375,15 @@ struct SidebarView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 160, height: 160) // Larger logo for wider space
-                        .shadow(color: themeVM.theme.colors.primary.opacity(0.4), radius: 12, x: 0, y: 6)
+                        .shadow(color: isLogoHovered ? themeVM.theme.colors.primary.opacity(0.6) : themeVM.theme.colors.primary.opacity(0.4), radius: isLogoHovered ? 16 : 12, x: 0, y: isLogoHovered ? 8 : 6)
                         .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 3)
                         .overlay(
                             RoundedRectangle(cornerRadius: 20)
                                 .stroke(
                                     LinearGradient(
                                         colors: [
-                                            themeVM.theme.colors.primary.opacity(0.4),
-                                            themeVM.theme.colors.secondary.opacity(0.3),
+                                            themeVM.theme.colors.primary.opacity(isLogoHovered ? 0.6 : 0.4),
+                                            themeVM.theme.colors.secondary.opacity(isLogoHovered ? 0.5 : 0.3),
                                             Color.black.opacity(0.1)
                                         ],
                                         startPoint: .topLeading,
@@ -391,6 +392,21 @@ struct SidebarView: View {
                                     lineWidth: 2.5
                                 )
                         )
+                        .scaleEffect(isLogoHovered ? 1.05 : 1.0)
+                        .rotationEffect(.degrees(isLogoHovered ? 5 : 0))
+                        .offset(y: isLogoHovered ? -4 : 0)
+                        .animation(.easeInOut(duration: 0.3), value: isLogoHovered)
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isLogoHovered = true
+                            }
+                            // Reset hover state after a short delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    isLogoHovered = false
+                                }
+                            }
+                        }
                     
                     if !isCollapsed {
                         VStack(alignment: .center, spacing: 6) {
@@ -534,6 +550,9 @@ struct SidebarView: View {
                         .stroke(Color.black.opacity(0.1), lineWidth: 1)
                 )
         )
+        .offset(y: isLogoHovered ? -8 : 0) // Lift entire sidebar on logo hover
+        .shadow(color: isLogoHovered ? Color.black.opacity(0.4) : Color.black.opacity(0.25), radius: isLogoHovered ? 20 : 12, x: 0, y: isLogoHovered ? 12 : 6)
+        .animation(.easeInOut(duration: 0.3), value: isLogoHovered)
         .animation(.easeInOut(duration: 0.3), value: isCollapsed)
     }
 }

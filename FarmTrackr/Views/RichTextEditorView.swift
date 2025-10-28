@@ -67,8 +67,12 @@ struct PlatformTextViewRepresentable: UIViewRepresentable {
         }
         
         func textViewDidChange(_ textView: UITextView) {
-            parent.attributedText = textView.attributedText
-            parent.onTextChange?(textView.text)
+            // Use a more robust approach to avoid state modification during view update
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.parent.attributedText = textView.attributedText
+                self.parent.onTextChange?(textView.text)
+            }
         }
         
         func textViewDidChangeSelection(_ textView: UITextView) {
@@ -126,8 +130,12 @@ struct PlatformTextViewRepresentable: NSViewRepresentable {
         
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
-            parent.attributedText = textView.attributedString()
-            parent.onTextChange?(textView.string)
+            // Use a more robust approach to avoid state modification during view update
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.parent.attributedText = textView.attributedString()
+                self.parent.onTextChange?(textView.string)
+            }
         }
         
         func textViewDidChangeSelection(_ notification: Notification) {

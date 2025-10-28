@@ -555,6 +555,7 @@ struct ContactRowView: View {
     let isSelectionMode: Bool
     let onTap: () -> Void
     @EnvironmentObject var themeVM: ThemeViewModel
+    @State private var isHovered = false
     
     var body: some View {
         HStack(alignment: .center, spacing: Constants.Spacing.medium) {
@@ -567,7 +568,7 @@ struct ContactRowView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-            // Contact avatar
+            // Contact avatar with hover effects
             Circle()
                 .fill(themeVM.theme.colors.primary.opacity(0.2))
                 .frame(width: 50, height: 50)
@@ -576,13 +577,16 @@ struct ContactRowView: View {
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(themeVM.theme.colors.primary)
                 )
+                .scaleEffect(isHovered ? 1.1 : 1.0)
+                .shadow(color: isHovered ? themeVM.theme.colors.primary.opacity(0.3) : Color.clear, radius: 4, x: 0, y: 2)
+                .animation(.easeInOut(duration: 0.2), value: isHovered)
                 .accessibilityHidden(true)
             // Name and farm (vertical)
             VStack(alignment: .leading, spacing: 2) {
                 Text(contact.fullName)
                     .font(themeVM.theme.fonts.titleFont)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(isHovered ? themeVM.theme.colors.primary : .primary)
                 if let farm = contact.farm, !farm.isEmpty {
                     Text(farm)
                         .font(themeVM.theme.fonts.bodyFont)
@@ -612,23 +616,38 @@ struct ContactRowView: View {
             Spacer()
             // Quality indicators
             qualityIndicators(for: contact)
-            // Chevron indicator
+            // Chevron indicator with hover effect
             if !isSelectionMode {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(isHovered ? themeVM.theme.colors.primary : .secondary)
+                    .scaleEffect(isHovered ? 1.2 : 1.0)
+                    .offset(x: isHovered ? 2 : 0)
+                    .animation(.easeInOut(duration: 0.2), value: isHovered)
                     .accessibilityHidden(true)
             }
         }
         .padding(themeVM.theme.spacing.large)
-        .background(themeVM.theme.colors.cardBackground)
+        .background(backgroundGradient)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+        .shadow(color: shadowColor, radius: shadowRadius, x: 0, y: shadowY)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? themeVM.theme.colors.primary : Color.black.opacity(0.1), lineWidth: isSelected ? 2 : 1)
+                .stroke(strokeColor, lineWidth: strokeWidth)
         )
+        .scaleEffect(isHovered ? 1.01 : 1.0)
+        .offset(y: isHovered ? -2 : 0)
+        .animation(.easeInOut(duration: 0.2), value: isHovered)
         .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = true
+            }
+            // Reset hover state after a short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isHovered = false
+                }
+            }
             onTap()
         }
         .accessibilityElement(children: .combine)
@@ -636,6 +655,58 @@ struct ContactRowView: View {
         .accessibilityHint(isSelectionMode ? 
             "Double tap to \(isSelected ? "deselect" : "select") this contact" :
             "Double tap to view contact details")
+    }
+    
+    // MARK: - Computed Properties for Hover Effects
+    
+    private var backgroundGradient: some ShapeStyle {
+        if isHovered {
+            return AnyShapeStyle(
+                LinearGradient(
+                    colors: [
+                        themeVM.theme.colors.cardBackground,
+                        themeVM.theme.colors.primary.opacity(0.03),
+                        themeVM.theme.colors.secondary.opacity(0.02)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+        } else {
+            return AnyShapeStyle(themeVM.theme.colors.cardBackground)
+        }
+    }
+    
+    private var shadowColor: Color {
+        isHovered ? Color.black.opacity(0.35) : Color.black.opacity(0.25)
+    }
+    
+    private var shadowRadius: CGFloat {
+        isHovered ? 16 : 12
+    }
+    
+    private var shadowY: CGFloat {
+        isHovered ? 8 : 6
+    }
+    
+    private var strokeColor: Color {
+        if isSelected {
+            return themeVM.theme.colors.primary
+        } else if isHovered {
+            return themeVM.theme.colors.primary.opacity(0.3)
+        } else {
+            return Color.black.opacity(0.1)
+        }
+    }
+    
+    private var strokeWidth: CGFloat {
+        if isSelected {
+            return 2
+        } else if isHovered {
+            return 1.5
+        } else {
+            return 1
+        }
     }
     
     private func qualityIndicators(for contact: FarmContact) -> some View {

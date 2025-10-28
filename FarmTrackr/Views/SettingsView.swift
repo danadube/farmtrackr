@@ -558,14 +558,8 @@ struct SettingsView: View {
             Text(cloudKitAvailable ? "Available" : "Unavailable")
                 .font(themeVM.theme.fonts.captionFont)
                 .foregroundColor(themeVM.theme.colors.secondaryLabel)
-            Button(action: performManualSync) {
-                Text("Sync Data")
-                    .font(themeVM.theme.fonts.captionFont)
-                    .foregroundColor(themeVM.theme.colors.text)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(themeVM.theme.colors.backgroundSecondary)
-                    .cornerRadius(themeVM.theme.cornerRadius.small)
+            HoverButton(title: "Sync Data", icon: "arrow.clockwise", style: .secondary) {
+                performManualSync()
             }
         }
         .padding(themeVM.theme.spacing.large)
@@ -587,33 +581,15 @@ struct SettingsView: View {
                 .font(themeVM.theme.fonts.captionFont)
                 .foregroundColor(themeVM.theme.colors.secondaryLabel)
             if googleSheetsManager.isAuthenticated {
-                Button(action: { showingGoogleSheetsPicker = true }) {
-                    Text("Import")
-                        .font(themeVM.theme.fonts.captionFont)
-                        .foregroundColor(themeVM.theme.colors.text)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(themeVM.theme.colors.backgroundSecondary)
-                        .cornerRadius(themeVM.theme.cornerRadius.small)
+                HoverButton(title: "Import", icon: "square.and.arrow.down", style: .secondary) {
+                    showingGoogleSheetsPicker = true
                 }
-                Button(action: { googleSheetsManager.logout() }) {
-                    Text("Disconnect")
-                        .font(themeVM.theme.fonts.captionFont)
-                        .foregroundColor(themeVM.theme.colors.text)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(themeVM.theme.colors.backgroundSecondary)
-                        .cornerRadius(themeVM.theme.cornerRadius.small)
+                HoverButton(title: "Disconnect", icon: "xmark.circle", style: .danger) {
+                    googleSheetsManager.logout()
                 }
             } else {
-                Button(action: { showingGoogleSheetsAuth = true }) {
-                    Text("Connect")
-                        .font(themeVM.theme.fonts.captionFont)
-                        .foregroundColor(themeVM.theme.colors.text)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(themeVM.theme.colors.backgroundSecondary)
-                        .cornerRadius(themeVM.theme.cornerRadius.small)
+                HoverButton(title: "Connect", icon: "link", style: .primary) {
+                    showingGoogleSheetsAuth = true
                 }
             }
         }
@@ -632,14 +608,8 @@ struct SettingsView: View {
             Text("Excel Import Test")
                 .font(themeVM.theme.fonts.bodyFont)
             Spacer()
-            Button(action: testExcelImport) {
-                Text("Test")
-                    .font(themeVM.theme.fonts.captionFont)
-                    .foregroundColor(themeVM.theme.colors.text)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(themeVM.theme.colors.backgroundSecondary)
-                    .cornerRadius(themeVM.theme.cornerRadius.medium)
+            HoverButton(title: "Test", icon: "play.circle", style: .tertiary) {
+                testExcelImport()
             }
         }
         .padding(themeVM.theme.spacing.large)
