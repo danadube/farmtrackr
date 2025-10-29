@@ -783,3 +783,53 @@ This roadmap should be reviewed and updated:
 - Overall: Strong foundation, ready for next major feature
 
 **Recommendation:** Focus on Label Printing (v0.4.0) as it's the highest priority remaining feature and addresses a known challenge from the Swift app implementation.
+
+## 🎨 UI/UX Enhancements & Refinements (Ongoing)
+
+### High Impact (Near-Term)
+- Navigation polish
+  - Reduce sidebar paddings/margins where sensible (logo done; review list items)
+  - Improve active/hover states for all nav links (consistent color/contrast)
+  - Add keyboard focus outlines for accessibility
+- Tables and lists
+  - Sticky headers on long lists (Contacts, Documents)
+  - Row hover states and larger hit targets
+  - Empty states with clear calls-to-action
+- Forms
+  - Consistent field spacing, label alignment, and helper text
+  - Inline validation with clear error messages
+  - Save/Cancel button placement consistency
+- Feedback and status
+  - Non-blocking toasts/snackbars for success/error states
+  - Loading states and skeletons for key pages
+  - Progress indicators for long-running tasks (imports, exports)
+- Theme fidelity
+  - Resolve dark→light flash on refresh (system theme)
+  - Ensure brand colors meet contrast ratios in both themes
+
+### Medium Impact
+- Typography
+  - Standardize font sizes/weights for headings, body, captions
+  - Tighten line-heights where content is dense
+- Spacing system
+  - Audit paddings/margins to an 8px scale across pages
+- Icons and actions
+  - Consistent icon sizes (16/20/24) and placement
+  - Confirm destructive actions with clear labels and secondary text
+- Motion
+  - Subtle transitions for expand/collapse, modals, and inline edits
+
+### Longer-Term
+- Accessibility
+  - Full keyboard navigation coverage and visible focus management
+  - ARIA roles/labels where needed
+  - Color contrast audits for all interactive elements
+- Responsiveness
+  - Mobile-first tweaks for Contacts, Documents, and Settings
+  - Touch target sizes at least 44px
+
+### Measurement
+- Add lightweight telemetry hooks (client-only) for page load timing and error capture
+- Capture click-through on critical actions (print, export, import) to prioritize polish
+
+---
