@@ -28,6 +28,27 @@ export function Sidebar({ children }: SidebarProps) {
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
+  
+  // Ensure we read theme from DOM on mount (set by inline script)
+  useEffect(() => {
+    setIsMounted(true)
+    // Force sync with DOM immediately
+    if (typeof window !== 'undefined') {
+      const domHasDark = document.documentElement.classList.contains('dark')
+      const domHasLight = document.documentElement.classList.contains('light')
+      if (domHasDark && resolvedTheme !== 'dark') {
+        // DOM says dark but React says different - trust DOM
+        document.documentElement.classList.remove('light')
+        document.documentElement.classList.add('dark')
+      } else if (domHasLight && resolvedTheme !== 'light') {
+        // DOM says light but React says different - trust DOM
+        document.documentElement.classList.remove('dark')
+        document.documentElement.classList.add('light')
+      }
+    }
+  }, [])
+  
   const colors = getThemeColors(resolvedTheme === 'dark')
 
   // Handle responsive behavior
@@ -65,8 +86,25 @@ export function Sidebar({ children }: SidebarProps) {
     setIsMobileOpen(false)
   }, [pathname])
 
+  // On first render, read theme from DOM (set by inline script) to prevent flash
+  // This ensures we use the correct background even before React state initializes
+  const getInitialBackground = () => {
+    if (typeof window === 'undefined') return '#f5f5f7'
+    const hasDark = document.documentElement.classList.contains('dark')
+    return hasDark ? '#111827' : '#f5f5f7'
+  }
+  
+  const [safeBackground, setSafeBackground] = useState(getInitialBackground)
+  
+  // Update background when theme resolves
+  useEffect(() => {
+    if (isMounted) {
+      setSafeBackground(colors.background)
+    }
+  }, [isMounted, colors.background])
+  
   return (
-    <div style={{ minHeight: '100vh', background: colors.background }}>
+    <div style={{ minHeight: '100vh', background: safeBackground }}>
       {/* Mobile Header */}
       <div 
         style={{

@@ -57,6 +57,13 @@
   * {
     border-color: hsl(var(--border));
   }
+  
+  html {
+    /* Set background on html to ensure it covers the entire viewport */
+    background-color: hsl(var(--background));
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -64,14 +71,29 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.2s ease, color 0.2s ease;
+    /* Ensure body fills viewport */
+    min-height: 100vh;
   }
   
   html.dark {
     color-scheme: dark;
+    /* Force dark background immediately */
+    background-color: hsl(210, 20%, 8%) !important;
   }
   
   html.light {
     color-scheme: light;
+    /* Force light background immediately */
+    background-color: hsl(210, 20%, 98%) !important;
+  }
+  
+  /* Ensure smooth theme transitions */
+  html.dark body {
+    background-color: hsl(210, 20%, 8%) !important;
+  }
+  
+  html.light body {
+    background-color: hsl(210, 20%, 98%) !important;
   }
 }
 
