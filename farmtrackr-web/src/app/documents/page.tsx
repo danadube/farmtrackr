@@ -16,6 +16,7 @@ import {
   MoreHorizontal
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 
@@ -32,11 +33,17 @@ interface Document {
 
 export default function DocumentsPage() {
   const { colors, isDark, card, background, text } = useThemeStyles()
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'template' | 'contact' | 'report'>('all')
 
   const [docs, setDocs] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [newDocTitle, setNewDocTitle] = useState('')
+  const [newDocDescription, setNewDocDescription] = useState('')
+  const [newDocContent, setNewDocContent] = useState('')
+  const [uploadingFile, setUploadingFile] = useState(false)
 
   useEffect(() => {
     const fetchDocs = async () => {
@@ -115,6 +122,104 @@ export default function DocumentsPage() {
     }
   }
 
+  const handleCreateDocument = async () => {
+    if (!newDocTitle.trim()) {
+      alert('Please enter a document title')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newDocTitle,
+          description: newDocDescription || null,
+          content: newDocContent || null,
+        }),
+      })
+
+      if (response.ok) {
+        const created = await response.json()
+        // Refresh the documents list
+        const res = await fetch(`/api/documents?${new URLSearchParams().toString()}`)
+        if (res.ok) {
+          const data = await res.json()
+          const mapped: Document[] = data.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            description: d.description || '',
+            createdAt: new Date(d.createdAt),
+            updatedAt: new Date(d.updatedAt),
+          }))
+          setDocs(mapped)
+        }
+        // Close modal and reset form
+        setShowCreateModal(false)
+        setNewDocTitle('')
+        setNewDocDescription('')
+        setNewDocContent('')
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error || 'Failed to create document'}`)
+      }
+    } catch (error) {
+      console.error('Failed to create document:', error)
+      alert('Failed to create document')
+    }
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingFile(true)
+    try {
+      // For now, we'll create a document with the file name
+      // In the future, you can upload to cloud storage and store the URL
+      const fileContent = await file.text().catch(() => null)
+      
+      const response = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: file.name,
+          description: `Uploaded file: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`,
+          content: fileContent,
+          fileUrl: null, // Can be updated when file storage is implemented
+        }),
+      })
+
+      if (response.ok) {
+        const created = await response.json()
+        // Refresh the documents list
+        const res = await fetch(`/api/documents?${new URLSearchParams().toString()}`)
+        if (res.ok) {
+          const data = await res.json()
+          const mapped: Document[] = data.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            description: d.description || '',
+            createdAt: new Date(d.createdAt),
+            updatedAt: new Date(d.updatedAt),
+          }))
+          setDocs(mapped)
+        }
+        alert('Document uploaded successfully!')
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error || 'Failed to upload document'}`)
+      }
+    } catch (error) {
+      console.error('Failed to upload file:', error)
+      alert('Failed to upload file')
+    } finally {
+      setUploadingFile(false)
+      // Reset file input
+      event.target.value = ''
+    }
+  }
+
   return (
     <Sidebar>
       <div 
@@ -176,7 +281,7 @@ export default function DocumentsPage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <button
+                  <label
                     style={{
                       padding: '12px 16px',
                       backgroundColor: colors.cardHover,
@@ -185,22 +290,32 @@ export default function DocumentsPage() {
                       borderRadius: '12px',
                       fontSize: '14px',
                       fontWeight: '500',
-                      cursor: 'pointer',
+                      cursor: uploadingFile ? 'wait' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      transition: 'background-color 0.2s ease'
+                      transition: 'background-color 0.2s ease',
+                      opacity: uploadingFile ? 0.6 : 1
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.borderHover
+                      if (!uploadingFile) {
+                        e.currentTarget.style.backgroundColor = colors.borderHover
+                      }
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = colors.cardHover
                     }}
                   >
                     <Upload style={{ width: '16px', height: '16px' }} />
-                    Upload
-                  </button>
+                    {uploadingFile ? 'Uploading...' : 'Upload'}
+                    <input
+                      type="file"
+                      accept=".txt,.pdf,.doc,.docx,.html"
+                      onChange={handleFileUpload}
+                      style={{ display: 'none' }}
+                      disabled={uploadingFile}
+                    />
+                  </label>
                   <Link href="/documents/create-letter" style={{ textDecoration: 'none' }}>
                     <button
                       style={{
@@ -230,6 +345,7 @@ export default function DocumentsPage() {
                     </button>
                   </Link>
                   <button
+                    onClick={() => setShowCreateModal(true)}
                     style={{
                       padding: '12px 16px',
                       backgroundColor: colors.success,
@@ -362,6 +478,7 @@ export default function DocumentsPage() {
                 </p>
                 {!searchQuery && selectedFilter === 'all' && (
                   <button
+                    onClick={() => setShowCreateModal(true)}
                     style={{
                       padding: '12px 24px',
                       backgroundColor: colors.success,
@@ -557,6 +674,154 @@ export default function DocumentsPage() {
           </div>
         </div>
       </div>
+
+      {/* Create Document Modal */}
+      {showCreateModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowCreateModal(false)
+          }}
+        >
+          <div
+            style={{
+              ...card,
+              padding: '32px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, marginBottom: '24px' }}>
+              Create New Document
+            </h2>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                Document Title *
+              </label>
+              <input
+                type="text"
+                value={newDocTitle}
+                onChange={(e) => setNewDocTitle(e.target.value)}
+                placeholder="Enter document title..."
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  backgroundColor: colors.card,
+                  color: colors.text.primary,
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleCreateDocument()
+                  }
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                Description (optional)
+              </label>
+              <input
+                type="text"
+                value={newDocDescription}
+                onChange={(e) => setNewDocDescription(e.target.value)}
+                placeholder="Brief description of the document..."
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  backgroundColor: colors.card,
+                  color: colors.text.primary,
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                Content (optional)
+              </label>
+              <textarea
+                value={newDocContent}
+                onChange={(e) => setNewDocContent(e.target.value)}
+                placeholder="Enter document content..."
+                style={{
+                  width: '100%',
+                  minHeight: '200px',
+                  padding: '12px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'monospace',
+                  backgroundColor: colors.card,
+                  color: colors.text.primary,
+                  resize: 'vertical',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setShowCreateModal(false)
+                  setNewDocTitle('')
+                  setNewDocDescription('')
+                  setNewDocContent('')
+                }}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: colors.cardHover,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  ...text.secondary,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateDocument}
+                disabled={!newDocTitle.trim()}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: colors.success,
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: newDocTitle.trim() ? 'pointer' : 'not-allowed',
+                  opacity: newDocTitle.trim() ? 1 : 0.6,
+                }}
+              >
+                Create Document
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Sidebar>
   )
 }
