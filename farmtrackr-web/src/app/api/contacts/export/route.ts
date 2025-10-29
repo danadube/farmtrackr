@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
-
-// PDF generation will use pdfkit - install with: npm install pdfkit @types/pdfkit
-// For now, we'll generate a simple text-based PDF structure
+import PDFDocument from 'pdfkit'
 
 export async function POST(request: NextRequest) {
   try {
@@ -136,32 +134,238 @@ export async function POST(request: NextRequest) {
         },
       })
     } else if (format === 'pdf') {
-      // Generate PDF report
-      // Simple text-based PDF generation
-      let pdfContent = `FarmTrackr Contact Report\n`
-      pdfContent += `Generated: ${new Date().toLocaleDateString()}\n`
-      pdfContent += `Total Contacts: ${exportData.length}\n`
-      pdfContent += `\n${'='.repeat(80)}\n\n`
-      
-      exportData.forEach((contact, index) => {
-        pdfContent += `Contact ${index + 1}\n`
-        pdfContent += `${'-'.repeat(80)}\n`
-        Object.entries(contact).forEach(([key, value]) => {
-          if (value && value.toString().trim()) {
-            pdfContent += `${key}: ${value}\n`
-          }
-        })
-        pdfContent += `\n`
+      // Generate PDF report with pdfkit
+      const doc = new PDFDocument({
+        size: 'LETTER',
+        margin: 50
       })
       
-      // Convert to PDF format (simple approach - in production, use pdfkit)
-      // For now, return as text file with .pdf extension
-      const buffer = Buffer.from(pdfContent, 'utf-8')
+      // Create buffer to store PDF
+      const chunks: Buffer[] = []
+      doc.on('data', (chunk) => chunks.push(chunk))
+      
+      // Track page numbers manually
+      let pageNumber = 0
+      doc.on('pageAdded', () => {
+        pageNumber++
+      })
+      
+      // PDF Metadata
+      const generationDate = new Date()
+      const fileName = `farmtrackr_report_${generationDate.toISOString().split('T')[0]}.pdf`
+      
+      doc.info({
+        Title: 'FarmTrackr Contact Report',
+        Author: 'FarmTrackr',
+        Subject: `Contact Export - ${exportData.length} contacts`,
+        Keywords: 'FarmTrackr, Contacts, Export',
+        CreationDate: generationDate,
+      })
+      
+      // Helper function to add page number
+      const addPageNumber = () => {
+        const currentPage = pageNumber || 1
+        const pageWidth = doc.page.width || 612
+        const pageHeight = doc.page.height || 792
+        
+        // Save current position
+        const savedY = doc.y
+        const savedX = doc.x
+        
+        doc.fontSize(9)
+          .fillColor('#666666')
+          .text(
+            `Page ${currentPage}`,
+            pageWidth - 100,
+            pageHeight - 30,
+            {
+              align: 'right',
+              width: 100
+            }
+          )
+        
+        // Restore position
+        doc.y = savedY
+        doc.x = savedX
+      }
+      
+      // Helper function to check if we need a new page
+      const checkNewPage = (requiredHeight: number) => {
+        const currentY = doc.y
+        const pageHeight = doc.page.height || 792
+        const bottomMargin = 50
+        if (currentY + requiredHeight > pageHeight - bottomMargin) {
+          addPageNumber()
+          doc.addPage()
+          pageNumber++
+          return true
+        }
+        return false
+      }
+      
+      // Title Page
+      pageNumber = 1
+      const pageWidth = doc.page.width || 612
+      
+      doc.fontSize(32)
+        .fillColor('#2E7D32') // Farm green
+        .text('FarmTrackr', 50, 100, { align: 'center', width: pageWidth - 100 })
+      
+      doc.fontSize(24)
+        .fillColor('#333333')
+        .text('Contact Report', 50, 150, { align: 'center', width: pageWidth - 100 })
+      
+      doc.fontSize(12)
+        .fillColor('#666666')
+        .text(`Generated: ${generationDate.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })}`, 50, 220, { align: 'center', width: pageWidth - 100 })
+      
+      doc.text(`Total Contacts: ${exportData.length}`, 50, 240, { align: 'center', width: pageWidth - 100 })
+      
+      if (farm) {
+        doc.text(`Farm: ${farm}`, 50, 260, { align: 'center', width: pageWidth - 100 })
+      }
+      
+      // Add page number to title page
+      addPageNumber()
+      doc.addPage()
+      pageNumber++
+      
+      // Contact Section Header
+      doc.fontSize(18)
+        .fillColor('#2E7D32')
+        .text('Contacts', 50, 50)
+      
+      doc.moveDown(1)
+      
+      // Process contacts
+      exportData.forEach((contact, index) => {
+        // Check if we need a new page before adding a contact
+        checkNewPage(150) // Approximate height needed for a contact
+        
+        // Contact header with background
+        const contactStartY = doc.y
+        const pageWidth = doc.page.width || 612
+        doc.rect(50, contactStartY, pageWidth - 100, 30)
+          .fillColor('#E8F5E9') // Light green background
+          .fill()
+          .stroke('#2E7D32') // Green border
+        
+        // Contact name/number
+        doc.fontSize(14)
+          .fillColor('#1B5E20') // Dark green
+          .font('Helvetica-Bold')
+          .text(`Contact ${index + 1}`, 55, contactStartY + 8)
+        
+        doc.y = contactStartY + 35
+        
+        // Contact details
+        doc.fontSize(10)
+          .fillColor('#333333')
+          .font('Helvetica')
+        
+        const lineHeight = 14
+        const leftColumn = 55
+        const rightColumn = (pageWidth - 100) / 2 + 55
+        
+        let currentColumn = leftColumn
+        let currentLine = doc.y
+        let itemsInCurrentColumn = 0
+        const maxItemsPerColumn = 12
+        
+        // Sort fields for better presentation
+        const fieldOrder = [
+          'First Name', 'Last Name', 'Farm',
+          'Email 1', 'Email 2',
+          'Phone 1', 'Phone 2', 'Phone 3', 'Phone 4', 'Phone 5', 'Phone 6',
+          'Mailing Address', 'City', 'State', 'Zip Code',
+          'Site Address', 'Site City', 'Site State', 'Site Zip Code',
+          'Notes',
+          'Date Created', 'Date Modified'
+        ]
+        
+        const sortedFields = fieldOrder.filter(key => 
+          columnsToInclude.includes(key) && contact[key] && String(contact[key]).trim()
+        )
+        
+        // Add remaining fields not in the sorted list
+        Object.keys(contact).forEach(key => {
+          if (!fieldOrder.includes(key) && columnsToInclude.includes(key) && contact[key] && String(contact[key]).trim()) {
+            sortedFields.push(key)
+          }
+        })
+        
+        sortedFields.forEach((key, fieldIndex) => {
+          const value = String(contact[key]).trim()
+          if (!value) return
+          
+          // Move to next column if current column is full
+          if (itemsInCurrentColumn >= maxItemsPerColumn) {
+            currentColumn = rightColumn
+            currentLine = contactStartY + 35
+            itemsInCurrentColumn = 0
+          }
+          
+          // Check if we need a new page
+          if (checkNewPage(20)) {
+            currentLine = doc.y
+            currentColumn = leftColumn
+            itemsInCurrentColumn = 0
+          }
+          
+          // Format field name (remove common prefixes, capitalize)
+          const displayKey = key
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase())
+            .trim()
+          
+          doc.fontSize(9)
+            .fillColor('#666666')
+            .font('Helvetica')
+            .text(`${displayKey}:`, currentColumn, currentLine, {
+              width: 200,
+              continued: false
+            })
+          
+          doc.fontSize(10)
+            .fillColor('#333333')
+            .font('Helvetica')
+            .text(value, currentColumn + 80, currentLine, {
+              width: 200
+            })
+          
+          currentLine += lineHeight
+          doc.y = currentLine
+          itemsInCurrentColumn++
+        })
+        
+        // Add spacing after contact
+        doc.moveDown(1)
+        doc.moveDown(0.5)
+      })
+      
+      // Add page number to last page
+      addPageNumber()
+      
+      // Finalize PDF
+      doc.end()
+      
+      // Wait for PDF to be fully generated
+      await new Promise<void>((resolve) => {
+        doc.on('end', () => resolve())
+      })
+      
+      const buffer = Buffer.concat(chunks)
       
       return new NextResponse(buffer, {
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="farmtrackr_report_${new Date().toISOString().split('T')[0]}.pdf"`,
+          'Content-Disposition': `attachment; filename="${fileName}"`,
         },
       })
     } else {
