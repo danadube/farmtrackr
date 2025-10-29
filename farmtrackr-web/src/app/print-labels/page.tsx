@@ -547,7 +547,7 @@ export default function PrintLabelsPage() {
                               overflow: 'hidden',
                               wordWrap: 'break-word',
                               whiteSpace: 'normal',
-                              ...text.primary,
+                              color: isDark ? '#ffffff' : '#000000', // Explicit color for visibility
                             }}
                           >
                             {addressLines.map((line, lineIdx) => (
@@ -558,9 +558,10 @@ export default function PrintLabelsPage() {
                                   padding: `0 ${(2 / zoom).toFixed(1)}px`,
                                   wordWrap: 'break-word',
                                   maxWidth: '100%',
+                                  color: isDark ? '#ffffff' : '#000000', // Explicit color
                                 }}
                               >
-                                {line}
+                                {line || '\u00A0'} {/* Non-breaking space if empty */}
                               </div>
                             ))}
                           </div>
