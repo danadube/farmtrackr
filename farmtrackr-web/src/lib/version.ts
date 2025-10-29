@@ -11,8 +11,8 @@
  */
 
 // IMPORTANT: Keep this in sync with package.json version
-export const APP_VERSION = '0.2.0'
-export const BUILD_NUMBER = '20251029.1' // Format: YYYYMMDD.buildNumber (increment buildNumber for same day)
+export const APP_VERSION = '0.4.0'
+export const BUILD_NUMBER = '20251029.2' // Format: YYYYMMDD.buildNumber (increment buildNumber for same day)
 export const LAST_UPDATED = 'October 29, 2025'
 export const APP_NAME = 'FarmTrackr'
 
