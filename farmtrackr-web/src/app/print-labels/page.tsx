@@ -105,6 +105,12 @@ export default function PrintLabelsPage() {
         const position = calculateLabelPosition(idx, format)
         const addressLines = formatAddressForLabel(contact, addressType)
         
+        // Skip contacts with no data at all (but this shouldn't happen normally)
+        if (addressLines.length === 0) {
+          console.warn(`Skipping contact with no address data: ${contact.id}`)
+          return
+        }
+        
         // Convert points to inches for more accurate printing
         const topInch = (position.top / 72).toFixed(4)
         const leftInch = (position.left / 72).toFixed(4)

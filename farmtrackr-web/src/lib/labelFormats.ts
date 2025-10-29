@@ -171,6 +171,11 @@ export function formatAddressForLabel(
     }
   }
 
-  return lines.filter(Boolean)
+  const result = lines.filter(Boolean)
+  // Always return at least the name, even if address is missing
+  if (result.length === 0 && fullName) {
+    return [fullName]
+  }
+  return result
 }
 
