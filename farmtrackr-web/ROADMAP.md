@@ -405,15 +405,41 @@ Based on Swift app challenges:
   - Choose sync direction per contact
   - Automatic sync scheduling
 
-**Estimated Development Time:** 4-5 weeks
+#### Google Calendar Integration
+- [ ] **Calendar API Setup**
+  - Enable Google Calendar API
+  - OAuth 2.0 with calendar scope
+  - Token management and refresh
+
+- [ ] **Event Management**
+  - Create calendar events for meetings/visits
+  - Link events to contacts
+  - Event reminders and notifications
+  - Recurring events support
+
+- [ ] **Schedule Management**
+  - View calendar from FarmTrackr
+  - Schedule meetings with contacts
+  - Block time for farm visits
+  - Calendar sync (two-way)
+
+- [ ] **Activity Integration**
+  - Automatically log calendar events as activities
+  - Link events to contacts
+  - Follow-up reminders from calendar
+  - Meeting notes attached to events
+
+**Estimated Development Time:** 5-6 weeks total
 - Google Sheets: 2-3 weeks
 - Google Contacts: 2 weeks (basic), +1 week for full sync
+- Google Calendar: 1-2 weeks
 
 **Dependencies:**
 - Google Cloud Project setup
 - People API enabled
+- Google Calendar API enabled
 - Google Sheets API enabled
-- OAuth 2.0 credentials
+- OAuth 2.0 credentials with multiple scopes
 - Secure backend for token storage
 
 ---
@@ -550,6 +576,7 @@ Based on Swift app challenges:
 | Data Quality UI | ✅ Complete | ✅ Complete | ✅ Done | Full page with tabs implemented |
 | Google Sheets Sync | 🟡 Partial | 🟡 Partial | 🟡 Medium | OAuth needed |
 | Google Contacts Integration | ❌ Not Started | ❌ Not Started | 🟡 Medium | People API + OAuth |
+| Google Calendar Integration | ❌ Not Started | ❌ Not Started | 🟡 Medium | Calendar API + OAuth |
 | Import Templates | ✅ Complete | ❌ Not Started | 🟡 Medium | Future enhancement |
 | Document Management | ✅ Complete | 🟡 API Complete, UI Partial | 🟡 Medium | CRUD API done, file upload pending |
 | Batch Operations | ✅ Complete | ❌ Not Started | 🟡 Medium | Future enhancement |
@@ -583,8 +610,9 @@ Based on Swift app challenges:
 1. **Excel Import/Export** - Additional format support
 2. **Google Sheets Full Integration** - Enhanced sync
 3. **Google Contacts Integration** - Import/export contacts
-4. **Document Management** - File organization
-5. **Import Templates** - Reusability
+4. **Google Calendar Integration** - Schedule meetings/visits
+5. **Document Management** - File organization
+6. **Import Templates** - Reusability
 
 ---
 

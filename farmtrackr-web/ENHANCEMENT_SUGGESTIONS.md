@@ -402,24 +402,27 @@
 
 ### **🌐 Integrations**
 
-#### **17. Calendar Integration** 📅 MEDIUM PRIORITY
-**Why:** Schedule and track meetings/visits
+#### **17. Google Calendar Integration** 📅 MEDIUM PRIORITY (Added to v0.5.0)
+**Why:** Schedule and track meetings/visits with contacts
 
 **Features:**
-- Google Calendar integration
-- iCal/Outlook calendar sync
-- Meeting/visit scheduling
-- Calendar view of activities
-- Reminder sync
-- Two-way sync
+- Google Calendar API integration
+- Create events for meetings/visits
+- Link events to contacts
+- Calendar view in FarmTrackr
+- Event reminders and notifications
+- Two-way calendar sync
+- Activity log integration (events become activities)
 
 **Benefits:**
 - Schedule management
 - Never double-book
 - Calendar reminders
 - Professional scheduling
+- Track visits and meetings with contacts
 
-**Estimated Time:** 2 weeks
+**Estimated Time:** 1-2 weeks
+**Status:** Added to v0.5.0 roadmap
 
 ---
 
