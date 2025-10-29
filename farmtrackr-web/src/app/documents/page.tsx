@@ -448,7 +448,7 @@ export default function DocumentsPage() {
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '12px', ...text.secondary, textAlign: 'right' }}>
-                        {doc.dateModified.toLocaleDateString('en-US', { 
+                        {doc.updatedAt.toLocaleDateString('en-US', { 
                           month: 'short', 
                           day: 'numeric' 
                         })}
