@@ -238,10 +238,54 @@ export default function ContactsPage() {
             </div>
           </div>
 
-          {/* Search and Filters */}
+          {/* Stats Summary */}
+          <div style={{ marginBottom: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            <div style={{ padding: '20px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Total Contacts
+                  </p>
+                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    {contacts.length}
+                  </p>
+                </div>
+                <Users style={{ width: '32px', height: '32px', color: colors.primary, opacity: 0.6 }} />
+              </div>
+            </div>
+            <div style={{ padding: '20px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Filtered Results
+                  </p>
+                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    {filteredContacts.length}
+                  </p>
+                </div>
+                <Filter style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6 }} />
+              </div>
+            </div>
+            <div style={{ padding: '20px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Unique Farms
+                  </p>
+                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    {uniqueFarms.length}
+                  </p>
+                </div>
+                <Building2 style={{ width: '32px', height: '32px', color: colors.warning, opacity: 0.6 }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Combined Search, Filters, and Sort */}
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ padding: '16px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ padding: '20px', ...card }}>
+              {/* Search and Filters Row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
                 <div style={{ position: 'relative', minWidth: '200px', maxWidth: '400px', width: '100%' }}>
                   <Search style={{ 
                     position: 'absolute', 
@@ -351,117 +395,72 @@ export default function ContactsPage() {
                   )}
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Sort Controls */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ padding: '12px 16px', ...card, display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ArrowUpDown style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
-                <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, whiteSpace: 'nowrap' }}>
-                  Sort by:
-                </label>
-              </div>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                style={{
-                  padding: '8px 12px',
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  backgroundColor: colors.card,
-                  color: colors.text.primary,
-                  cursor: 'pointer',
-                  minWidth: '140px'
-                }}
-              >
-                <option value="lastName">Last Name</option>
-                <option value="firstName">First Name</option>
-                <option value="city">City</option>
-                <option value="farm">Farm</option>
-                <option value="state">State</option>
-                <option value="dateCreated">Date Created</option>
-              </select>
-              <button
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                style={{
-                  padding: '8px 12px',
-                  backgroundColor: colors.cardHover,
-                  ...text.secondary,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'background-color 0.2s ease',
-                  whiteSpace: 'nowrap'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.borderHover
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.cardHover
-                }}
-              >
-                {sortOrder === 'asc' ? (
-                  <>
-                    <ArrowUp style={{ width: '14px', height: '14px' }} />
-                    Ascending
-                  </>
-                ) : (
-                  <>
-                    <ArrowDown style={{ width: '14px', height: '14px' }} />
-                    Descending
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Stats Summary */}
-          <div style={{ marginBottom: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-            <div style={{ padding: '20px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                    Total Contacts
-                  </p>
-                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
-                    {contacts.length}
-                  </p>
+              {/* Sort Row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', paddingTop: '16px', borderTop: `1px solid ${colors.border}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ArrowUpDown style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, whiteSpace: 'nowrap' }}>
+                    Sort by:
+                  </label>
                 </div>
-                <Users style={{ width: '32px', height: '32px', color: colors.primary, opacity: 0.6 }} />
-              </div>
-            </div>
-            <div style={{ padding: '20px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                    Filtered Results
-                  </p>
-                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
-                    {filteredContacts.length}
-                  </p>
-                </div>
-                <Filter style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6 }} />
-              </div>
-            </div>
-            <div style={{ padding: '20px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                    Unique Farms
-                  </p>
-                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
-                    {uniqueFarms.length}
-                  </p>
-                </div>
-                <Building2 style={{ width: '32px', height: '32px', color: colors.warning, opacity: 0.6 }} />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  style={{
+                    padding: '8px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    backgroundColor: colors.card,
+                    color: colors.text.primary,
+                    cursor: 'pointer',
+                    minWidth: '140px'
+                  }}
+                >
+                  <option value="lastName">Last Name</option>
+                  <option value="firstName">First Name</option>
+                  <option value="city">City</option>
+                  <option value="farm">Farm</option>
+                  <option value="state">State</option>
+                  <option value="dateCreated">Date Created</option>
+                </select>
+                <button
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: colors.cardHover,
+                    ...text.secondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'background-color 0.2s ease',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.borderHover
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.cardHover
+                  }}
+                >
+                  {sortOrder === 'asc' ? (
+                    <>
+                      <ArrowUp style={{ width: '14px', height: '14px' }} />
+                      Ascending
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDown style={{ width: '14px', height: '14px' }} />
+                      Descending
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
