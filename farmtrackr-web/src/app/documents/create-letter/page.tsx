@@ -73,9 +73,10 @@ export default function CreateLetterPage() {
         const contactsRes = await fetch('/api/contacts')
         if (contactsRes.ok) {
           const contactsData = await contactsRes.json()
-          const farms: string[] = Array.from(new Set(
+          const farmSet = new Set<string>(
             contactsData.map((c: any) => c.farm as string).filter((farm): farm is string => typeof farm === 'string' && farm.length > 0)
-          )).sort()
+          )
+          const farms = Array.from(farmSet).sort()
           setAvailableFarms(farms)
         }
         
