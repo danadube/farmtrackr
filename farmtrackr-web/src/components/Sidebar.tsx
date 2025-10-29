@@ -31,16 +31,16 @@ export function Sidebar({ children }: SidebarProps) {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="min-h-screen gradient-bg">
       {/* Navigation Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg border-r border-gray-200">
+      <div className="fixed left-0 top-0 h-full w-64 bg-card shadow-lg border-r border-border">
         {/* Logo */}
-        <div className="p-6 border-b border-gray-100">
+        <div className="p-6 border-b border-border">
           <div className="flex items-center space-x-3">
             <FarmTrackrLogo size="lg" variant="logo" />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">FarmTrackr</h1>
-              <p className="text-sm text-gray-500">Farm CRM</p>
+              <h1 className="text-xl font-bold text-card-foreground">FarmTrackr</h1>
+              <p className="text-sm text-muted-foreground">Farm CRM</p>
             </div>
           </div>
         </div>
@@ -48,15 +48,15 @@ export function Sidebar({ children }: SidebarProps) {
         {/* Navigation */}
         <nav className="p-4 space-y-2">
           <div className="space-y-1">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">MAIN</h3>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">MAIN</h3>
             {navigation.slice(0, 3).map((item) => (
               <Link 
                 key={item.name}
                 href={item.href} 
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                   pathname === item.href 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-primary/10 text-primary' 
+                    : 'text-card-foreground hover:bg-muted'
                 }`}
               >
                 <item.icon className="w-4 h-4" />
@@ -66,15 +66,15 @@ export function Sidebar({ children }: SidebarProps) {
           </div>
 
           <div className="space-y-1">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">TOOLS</h3>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 mt-6">TOOLS</h3>
             {navigation.slice(3, 6).map((item) => (
               <Link 
                 key={item.name}
                 href={item.href} 
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                   pathname === item.href 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-primary/10 text-primary' 
+                    : 'text-card-foreground hover:bg-muted'
                 }`}
               >
                 <item.icon className="w-4 h-4" />
@@ -84,15 +84,15 @@ export function Sidebar({ children }: SidebarProps) {
           </div>
 
           <div className="space-y-1">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">SETTINGS</h3>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 mt-6">SETTINGS</h3>
             {navigation.slice(6).map((item) => (
               <Link 
                 key={item.name}
                 href={item.href} 
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                   pathname === item.href 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-primary/10 text-primary' 
+                    : 'text-card-foreground hover:bg-muted'
                 }`}
               >
                 <item.icon className="w-4 h-4" />

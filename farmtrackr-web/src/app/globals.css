@@ -4,33 +4,167 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 255, 255, 255;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    /* HSB-based color system - Light mode */
+    --background: 210 20% 98%;        /* Light gray with subtle blue tint */
+    --foreground: 210 20% 8%;         /* Dark gray with subtle blue tint */
+    --card: 0 0% 100%;                /* Pure white cards */
+    --card-foreground: 210 20% 8%;    /* Dark text on cards */
+    --popover: 0 0% 100%;             /* Pure white popovers */
+    --popover-foreground: 210 20% 8%; /* Dark text on popovers */
+    --primary: 142 76% 50%;           /* Vibrant green */
+    --primary-foreground: 0 0% 100%;  /* White text on primary */
+    --secondary: 210 20% 95%;         /* Very light gray */
+    --secondary-foreground: 210 20% 15%; /* Dark gray text */
+    --muted: 210 20% 95%;             /* Very light gray */
+    --muted-foreground: 210 20% 45%;  /* Medium gray text */
+    --accent: 210 20% 90%;            /* Light gray accent */
+    --accent-foreground: 210 20% 15%; /* Dark gray text */
+    --destructive: 0 84% 60%;         /* Red for destructive actions */
+    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    --border: 210 20% 90%;            /* Light gray borders */
+    --input: 210 20% 90%;             /* Light gray inputs */
+    --ring: 142 76% 50%;              /* Green focus ring */
+    --radius: 12px;                   /* 8-point spacing: 1.5 * 8 */
+  }
+
+  .dark {
+    /* HSB-based color system - Dark mode */
+    --background: 210 20% 8%;         /* Dark gray with subtle blue tint */
+    --foreground: 210 20% 95%;        /* Light gray text */
+    --card: 210 20% 12%;              /* Slightly lighter dark gray */
+    --card-foreground: 210 20% 95%;   /* Light text on cards */
+    --popover: 210 20% 12%;           /* Dark popovers */
+    --popover-foreground: 210 20% 95%; /* Light text on popovers */
+    --primary: 142 76% 50%;           /* Same vibrant green */
+    --primary-foreground: 0 0% 100%;  /* White text on primary */
+    --secondary: 210 20% 15%;         /* Dark gray secondary */
+    --secondary-foreground: 210 20% 85%; /* Light gray text */
+    --muted: 210 20% 15%;             /* Dark gray muted */
+    --muted-foreground: 210 20% 65%;  /* Medium gray text */
+    --accent: 210 20% 20%;            /* Slightly lighter dark gray */
+    --accent-foreground: 210 20% 85%; /* Light gray text */
+    --destructive: 0 84% 60%;         /* Same red */
+    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    --border: 210 20% 20%;            /* Dark gray borders */
+    --input: 210 20% 20%;             /* Dark gray inputs */
+    --ring: 142 76% 50%;              /* Same green focus ring */
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  font-family: 'Inter', system-ui, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+@layer components {
+  /* Card components with 8-point spacing */
+  .card {
+    @apply bg-card text-card-foreground rounded-lg border border-border shadow-sm;
+    padding: 24px; /* 3 * 8 */
+  }
+  
+  .card-compact {
+    @apply bg-card text-card-foreground rounded-lg border border-border shadow-sm;
+    padding: 16px; /* 2 * 8 */
+  }
+  
+  .card-hover {
+    @apply hover:shadow-md hover:border-primary/20 transition-all duration-200;
+  }
+  
+  /* Button components with 8-point spacing */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-colors;
+    padding: 12px 24px; /* 1.5 * 8, 3 * 8 */
+    border-radius: 8px; /* 1 * 8 */
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 font-medium transition-colors;
+    padding: 12px 24px; /* 1.5 * 8, 3 * 8 */
+    border-radius: 8px; /* 1 * 8 */
+  }
+  
+  .btn-sm {
+    @apply font-medium transition-colors;
+    padding: 8px 16px; /* 1 * 8, 2 * 8 */
+    border-radius: 6px; /* 0.75 * 8 */
+  }
+  
+  /* Input components with 8-point spacing */
+  .input {
+    @apply flex w-full border border-input bg-background ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    height: 40px; /* 5 * 8 */
+    padding: 8px 12px; /* 1 * 8, 1.5 * 8 */
+    border-radius: 8px; /* 1 * 8 */
+    font-size: 14px; /* 14px */
+    line-height: 20px; /* 2.5 * 8 */
+  }
+  
+  /* Layout components with 8-point spacing */
+  .container {
+    @apply mx-auto px-6; /* 6 * 8 */
+    max-width: 1200px;
+  }
+  
+  .section {
+    margin-bottom: 32px; /* 4 * 8 */
+  }
+  
+  .section-sm {
+    margin-bottom: 24px; /* 3 * 8 */
+  }
+  
+  .section-lg {
+    margin-bottom: 48px; /* 6 * 8 */
+  }
+  
+  /* Background components */
+  .gradient-bg {
+    @apply bg-gradient-to-br;
+    background-color: hsl(210, 20%, 98%);
+    background-image: linear-gradient(135deg, hsl(210, 20%, 98%) 0%, hsl(142, 76%, 95%) 100%);
+  }
+  
+  .glass-effect {
+    @apply backdrop-blur-sm border;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Typography with proper spacing */
+  .heading-1 {
+    @apply font-bold text-foreground;
+    font-size: 36px; /* 36px */
+    line-height: 40px; /* 5 * 8 */
+    margin-bottom: 16px; /* 2 * 8 */
+  }
+  
+  .heading-2 {
+    @apply font-semibold text-foreground;
+    font-size: 24px; /* 24px */
+    line-height: 32px; /* 4 * 8 */
+    margin-bottom: 12px; /* 1.5 * 8 */
+  }
+  
+  .heading-3 {
+    @apply font-semibold text-foreground;
+    font-size: 20px; /* 20px */
+    line-height: 28px; /* 3.5 * 8 */
+    margin-bottom: 8px; /* 1 * 8 */
+  }
+  
+  .body-text {
+    @apply text-muted-foreground;
+    font-size: 16px; /* 16px */
+    line-height: 24px; /* 3 * 8 */
+    margin-bottom: 8px; /* 1 * 8 */
   }
 }
