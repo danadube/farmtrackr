@@ -203,9 +203,8 @@ export default function PrintLabelsPage() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', ...background }}>
-      <Sidebar />
-      <div style={{ flex: 1, padding: '24px', overflow: 'auto' }}>
+    <Sidebar>
+      <div style={{ marginLeft: '256px', padding: '24px', overflow: 'auto', ...background }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           {/* Header */}
           <div style={{ marginBottom: '24px' }}>
@@ -527,7 +526,7 @@ export default function PrintLabelsPage() {
           )}
         </div>
       </div>
-    </div>
+    </Sidebar>
   )
 }
 
