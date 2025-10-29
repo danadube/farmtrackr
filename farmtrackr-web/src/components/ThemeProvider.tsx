@@ -35,23 +35,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
-      // Read from DOM first (set by inline script in layout.tsx)
-      const domTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'
-      
-      // If DOM already has theme set, use it (prevents flash)
-      if (document.documentElement.classList.contains('dark') || document.documentElement.classList.contains('light')) {
-        return domTheme
+      // 1) If the inline script already set a theme class, trust it
+      const hasDark = document.documentElement.classList.contains('dark')
+      const hasLight = document.documentElement.classList.contains('light')
+      if (hasDark || hasLight) {
+        return hasDark ? 'dark' : 'light'
       }
-      
-      // Otherwise, resolve from localStorage
-      const initialTheme = localStorage.getItem('theme') as Theme | null || 'system'
-      const resolved = resolveTheme(initialTheme)
-      // Ensure DOM is synced
-      if (document.documentElement) {
-        document.documentElement.classList.remove('light', 'dark', 'system')
-        document.documentElement.classList.add(resolved)
-        document.documentElement.setAttribute('data-theme', resolved)
-      }
+
+      // 2) No DOM class yet: if user preference is system, use matchMedia directly
+      const stored = (localStorage.getItem('theme') as Theme | null) || 'system'
+      const resolved = stored === 'system' ? getSystemTheme() : stored
+
+      // Ensure DOM is synced as early as possible
+      document.documentElement.classList.remove('light', 'dark', 'system')
+      document.documentElement.classList.add(resolved)
+      document.documentElement.setAttribute('data-theme', resolved)
+
       return resolved
     }
     return 'light'
