@@ -120,7 +120,7 @@ export function Sidebar({ children }: SidebarProps) {
         }}
       >
         <Link href="/" style={{ textDecoration: 'none', color: colors.text.primary }}>
-          <FarmTrackrLogo size="md" variant="logo" showTitle={true} />
+          <FarmTrackrLogo size="md" variant="logo" showTitle={false} />
         </Link>
         <button
           onClick={() => setIsMobileOpen(!isMobileOpen)}
@@ -165,7 +165,7 @@ export function Sidebar({ children }: SidebarProps) {
         {/* Logo */}
         <div style={{ marginBottom: '32px' }}>
           <Link href="/" style={{ textDecoration: 'none', color: colors.text.primary }}>
-            <FarmTrackrLogo size="lg" variant="logo" showTitle={true} />
+            <FarmTrackrLogo size="lg" variant="logo" showTitle={false} />
           </Link>
         </div>
 
