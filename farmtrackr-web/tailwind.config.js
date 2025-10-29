@@ -9,15 +9,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // HSB-based color system
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        // HSB-based color system with direct HSL values
+        border: 'hsl(210, 20%, 90%)',
+        input: 'hsl(210, 20%, 90%)',
+        ring: 'hsl(142, 76%, 50%)',
+        background: 'hsl(210, 20%, 98%)',
+        foreground: 'hsl(210, 20%, 8%)',
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: 'hsl(142, 76%, 50%)',
+          foreground: 'hsl(0, 0%, 100%)',
           50: 'hsl(142, 76%, 95%)',
           100: 'hsl(142, 76%, 90%)',
           200: 'hsl(142, 76%, 80%)',
@@ -30,28 +30,28 @@ const config: Config = {
           900: 'hsl(142, 76%, 10%)',
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: 'hsl(210, 20%, 95%)',
+          foreground: 'hsl(210, 20%, 15%)',
         },
         accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+          DEFAULT: 'hsl(210, 20%, 90%)',
+          foreground: 'hsl(210, 20%, 15%)',
         },
         muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
+          DEFAULT: 'hsl(210, 20%, 95%)',
+          foreground: 'hsl(210, 20%, 45%)',
         },
         destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
+          DEFAULT: 'hsl(0, 84%, 60%)',
+          foreground: 'hsl(0, 0%, 100%)',
         },
         popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
+          DEFAULT: 'hsl(0, 0%, 100%)',
+          foreground: 'hsl(210, 20%, 8%)',
         },
         card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
+          DEFAULT: 'hsl(0, 0%, 100%)',
+          foreground: 'hsl(210, 20%, 8%)',
         },
         // Neutral grays with subtle saturation
         gray: {
