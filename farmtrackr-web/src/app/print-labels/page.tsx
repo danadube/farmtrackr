@@ -95,6 +95,8 @@ export default function PrintLabelsPage() {
 
     // Get all pages of labels
     const allPages: string[] = []
+    console.log(`Print: Total filtered contacts: ${filteredContacts.length}, Pages: ${totalPages}, Contacts per page: ${contactsPerPage}`)
+    
     Array.from({ length: totalPages }).forEach((_, pageIdx) => {
       const pageStart = pageIdx * contactsPerPage
       const pageContacts = filteredContacts.slice(pageStart, pageStart + contactsPerPage)
@@ -102,20 +104,19 @@ export default function PrintLabelsPage() {
       let pageHTML = '<div class="label-page" style="width: 612px; height: 792px; position: relative; page-break-after: always;">'
       
       let labelIndex = 0 // Track actual label position within this page (0-29 for 5160)
-      console.log(`Page ${pageIdx}: Processing ${pageContacts.length} contacts, should generate ${Math.min(pageContacts.length, contactsPerPage)} labels`)
+      console.log(`Page ${pageIdx}: Slice [${pageStart}:${pageStart + contactsPerPage}] = ${pageContacts.length} contacts`)
       
+      // CRITICAL: Print ALL contacts, even if empty - use labelIndex for position
       pageContacts.forEach((contact, arrayIdx) => {
         const addressLines = formatAddressForLabel(contact, addressType)
         
-        // Always print label - addressLines will always have at least the name
-        console.log(`Page ${pageIdx}, Contact ${arrayIdx} (label ${labelIndex}): ${contact.firstName} ${contact.lastName}, addressLines: ${addressLines.length}`)
-        
-        // Use labelIndex for positioning to ensure column-major order is maintained
+        // Use labelIndex for positioning (NOT arrayIdx) - ensures sequential positioning
         const position = calculateLabelPosition(labelIndex, format)
         const column = Math.floor(labelIndex / format.rows)
         const row = labelIndex % format.rows
-        console.log(`  Position: labelIndex=${labelIndex}, column=${column}, row=${row}, top=${position.top}, left=${position.left}`)
-        labelIndex++ // Increment for next label position
+        
+        console.log(`  Contact ${arrayIdx} -> Label ${labelIndex} (col ${column}, row ${row}): ${contact.firstName} ${contact.lastName}`)
+        labelIndex++ // Always increment, even if contact has issues
         
         // Convert points to inches for more accurate printing
         const topInch = (position.top / 72).toFixed(4)
