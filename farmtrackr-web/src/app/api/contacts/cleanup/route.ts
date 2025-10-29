@@ -70,8 +70,9 @@ export async function POST(request: NextRequest) {
         const updates: any = {}
         let hasChanges = false
 
-        ['email1', 'email2'].forEach(field => {
-          const value = contact[field as keyof typeof contact]
+        const emailFields = ['email1', 'email2'] as const
+        emailFields.forEach(field => {
+          const value = contact[field]
           if (value && typeof value === 'string') {
             const normalized = value.toLowerCase().trim()
             if (normalized !== value) {
