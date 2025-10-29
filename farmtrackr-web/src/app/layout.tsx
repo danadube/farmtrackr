@@ -10,9 +10,10 @@ export const metadata: Metadata = {
   description: 'Comprehensive farm contact management system',
   icons: {
     icon: [
-      { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon.png', type: 'image/png', sizes: 'any' },
+      { url: '/favicon-32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon-16.png', type: 'image/png', sizes: '16x16' },
       { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', type: 'image/x-icon', sizes: 'any' },
     ],
   },
 }
