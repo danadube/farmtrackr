@@ -8,9 +8,20 @@ export async function GET(request: NextRequest) {
       orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
     })
     return NextResponse.json(letterheads)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Letterheads GET error:', error)
-    return NextResponse.json({ error: 'Failed to fetch letterheads' }, { status: 500 })
+    // Check if it's a table doesn't exist error
+    if (error?.code === 'P2021' || error?.message?.includes('does not exist')) {
+      console.error('Letterheads table does not exist. Run: prisma db push')
+      return NextResponse.json({ 
+        error: 'Letterheads table not found. Please ensure database migrations have been applied.',
+        code: 'TABLE_NOT_FOUND'
+      }, { status: 503 })
+    }
+    return NextResponse.json({ 
+      error: 'Failed to fetch letterheads',
+      details: error?.message || 'Unknown error'
+    }, { status: 500 })
   }
 }
 
@@ -48,9 +59,20 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(created, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Letterheads POST error:', error)
-    return NextResponse.json({ error: 'Failed to create letterhead' }, { status: 500 })
+    // Check if it's a table doesn't exist error
+    if (error?.code === 'P2021' || error?.message?.includes('does not exist')) {
+      console.error('Letterheads table does not exist. Run: prisma db push')
+      return NextResponse.json({ 
+        error: 'Letterheads table not found. Please ensure database migrations have been applied.',
+        code: 'TABLE_NOT_FOUND'
+      }, { status: 503 })
+    }
+    return NextResponse.json({ 
+      error: 'Failed to create letterhead',
+      details: error?.message || 'Unknown error'
+    }, { status: 500 })
   }
 }
 
