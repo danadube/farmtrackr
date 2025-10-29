@@ -32,6 +32,17 @@ interface Signature {
   isDefault?: boolean
 }
 
+interface Letterhead {
+  id: string
+  name: string
+  description?: string
+  headerHtml?: string
+  headerText?: string
+  footerHtml?: string
+  footerText?: string
+  isDefault?: boolean
+}
+
 export default function CreateLetterPage() {
   const { colors, isDark, card, background, text } = useThemeStyles()
   const [currentStep, setCurrentStep] = useState(1)
@@ -42,9 +53,12 @@ export default function CreateLetterPage() {
   const [letterContent, setLetterContent] = useState('')
   const [signatures, setSignatures] = useState<Signature[]>([])
   const [selectedSignature, setSelectedSignature] = useState<string>('')
+  const [letterheads, setLetterheads] = useState<Letterhead[]>([])
+  const [selectedLetterhead, setSelectedLetterhead] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
+  const [showLetterheadModal, setShowLetterheadModal] = useState(false)
   
   // Template modal state
   const [newTemplateName, setNewTemplateName] = useState('')
@@ -56,6 +70,13 @@ export default function CreateLetterPage() {
   const [newSignatureClosing, setNewSignatureClosing] = useState('Sincerely,')
   const [newSignatureText, setNewSignatureText] = useState('')
   const [newSignatureType, setNewSignatureType] = useState('CUSTOM')
+  
+  // Letterhead modal state
+  const [newLetterheadName, setNewLetterheadName] = useState('')
+  const [newLetterheadDescription, setNewLetterheadDescription] = useState('')
+  const [newLetterheadHeaderHtml, setNewLetterheadHeaderHtml] = useState('')
+  const [newLetterheadHeaderText, setNewLetterheadHeaderText] = useState('')
+  const [newLetterheadFooterHtml, setNewLetterheadFooterHtml] = useState('')
 
   // Fetch templates and farms on mount
   useEffect(() => {
@@ -89,6 +110,16 @@ export default function CreateLetterPage() {
           // Set default signature if available
           const defaultSig = sigsData.find((s: Signature) => s.isDefault)
           if (defaultSig) setSelectedSignature(defaultSig.id)
+        }
+        
+        // Fetch letterheads
+        const letterheadsRes = await fetch('/api/letterheads')
+        if (letterheadsRes.ok) {
+          const letterheadsData = await letterheadsRes.json()
+          setLetterheads(letterheadsData)
+          // Set default letterhead if available
+          const defaultLetterhead = letterheadsData.find((l: Letterhead) => l.isDefault)
+          if (defaultLetterhead) setSelectedLetterhead(defaultLetterhead.id)
         }
       } catch (error) {
         console.error('Failed to fetch data:', error)
@@ -168,7 +199,8 @@ export default function CreateLetterPage() {
     { number: 1, label: 'Choose Template', icon: FileText },
     { number: 2, label: 'Select Farms', icon: Users },
     { number: 3, label: 'Edit Letter', icon: FileEdit },
-    { number: 4, label: 'Signature', icon: PenTool },
+    { number: 4, label: 'Letterhead', icon: FileText },
+    { number: 5, label: 'Signature', icon: PenTool },
   ]
 
   const getAvailableVariables = () => [
@@ -265,6 +297,47 @@ export default function CreateLetterPage() {
     { value: 'RESPECTFULLY', label: 'Respectfully', defaultClosing: 'Respectfully,' },
     { value: 'CUSTOM', label: 'Custom', defaultClosing: '' },
   ]
+
+  const handleCreateLetterhead = async () => {
+    if (!newLetterheadName.trim() || (!newLetterheadHeaderHtml.trim() && !newLetterheadHeaderText.trim())) {
+      alert('Name and at least header HTML or text is required')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/letterheads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newLetterheadName,
+          description: newLetterheadDescription || null,
+          headerHtml: newLetterheadHeaderHtml || null,
+          headerText: newLetterheadHeaderText || null,
+          footerHtml: newLetterheadFooterHtml || null,
+          footerText: null,
+          isDefault: false,
+        }),
+      })
+
+      if (response.ok) {
+        const created = await response.json()
+        setLetterheads([created, ...letterheads])
+        setSelectedLetterhead(created.id)
+        setShowLetterheadModal(false)
+        setNewLetterheadName('')
+        setNewLetterheadDescription('')
+        setNewLetterheadHeaderHtml('')
+        setNewLetterheadHeaderText('')
+        setNewLetterheadFooterHtml('')
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Failed to create letterhead:', error)
+      alert('Failed to create letterhead')
+    }
+  }
 
   return (
     <Sidebar>
@@ -542,8 +615,147 @@ export default function CreateLetterPage() {
                   </div>
                 )}
 
-                {/* Step 4: Signature */}
+                {/* Step 4: Letterhead */}
                 {currentStep === 4 && (
+                  <div>
+                    <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, marginBottom: '24px' }}>
+                      Choose Letterhead
+                    </h2>
+                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '24px' }}>
+                      Optional: Select a letterhead to appear at the top (and optionally bottom) of your letters
+                    </p>
+                    {letterheads.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '48px' }}>
+                        <FileText style={{ width: '48px', height: '48px', color: colors.text.tertiary, margin: '0 auto 16px' }} />
+                        <p style={{ ...text.secondary, marginBottom: '16px' }}>No letterheads available</p>
+                        <button
+                          onClick={() => setShowLetterheadModal(true)}
+                          style={{
+                            padding: '12px 24px',
+                            backgroundColor: colors.success,
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            marginRight: '12px'
+                          }}
+                        >
+                          Create Letterhead
+                        </button>
+                        <button
+                          onClick={() => setCurrentStep(5)}
+                          style={{
+                            padding: '12px 24px',
+                            backgroundColor: colors.cardHover,
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '12px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            ...text.secondary
+                          }}
+                        >
+                          Skip (No Letterhead)
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+                          <button
+                            onClick={() => setShowLetterheadModal(true)}
+                            style={{
+                              padding: '8px 16px',
+                              backgroundColor: colors.cardHover,
+                              border: `1px solid ${colors.border}`,
+                              borderRadius: '8px',
+                              fontSize: '14px',
+                              cursor: 'pointer',
+                              ...text.secondary
+                            }}
+                          >
+                            + Create New
+                          </button>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+                          <div
+                            onClick={() => setSelectedLetterhead('')}
+                            style={{
+                              padding: '20px',
+                              border: `2px solid ${!selectedLetterhead ? colors.primary : colors.border}`,
+                              borderRadius: '12px',
+                              backgroundColor: !selectedLetterhead ? `${colors.primary}10` : colors.card,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                              <div>
+                                <h3 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, marginBottom: '8px' }}>
+                                  No Letterhead
+                                </h3>
+                                <p style={{ fontSize: '14px', ...text.secondary }}>
+                                  Send plain letters without header/footer
+                                </p>
+                              </div>
+                              {!selectedLetterhead && <Check style={{ width: '20px', height: '20px', color: colors.primary }} />}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          {letterheads.map(letterhead => {
+                            const isSelected = selectedLetterhead === letterhead.id
+                            return (
+                              <div
+                                key={letterhead.id}
+                                onClick={() => setSelectedLetterhead(letterhead.id)}
+                                style={{
+                                  padding: '20px',
+                                  border: `2px solid ${isSelected ? colors.primary : colors.border}`,
+                                  borderRadius: '12px',
+                                  backgroundColor: isSelected ? `${colors.primary}10` : colors.card,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                                  <div>
+                                    <h3 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, marginBottom: '4px' }}>
+                                      {letterhead.name}
+                                    </h3>
+                                    {letterhead.description && (
+                                      <p style={{ fontSize: '14px', ...text.secondary }}>
+                                        {letterhead.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {isSelected && <Check style={{ width: '20px', height: '20px', color: colors.primary }} />}
+                                </div>
+                                {letterhead.headerHtml && (
+                                  <div style={{ 
+                                    padding: '12px', 
+                                    backgroundColor: colors.cardHover, 
+                                    borderRadius: '8px', 
+                                    marginTop: '12px',
+                                    fontSize: '12px',
+                                    ...text.secondary
+                                  }}>
+                                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>Header Preview:</div>
+                                    <div dangerouslySetInnerHTML={{ __html: letterhead.headerHtml }} />
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Step 5: Signature */}
+                {currentStep === 5 && (
                   <div>
                     <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, marginBottom: '24px' }}>
                       Choose Signature
@@ -632,7 +844,7 @@ export default function CreateLetterPage() {
               Back
             </button>
             
-            {currentStep < 4 ? (
+            {currentStep < 5 ? (
               <button
                 onClick={handleNext}
                 disabled={
@@ -1008,6 +1220,215 @@ export default function CreateLetterPage() {
                     }}
                   >
                     Create Signature
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Create Letterhead Modal */}
+          {showLetterheadModal && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000,
+              }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setShowLetterheadModal(false)
+              }}
+            >
+              <div
+                style={{
+                  ...card,
+                  padding: '32px',
+                  maxWidth: '700px',
+                  width: '90%',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, marginBottom: '24px' }}>
+                  Create Letterhead
+                </h2>
+                
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Letterhead Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newLetterheadName}
+                    onChange={(e) => setNewLetterheadName(e.target.value)}
+                    placeholder="e.g., Standard FarmTrackr Letterhead"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Description (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newLetterheadDescription}
+                    onChange={(e) => setNewLetterheadDescription(e.target.value)}
+                    placeholder="Brief description of this letterhead"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Header HTML * 
+                    <span style={{ fontSize: '12px', marginLeft: '8px', fontWeight: 'normal' }}>
+                      (Use HTML for rich formatting, logos, etc.)
+                    </span>
+                  </label>
+                  <textarea
+                    value={newLetterheadHeaderHtml}
+                    onChange={(e) => setNewLetterheadHeaderHtml(e.target.value)}
+                    placeholder='<div style="text-align: center;"><strong>FarmTrackr</strong><br/>123 Farm Road<br/>City, State ZIP</div>'
+                    style={{
+                      width: '100%',
+                      minHeight: '150px',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontFamily: 'monospace',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                      resize: 'vertical',
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Header Plain Text (alternative)
+                    <span style={{ fontSize: '12px', marginLeft: '8px', fontWeight: 'normal' }}>
+                      (Fallback if HTML not available)
+                    </span>
+                  </label>
+                  <textarea
+                    value={newLetterheadHeaderText}
+                    onChange={(e) => setNewLetterheadHeaderText(e.target.value)}
+                    placeholder="FarmTrackr\n123 Farm Road\nCity, State ZIP"
+                    style={{
+                      width: '100%',
+                      minHeight: '100px',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontFamily: 'monospace',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                      resize: 'vertical',
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Footer HTML (optional)
+                  </label>
+                  <textarea
+                    value={newLetterheadFooterHtml}
+                    onChange={(e) => setNewLetterheadFooterHtml(e.target.value)}
+                    placeholder='<div style="text-align: center; font-size: 10px;">© 2025 FarmTrackr. All rights reserved.</div>'
+                    style={{
+                      width: '100%',
+                      minHeight: '100px',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontFamily: 'monospace',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                      resize: 'vertical',
+                    }}
+                  />
+                </div>
+
+                {newLetterheadHeaderHtml && (
+                  <div style={{ 
+                    padding: '16px', 
+                    backgroundColor: colors.cardHover, 
+                    borderRadius: '8px', 
+                    marginBottom: '16px',
+                    borderLeft: `3px solid ${colors.primary}`,
+                  }}>
+                    <div style={{ fontSize: '12px', fontWeight: '600', ...text.secondary, marginBottom: '8px' }}>
+                      Header Preview:
+                    </div>
+                    <div dangerouslySetInnerHTML={{ __html: newLetterheadHeaderHtml }} />
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+                  <button
+                    onClick={() => {
+                      setShowLetterheadModal(false)
+                      setNewLetterheadName('')
+                      setNewLetterheadDescription('')
+                      setNewLetterheadHeaderHtml('')
+                      setNewLetterheadHeaderText('')
+                      setNewLetterheadFooterHtml('')
+                    }}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      ...text.secondary,
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateLetterhead}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: colors.success,
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Create Letterhead
                   </button>
                 </div>
               </div>

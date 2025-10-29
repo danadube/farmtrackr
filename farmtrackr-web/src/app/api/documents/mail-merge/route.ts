@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { templateId, farms, content, signatureId } = body
+    const { templateId, farms, content, signatureId, letterheadId } = body
 
     if (!templateId || !farms || farms.length === 0 || !content || !signatureId) {
       return NextResponse.json(
@@ -21,6 +21,14 @@ export async function POST(request: NextRequest) {
 
     if (!signature) {
       return NextResponse.json({ error: 'Signature not found' }, { status: 404 })
+    }
+
+    // Get letterhead (optional)
+    let letterhead = null
+    if (letterheadId) {
+      letterhead = await prisma.letterhead.findUnique({
+        where: { id: letterheadId },
+      })
     }
 
     // Get contacts for selected farms
@@ -57,8 +65,28 @@ export async function POST(request: NextRequest) {
         letterContent = letterContent.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value)
       })
 
+      // Build full letter with letterhead, content, and signature
+      let fullLetter = ''
+      
+      // Add letterhead header if available
+      if (letterhead?.headerHtml) {
+        fullLetter += `${letterhead.headerHtml}\n\n`
+      } else if (letterhead?.headerText) {
+        fullLetter += `${letterhead.headerText}\n\n`
+      }
+      
+      // Add letter content
+      fullLetter += `${letterContent}\n\n`
+      
       // Add signature
-      const fullLetter = `${letterContent}\n\n${signature.closing}\n\n${signature.signature}`
+      fullLetter += `${signature.closing}\n\n${signature.signature}`
+      
+      // Add letterhead footer if available
+      if (letterhead?.footerHtml) {
+        fullLetter += `\n\n${letterhead.footerHtml}`
+      } else if (letterhead?.footerText) {
+        fullLetter += `\n\n${letterhead.footerText}`
+      }
 
       return {
         contactId: contact.id,

@@ -106,3 +106,18 @@ model Signature {
 
   @@map("signatures")
 }
+
+model Letterhead {
+  id          String   @id @default(cuid())
+  name        String   // Display name for the letterhead
+  description String?  // Brief description
+  headerHtml  String?  // HTML content for header (logo, company name, address)
+  headerText  String?  // Plain text alternative for header
+  footerHtml  String?  // HTML content for footer (optional)
+  footerText  String?  // Plain text alternative for footer
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("letterheads")
+}
