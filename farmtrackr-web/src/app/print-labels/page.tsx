@@ -126,7 +126,7 @@ export default function PrintLabelsPage() {
             word-wrap: break-word;
             white-space: normal;
           ">
-            ${addressLines.map(line => `<div class="label-line" style="margin: 0; padding: 0;">${line}</div>`).join('')}
+            ${addressLines.map(line => `<div class="label-line" style="margin: 0; padding: 0 2px;">${line}</div>`).join('')}
           </div>
         `
       })
