@@ -8,7 +8,8 @@ import {
   FileText, 
   Upload, 
   TrendingUp,
-  Home
+  Home,
+  FileSpreadsheet
 } from 'lucide-react'
 import { FarmTrackrLogo } from '@/components/FarmTrackrLogo'
 
@@ -24,6 +25,7 @@ export function Sidebar({ children }: SidebarProps) {
     { name: 'Contacts', href: '/contacts', icon: Users },
     { name: 'Documents', href: '/documents', icon: FileText },
     { name: 'Data Quality', href: '/data-quality', icon: TrendingUp },
+    { name: 'Google Sheets', href: '/google-sheets', icon: FileSpreadsheet },
     { name: 'Import & Export', href: '/import-export', icon: Upload },
     { name: 'Settings', href: '/settings', icon: Building2 },
   ]
@@ -65,7 +67,7 @@ export function Sidebar({ children }: SidebarProps) {
 
           <div className="space-y-1">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">TOOLS</h3>
-            {navigation.slice(3, 5).map((item) => (
+            {navigation.slice(3, 6).map((item) => (
               <Link 
                 key={item.name}
                 href={item.href} 
@@ -83,7 +85,7 @@ export function Sidebar({ children }: SidebarProps) {
 
           <div className="space-y-1">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">SETTINGS</h3>
-            {navigation.slice(5).map((item) => (
+            {navigation.slice(6).map((item) => (
               <Link 
                 key={item.name}
                 href={item.href} 
