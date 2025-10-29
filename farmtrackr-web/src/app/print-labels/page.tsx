@@ -101,15 +101,14 @@ export default function PrintLabelsPage() {
       
       let pageHTML = '<div class="label-page" style="width: 612px; height: 792px; position: relative; page-break-after: always;">'
       
-      pageContacts.forEach((contact, idx) => {
-        const position = calculateLabelPosition(idx, format)
+      let labelIndex = 0 // Track actual label position (not array index)
+      pageContacts.forEach((contact) => {
         const addressLines = formatAddressForLabel(contact, addressType)
         
-        // Skip contacts with no data at all (but this shouldn't happen normally)
-        if (addressLines.length === 0) {
-          console.warn(`Skipping contact with no address data: ${contact.id}`)
-          return
-        }
+        // Always print label, even if only name exists
+        // Use labelIndex for positioning to ensure column-major order is maintained
+        const position = calculateLabelPosition(labelIndex, format)
+        labelIndex++ // Increment for next label position
         
         // Convert points to inches for more accurate printing
         const topInch = (position.top / 72).toFixed(4)
