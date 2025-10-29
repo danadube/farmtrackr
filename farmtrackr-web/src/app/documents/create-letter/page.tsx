@@ -42,6 +42,19 @@ export default function CreateLetterPage() {
   const [signatures, setSignatures] = useState<Signature[]>([])
   const [selectedSignature, setSelectedSignature] = useState<string>('')
   const [loading, setLoading] = useState(true)
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [showSignatureModal, setShowSignatureModal] = useState(false)
+  
+  // Template modal state
+  const [newTemplateName, setNewTemplateName] = useState('')
+  const [newTemplateDescription, setNewTemplateDescription] = useState('')
+  const [newTemplateContent, setNewTemplateContent] = useState('')
+  
+  // Signature modal state
+  const [newSignatureName, setNewSignatureName] = useState('')
+  const [newSignatureClosing, setNewSignatureClosing] = useState('Sincerely,')
+  const [newSignatureText, setNewSignatureText] = useState('')
+  const [newSignatureType, setNewSignatureType] = useState('CUSTOM')
 
   // Fetch templates and farms on mount
   useEffect(() => {
@@ -169,6 +182,88 @@ export default function CreateLetterPage() {
     '{{phone}}',
   ]
 
+  const handleCreateTemplate = async () => {
+    if (!newTemplateName.trim() || !newTemplateContent.trim()) {
+      alert('Name and content are required')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/letter-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newTemplateName,
+          description: newTemplateDescription || null,
+          content: newTemplateContent,
+        }),
+      })
+
+      if (response.ok) {
+        const created = await response.json()
+        setTemplates([created, ...templates])
+        setSelectedTemplate(created)
+        setShowTemplateModal(false)
+        setNewTemplateName('')
+        setNewTemplateDescription('')
+        setNewTemplateContent('')
+        setCurrentStep(3) // Move to letter editing step
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Failed to create template:', error)
+      alert('Failed to create template')
+    }
+  }
+
+  const handleCreateSignature = async () => {
+    if (!newSignatureName.trim() || !newSignatureClosing.trim() || !newSignatureText.trim()) {
+      alert('Name, closing, and signature text are required')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/signatures', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newSignatureName,
+          type: newSignatureType,
+          closing: newSignatureClosing,
+          signature: newSignatureText,
+          isDefault: false,
+        }),
+      })
+
+      if (response.ok) {
+        const created = await response.json()
+        setSignatures([created, ...signatures])
+        setSelectedSignature(created.id)
+        setShowSignatureModal(false)
+        setNewSignatureName('')
+        setNewSignatureClosing('Sincerely,')
+        setNewSignatureText('')
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Failed to create signature:', error)
+      alert('Failed to create signature')
+    }
+  }
+
+  const signatureTypes = [
+    { value: 'SINCERELY', label: 'Sincerely', defaultClosing: 'Sincerely,' },
+    { value: 'BEST_REGARDS', label: 'Best Regards', defaultClosing: 'Best Regards,' },
+    { value: 'WARMEST_REGARDS', label: 'Warmest Regards', defaultClosing: 'Warmest Regards,' },
+    { value: 'THANK_YOU', label: 'Thank You', defaultClosing: 'Thank You,' },
+    { value: 'RESPECTFULLY', label: 'Respectfully', defaultClosing: 'Respectfully,' },
+    { value: 'CUSTOM', label: 'Custom', defaultClosing: '' },
+  ]
+
   return (
     <Sidebar>
       <div 
@@ -291,6 +386,7 @@ export default function CreateLetterPage() {
                         <FileText style={{ width: '48px', height: '48px', color: colors.text.tertiary, margin: '0 auto 16px' }} />
                         <p style={{ ...text.secondary, marginBottom: '16px' }}>No templates available</p>
                         <button
+                          onClick={() => setShowTemplateModal(true)}
                           style={{
                             padding: '12px 24px',
                             backgroundColor: colors.success,
@@ -455,6 +551,7 @@ export default function CreateLetterPage() {
                         <PenTool style={{ width: '48px', height: '48px', color: colors.text.tertiary, margin: '0 auto 16px' }} />
                         <p style={{ ...text.secondary, marginBottom: '16px' }}>No signatures available</p>
                         <button
+                          onClick={() => setShowSignatureModal(true)}
                           style={{
                             padding: '12px 24px',
                             backgroundColor: colors.success,
@@ -585,6 +682,335 @@ export default function CreateLetterPage() {
               </button>
             )}
           </div>
+
+          {/* Create Template Modal */}
+          {showTemplateModal && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000,
+              }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setShowTemplateModal(false)
+              }}
+            >
+              <div
+                style={{
+                  ...card,
+                  padding: '32px',
+                  maxWidth: '700px',
+                  width: '90%',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, marginBottom: '24px' }}>
+                  Create Letter Template
+                </h2>
+                
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Template Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newTemplateName}
+                    onChange={(e) => setNewTemplateName(e.target.value)}
+                    placeholder="e.g., Welcome Letter"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Description (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newTemplateDescription}
+                    onChange={(e) => setNewTemplateDescription(e.target.value)}
+                    placeholder="Brief description of this template"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Template Content *
+                    <span style={{ fontSize: '12px', marginLeft: '8px', fontWeight: 'normal' }}>
+                      (Use variables: {getAvailableVariables().join(', ')})
+                    </span>
+                  </label>
+                  <textarea
+                    value={newTemplateContent}
+                    onChange={(e) => setNewTemplateContent(e.target.value)}
+                    placeholder={`Dear {{contact_name}},\n\nWe are excited to connect with {{farm}}...`}
+                    style={{
+                      width: '100%',
+                      minHeight: '300px',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontFamily: 'monospace',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                      lineHeight: '1.6',
+                      resize: 'vertical',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+                  <button
+                    onClick={() => {
+                      setShowTemplateModal(false)
+                      setNewTemplateName('')
+                      setNewTemplateDescription('')
+                      setNewTemplateContent('')
+                    }}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      ...text.secondary,
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateTemplate}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: colors.success,
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Create Template
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Create Signature Modal */}
+          {showSignatureModal && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000,
+              }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setShowSignatureModal(false)
+              }}
+            >
+              <div
+                style={{
+                  ...card,
+                  padding: '32px',
+                  maxWidth: '600px',
+                  width: '90%',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, marginBottom: '24px' }}>
+                  Create Signature
+                </h2>
+                
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Signature Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newSignatureName}
+                    onChange={(e) => setNewSignatureName(e.target.value)}
+                    placeholder="e.g., Standard Business Closing"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Closing Type
+                  </label>
+                  <select
+                    value={newSignatureType}
+                    onChange={(e) => {
+                      setNewSignatureType(e.target.value)
+                      const selected = signatureTypes.find(t => t.value === e.target.value)
+                      if (selected && selected.defaultClosing) {
+                        setNewSignatureClosing(selected.defaultClosing)
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {signatureTypes.map(type => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Closing Text *
+                  </label>
+                  <input
+                    type="text"
+                    value={newSignatureClosing}
+                    onChange={(e) => setNewSignatureClosing(e.target.value)}
+                    placeholder="e.g., Sincerely,"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                    Signature Line *
+                  </label>
+                  <input
+                    type="text"
+                    value={newSignatureText}
+                    onChange={(e) => setNewSignatureText(e.target.value)}
+                    placeholder="e.g., John Doe, FarmTrackr Team"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                    }}
+                  />
+                </div>
+
+                <div style={{ 
+                  padding: '16px', 
+                  backgroundColor: colors.cardHover, 
+                  borderRadius: '8px', 
+                  marginBottom: '16px',
+                  borderLeft: `3px solid ${colors.primary}`,
+                }}>
+                  <div style={{ fontSize: '12px', fontWeight: '600', ...text.secondary, marginBottom: '8px' }}>
+                    Preview:
+                  </div>
+                  <div style={{ ...text.secondary, fontStyle: 'italic', marginBottom: '8px' }}>
+                    {newSignatureClosing || 'Sincerely,'}
+                  </div>
+                  <div style={{ ...text.primary, fontWeight: '500' }}>
+                    {newSignatureText || 'Signature Line'}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+                  <button
+                    onClick={() => {
+                      setShowSignatureModal(false)
+                      setNewSignatureName('')
+                      setNewSignatureClosing('Sincerely,')
+                      setNewSignatureText('')
+                      setNewSignatureType('CUSTOM')
+                    }}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      ...text.secondary,
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateSignature}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: colors.success,
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Create Signature
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Sidebar>
