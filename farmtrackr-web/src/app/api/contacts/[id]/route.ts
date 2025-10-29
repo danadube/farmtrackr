@@ -26,36 +26,47 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json()
+    const body = await request.json() as Record<string, any>
+    
+    // Convert empty strings to undefined
+    const cleanBody = Object.fromEntries(
+      Object.entries(body).map(([key, value]) => [
+        key, 
+        value === '' || value === null ? undefined : value
+      ])
+    ) as Record<string, any>
     
     const contact = await prisma.farmContact.update({
       where: { id: params.id },
       data: {
-        firstName: body.firstName,
-        lastName: body.lastName,
-        farm: body.farm,
-        mailingAddress: body.mailingAddress,
-        city: body.city,
-        state: body.state,
-        zipCode: body.zipCode ? parseInt(body.zipCode) : null,
-        email1: body.email1,
-        email2: body.email2,
-        phoneNumber1: body.phoneNumber1,
-        phoneNumber2: body.phoneNumber2,
-        phoneNumber3: body.phoneNumber3,
-        phoneNumber4: body.phoneNumber4,
-        phoneNumber5: body.phoneNumber5,
-        phoneNumber6: body.phoneNumber6,
-        siteMailingAddress: body.siteMailingAddress,
-        siteCity: body.siteCity,
-        siteState: body.siteState,
-        siteZipCode: body.siteZipCode ? parseInt(body.siteZipCode) : null,
-        notes: body.notes,
+        firstName: cleanBody.firstName,
+        lastName: cleanBody.lastName,
+        farm: cleanBody.farm,
+        mailingAddress: cleanBody.mailingAddress,
+        city: cleanBody.city,
+        state: cleanBody.state,
+        zipCode: cleanBody.zipCode ? parseInt(String(cleanBody.zipCode)) : undefined,
+        email1: cleanBody.email1,
+        email2: cleanBody.email2,
+        phoneNumber1: cleanBody.phoneNumber1,
+        phoneNumber2: cleanBody.phoneNumber2,
+        phoneNumber3: cleanBody.phoneNumber3,
+        phoneNumber4: cleanBody.phoneNumber4,
+        phoneNumber5: cleanBody.phoneNumber5,
+        phoneNumber6: cleanBody.phoneNumber6,
+        siteMailingAddress: cleanBody.siteMailingAddress,
+        siteCity: cleanBody.siteCity,
+        siteState: cleanBody.siteState,
+        siteZipCode: cleanBody.siteZipCode ? parseInt(String(cleanBody.siteZipCode)) : undefined,
+        notes: cleanBody.notes,
       },
     })
 
     return NextResponse.json(contact)
   } catch (error) {
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Contact not found' }, { status: 404 })
+    }
     console.error('Error updating contact:', error)
     return NextResponse.json({ error: 'Failed to update contact' }, { status: 500 })
   }
@@ -72,6 +83,9 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Contact deleted successfully' })
   } catch (error) {
+    if ((error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'Contact not found' }, { status: 404 })
+    }
     console.error('Error deleting contact:', error)
     return NextResponse.json({ error: 'Failed to delete contact' }, { status: 500 })
   }

@@ -1,508 +1,525 @@
-# FarmTrackr Web - Comprehensive Development Roadmap
+# FarmTrackr Web App - Development Roadmap
 
-## Overview
-This roadmap outlines the complete development plan to bring the web-based FarmTrackr up to parity with the Swift app and then extend it beyond. The roadmap is organized into phases, with each phase building upon the previous one.
+## 📋 Overview
 
-## Current Status: Phase 0 - Foundation ✅
-- ✅ Next.js 14 framework with TypeScript
-- ✅ Tailwind CSS styling system
-- ✅ Basic dashboard and contact listing
-- ✅ Responsive design foundation
-- ✅ Mock data implementation
+This roadmap outlines the development plan to bring the web application to feature parity with the Swift app, with special attention to the label printing functionality that had implementation challenges.
+
+**Last Updated:** January 29, 2025  
+**Current Version:** v0.2.0 (Data Persistence)
 
 ---
 
-## Phase 1: Core CRM Functionality (Weeks 1-2)
-**Goal**: Match basic Swift app features
+## 🎯 Current Status (v0.2.0 - Data Persistence)
 
-### 1.1 Contact Management System
-- [ ] **Contact CRUD Operations**
-  - [ ] Create new contact form with validation
-  - [ ] Edit existing contact functionality
-  - [ ] Delete contact with confirmation
-  - [ ] Contact detail view with all fields
-  - [ ] Contact search and filtering
-  - [ ] Contact sorting (name, farm, date, etc.)
+### ✅ Completed Features
+- [x] **Contact Management (CRUD)**
+  - Create, read, update, delete contacts
+  - Full contact form with all 20+ fields
+  - Site address support (mailing vs site address)
+  - Phone number formatting (XXX) XXX-XXXX
+  - Address formatting (City, State ZIP)
+  
+- [x] **Basic Dashboard**
+  - Contact statistics
+  - Recent contacts display
+  - Quick action buttons
+  
+- [x] **Search & Filter**
+  - Real-time search by name, farm, email, city
+  - Farm filter dropdown
+  - State filter dropdown
+  - Filter stats display
+  
+- [x] **Theme System**
+  - Light, dark, and system theme support
+  - Theme persistence
+  - Theme-aware styling throughout
+  
+- [x] **Responsive Design**
+  - Sidebar navigation (always visible on desktop)
+  - Mobile-responsive layout
+  - Apple-style aesthetic
+  - Footer with build number
 
-- [ ] **Contact Data Model Enhancement**
-  - [ ] Complete FarmContact interface with all fields
-  - [ ] Phone number formatting utilities
-  - [ ] Address formatting utilities
-  - [ ] Email validation
-  - [ ] Computed properties (initials, fullName, etc.)
+- [x] **Database Integration** ✅
+  - PostgreSQL database setup (Prisma Postgres on Vercel)
+  - Database migrations system
+  - Connection pooling via Prisma
+  - Data persistence across sessions
 
-- [ ] **Contact Views**
-  - [ ] Contact detail page (`/contacts/[id]`)
-  - [ ] Contact edit page (`/contacts/[id]/edit`)
-  - [ ] Contact creation page (`/contacts/new`)
-  - [ ] Contact list improvements
-  - [ ] Contact cards with avatars
+- [x] **Data Export** ✅
+  - CSV export functionality
+  - Excel export functionality
+  - Farm-filtered export support
 
-### 1.2 Data Persistence
-- [ ] **Database Setup**
-  - [ ] Prisma ORM integration
-  - [ ] PostgreSQL/SQLite database
-  - [ ] Database schema migration
-  - [ ] Seed data for development
+- [x] **Data Quality & Duplicate Detection** ✅
+  - Duplicate detection algorithm
+  - Data validation system
+  - Quality score calculation
+  - Duplicate groups display
+  - Validation issues display
 
-- [ ] **API Routes**
-  - [ ] GET `/api/contacts` - List contacts with search/filter
-  - [ ] POST `/api/contacts` - Create new contact
-  - [ ] GET `/api/contacts/[id]` - Get single contact
-  - [ ] PUT `/api/contacts/[id]` - Update contact
-  - [ ] DELETE `/api/contacts/[id]` - Delete contact
+- [x] **Google Sheets Configuration** ✅
+  - Updated farm spreadsheet IDs (11 farms)
+  - Configuration management
+  - Integration ready for authentication
 
-### 1.3 Basic UI/UX Polish
-- [ ] **Form Components**
-  - [ ] Reusable form input components
-  - [ ] Form validation with error messages
-  - [ ] Loading states and error handling
-  - [ ] Success/error notifications
+- [x] **Version & Build System** ✅
+  - Build number tracking
+  - About section in Settings
+  - Footer with build information
+  - Version update documentation
 
-- [ ] **Navigation Improvements**
-  - [ ] Active state indicators
-  - [ ] Breadcrumb navigation
-  - [ ] Mobile-responsive sidebar
-  - [ ] Keyboard navigation support
+### 🚧 In Progress
+- [ ] **Google Sheets Integration** (Partially implemented)
+  - API structure exists
+  - Needs authentication flow completion
+  - Needs data sync implementation
 
----
-
-## Phase 2: Advanced Contact Features (Weeks 3-4)
-**Goal**: Implement advanced contact management features
-
-### 2.1 Contact Organization
-- [ ] **Farm Management**
-  - [ ] Farm-based contact grouping
-  - [ ] Farm statistics and analytics
-  - [ ] Farm-specific contact views
-  - [ ] Farm creation and editing
-
-- [ ] **Contact Relationships**
-  - [ ] Contact linking and relationships
-  - [ ] Family/farm member associations
-  - [ ] Contact hierarchy support
-
-### 2.2 Contact Data Quality
-- [ ] **Data Validation**
-  - [ ] Email format validation
-  - [ ] Phone number validation
-  - [ ] Address validation
-  - [ ] Required field validation
-
-- [ ] **Data Cleanup Tools**
-  - [ ] Duplicate detection and resolution
-  - [ ] Data standardization
-  - [ ] Missing data identification
-  - [ ] Data quality scoring
-
-### 2.3 Contact Search & Filtering
-- [ ] **Advanced Search**
-  - [ ] Full-text search across all fields
-  - [ ] Search suggestions and autocomplete
-  - [ ] Search history and saved searches
-  - [ ] Search result highlighting
-
-- [ ] **Filtering System**
-  - [ ] Multi-criteria filtering
-  - [ ] Filter presets and saved filters
-  - [ ] Filter combinations
-  - [ ] Filter UI with clear/reset options
+### ❌ Not Started
+- [ ] CSV Import (UI implementation needed)
+- [ ] Excel Import (UI implementation needed)
+- [ ] Label Printing (Critical Priority)
+- [ ] Document Management
+- [ ] Batch Operations
+- [ ] Import Templates
+- [ ] Advanced Search/Filter
+- [ ] Data Validation & Cleanup UI
 
 ---
 
-## Phase 3: Import/Export System (Weeks 5-6)
-**Goal**: Complete data import/export functionality
+## 🚀 Version Roadmap
 
-### 3.1 File Import System
-- [ ] **CSV Import**
-  - [ ] CSV file upload and parsing
-  - [ ] Field mapping interface
-  - [ ] Data preview before import
-  - [ ] Import validation and error handling
-  - [ ] Batch import processing
+### **v0.2.0 - Data Persistence & Import** (Target: Q1 2025)
+**Focus:** Foundation for data management and import capabilities
 
-- [ ] **Excel Import**
-  - [ ] Excel file support (.xlsx, .xls)
-  - [ ] Multiple sheet handling
-  - [ ] Excel-specific field mapping
-  - [ ] Excel data type handling
+#### Database Integration
+- [x] **Database Setup** ✅
+  - PostgreSQL database (Prisma Postgres on Vercel)
+  - Database migrations system
+  - Connection pooling via Prisma Accelerate
+  - Production data migration completed
 
-- [ ] **Import Templates**
-  - [ ] Predefined import templates
-  - [ ] Custom template creation
-  - [ ] Template management system
-  - [ ] Template sharing and export
+#### CSV Import
+- [ ] **CSV File Import**
+  - File upload interface
+  - CSV parsing and validation
+  - Field mapping UI (automatic + manual)
+  - Import preview with validation errors
+  - Duplicate detection during import
+  - Bulk import with progress tracking
+  - Error handling and reporting
 
-### 3.2 Export System
-- [ ] **Data Export**
-  - [ ] CSV export with custom fields
-  - [ ] Excel export with formatting
-  - [ ] PDF contact reports
-  - [ ] Custom export templates
+#### Excel Import
+- [ ] **Excel (.xlsx) Import**
+  - Excel file parsing (using xlsx library)
+  - Multi-sheet support
+  - Header row detection
+  - Data type validation
+  - Import template system
 
-- [ ] **Report Generation**
-  - [ ] Contact statistics reports
-  - [ ] Farm summary reports
-  - [ ] Data quality reports
-  - [ ] Custom report builder
+#### Import Templates
+- [ ] **Reusable Import Configurations**
+  - Save import field mappings
+  - Template management UI
+  - Template sharing/export
 
-### 3.3 Google Sheets Integration
-- [ ] **Google Sheets API**
-  - [ ] OAuth 2.0 authentication
-  - [ ] Google Sheets read/write access
-  - [ ] Real-time sync capabilities
-  - [ ] Multiple spreadsheet support
+**Dependencies:**
+- Database ORM (Prisma or similar)
+- xlsx parsing library
+- File upload handling
 
-- [ ] **Sync Management**
-  - [ ] Bidirectional sync
-  - [ ] Conflict resolution
-  - [ ] Sync scheduling
-  - [ ] Sync status monitoring
+**Estimated Development Time:** 3-4 weeks
 
 ---
 
-## Phase 4: Document Management (Weeks 7-8)
-**Goal**: Implement document storage and management
+### **v0.3.0 - Export & Data Quality** (Target: Q1 2025) - IN PROGRESS
+**Focus:** Data export capabilities and quality management
 
-### 4.1 Document Storage
-- [ ] **File Upload System**
-  - [ ] Multiple file format support
-  - [ ] File size limits and validation
-  - [ ] File organization and categorization
-  - [ ] File metadata management
+#### Export System
+- [x] **CSV Export** ✅
+  - Basic CSV export working
+  - All contact fields included
+- [x] **Excel Export** ✅
+  - .xlsx format working
+  - All contact fields included
+- [ ] **Customizable Columns** (In Progress)
+  - Column selection UI needed
+- [ ] **JSON Export**
+  - JSON format for API integration
+- [ ] **PDF Export**
+  - PDF contact reports
+  - Printable format
+- [x] **Export Filters (API)** ✅
+  - Farm filter in API (needs UI)
+- [ ] **Export Filters (UI)**
+  - Farm filter dropdown in UI
+  - Date range filter UI
+  - Additional filter options
 
-- [ ] **Document Organization**
-  - [ ] Folder structure for documents
-  - [ ] Document tagging system
-  - [ ] Document search and filtering
-  - [ ] Document versioning
+#### Data Quality Tools
+- [x] **Duplicate Detection** ✅
+  - Automatic duplicate scanning working
+  - Duplicate matching algorithms:
+    - [x] Name-based matching ✅
+    - [x] Email-based matching ✅
+    - [x] Phone-based matching ✅
+    - [ ] Address-based matching (partial)
+  - [x] Duplicate groups display ✅
+  - [ ] Duplicate merge functionality (needs implementation)
+  - [ ] Merge conflict resolution UI (needs implementation)
 
-### 4.2 Document Processing
-- [ ] **Document Editor**
-  - [ ] Rich text editor integration
-  - [ ] Document templates
-  - [ ] Document formatting tools
-  - [ ] Document collaboration features
+#### Data Validation
+- [x] **Comprehensive Validation** ✅
+  - [x] Email format validation ✅
+  - [x] Phone number formatting and validation ✅
+  - [x] ZIP code validation (5-digit) ✅
+  - [ ] ZIP+4 validation (needs implementation)
+  - [ ] Address validation (basic done, needs enhancement)
+  - [ ] Data completeness scoring (needs display)
+  - [ ] Validation rules configuration (needs UI)
 
-- [ ] **Document Generation**
-  - [ ] Mail merge functionality
-  - [ ] Document templates
-  - [ ] Automated document creation
-  - [ ] Document batch processing
+#### Data Cleanup
+- [x] **Basic Data Cleanup** ✅
+  - [x] Phone number formatting (display) ✅
+  - [ ] Phone number formatting tool (bulk operation)
+  - [x] ZIP code formatting (display) ✅
+  - [ ] ZIP code formatting tool (bulk operation)
+  - [ ] Address normalization (needs implementation)
+  - [ ] Email normalization (needs implementation)
+  - [ ] Bulk cleanup operations UI (needs implementation)
 
-### 4.3 Cloud Storage Integration
-- [ ] **Cloud Providers**
-  - [ ] Google Drive integration
-  - [ ] Dropbox integration
-  - [ ] OneDrive integration
-  - [ ] AWS S3 integration
+**Estimated Development Time Remaining:** 1-2 weeks
 
 ---
 
-## Phase 5: Label Printing & Mail Merge (Weeks 9-10)
-**Goal**: Implement label printing and mail merge features
+### **v0.4.0 - Label Printing** (Target: Q2 2025)
+**Focus:** CRITICAL - Address label printing functionality (had issues in Swift app)
 
-### 5.1 Label Templates
-- [ ] **Label Template System**
-  - [ ] Avery label template support
-  - [ ] Custom label template creation
-  - [ ] Template preview functionality
-  - [ ] Template management system
+#### Label Printing Core
+- [ ] **Avery Label Format Support**
+  - Avery 5160 (1" x 2.625") - 30 labels per sheet
+  - Avery 5161 (1" x 4") - 20 labels per sheet
+  - Avery 5162 (1.33" x 4") - 14 labels per sheet
+  - Avery 5163 (2" x 4") - 10 labels per sheet
+  - Avery 5164 (3.33" x 4") - 6 labels per sheet
+  - Avery 5167 (0.5" x 1.75") - 80 labels per sheet
+  - Custom format support
 
-- [ ] **Label Design**
-  - [ ] Drag-and-drop label designer
-  - [ ] Field placement and formatting
-  - [ ] Label preview with real data
-  - [ ] Print layout optimization
+- [ ] **Label Rendering Engine**
+  - Column-major order layout
+  - Precise label positioning (margins, gaps)
+  - Font size and family selection
+  - Text wrapping and truncation
+  - Multi-page support
+  - Print-ready PDF generation
 
-### 5.2 Print System
+#### Label Printing UI
+- [ ] **Print Label Interface**
+  - Farm selection dropdown
+  - Label format picker
+  - Address type selection (mailing vs site)
+  - Font family selection (System, Times New Roman, Arial, Courier New)
+  - Contact count display
+  - Preview before printing
+  - Print button integration
+
+#### Label Preview
+- [ ] **Visual Preview System**
+  - Full-page preview (8.5" x 11")
+  - Multi-page preview with pagination
+  - Zoom in/out functionality
+  - Page navigation
+  - Visual grid overlay (optional)
+
+#### Print Implementation
 - [ ] **Print Functionality**
-  - [ ] Browser print integration
-  - [ ] Print preview system
-  - [ ] Print settings and options
-  - [ ] Batch printing capabilities
+  - PDF generation from label layout
+  - Browser print dialog integration
+  - Print settings (orientation, margins)
+  - Multi-page print support
+  - Print-specific styling (no borders, white background)
 
-- [ ] **Label Formats**
-  - [ ] Address labels
-  - [ ] Name tags
-  - [ ] Custom label formats
-  - [ ] Multi-label sheets
+#### ⚠️ **Critical Implementation Notes**
+Based on Swift app challenges:
 
-### 5.3 Mail Merge
-- [ ] **Mail Merge Engine**
-  - [ ] Document template system
-  - [ ] Variable field insertion
-  - [ ] Batch document generation
-  - [ ] Merge preview functionality
+1. **Precise Positioning is Critical**
+   - Use CSS for exact label positioning (avoid flexbox/grid for labels)
+   - Calculate positions based on label format specs (margins, gaps)
+   - Use fixed pixel positioning, not percentages
+   - Account for printer margins and DPI differences
 
-- [ ] **Output Formats**
-  - [ ] PDF generation
-  - [ ] Word document output
-  - [ ] Email integration
-  - [ ] Print-ready formats
+2. **Font Rendering**
+   - Use web-safe fonts or ensure font loading
+   - Test with various font families
+   - Implement text scaling for different label sizes
+   - Use monospace fonts for consistent spacing
 
----
+3. **Print-Specific Styling**
+   - Separate stylesheet for print media queries
+   - Remove borders/backgrounds in print view
+   - Ensure white background for labels
+   - Use @media print rules
 
-## Phase 6: Data Quality & Analytics (Weeks 11-12)
-**Goal**: Implement data quality tools and analytics
+4. **Multi-Page Handling**
+   - Pagination logic (labels per page calculation)
+   - Generate separate PDF pages for each sheet
+   - Handle partial pages correctly
+   - Column-major order layout (critical for correct positioning)
 
-### 6.1 Data Quality Tools
-- [ ] **Duplicate Detection**
-  - [ ] Fuzzy matching algorithms
-  - [ ] Duplicate resolution interface
-  - [ ] Merge conflict handling
-  - [ ] Duplicate prevention
+5. **Browser Compatibility**
+   - Test print functionality across browsers
+   - Chrome/Edge: Best print support
+   - Firefox: Good support, may need adjustments
+   - Safari: May have limitations
+   - Provide browser-specific instructions if needed
 
-- [ ] **Data Validation**
-  - [ ] Real-time validation
-  - [ ] Data quality scoring
-  - [ ] Validation rule management
-  - [ ] Data correction suggestions
+6. **Address Formatting**
+   - Center-align text (as per user preference)
+   - Handle long addresses (truncation/wrapping)
+   - Proper line breaks
+   - PO Box capitalization (user preference)
 
-### 6.2 Analytics Dashboard
-- [ ] **Contact Analytics**
-  - [ ] Contact growth trends
-  - [ ] Farm distribution analysis
-  - [ ] Geographic analysis
-  - [ ] Contact activity metrics
+**Technical Stack:**
+- PDF.js or jsPDF for PDF generation
+- CSS @media print for print styling
+- Canvas API for precise rendering (if needed)
+- Print CSS for browser print dialog
 
-- [ ] **Data Insights**
-  - [ ] Data completeness metrics
-  - [ ] Data quality trends
-  - [ ] Usage analytics
-  - [ ] Performance metrics
+**Estimated Development Time:** 4-5 weeks (extra time allocated for testing and refinement)
 
-### 6.3 Reporting System
-- [ ] **Report Builder**
-  - [ ] Custom report creation
-  - [ ] Report templates
-  - [ ] Scheduled reports
-  - [ ] Report sharing and export
-
-- [ ] **Standard Reports**
-  - [ ] Contact summary reports
-  - [ ] Farm analysis reports
-  - [ ] Data quality reports
-  - [ ] System usage reports
+**Dependencies:**
+- PDF generation library
+- Print CSS expertise
+- Label format specifications
 
 ---
 
-## Phase 7: Advanced Features (Weeks 13-16)
-**Goal**: Implement advanced features beyond Swift app
+### **v0.5.0 - Google Sheets Integration** (Target: Q2 2025)
+**Focus:** Complete Google Sheets sync capabilities
 
-### 7.1 User Management
-- [ ] **Authentication System**
-  - [ ] User registration and login
-  - [ ] Password reset functionality
-  - [ ] Email verification
-  - [ ] Social login integration
+#### Google Sheets Sync
+- [ ] **Authentication**
+  - OAuth 2.0 implementation
+  - Token refresh handling
+  - Multi-account support
+  - Secure credential storage
 
-- [ ] **User Roles & Permissions**
-  - [ ] Role-based access control
-  - [ ] Permission management
-  - [ ] User invitation system
-  - [ ] Team collaboration features
+- [ ] **Data Synchronization**
+  - Import from Google Sheets
+  - Export to Google Sheets
+  - Conflict resolution
+  - Sync status indicators
+  - Last sync timestamp
 
-### 7.2 API & Integration
-- [ ] **REST API**
-  - [ ] Complete API documentation
-  - [ ] API authentication
-  - [ ] Rate limiting and throttling
-  - [ ] API versioning
+- [ ] **Sheet Management**
+  - Multiple sheet support
+  - Sheet selection UI
+  - Column mapping
+  - Auto-sync options
+  - Sync scheduling
 
-- [ ] **Third-party Integrations**
-  - [ ] CRM system integrations
-  - [ ] Email marketing tools
-  - [ ] Accounting software
-  - [ ] Calendar applications
+#### Farm Spreadsheet Management
+- [ ] **Multi-Farm Support**
+  - Farm-specific spreadsheets
+  - Separate sync per farm
+  - Bulk operations across farms
 
-### 7.3 Mobile Optimization
-- [ ] **Progressive Web App**
-  - [ ] PWA manifest and service worker
-  - [ ] Offline functionality
-  - [ ] Push notifications
-  - [ ] App-like experience
+**Estimated Development Time:** 3-4 weeks
 
-- [ ] **Mobile-specific Features**
-  - [ ] Touch-optimized interface
-  - [ ] Mobile-specific navigation
-  - [ ] Camera integration for contact photos
-  - [ ] Location services integration
+**Dependencies:**
+- Google Sheets API credentials
+- OAuth setup
+- Secure backend for token storage
 
 ---
 
-## Phase 8: Performance & Scalability (Weeks 17-18)
-**Goal**: Optimize for production use
+### **v0.6.0 - Advanced Features** (Target: Q3 2025)
+**Focus:** Advanced CRM capabilities
 
-### 8.1 Performance Optimization
-- [ ] **Frontend Optimization**
-  - [ ] Code splitting and lazy loading
-  - [ ] Image optimization
-  - [ ] Caching strategies
-  - [ ] Bundle size optimization
+#### Batch Operations
+- [ ] **Bulk Actions**
+  - Multi-select contacts
+  - Bulk edit (farm, notes, etc.)
+  - Bulk delete with confirmation
+  - Bulk export
+  - Bulk import updates
 
-- [ ] **Backend Optimization**
-  - [ ] Database query optimization
-  - [ ] API response caching
-  - [ ] Background job processing
-  - [ ] Memory usage optimization
+#### Document Management
+- [ ] **Document Storage**
+  - Document upload (PDF, images, etc.)
+  - Document association with contacts
+  - Document organization
+  - Document preview
+  - Document download
 
-### 8.2 Scalability Features
-- [ ] **Database Scaling**
-  - [ ] Database indexing
-  - [ ] Query optimization
-  - [ ] Connection pooling
-  - [ ] Read replicas
+#### Advanced Search
+- [ ] **Enhanced Search**
+  - Advanced filter builder
+  - Saved search queries
+  - Search across all fields
+  - Fuzzy search
+  - Search history
 
-- [ ] **Infrastructure**
-  - [ ] CDN integration
-  - [ ] Load balancing
-  - [ ] Auto-scaling
-  - [ ] Monitoring and alerting
+#### Reporting & Analytics
+- [ ] **Reports**
+  - Contact reports by farm
+  - Data quality reports
+  - Export reports
+  - Custom report builder
 
----
-
-## Phase 9: Production Deployment (Weeks 19-20)
-**Goal**: Deploy to production with monitoring
-
-### 9.1 Deployment Setup
-- [ ] **Production Environment**
-  - [ ] Production database setup
-  - [ ] Environment configuration
-  - [ ] SSL certificate setup
-  - [ ] Domain configuration
-
-- [ ] **CI/CD Pipeline**
-  - [ ] Automated testing
-  - [ ] Automated deployment
-  - [ ] Rollback procedures
-  - [ ] Environment promotion
-
-### 9.2 Monitoring & Maintenance
-- [ ] **Application Monitoring**
-  - [ ] Error tracking and logging
-  - [ ] Performance monitoring
-  - [ ] User analytics
-  - [ ] Uptime monitoring
-
-- [ ] **Backup & Recovery**
-  - [ ] Automated backups
-  - [ ] Disaster recovery procedures
-  - [ ] Data migration tools
-  - [ ] Rollback capabilities
+**Estimated Development Time:** 4-5 weeks
 
 ---
 
-## Phase 10: Future Enhancements (Weeks 21+)
-**Goal**: Extend beyond Swift app capabilities
+### **v1.0.0 - Production Ready** (Target: Q4 2025)
+**Focus:** Polish, performance, and production deployment
 
-### 10.1 Advanced CRM Features
-- [ ] **Contact Lifecycle Management**
-  - [ ] Contact status tracking
-  - [ ] Interaction history
-  - [ ] Follow-up reminders
-  - [ ] Contact scoring
+#### Performance Optimization
+- [ ] **Performance Improvements**
+  - Database query optimization
+  - Caching strategies
+  - Lazy loading
+  - Pagination for large datasets
+  - Image optimization
 
-- [ ] **Communication Tools**
-  - [ ] Email integration
-  - [ ] SMS capabilities
-  - [ ] Voice calling integration
-  - [ ] Video conferencing
+#### Testing
+- [ ] **Test Suite**
+  - Unit tests for core functionality
+  - Integration tests for API
+  - E2E tests for critical flows
+  - Label printing specific tests
+  - Cross-browser testing
 
-### 10.2 Business Intelligence
-- [ ] **Advanced Analytics**
-  - [ ] Predictive analytics
-  - [ ] Machine learning insights
-  - [ ] Custom dashboards
-  - [ ] Data visualization
+#### Security
+- [ ] **Security Enhancements**
+  - Authentication system
+  - Authorization (roles/permissions)
+  - Input sanitization
+  - XSS protection
+  - CSRF protection
+  - Rate limiting
 
-- [ ] **Workflow Automation**
-  - [ ] Automated workflows
-  - [ ] Trigger-based actions
-  - [ ] Custom business rules
-  - [ ] Process optimization
+#### Documentation
+- [ ] **Documentation**
+  - User manual
+  - API documentation
+  - Deployment guide
+  - Troubleshooting guide
+  - Label printing guide
 
-### 10.3 Enterprise Features
-- [ ] **Multi-tenant Architecture**
-  - [ ] Tenant isolation
-  - [ ] Custom branding
-  - [ ] Tenant-specific configurations
-  - [ ] Data segregation
+#### Deployment
+- [ ] **Production Deployment**
+  - Production database setup
+  - CDN for static assets
+  - Monitoring and logging
+  - Error tracking
+  - Backup automation
 
-- [ ] **Advanced Security**
-  - [ ] Two-factor authentication
-  - [ ] Single sign-on (SSO)
-  - [ ] Audit logging
-  - [ ] Compliance features
-
----
-
-## Technical Requirements
-
-### Technology Stack
-- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
-- **Backend**: Next.js API routes, Prisma ORM
-- **Database**: PostgreSQL (production), SQLite (development)
-- **Authentication**: NextAuth.js
-- **File Storage**: AWS S3 or similar
-- **Deployment**: Vercel or similar platform
-
-### Development Tools
-- **Version Control**: Git with GitHub
-- **Testing**: Jest, React Testing Library
-- **Linting**: ESLint, Prettier
-- **Type Checking**: TypeScript
-- **Package Management**: Yarn
-
-### Performance Targets
-- **Page Load Time**: < 2 seconds
-- **API Response Time**: < 500ms
-- **Database Query Time**: < 100ms
-- **Uptime**: 99.9%
+**Estimated Development Time:** 6-8 weeks
 
 ---
 
-## Success Metrics
+## 📊 Feature Comparison Matrix
 
-### Phase Completion Criteria
-- [ ] All features from Swift app implemented
-- [ ] Performance meets or exceeds Swift app
-- [ ] User interface matches or improves upon Swift app
-- [ ] All tests passing
-- [ ] Documentation complete
+| Feature | Swift App | Web App Status | Priority |
+|---------|-----------|----------------|----------|
+| Contact CRUD | ✅ Complete | ✅ Complete | ✅ Done |
+| Search & Filter | ✅ Complete | 🟡 Partial | 🔴 High |
+| CSV Import | ✅ Complete | ❌ Not Started | 🔴 High |
+| Excel Import | ✅ Complete | ❌ Not Started | 🟡 Medium |
+| CSV Export | ✅ Complete | ❌ Not Started | 🔴 High |
+| Excel Export | ✅ Complete | ❌ Not Started | 🟡 Medium |
+| PDF Export | ✅ Complete | ❌ Not Started | 🟡 Medium |
+| **Label Printing** | ⚠️ Had Issues | ❌ Not Started | 🔴 **CRITICAL** |
+| Duplicate Detection | ✅ Complete | ❌ Not Started | 🔴 High |
+| Data Validation | ✅ Complete | 🟡 Basic | 🔴 High |
+| Google Sheets Sync | 🟡 Partial | 🟡 Partial | 🟡 Medium |
+| Import Templates | ✅ Complete | ❌ Not Started | 🟡 Medium |
+| Document Management | ✅ Complete | ❌ Not Started | 🟡 Medium |
+| Batch Operations | ✅ Complete | ❌ Not Started | 🟡 Medium |
+| Theme System | ✅ Complete | ✅ Complete | ✅ Done |
+| Cloud Sync | ✅ Complete | N/A (Web) | N/A |
+| Backup/Restore | ✅ Complete | ❌ Not Started | 🟡 Medium |
 
-### Quality Gates
-- [ ] Code review completed
-- [ ] Security audit passed
-- [ ] Performance testing completed
-- [ ] User acceptance testing passed
-- [ ] Production deployment successful
-
----
-
-## Risk Mitigation
-
-### Technical Risks
-- **Database Performance**: Implement proper indexing and query optimization
-- **File Upload Limits**: Use chunked uploads and progress tracking
-- **Browser Compatibility**: Test across major browsers and devices
-- **API Rate Limits**: Implement proper caching and rate limiting
-
-### Project Risks
-- **Scope Creep**: Maintain focus on core features first
-- **Timeline Delays**: Build in buffer time for complex features
-- **Resource Constraints**: Prioritize features based on user value
-- **Technical Debt**: Regular refactoring and code review
+**Legend:**
+- ✅ Complete
+- 🟡 Partial/In Progress
+- ❌ Not Started
+- ⚠️ Had Issues/Needs Extra Attention
 
 ---
 
-## Conclusion
+## 🎯 Priority Focus Areas
 
-This roadmap provides a comprehensive path from the current web app foundation to a production-ready farm CRM system that matches and exceeds the capabilities of the Swift app. Each phase builds upon the previous one, ensuring a solid foundation while progressively adding advanced features.
+### Critical Priority (Must Have)
+1. **Label Printing** - This was the most problematic feature in Swift app
+2. **CSV Import/Export** - Core data migration functionality
+3. **Duplicate Detection** - Data quality critical
+4. **Database Integration** - Foundation for all features
 
-The roadmap is designed to be flexible and can be adjusted based on user feedback, technical constraints, and business priorities. Regular reviews and updates will ensure the project stays on track and delivers maximum value to users.
+### High Priority (Important)
+1. **Data Validation** - Prevent bad data entry
+2. **Advanced Search** - Improve usability
+3. **Batch Operations** - Efficiency for large datasets
+
+### Medium Priority (Nice to Have)
+1. **Excel Import/Export** - Additional format support
+2. **Google Sheets Full Integration** - Enhanced sync
+3. **Document Management** - File organization
+4. **Import Templates** - Reusability
 
 ---
 
-*Last Updated: October 29, 2025*
-*Status: Ready for Phase 1 Implementation*
+## 🔧 Technical Considerations
+
+### Label Printing Specific Challenges
+
+**From Swift App Experience:**
+1. **Precise Positioning**: Labels must align exactly with Avery template dimensions
+2. **Font Rendering**: Fonts may render differently in print vs screen
+3. **Multi-Page Handling**: Correct pagination for large contact lists
+4. **Browser Compatibility**: Print functionality varies by browser
+5. **DPI Differences**: Printer DPI vs screen DPI differences
+
+**Recommended Approach:**
+- Use CSS @page rules for print margins
+- Calculate label positions in pixels based on DPI (72 DPI for screen, 300 DPI for print)
+- Test extensively with actual Avery label sheets
+- Provide print preview before actual printing
+- Generate PDF for consistent results across browsers
+
+---
+
+## 📅 Milestone Schedule
+
+| Version | Target Date | Key Deliverables |
+|---------|-------------|------------------|
+| v0.2.0 | Q1 2025 | Database + Import System |
+| v0.3.0 | Q1 2025 | Export + Data Quality |
+| v0.4.0 | Q2 2025 | **Label Printing (Critical)** |
+| v0.5.0 | Q2 2025 | Google Sheets Integration |
+| v0.6.0 | Q3 2025 | Advanced Features |
+| v1.0.0 | Q4 2025 | Production Release |
+
+---
+
+## 📝 Notes
+
+- **Label Printing is marked as Critical Priority** due to implementation challenges in the Swift app
+- Extra development time allocated for v0.4.0 to ensure proper testing and refinement
+- Database integration (v0.2.0) is foundational and should be completed before other features
+- Consider user feedback from Swift app when implementing label printing
+- Browser print capabilities vary - may need browser-specific implementations
+
+---
+
+## 🔄 Roadmap Maintenance
+
+This roadmap should be reviewed and updated:
+- After each version release
+- When priorities change
+- When technical challenges are discovered
+- Quarterly for strategic planning
+
+**Last Reviewed:** January 2025

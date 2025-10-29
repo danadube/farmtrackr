@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { ThemeProvider } from '@/components/ThemeProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,11 +19,37 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  try {
+                    const theme = localStorage.getItem('theme') || 'system';
+                    let resolvedTheme;
+                    
+                    if (theme === 'system') {
+                      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                      resolvedTheme = prefersDark ? 'dark' : 'light';
+                    } else {
+                      resolvedTheme = theme;
+                    }
+                    
+                    document.documentElement.classList.remove('light', 'dark');
+                    document.documentElement.classList.add(resolvedTheme);
+                  } catch (e) {
+                    document.documentElement.classList.add('light');
+                  }
+                })();
+              `,
+            }}
+          />
+      </head>
       <body className={inter.className}>
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+        <ThemeProvider>
           {children}
-        </div>
+        </ThemeProvider>
       </body>
     </html>
   )

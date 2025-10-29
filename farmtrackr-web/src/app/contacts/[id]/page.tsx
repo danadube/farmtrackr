@@ -1,0 +1,681 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import { FarmContact } from '@/types'
+import { 
+  ArrowLeft, 
+  Edit, 
+  Trash2, 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Building2,
+  Calendar,
+  FileText
+} from 'lucide-react'
+import Link from 'next/link'
+import { Sidebar } from '@/components/Sidebar'
+import { useThemeStyles } from '@/hooks/useThemeStyles'
+import { formatPhoneNumber, formatCityStateZip } from '@/lib/formatters'
+
+export default function ContactDetailPage() {
+  const { colors, isDark, card, background, text } = useThemeStyles()
+  const router = useRouter()
+  const params = useParams()
+  const contactId = params?.id as string
+  
+  const [contact, setContact] = useState<FarmContact | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+
+  useEffect(() => {
+    async function fetchContact() {
+      try {
+        const response = await fetch(`/api/contacts/${contactId}`)
+        if (response.ok) {
+          const data = await response.json()
+          // Convert date strings back to Date objects
+          const contactWithDates = {
+            ...data,
+            dateCreated: new Date(data.dateCreated),
+            dateModified: new Date(data.dateModified),
+          }
+          setContact(contactWithDates)
+        } else {
+          setContact(null)
+        }
+      } catch (error) {
+        console.error('Error fetching contact:', error)
+        setContact(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchContact()
+  }, [contactId])
+
+  const handleDelete = async () => {
+    setIsDeleting(true)
+    
+    try {
+      const response = await fetch(`/api/contacts/${contactId}`, { 
+        method: 'DELETE' 
+      })
+      
+      if (response.ok) {
+        router.push('/contacts')
+      } else {
+        const errorData = await response.json()
+        console.error('Error deleting contact:', errorData)
+        setIsDeleting(false)
+      }
+    } catch (error) {
+      console.error('Error deleting contact:', error)
+      setIsDeleting(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <Sidebar>
+        <div 
+          style={{ 
+            marginLeft: '256px', 
+            paddingLeft: '0',
+            minHeight: '100vh',
+            ...background,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <div 
+              style={{
+                width: '48px',
+                height: '48px',
+                border: `4px solid ${colors.border}`,
+                borderTop: `4px solid ${colors.success}`,
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 16px'
+              }}
+            />
+            <p style={{ ...text.secondary, fontSize: '16px' }}>Loading contact...</p>
+          </div>
+        </div>
+      </Sidebar>
+    )
+  }
+
+  if (!contact) {
+    return (
+      <Sidebar>
+        <div 
+          style={{ 
+            marginLeft: '256px', 
+            paddingLeft: '0',
+            minHeight: '100vh',
+            ...background,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <User style={{ width: '48px', height: '48px', color: colors.text.tertiary, margin: '0 auto 16px' }} />
+            <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, marginBottom: '8px' }}>
+              Contact Not Found
+            </h2>
+            <p style={{ ...text.secondary, marginBottom: '24px' }}>
+              The contact you're looking for doesn't exist.
+            </p>
+            <Link 
+              href="/contacts"
+              style={{
+                padding: '12px 24px',
+                backgroundColor: colors.success,
+                color: '#ffffff',
+                textDecoration: 'none',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'background-color 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colors.success
+              }}
+            >
+              Back to Contacts
+            </Link>
+          </div>
+        </div>
+      </Sidebar>
+    )
+  }
+
+  return (
+    <Sidebar>
+      <div 
+        style={{ 
+          marginLeft: '256px', 
+          paddingLeft: '0',
+          minHeight: '100vh',
+          ...background
+        }}
+      >
+        <div 
+          style={{
+            maxWidth: '1200px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            paddingLeft: '48px',
+            paddingRight: '48px',
+            paddingTop: '32px',
+            paddingBottom: '32px'
+          }}
+        >
+          {/* Header */}
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{ padding: '24px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <button
+                    onClick={() => router.back()}
+                    style={{
+                      padding: '8px',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
+                  >
+                    <ArrowLeft style={{ width: '20px', height: '20px', color: colors.text.secondary }} />
+                  </button>
+                  
+                  <div 
+                    style={{
+                      width: '64px',
+                      height: '64px',
+                      backgroundColor: colors.iconBg,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <span style={{ fontSize: '24px', fontWeight: '700', color: colors.success }}>
+                      {contact.firstName?.[0]}{contact.lastName?.[0]}
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <h1 style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0 0 4px 0' }}>
+                      {contact.firstName} {contact.lastName}
+                    </h1>
+                    <p style={{ ...text.secondary, fontSize: '16px', margin: '0' }}>
+                      {contact.farm} • Contact Details
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Link
+                    href={`/contacts/${contact.id}/edit`}
+                    style={{
+                      padding: '12px 16px',
+                      backgroundColor: colors.success,
+                      color: '#ffffff',
+                      textDecoration: 'none',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.success
+                    }}
+                  >
+                    <Edit style={{ width: '16px', height: '16px' }} />
+                    Edit
+                  </Link>
+                  
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    style={{
+                      padding: '12px 16px',
+                      backgroundColor: colors.error,
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? '#dc2626' : '#dc2626'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.error
+                    }}
+                  >
+                    <Trash2 style={{ width: '16px', height: '16px' }} />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div style={{ padding: '32px', ...card }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '32px' }}>
+              {/* Left Column */}
+              <div>
+                {/* Basic Information */}
+                <div style={{ marginBottom: '32px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <User style={{ width: '16px', height: '16px', color: colors.success }} />
+                    <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Basic Information
+                    </h2>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Full Name
+                      </label>
+                      <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                        {contact.firstName} {contact.lastName}
+                      </p>
+                    </div>
+                    
+                    {contact.farm && (
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Farm
+                        </label>
+                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                          {contact.farm}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div style={{ marginBottom: '32px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <Mail style={{ width: '16px', height: '16px', color: colors.success }} />
+                    <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Contact Information
+                    </h2>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {contact.email1 && (
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Primary Email
+                        </label>
+                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                          <a 
+                            href={`mailto:${contact.email1}`}
+                            style={{ color: colors.success, textDecoration: 'none' }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.textDecoration = 'underline'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.textDecoration = 'none'
+                            }}
+                          >
+                            {contact.email1}
+                          </a>
+                        </p>
+                      </div>
+                    )}
+                    
+                    {contact.email2 && (
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Secondary Email
+                        </label>
+                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                          <a 
+                            href={`mailto:${contact.email2}`}
+                            style={{ color: colors.success, textDecoration: 'none' }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.textDecoration = 'underline'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.textDecoration = 'none'
+                            }}
+                          >
+                            {contact.email2}
+                          </a>
+                        </p>
+                      </div>
+                    )}
+                    
+                    {contact.phoneNumber1 && (
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Primary Phone
+                        </label>
+                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                          <a 
+                            href={`tel:${contact.phoneNumber1}`}
+                            style={{ color: colors.success, textDecoration: 'none' }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.textDecoration = 'underline'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.textDecoration = 'none'
+                            }}
+                          >
+                            {formatPhoneNumber(contact.phoneNumber1)}
+                          </a>
+                        </p>
+                      </div>
+                    )}
+                    
+                    {contact.phoneNumber2 && (
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Secondary Phone
+                        </label>
+                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                          <a 
+                            href={`tel:${contact.phoneNumber2}`}
+                            style={{ color: colors.success, textDecoration: 'none' }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.textDecoration = 'underline'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.textDecoration = 'none'
+                            }}
+                          >
+                            {formatPhoneNumber(contact.phoneNumber2)}
+                          </a>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div>
+                {/* Mailing Address */}
+                <div style={{ marginBottom: '32px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <MapPin style={{ width: '16px', height: '16px', color: colors.success }} />
+                    <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Mailing Address
+                    </h2>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {contact.mailingAddress ? (
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Street Address
+                        </label>
+                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                          {contact.mailingAddress}
+                        </p>
+                      </div>
+                    ) : (
+                      <p style={{ fontSize: '14px', ...text.tertiary, fontStyle: 'italic' }}>
+                        No mailing address on file
+                      </p>
+                    )}
+                    
+                    {(contact.city || contact.state || contact.zipCode) ? (
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          City, State ZIP
+                        </label>
+                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                          {formatCityStateZip(contact.city, contact.state, contact.zipCode)}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Site Address */}
+                <div style={{ marginBottom: '32px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <MapPin style={{ width: '16px', height: '16px', color: colors.success }} />
+                    <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Site Address
+                    </h2>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {contact.siteMailingAddress ? (
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Street Address
+                        </label>
+                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                          {contact.siteMailingAddress}
+                        </p>
+                      </div>
+                    ) : (
+                      <p style={{ fontSize: '14px', ...text.tertiary, fontStyle: 'italic' }}>
+                        No site address on file
+                      </p>
+                    )}
+                    
+                    {(contact.siteCity || contact.siteState || contact.siteZipCode) ? (
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          City, State ZIP
+                        </label>
+                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                          {formatCityStateZip(contact.siteCity, contact.siteState, contact.siteZipCode) || '—'}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Metadata */}
+                <div style={{ marginBottom: '32px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <Calendar style={{ width: '16px', height: '16px', color: colors.success }} />
+                    <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Record Information
+                    </h2>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Created
+                      </label>
+                      <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                        {contact.dateCreated.toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Last Modified
+                      </label>
+                      <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                        {contact.dateModified.toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                {contact.notes && (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                      <FileText style={{ width: '16px', height: '16px', color: colors.success }} />
+                      <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                        Notes
+                      </h2>
+                    </div>
+                    
+                    <div 
+                      style={{
+                        padding: '16px',
+                        backgroundColor: colors.cardHover,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        ...text.secondary,
+                        lineHeight: '1.5'
+                      }}
+                    >
+                      {contact.notes}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            right: '0',
+            bottom: '0',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: colors.card,
+              padding: '32px',
+              borderRadius: '12px',
+              boxShadow: isDark ? '0 20px 25px -5px rgba(0, 0, 0, 0.5)' : '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              maxWidth: '400px',
+              width: '90%',
+              border: `1px solid ${colors.border}`
+            }}
+          >
+            <h3 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, marginBottom: '16px' }}>
+              Delete Contact
+            </h3>
+            <p style={{ ...text.secondary, marginBottom: '24px', lineHeight: '1.5' }}>
+              Are you sure you want to delete <strong>{contact.firstName} {contact.lastName}</strong>? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: colors.cardHover,
+                  ...text.secondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isDeleting) {
+                    e.currentTarget.style.backgroundColor = colors.borderHover
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isDeleting) {
+                    e.currentTarget.style.backgroundColor = colors.cardHover
+                  }
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: isDeleting ? colors.text.tertiary : colors.error,
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isDeleting) {
+                    e.currentTarget.style.backgroundColor = isDark ? '#dc2626' : '#dc2626'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isDeleting) {
+                    e.currentTarget.style.backgroundColor = colors.error
+                  }
+                }}
+              >
+                <Trash2 style={{ width: '16px', height: '16px' }} />
+                {isDeleting ? 'Deleting...' : 'Delete Contact'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </Sidebar>
+  )
+}

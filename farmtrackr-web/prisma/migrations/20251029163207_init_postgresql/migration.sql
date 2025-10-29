@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE "farm_contacts" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "firstName" TEXT,
     "lastName" TEXT,
     "farm" TEXT,
@@ -21,38 +21,46 @@ CREATE TABLE "farm_contacts" (
     "siteState" TEXT,
     "siteZipCode" INTEGER,
     "notes" TEXT,
-    "dateCreated" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "dateModified" DATETIME NOT NULL
+    "dateCreated" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "dateModified" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "farm_contacts_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "import_templates" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
     "fieldMapping" JSONB NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "import_templates_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "label_templates" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
     "template" JSONB NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "label_templates_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "documents" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "content" TEXT,
     "fileUrl" TEXT,
     "contactId" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "documents_pkey" PRIMARY KEY ("id")
 );

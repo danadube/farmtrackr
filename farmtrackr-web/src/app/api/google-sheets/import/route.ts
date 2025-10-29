@@ -1,49 +1,160 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { FARM_SPREADSHEETS, FarmName } from '@/lib/farmSpreadsheets'
+import { prisma } from '@/lib/prisma'
+import Papa from 'papaparse'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { farm } = await request.json()
-    
+    const body = await request.json()
+    const { farm } = body
+
     if (!farm || !FARM_SPREADSHEETS[farm as FarmName]) {
-      return NextResponse.json({ error: 'Invalid farm specified' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid farm name' }, { status: 400 })
     }
 
     const farmConfig = FARM_SPREADSHEETS[farm as FarmName]
     
-    // For now, return mock data since we don't have Google Sheets API set up yet
-    // In production, this would connect to Google Sheets API
-    const mockContacts = [
-      {
-        firstName: 'John',
-        lastName: 'Doe',
-        farm: farm,
-        email1: 'john.doe@example.com',
-        phoneNumber1: '(555) 123-4567',
-        mailingAddress: '123 Farm Road',
-        city: 'Farm City',
-        state: 'CA',
-        zipCode: 90210
-      },
-      {
-        firstName: 'Jane',
-        lastName: 'Smith',
-        farm: farm,
-        email1: 'jane.smith@example.com',
-        phoneNumber1: '(555) 987-6543',
-        mailingAddress: '456 Ranch Lane',
-        city: 'Ranch Town',
-        state: 'CA',
-        zipCode: 90211
+    // Fetch CSV from Google Sheets (public export URL)
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${farmConfig.id}/export?format=csv`
+    
+    try {
+      const response = await fetch(csvUrl)
+      
+      if (!response.ok) {
+        // If direct access fails, return instructions
+        return NextResponse.json({
+          error: 'Unable to access Google Sheet directly',
+          message: 'Please make the sheet publicly viewable (File > Share > Anyone with the link can view) or export as CSV and upload manually',
+          csvUrl,
+          spreadsheetUrl: farmConfig.url,
+        }, { status: 403 })
       }
-    ]
 
-    return NextResponse.json({ 
-      success: true, 
-      count: mockContacts.length,
-      contacts: mockContacts,
-      message: `Mock import from ${farm} Google Sheet`
-    })
+      const csvText = await response.text()
+      
+      // Parse CSV
+      const parsed = Papa.parse<any>(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim(),
+      })
+
+      const rows = parsed.data
+      
+      if (rows.length === 0) {
+        return NextResponse.json({
+          success: true,
+          imported: 0,
+          skipped: 0,
+          total: 0,
+          message: 'No data found in sheet'
+        })
+      }
+
+      // Map fields flexibly
+      const mapRow = (row: any) => {
+        const getField = (keys: string[]) => {
+          for (const key of keys) {
+            const value = row[key]
+            if (value && String(value).trim()) return String(value).trim()
+          }
+          return undefined
+        }
+
+        return {
+          firstName: getField(['First Name', 'firstName', 'First', 'first name', 'FIRST NAME']) || '',
+          lastName: getField(['Last Name', 'lastName', 'Last', 'last name', 'LAST NAME']) || '',
+          farm: farm,
+          mailingAddress: getField(['Mailing Address', 'mailingAddress', 'Address', 'address', 'MAILING ADDRESS']),
+          city: getField(['City', 'city', 'CITY']),
+          state: getField(['State', 'state', 'STATE']),
+          zipCode: (() => {
+            const zip = getField(['Zip Code', 'zipCode', 'ZIP', 'zip', 'ZIP CODE', 'Zip'])
+            if (zip) {
+              const zipNum = parseInt(String(zip).replace(/[^0-9]/g, ''))
+              return isNaN(zipNum) ? undefined : zipNum
+            }
+            return undefined
+          })(),
+          email1: getField(['Email', 'email', 'Email 1', 'email1', 'EMAIL', 'Primary Email']),
+          email2: getField(['Email 2', 'email2', 'EMAIL 2', 'Secondary Email']),
+          phoneNumber1: getField(['Phone', 'phone', 'Phone 1', 'phoneNumber1', 'Phone Number', 'PHONE']),
+          phoneNumber2: getField(['Phone 2', 'phoneNumber2', 'PHONE 2']),
+          phoneNumber3: getField(['Phone 3', 'phoneNumber3', 'PHONE 3']),
+          phoneNumber4: getField(['Phone 4', 'phoneNumber4', 'PHONE 4']),
+          phoneNumber5: getField(['Phone 5', 'phoneNumber5', 'PHONE 5']),
+          phoneNumber6: getField(['Phone 6', 'phoneNumber6', 'PHONE 6']),
+          siteMailingAddress: getField(['Site Address', 'siteMailingAddress', 'Site', 'SITE ADDRESS']),
+          siteCity: getField(['Site City', 'siteCity', 'SITE CITY']),
+          siteState: getField(['Site State', 'siteState', 'SITE STATE']),
+          siteZipCode: (() => {
+            const zip = getField(['Site Zip Code', 'siteZipCode', 'SITE ZIP'])
+            if (zip) {
+              const zipNum = parseInt(String(zip).replace(/[^0-9]/g, ''))
+              return isNaN(zipNum) ? undefined : zipNum
+            }
+            return undefined
+          })(),
+          notes: getField(['Notes', 'notes', 'NOTES', 'Comments']),
+        }
+      }
+
+      // Import contacts
+      let imported = 0
+      let skipped = 0
+      let errors = 0
+
+      for (const row of rows) {
+        try {
+          const contactData = mapRow(row)
+
+          // Skip if no name data
+          if (!contactData.firstName && !contactData.lastName) {
+            skipped++
+            continue
+          }
+
+          // Check for duplicates
+          const existing = await prisma.farmContact.findFirst({
+            where: {
+              firstName: contactData.firstName,
+              lastName: contactData.lastName,
+              farm: farm,
+            },
+          })
+
+          if (existing) {
+            skipped++
+            continue
+          }
+
+          await prisma.farmContact.create({
+            data: contactData,
+          })
+
+          imported++
+        } catch (error) {
+          errors++
+          console.error('Error importing contact:', error)
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        imported,
+        skipped,
+        errors,
+        total: rows.length,
+        message: `Successfully imported ${imported} of ${rows.length} contacts${skipped > 0 ? ` (${skipped} skipped)` : ''}`
+      })
+    } catch (fetchError) {
+      console.error('Error fetching Google Sheet:', fetchError)
+      return NextResponse.json({
+        error: 'Failed to fetch Google Sheet',
+        message: 'Make sure the sheet is publicly accessible or export as CSV and upload manually',
+        spreadsheetUrl: farmConfig.url,
+      }, { status: 500 })
+    }
   } catch (error) {
     console.error('Google Sheets import error:', error)
     return NextResponse.json({ error: 'Failed to import from Google Sheets' }, { status: 500 })

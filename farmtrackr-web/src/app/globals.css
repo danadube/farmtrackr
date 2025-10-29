@@ -55,14 +55,23 @@
 
 @layer base {
   * {
-    border-color: hsl(210, 20%, 90%);
+    border-color: hsl(var(--border));
   }
   body {
-    background-color: hsl(210, 20%, 98%);
-    color: hsl(210, 20%, 8%);
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  
+  html.dark {
+    color-scheme: dark;
+  }
+  
+  html.light {
+    color-scheme: light;
   }
 }
 

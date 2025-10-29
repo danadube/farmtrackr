@@ -1,143 +1,63 @@
 import { Stats, FarmContact } from '@/types'
 import DashboardClient from './DashboardClient'
+import { prisma } from '@/lib/prisma'
 
-// Mock data for production deployment
-const mockContacts: FarmContact[] = [
-  {
-    id: '1',
-    firstName: 'Donald',
-    lastName: 'Shelton',
-    farm: 'Cielo',
-    mailingAddress: '123 Farm Road',
-    city: 'Farm City',
-    state: 'CA',
-    zipCode: 90210,
-    email1: 'donald@cielo.com',
-    email2: undefined,
-    phoneNumber1: '(555) 123-4567',
-    phoneNumber2: undefined,
-    phoneNumber3: undefined,
-    phoneNumber4: undefined,
-    phoneNumber5: undefined,
-    phoneNumber6: undefined,
-    siteMailingAddress: undefined,
-    siteCity: undefined,
-    siteState: undefined,
-    siteZipCode: undefined,
-    notes: undefined,
-    dateCreated: new Date('2025-07-14'),
-    dateModified: new Date('2025-07-14'),
-  },
-  {
-    id: '2',
-    firstName: 'Tawna',
-    lastName: 'Baxter',
-    farm: 'Cielo',
-    mailingAddress: '456 Ranch Lane',
-    city: 'Ranch Town',
-    state: 'CA',
-    zipCode: 90211,
-    email1: 'tawna@cielo.com',
-    email2: undefined,
-    phoneNumber1: '(555) 234-5678',
-    phoneNumber2: undefined,
-    phoneNumber3: undefined,
-    phoneNumber4: undefined,
-    phoneNumber5: undefined,
-    phoneNumber6: undefined,
-    siteMailingAddress: undefined,
-    siteCity: undefined,
-    siteState: undefined,
-    siteZipCode: undefined,
-    notes: undefined,
-    dateCreated: new Date('2025-07-13'),
-    dateModified: new Date('2025-07-13'),
-  },
-  {
-    id: '3',
-    firstName: 'Diana',
-    lastName: 'Johnson',
-    farm: 'Cielo',
-    mailingAddress: '789 Orchard Way',
-    city: 'Orchard City',
-    state: 'CA',
-    zipCode: 90212,
-    email1: 'diana@cielo.com',
-    email2: undefined,
-    phoneNumber1: '(555) 345-6789',
-    phoneNumber2: undefined,
-    phoneNumber3: undefined,
-    phoneNumber4: undefined,
-    phoneNumber5: undefined,
-    phoneNumber6: undefined,
-    siteMailingAddress: undefined,
-    siteCity: undefined,
-    siteState: undefined,
-    siteZipCode: undefined,
-    notes: undefined,
-    dateCreated: new Date('2025-07-12'),
-    dateModified: new Date('2025-07-12'),
-  },
-  {
-    id: '4',
-    firstName: 'Stephen',
-    lastName: 'Maitland-lewis',
-    farm: 'Cielo',
-    mailingAddress: '321 Vineyard Drive',
-    city: 'Vineyard Valley',
-    state: 'CA',
-    zipCode: 90213,
-    email1: 'stephen@cielo.com',
-    email2: undefined,
-    phoneNumber1: '(555) 456-7890',
-    phoneNumber2: undefined,
-    phoneNumber3: undefined,
-    phoneNumber4: undefined,
-    phoneNumber5: undefined,
-    phoneNumber6: undefined,
-    siteMailingAddress: undefined,
-    siteCity: undefined,
-    siteState: undefined,
-    siteZipCode: undefined,
-    notes: undefined,
-    dateCreated: new Date('2025-07-11'),
-    dateModified: new Date('2025-07-11'),
-  },
-  {
-    id: '5',
-    firstName: 'Gerald',
-    lastName: 'Morris',
-    farm: 'Cielo',
-    mailingAddress: '654 Harvest Hill',
-    city: 'Harvest Heights',
-    state: 'CA',
-    zipCode: 90214,
-    email1: 'gerald@cielo.com',
-    email2: undefined,
-    phoneNumber1: '(555) 567-8901',
-    phoneNumber2: undefined,
-    phoneNumber3: undefined,
-    phoneNumber4: undefined,
-    phoneNumber5: undefined,
-    phoneNumber6: undefined,
-    siteMailingAddress: undefined,
-    siteCity: undefined,
-    siteState: undefined,
-    siteZipCode: undefined,
-    notes: undefined,
-    dateCreated: new Date('2025-07-10'),
-    dateModified: new Date('2025-07-10'),
-  },
-]
+// Force dynamic rendering (don't pre-render at build time)
+export const dynamic = 'force-dynamic'
 
-const mockStats: Stats = {
-  totalContacts: 5,
-  farmsWithContacts: 1,
-  recentContacts: 3
+// Fetch data directly from database
+async function getContacts(): Promise<FarmContact[]> {
+  try {
+    const contacts = await prisma.farmContact.findMany({
+      orderBy: { dateCreated: 'desc' },
+    })
+    return contacts
+  } catch (error) {
+    console.error('Error fetching contacts:', error)
+    return []
+  }
+}
+
+async function getStats(): Promise<Stats> {
+  try {
+    const totalContacts = await prisma.farmContact.count()
+    
+    // Get unique farms count
+    const farms = await prisma.farmContact.findMany({
+      select: { farm: true },
+      distinct: ['farm'],
+    })
+    const farmsWithContacts = farms.filter(f => f.farm).length
+    
+    // Get recent contacts (created in last 30 days)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const recentContacts = await prisma.farmContact.count({
+      where: {
+        dateCreated: {
+          gte: thirtyDaysAgo,
+        },
+      },
+    })
+
+    return {
+      totalContacts,
+      farmsWithContacts,
+      recentContacts,
+    }
+  } catch (error) {
+    console.error('Error fetching stats:', error)
+    return {
+      totalContacts: 0,
+      farmsWithContacts: 0,
+      recentContacts: 0
+    }
+  }
 }
 
 export default async function DashboardPage() {
-  // For now, use mock data for production deployment
-  // TODO: Implement database connection for production
-  return <DashboardClient contacts={mockContacts} stats={mockStats} />
+  const contacts = await getContacts()
+  const stats = await getStats()
+  
+  return <DashboardClient contacts={contacts} stats={stats} />
 }

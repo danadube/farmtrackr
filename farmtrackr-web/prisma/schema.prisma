@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model FarmContact {
-  id                 String    @id @default(cuid())
+  id                 String   @id @default(cuid())
   firstName          String?
   lastName           String?
   farm               String?
@@ -32,19 +32,19 @@ model FarmContact {
   siteState          String?
   siteZipCode        Int?
   notes              String?
-  dateCreated        DateTime  @default(now())
-  dateModified       DateTime  @updatedAt
+  dateCreated        DateTime @default(now())
+  dateModified       DateTime @updatedAt
 
   @@map("farm_contacts")
 }
 
 model ImportTemplate {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  fieldMapping Json    // Store field mapping as JSON
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  fieldMapping Json // Store field mapping as JSON
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@map("import_templates")
 }
@@ -53,7 +53,7 @@ model LabelTemplate {
   id          String   @id @default(cuid())
   name        String
   description String?
-  template    Json     // Store template configuration as JSON
+  template    Json // Store template configuration as JSON
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -64,9 +64,9 @@ model Document {
   id          String   @id @default(cuid())
   title       String
   description String?
-  content     String?  // Store document content as text
-  fileUrl     String?  // Store file URL if it's a file
-  contactId   String?  // Optional link to a contact
+  content     String? // Store document content as text
+  fileUrl     String? // Store file URL if it's a file
+  contactId   String? // Optional link to a contact
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

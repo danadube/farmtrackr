@@ -17,6 +17,7 @@ import {
 import Link from 'next/link'
 import { FarmTrackrLogo } from '@/components/FarmTrackrLogo'
 import { Sidebar } from '@/components/Sidebar'
+import { useThemeStyles } from '@/hooks/useThemeStyles'
 
 interface DashboardClientProps {
   contacts: FarmContact[];
@@ -25,6 +26,7 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ contacts, stats }: DashboardClientProps) {
   const [mounted, setMounted] = useState(false)
+  const { colors, isDark, card, background, text } = useThemeStyles()
 
   useEffect(() => {
     setMounted(true)
@@ -40,119 +42,345 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
 
   return (
     <Sidebar>
-      <div className="min-h-screen gradient-bg">
-        <div className="container py-8">
+      <div 
+        style={{ 
+          marginLeft: '256px', 
+          paddingLeft: '0',
+          minHeight: '100vh',
+          ...background
+        }}
+      >
+        <div 
+          style={{
+            maxWidth: '1200px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            paddingLeft: '48px',
+            paddingRight: '48px',
+            paddingTop: '32px',
+            paddingBottom: '32px'
+          }}
+        >
           {/* Hero Section */}
-          <div className="section-lg">
-            <div className="card glass-effect">
-              <div className="flex items-center space-x-6">
-                <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center">
-                  <FarmTrackrLogo size="lg" variant="icon" className="text-primary" />
+          <div style={{ marginBottom: '48px' }}>
+            <div 
+              style={{
+                padding: '24px',
+                ...card
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                <div 
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    backgroundColor: colors.iconBg,
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <FarmTrackrLogo size="lg" variant="icon" className="text-green-600" />
                 </div>
                 <div>
-                  <h1 className="heading-1">Welcome back</h1>
-                  <p className="body-text">Manage your farm contacts and operations efficiently</p>
+                  <h1 
+                    style={{
+                      fontSize: '36px',
+                      fontWeight: '700',
+                      ...text.primary,
+                      lineHeight: '40px',
+                      marginBottom: '8px',
+                      margin: '0 0 8px 0'
+                    }}
+                  >
+                    Welcome back
+                  </h1>
+                  <p style={{ ...text.secondary, fontSize: '16px', lineHeight: '24px', margin: '0' }}>
+                    Manage your farm contacts and operations efficiently
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="section">
-            <h2 className="heading-2">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Link href="/contacts/new" className="card card-hover group">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <Plus className="w-6 h-6 text-primary" />
+          <div style={{ marginBottom: '32px' }}>
+            <h2 
+              style={{
+                fontSize: '24px',
+                fontWeight: '600',
+                ...text.primary,
+                lineHeight: '32px',
+                marginBottom: '12px',
+                margin: '0 0 12px 0'
+              }}
+            >
+              Quick Actions
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+              {/* Add Contact */}
+              <Link 
+                href="/contacts/new" 
+                style={{
+                  display: 'block',
+                  padding: '16px',
+                  ...card,
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = isDark 
+                    ? '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
+                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                  e.currentTarget.style.borderColor = colors.primary
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = card.boxShadow
+                  e.currentTarget.style.borderColor = colors.border
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
+                  <div 
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      backgroundColor: colors.iconBg,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Plus style={{ width: '24px', height: '24px', color: colors.primary }} />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground mb-1">Add Contact</h3>
-                    <p className="text-sm text-muted-foreground">Create a new farm contact</p>
+                  <div>
+                    <h3 style={{ fontWeight: '600', marginBottom: '4px', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
+                      Add Contact
+                    </h3>
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
+                      Create a new farm contact
+                    </p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </Link>
 
-              <Link href="/import-export" className="card card-hover group">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <Upload className="w-6 h-6 text-primary" />
+              {/* Import & Export */}
+              <Link 
+                href="/import-export" 
+                style={{
+                  display: 'block',
+                  padding: '16px',
+                  ...card,
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = isDark 
+                    ? '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
+                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                  e.currentTarget.style.borderColor = colors.primary
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = card.boxShadow
+                  e.currentTarget.style.borderColor = colors.border
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
+                  <div 
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Upload style={{ width: '24px', height: '24px', color: colors.success }} />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground mb-1">Import & Export</h3>
-                    <p className="text-sm text-muted-foreground">Manage data files</p>
+                  <div>
+                    <h3 style={{ fontWeight: '600', marginBottom: '4px', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
+                      Import & Export
+                    </h3>
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
+                      Manage data files
+                    </p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </Link>
 
-              <Link href="/print-labels" className="card card-hover group">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <Printer className="w-6 h-6 text-primary" />
+              {/* Print Labels */}
+              <Link 
+                href="/print-labels" 
+                style={{
+                  display: 'block',
+                  padding: '16px',
+                  ...card,
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = isDark 
+                    ? '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
+                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                  e.currentTarget.style.borderColor = colors.primary
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = card.boxShadow
+                  e.currentTarget.style.borderColor = colors.border
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
+                  <div 
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      backgroundColor: isDark ? '#4c1d95' : '#f3e8ff',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Printer style={{ width: '24px', height: '24px', color: colors.accent }} />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground mb-1">Print Labels</h3>
-                    <p className="text-sm text-muted-foreground">Print address labels</p>
+                  <div>
+                    <h3 style={{ fontWeight: '600', marginBottom: '4px', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
+                      Print Labels
+                    </h3>
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
+                      Print address labels
+                    </p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </Link>
 
-              <Link href="/documents" className="card card-hover group">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <FileText className="w-6 h-6 text-primary" />
+              {/* Documents */}
+              <Link 
+                href="/documents" 
+                style={{
+                  display: 'block',
+                  padding: '16px',
+                  ...card,
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = isDark 
+                    ? '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
+                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                  e.currentTarget.style.borderColor = colors.primary
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = card.boxShadow
+                  e.currentTarget.style.borderColor = colors.border
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
+                  <div 
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      backgroundColor: isDark ? '#7c2d12' : '#fff7ed',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <FileText style={{ width: '24px', height: '24px', color: colors.warning }} />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground mb-1">Documents</h3>
-                    <p className="text-sm text-muted-foreground">Manage documents</p>
+                  <div>
+                    <h3 style={{ fontWeight: '600', marginBottom: '4px', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
+                      Documents
+                    </h3>
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
+                      Manage documents
+                    </p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </Link>
             </div>
           </div>
 
           {/* Statistics */}
-          <div className="section">
-            <h2 className="heading-2">Overview</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="card">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Users className="w-6 h-6 text-primary" />
+          <div style={{ marginBottom: '32px' }}>
+            <h2 
+              style={{
+                fontSize: '24px',
+                fontWeight: '600',
+                ...text.primary,
+                lineHeight: '32px',
+                marginBottom: '12px',
+                margin: '0 0 12px 0'
+              }}
+            >
+              Overview
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+              <div 
+                style={{
+                  padding: '24px',
+                  ...card
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div 
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      backgroundColor: colors.iconBg,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Users style={{ width: '24px', height: '24px', color: colors.primary }} />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Total Contacts</p>
-                    <p className="text-3xl font-bold text-foreground">{stats.totalContacts}</p>
+                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                      Total Contacts
+                    </p>
+                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                      {stats.totalContacts}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="card">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-primary" />
+              <div 
+                style={{
+                  padding: '24px',
+                  ...card
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div 
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Building2 style={{ width: '24px', height: '24px', color: colors.success }} />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Active Farms</p>
-                    <p className="text-3xl font-bold text-foreground">{stats.farmsWithContacts}</p>
-                    <p className="text-xs text-muted-foreground">Cielo</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Recent Activity</p>
-                    <p className="text-3xl font-bold text-foreground">{stats.recentContacts}</p>
-                    <p className="text-xs text-muted-foreground">This week</p>
+                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                      Active Farms
+                    </p>
+                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                      {stats.farmsWithContacts}
+                    </p>
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
+                      Cielo
+                    </p>
                   </div>
                 </div>
               </div>
@@ -160,58 +388,105 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
           </div>
 
           {/* Recent Contacts */}
-          <div className="section">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="heading-2">Recent Contacts</h2>
-              <Link href="/contacts" className="btn-secondary btn-sm">
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <h2 
+                style={{
+                  fontSize: '24px',
+                  fontWeight: '600',
+                  ...text.primary,
+                  lineHeight: '32px',
+                  margin: '0'
+                }}
+              >
+                Recent Contacts
+              </h2>
+              <Link 
+                href="/contacts" 
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: isDark ? colors.cardHover : colors.cardHover,
+                  ...text.secondary,
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.borderHover
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.cardHover
+                }}
+              >
                 View All
               </Link>
             </div>
             
-            <div className="card">
-              {recentContactsList.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="heading-3">No contacts yet</h3>
-                  <p className="body-text mb-6">Get started by adding your first farm contact.</p>
-                  <Link href="/contacts/new" className="btn-primary">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add First Contact
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentContactsList.map((contact) => (
-                    <Link 
-                      key={contact.id} 
-                      href={`/contacts/${contact.id}`} 
-                      className="flex items-center space-x-4 p-4 rounded-lg hover:bg-muted/50 transition-colors group"
+            <div 
+              style={{
+                padding: '24px',
+                ...card
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {recentContactsList.map((contact) => (
+                  <Link 
+                    key={contact.id} 
+                    href={`/contacts/${contact.id}`} 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      textDecoration: 'none',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.cardHover
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+                  >
+                    <div 
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        backgroundColor: colors.iconBg,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
                     >
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-semibold text-primary">
-                          {contact.firstName?.[0]}{contact.lastName?.[0]}
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium text-foreground group-hover:text-primary transition-colors">
-                          {contact.firstName} {contact.lastName}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">{contact.farm}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">
-                          {contact.dateCreated.toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          })}
-                        </p>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </Link>
-                  ))}
-                </div>
-              )}
+                      <span style={{ fontSize: '14px', fontWeight: '600', color: colors.primary }}>
+                        {contact.firstName?.[0]}{contact.lastName?.[0]}
+                      </span>
+                    </div>
+                    <div style={{ flex: '1' }}>
+                      <h3 style={{ fontWeight: '500', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
+                        {contact.firstName} {contact.lastName}
+                      </h3>
+                      <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
+                        {contact.farm}
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
+                        {contact.dateCreated.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                      </p>
+                    </div>
+                    <ArrowRight style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </div>

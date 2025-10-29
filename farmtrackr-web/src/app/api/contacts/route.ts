@@ -4,23 +4,27 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search')
-    const farm = searchParams.get('farm')
+    const search = searchParams.get('search') || undefined
+    const farm = searchParams.get('farm') || undefined
 
+    // Build Prisma query with filters
     const where: any = {}
-    
-    if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
-        { farm: { contains: search, mode: 'insensitive' } },
-        { email1: { contains: search, mode: 'insensitive' } },
-        { email2: { contains: search, mode: 'insensitive' } },
-      ]
-    }
     
     if (farm) {
       where.farm = farm
+    }
+    
+    if (search) {
+      // SQLite doesn't support case-insensitive mode, so we'll handle it in application code
+      // For now, we'll use a case-sensitive search and filter in-memory if needed
+      where.OR = [
+        { firstName: { contains: search } },
+        { lastName: { contains: search } },
+        { farm: { contains: search } },
+        { email1: { contains: search } },
+        { email2: { contains: search } },
+        { city: { contains: search } },
+      ]
     }
 
     const contacts = await prisma.farmContact.findMany({
@@ -37,30 +41,38 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body = await request.json() as Record<string, any>
+    
+    // Convert empty strings to undefined
+    const cleanBody = Object.fromEntries(
+      Object.entries(body).map(([key, value]) => [
+        key, 
+        value === '' || value === null ? undefined : value
+      ])
+    ) as Record<string, any>
     
     const contact = await prisma.farmContact.create({
       data: {
-        firstName: body.firstName,
-        lastName: body.lastName,
-        farm: body.farm,
-        mailingAddress: body.mailingAddress,
-        city: body.city,
-        state: body.state,
-        zipCode: body.zipCode ? parseInt(body.zipCode) : null,
-        email1: body.email1,
-        email2: body.email2,
-        phoneNumber1: body.phoneNumber1,
-        phoneNumber2: body.phoneNumber2,
-        phoneNumber3: body.phoneNumber3,
-        phoneNumber4: body.phoneNumber4,
-        phoneNumber5: body.phoneNumber5,
-        phoneNumber6: body.phoneNumber6,
-        siteMailingAddress: body.siteMailingAddress,
-        siteCity: body.siteCity,
-        siteState: body.siteState,
-        siteZipCode: body.siteZipCode ? parseInt(body.siteZipCode) : null,
-        notes: body.notes,
+        firstName: cleanBody.firstName || '',
+        lastName: cleanBody.lastName || '',
+        farm: cleanBody.farm,
+        mailingAddress: cleanBody.mailingAddress,
+        city: cleanBody.city,
+        state: cleanBody.state,
+        zipCode: cleanBody.zipCode ? parseInt(String(cleanBody.zipCode)) : undefined,
+        email1: cleanBody.email1,
+        email2: cleanBody.email2,
+        phoneNumber1: cleanBody.phoneNumber1,
+        phoneNumber2: cleanBody.phoneNumber2,
+        phoneNumber3: cleanBody.phoneNumber3,
+        phoneNumber4: cleanBody.phoneNumber4,
+        phoneNumber5: cleanBody.phoneNumber5,
+        phoneNumber6: cleanBody.phoneNumber6,
+        siteMailingAddress: cleanBody.siteMailingAddress,
+        siteCity: cleanBody.siteCity,
+        siteState: cleanBody.siteState,
+        siteZipCode: cleanBody.siteZipCode ? parseInt(String(cleanBody.siteZipCode)) : undefined,
+        notes: cleanBody.notes,
       },
     })
 

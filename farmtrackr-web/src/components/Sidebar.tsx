@@ -1,110 +1,198 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { useTheme } from '@/components/ThemeProvider'
+import { getThemeColors } from '@/lib/theme'
+import { 
+  Home, 
+  Users, 
+  FileText, 
+  TrendingUp, 
+  Upload, 
+  Settings,
+  FileSpreadsheet,
+  Menu,
+  X
+} from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  Users, 
-  Building2, 
-  FileText, 
-  Upload, 
-  TrendingUp,
-  Home,
-  FileSpreadsheet
-} from 'lucide-react'
-import { FarmTrackrLogo } from '@/components/FarmTrackrLogo'
+import { FarmTrackrLogo } from './FarmTrackrLogo'
+import { Footer } from './Footer'
 
 interface SidebarProps {
   children: React.ReactNode
 }
 
 export function Sidebar({ children }: SidebarProps) {
+  const { resolvedTheme } = useTheme()
   const pathname = usePathname()
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(true)
+  const colors = getThemeColors(resolvedTheme === 'dark')
 
-  const navigation = [
-    { name: 'Home', href: '/', icon: Home },
-    { name: 'Contacts', href: '/contacts', icon: Users },
-    { name: 'Documents', href: '/documents', icon: FileText },
-    { name: 'Data Quality', href: '/data-quality', icon: TrendingUp },
-    { name: 'Google Sheets', href: '/google-sheets', icon: FileSpreadsheet },
-    { name: 'Import & Export', href: '/import-export', icon: Upload },
-    { name: 'Settings', href: '/settings', icon: Building2 },
+  // Handle responsive behavior
+  useEffect(() => {
+    const checkIsDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768)
+      if (window.innerWidth >= 768) {
+        setIsMobileOpen(false) // Always close mobile menu when switching to desktop
+      }
+    }
+    
+    checkIsDesktop()
+    window.addEventListener('resize', checkIsDesktop)
+    return () => window.removeEventListener('resize', checkIsDesktop)
+  }, [])
+
+  const navItems = [
+    { href: '/', label: 'Dashboard', icon: Home },
+    { href: '/contacts', label: 'Contacts', icon: Users },
+    { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet },
+    { href: '/documents', label: 'Documents', icon: FileText },
+    { href: '/data-quality', label: 'Data Quality', icon: TrendingUp },
+    { href: '/import-export', label: 'Import & Export', icon: Upload },
+    { href: '/settings', label: 'Settings', icon: Settings },
   ]
 
+  const isActive = (href: string) => {
+    if (href === '/') {
+      return pathname === '/'
+    }
+    return pathname?.startsWith(href)
+  }
+
+  useEffect(() => {
+    setIsMobileOpen(false)
+  }, [pathname])
+
   return (
-    <div className="min-h-screen gradient-bg">
-      {/* Navigation Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-card shadow-lg border-r border-border">
-        {/* Logo */}
-        <div className="p-6 border-b border-border">
-          <div className="flex items-center space-x-3">
-            <FarmTrackrLogo size="lg" variant="logo" />
-            <div>
-              <h1 className="text-xl font-bold text-card-foreground">FarmTrackr</h1>
-              <p className="text-sm text-muted-foreground">Farm CRM</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="p-4 space-y-2">
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">MAIN</h3>
-            {navigation.slice(0, 3).map((item) => (
-              <Link 
-                key={item.name}
-                href={item.href} 
-                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                  pathname === item.href 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'text-card-foreground hover:bg-muted'
-                }`}
-              >
-                <item.icon className="w-4 h-4" />
-                <span className={pathname === item.href ? 'font-medium' : ''}>{item.name}</span>
-              </Link>
-            ))}
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 mt-6">TOOLS</h3>
-            {navigation.slice(3, 6).map((item) => (
-              <Link 
-                key={item.name}
-                href={item.href} 
-                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                  pathname === item.href 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'text-card-foreground hover:bg-muted'
-                }`}
-              >
-                <item.icon className="w-4 h-4" />
-                <span className={pathname === item.href ? 'font-medium' : ''}>{item.name}</span>
-              </Link>
-            ))}
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 mt-6">SETTINGS</h3>
-            {navigation.slice(6).map((item) => (
-              <Link 
-                key={item.name}
-                href={item.href} 
-                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                  pathname === item.href 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'text-card-foreground hover:bg-muted'
-                }`}
-              >
-                <item.icon className="w-4 h-4" />
-                <span className={pathname === item.href ? 'font-medium' : ''}>{item.name}</span>
-              </Link>
-            ))}
-          </div>
-        </nav>
+    <div style={{ minHeight: '100vh', background: colors.background }}>
+      {/* Mobile Header */}
+      <div 
+        style={{
+          display: isDesktop ? 'none' : 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px',
+          borderBottom: `1px solid ${colors.border}`,
+          background: colors.surface,
+          position: 'sticky',
+          top: 0,
+          zIndex: 50
+        }}
+      >
+        <Link href="/" style={{ textDecoration: 'none', color: colors.text.primary }}>
+          <FarmTrackrLogo size="md" variant="logo" showTitle={true} />
+        </Link>
+        <button
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          style={{
+            padding: '8px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            color: colors.text.primary
+          }}
+        >
+          {isMobileOpen ? (
+            <X style={{ width: '24px', height: '24px' }} />
+          ) : (
+            <Menu style={{ width: '24px', height: '24px' }} />
+          )}
+        </button>
       </div>
 
+      {/* Navigation Sidebar */}
+      <div 
+        style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: '256px',
+          background: colors.surface,
+          borderRight: `1px solid ${colors.border}`,
+          padding: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          zIndex: 40,
+          // Always visible on desktop (768px+), slide in/out on mobile
+          transform: isDesktop 
+            ? 'translateX(0)' 
+            : (isMobileOpen ? 'translateX(0)' : 'translateX(-100%)'),
+          transition: 'transform 0.3s ease',
+        }}
+        id="sidebar"
+      >
+        {/* Logo */}
+        <div style={{ marginBottom: '32px' }}>
+          <Link href="/" style={{ textDecoration: 'none', color: colors.text.primary }}>
+            <FarmTrackrLogo size="lg" variant="logo" showTitle={true} />
+          </Link>
+        </div>
+
+        {/* Navigation Items */}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const active = isActive(item.href)
+            
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  textDecoration: 'none',
+                  backgroundColor: active ? colors.iconBg : 'transparent',
+                  color: active ? colors.primary : colors.text.secondary,
+                  fontWeight: active ? '600' : '500',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.backgroundColor = colors.cardHover
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }
+                }}
+              >
+                <Icon style={{ width: '20px', height: '20px' }} />
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Footer in Sidebar */}
+        <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: `1px solid ${colors.border}` }}>
+          <Footer />
+        </div>
+      </div>
+
+      {/* Mobile Overlay */}
+      {isMobileOpen && !isDesktop && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 30,
+          }}
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
-      <div className="ml-64">
+      <div style={{ minHeight: '100vh' }}>
         {children}
       </div>
     </div>

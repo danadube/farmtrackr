@@ -1,12 +1,16 @@
 {
   "name": "farmtrackr-web",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:push": "prisma db push",
+    "import-data": "tsx scripts/import-local-data.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.18.0",
@@ -31,6 +35,7 @@
     "eslint-config-next": "14.2.33",
     "postcss": "^8",
     "tailwindcss": "^3.3.0",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }

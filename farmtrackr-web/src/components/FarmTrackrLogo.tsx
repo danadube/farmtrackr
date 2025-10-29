@@ -1,67 +1,81 @@
 'use client'
 
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
+import { useTheme } from '@/components/ThemeProvider'
 
 interface FarmTrackrLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
   variant?: 'icon' | 'logo'
   className?: string
+  showTitle?: boolean
 }
 
-export function FarmTrackrLogo({ size = 'md', variant = 'logo', className = '' }: FarmTrackrLogoProps) {
-  const [isDark, setIsDark] = useState(false)
-
-  useEffect(() => {
-    // Check for dark mode preference
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    setIsDark(mediaQuery.matches)
-    
-    const handleChange = (e: MediaQueryListEvent) => setIsDark(e.matches)
-    mediaQuery.addEventListener('change', handleChange)
-    
-    return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [])
-
-  const sizeClasses = {
-    sm: 'w-6 h-6',
-    md: 'w-8 h-8',
-    lg: 'w-10 h-10',
-    xl: 'w-12 h-12'
-  }
+export function FarmTrackrLogo({ 
+  size = 'md', 
+  variant = 'logo', 
+  className = '',
+  showTitle = true
+}: FarmTrackrLogoProps) {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
 
   const logoSizes = {
-    sm: 24,
-    md: 32,
-    lg: 40,
-    xl: 48
+    sm: { width: 24, height: 24 },
+    md: { width: 160, height: 40 },
+    lg: { width: 200, height: 50 },
+    xl: { width: 240, height: 60 }
+  }
+
+  const iconSizes = {
+    sm: { width: 24, height: 24 },
+    md: { width: 32, height: 32 },
+    lg: { width: 40, height: 40 },
+    xl: { width: 48, height: 48 }
   }
 
   if (variant === 'icon') {
+    const sizeConfig = iconSizes[size]
     return (
-      <div className={`${sizeClasses[size]} ${className}`}>
+      <div style={{ width: sizeConfig.width, height: sizeConfig.height }} className={className}>
         <Image
           src="/images/farmtrackr-icon.png"
           alt="FarmTrackr"
-          width={logoSizes[size]}
-          height={logoSizes[size]}
-          className="w-full h-full object-contain"
+          width={sizeConfig.width}
+          height={sizeConfig.height}
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          quality={100}
           priority
         />
       </div>
     )
   }
 
+  // Logo variant - show full logo with title
+  const sizeConfig = logoSizes[size]
   return (
-    <div className={`${sizeClasses[size]} ${className}`}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: showTitle ? '12px' : '0' }} className={className}>
       <Image
         src={isDark ? "/images/farmtrackr-logo-dark.png" : "/images/farmtrackr-logo-light.png"}
         alt="FarmTrackr"
-        width={logoSizes[size]}
-        height={logoSizes[size]}
-        className="w-full h-full object-contain"
+        width={sizeConfig.width}
+        height={sizeConfig.height}
+        style={{ 
+          width: sizeConfig.width, 
+          height: sizeConfig.height, 
+          objectFit: 'contain'
+        }}
+        quality={100}
         priority
       />
+      {showTitle && (
+        <span style={{ 
+          fontSize: size === 'lg' ? '24px' : size === 'xl' ? '28px' : '20px',
+          fontWeight: '700',
+          color: 'inherit'
+        }}>
+          FarmTrackr
+        </span>
+      )}
     </div>
   )
 }
