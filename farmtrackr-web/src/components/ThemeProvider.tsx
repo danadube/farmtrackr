@@ -35,12 +35,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
+      // Read from DOM first (set by inline script in layout.tsx)
+      const domTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+      
+      // If DOM already has theme set, use it (prevents flash)
+      if (document.documentElement.classList.contains('dark') || document.documentElement.classList.contains('light')) {
+        return domTheme
+      }
+      
+      // Otherwise, resolve from localStorage
       const initialTheme = localStorage.getItem('theme') as Theme | null || 'system'
       const resolved = resolveTheme(initialTheme)
       // Ensure DOM is synced
       if (document.documentElement) {
-        document.documentElement.classList.remove('light', 'dark')
+        document.documentElement.classList.remove('light', 'dark', 'system')
         document.documentElement.classList.add(resolved)
+        document.documentElement.setAttribute('data-theme', resolved)
       }
       return resolved
     }
@@ -54,8 +64,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') return
     
     const root = document.documentElement
-    root.classList.remove('light', 'dark')
+    root.classList.remove('light', 'dark', 'system')
     root.classList.add(newTheme)
+    root.setAttribute('data-theme', newTheme)
+    root.style.colorScheme = newTheme
     setResolvedTheme(newTheme)
   }, [])
 

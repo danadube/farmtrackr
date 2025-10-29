@@ -36,10 +36,18 @@ export default function RootLayout({
                       resolvedTheme = theme;
                     }
                     
-                    document.documentElement.classList.remove('light', 'dark');
+                    // Remove any existing theme classes first
+                    document.documentElement.classList.remove('light', 'dark', 'system');
+                    // Add resolved theme immediately (blocking)
                     document.documentElement.classList.add(resolvedTheme);
+                    // Also set data attribute for CSS
+                    document.documentElement.setAttribute('data-theme', resolvedTheme);
+                    // Prevent flash by setting style immediately
+                    document.documentElement.style.colorScheme = resolvedTheme;
                   } catch (e) {
+                    document.documentElement.classList.remove('light', 'dark', 'system');
                     document.documentElement.classList.add('light');
+                    document.documentElement.setAttribute('data-theme', 'light');
                   }
                 })();
               `,
