@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { 
   FileText, 
   Plus, 
@@ -23,10 +23,10 @@ interface Document {
   id: string
   title: string
   description?: string
-  type: 'template' | 'contact' | 'report'
+  type?: 'template' | 'contact' | 'report'
   contactName?: string
-  dateCreated: Date
-  dateModified: Date
+  createdAt: Date
+  updatedAt: Date
   fileSize?: string
 }
 
@@ -35,57 +35,37 @@ export default function DocumentsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'template' | 'contact' | 'report'>('all')
 
-  // Mock documents data
-  const mockDocuments: Document[] = [
-    {
-      id: '1',
-      title: 'Avery 5160 Address Labels Template',
-      description: 'Standard address label template for Avery 5160 labels',
-      type: 'template',
-      dateCreated: new Date('2025-07-14'),
-      dateModified: new Date('2025-07-14'),
-      fileSize: '2.3 KB'
-    },
-    {
-      id: '2',
-      title: 'Farm Contact Report - July 2025',
-      description: 'Monthly contact report for all farms',
-      type: 'report',
-      dateCreated: new Date('2025-07-13'),
-      dateModified: new Date('2025-07-13'),
-      fileSize: '15.7 KB'
-    },
-    {
-      id: '3',
-      title: 'Cielo Farm Contact List',
-      description: 'Contact information for Cielo farm operations',
-      type: 'contact',
-      contactName: 'Cielo Farm',
-      dateCreated: new Date('2025-07-12'),
-      dateModified: new Date('2025-07-12'),
-      fileSize: '8.1 KB'
-    },
-    {
-      id: '4',
-      title: 'Import Template - Excel Format',
-      description: 'Template for importing contacts from Excel files',
-      type: 'template',
-      dateCreated: new Date('2025-07-11'),
-      dateModified: new Date('2025-07-11'),
-      fileSize: '5.2 KB'
-    },
-    {
-      id: '5',
-      title: 'Data Quality Report',
-      description: 'Report showing duplicate contacts and data quality issues',
-      type: 'report',
-      dateCreated: new Date('2025-07-10'),
-      dateModified: new Date('2025-07-10'),
-      fileSize: '12.4 KB'
-    }
-  ]
+  const [docs, setDocs] = useState<Document[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredDocuments = mockDocuments.filter(doc => {
+  useEffect(() => {
+    const fetchDocs = async () => {
+      try {
+        setLoading(true)
+        const params = new URLSearchParams()
+        if (searchQuery) params.set('q', searchQuery)
+        const res = await fetch(`/api/documents?${params.toString()}`)
+        if (res.ok) {
+          const data = await res.json()
+          const mapped: Document[] = data.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            description: d.description || '',
+            createdAt: new Date(d.createdAt),
+            updatedAt: new Date(d.updatedAt),
+          }))
+          setDocs(mapped)
+        }
+      } catch (e) {
+        console.error('Failed to load documents', e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDocs()
+  }, [searchQuery])
+
+  const filteredDocuments = docs.filter(doc => {
     const matchesSearch = !searchQuery || 
       doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
