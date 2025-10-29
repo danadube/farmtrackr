@@ -1309,6 +1309,22 @@ export default function CreateLetterPage() {
                       (Use HTML for rich formatting, logos, etc.)
                     </span>
                   </label>
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: colors.cardHover, 
+                    borderRadius: '8px', 
+                    marginBottom: '12px',
+                    fontSize: '12px',
+                    ...text.secondary,
+                    borderLeft: `3px solid ${colors.primary}20`
+                  }}>
+                    <strong style={{ ...text.primary }}>💡 Tip:</strong> If you have a Word letterhead, you can:
+                    <ul style={{ marginTop: '8px', marginBottom: '0', paddingLeft: '20px' }}>
+                      <li>Save Word doc as "Web Page, Filtered" HTML, then copy the relevant HTML</li>
+                      <li>Or copy from Word → paste into Gmail/Docs → copy as HTML</li>
+                      <li>Or manually convert: use &lt;div&gt;, &lt;strong&gt;, &lt;br/&gt; tags with inline styles</li>
+                    </ul>
+                  </div>
                   <textarea
                     value={newLetterheadHeaderHtml}
                     onChange={(e) => setNewLetterheadHeaderHtml(e.target.value)}
