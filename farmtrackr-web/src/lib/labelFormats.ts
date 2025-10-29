@@ -21,14 +21,14 @@ export const AVERY_FORMATS: Record<string, AveryLabelFormat> = {
   '5160': {
     id: '5160',
     name: 'Avery 5160 (1" x 2.625")',
-    labelWidth: 190.5, // 2.625 inches = 189 points (accounting for slight printer variance)
+    labelWidth: 189, // 2.625 inches = 189 points exactly
     labelHeight: 72, // 1 inch = 72 points
     columns: 3,
     rows: 10,
     labelsPerSheet: 30,
     marginTop: 36, // 0.5 inch top margin
-    marginLeft: 36, // 0.5 inch left margin
-    gapHorizontal: 9, // small gap between labels
+    marginLeft: 14, // 0.19 inch left margin (Avery standard)
+    gapHorizontal: 8.5, // ~0.12 inch gap between columns (calculated from sheet width)
     gapVertical: 0, // no vertical gap (labels touch)
   },
   '5161': {

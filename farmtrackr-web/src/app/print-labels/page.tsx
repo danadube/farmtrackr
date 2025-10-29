@@ -117,11 +117,14 @@ export default function PrintLabelsPage() {
             justify-content: center;
             align-items: center;
             font-family: ${FONT_FAMILIES[fontFamily]};
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 11px;
+            line-height: 1.3;
             text-align: center;
-            padding: 4px;
+            padding: 2px 4px;
             box-sizing: border-box;
+            overflow: hidden;
+            word-wrap: break-word;
+            white-space: normal;
           ">
             ${addressLines.map(line => `<div class="label-line" style="margin: 0; padding: 0;">${line}</div>`).join('')}
           </div>
@@ -177,12 +180,17 @@ export default function PrintLabelsPage() {
               border: none;
               background: white;
               color: black;
+              word-wrap: break-word;
+              white-space: normal;
             }
             .label-line {
-              line-height: 1.4;
+              line-height: 1.3;
               margin: 0;
-              padding: 0;
+              padding: 0 2px;
               color: black;
+              font-size: 11px;
+              word-wrap: break-word;
+              max-width: 100%;
             }
           </style>
         </head>
@@ -501,17 +509,28 @@ export default function PrintLabelsPage() {
                               justifyContent: 'center',
                               alignItems: 'center',
                               fontFamily: FONT_FAMILIES[fontFamily],
-                              fontSize: `${(12 / zoom).toFixed(1)}px`,
-                              lineHeight: '1.4',
+                              fontSize: `${(11 / zoom).toFixed(1)}px`,
+                              lineHeight: '1.3',
                               textAlign: 'center',
-                              padding: `${(4 / zoom).toFixed(1)}px`,
+                              padding: `${(2 / zoom).toFixed(1)}px ${(4 / zoom).toFixed(1)}px`,
                               boxSizing: 'border-box',
                               border: isDark ? '1px solid #333' : '1px dashed #ddd',
+                              overflow: 'hidden',
+                              wordWrap: 'break-word',
+                              whiteSpace: 'normal',
                               ...text.primary,
                             }}
                           >
                             {addressLines.map((line, lineIdx) => (
-                              <div key={lineIdx} style={{ margin: 0, padding: 0 }}>
+                              <div 
+                                key={lineIdx} 
+                                style={{ 
+                                  margin: 0, 
+                                  padding: `0 ${(2 / zoom).toFixed(1)}px`,
+                                  wordWrap: 'break-word',
+                                  maxWidth: '100%',
+                                }}
+                              >
                                 {line}
                               </div>
                             ))}
