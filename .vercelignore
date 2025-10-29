@@ -1,0 +1,4 @@
+# Ignore everything except the farmtrackr-web directory
+*
+!farmtrackr-web/
+!farmtrackr-web/**
