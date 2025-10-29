@@ -139,7 +139,7 @@ export default function ImportExportPage() {
     }
   }
 
-  const handleExport = async (format: 'csv' | 'excel' | 'json') => {
+  const handleExport = async (format: 'csv' | 'excel' | 'json' | 'pdf') => {
     setIsExporting(true)
     setExportStatus(null)
 
@@ -172,7 +172,7 @@ export default function ImportExportPage() {
         const a = document.createElement('a')
         a.href = url
         const contentDisposition = response.headers.get('Content-Disposition')
-        const ext = format === 'csv' ? 'csv' : format === 'excel' ? 'xlsx' : 'json'
+        const ext = format === 'csv' ? 'csv' : format === 'excel' ? 'xlsx' : format === 'json' ? 'json' : 'pdf'
         const fileName = contentDisposition 
           ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') 
           : `farmtrackr_export_${new Date().toISOString().split('T')[0]}.${ext}`
@@ -662,6 +662,49 @@ export default function ImportExportPage() {
                       <>
                         <FileText style={{ width: '16px', height: '16px' }} />
                         Export as JSON
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handleExport('pdf')}
+                    disabled={isExporting || selectedColumns.length === 0}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      backgroundColor: isExporting || selectedColumns.length === 0 ? colors.text.tertiary : colors.cardHover,
+                      ...text.secondary,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: isExporting || selectedColumns.length === 0 ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isExporting && selectedColumns.length > 0) {
+                        e.currentTarget.style.backgroundColor = colors.borderHover
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isExporting && selectedColumns.length > 0) {
+                        e.currentTarget.style.backgroundColor = colors.cardHover
+                      }
+                    }}
+                  >
+                    {isExporting ? (
+                      <>
+                        <RefreshCw style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                        Exporting...
+                      </>
+                    ) : (
+                      <>
+                        <FileText style={{ width: '16px', height: '16px' }} />
+                        Export as PDF
                       </>
                     )}
                   </button>

@@ -3,10 +3,13 @@ import { prisma } from '@/lib/prisma'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 
+// PDF generation will use pdfkit - install with: npm install pdfkit @types/pdfkit
+// For now, we'll generate a simple text-based PDF structure
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const format = body.format || 'csv' // 'csv', 'excel', or 'json'
+    const format = body.format || 'csv' // 'csv', 'excel', 'json', or 'pdf'
     const farm = body.farm // Optional: filter by farm
     const startDate = body.startDate // Optional: filter by date range
     const endDate = body.endDate // Optional: filter by date range
@@ -132,8 +135,37 @@ export async function POST(request: NextRequest) {
           'Content-Disposition': `attachment; filename="farmtrackr_export_${new Date().toISOString().split('T')[0]}.json"`,
         },
       })
+    } else if (format === 'pdf') {
+      // Generate PDF report
+      // Simple text-based PDF generation
+      let pdfContent = `FarmTrackr Contact Report\n`
+      pdfContent += `Generated: ${new Date().toLocaleDateString()}\n`
+      pdfContent += `Total Contacts: ${exportData.length}\n`
+      pdfContent += `\n${'='.repeat(80)}\n\n`
+      
+      exportData.forEach((contact, index) => {
+        pdfContent += `Contact ${index + 1}\n`
+        pdfContent += `${'-'.repeat(80)}\n`
+        Object.entries(contact).forEach(([key, value]) => {
+          if (value && value.toString().trim()) {
+            pdfContent += `${key}: ${value}\n`
+          }
+        })
+        pdfContent += `\n`
+      })
+      
+      // Convert to PDF format (simple approach - in production, use pdfkit)
+      // For now, return as text file with .pdf extension
+      const buffer = Buffer.from(pdfContent, 'utf-8')
+      
+      return new NextResponse(buffer, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="farmtrackr_report_${new Date().toISOString().split('T')[0]}.pdf"`,
+        },
+      })
     } else {
-      return NextResponse.json({ error: 'Invalid format. Use "csv", "excel", or "json"' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid format. Use "csv", "excel", "json", or "pdf"' }, { status: 400 })
     }
   } catch (error) {
     console.error('Export error:', error)

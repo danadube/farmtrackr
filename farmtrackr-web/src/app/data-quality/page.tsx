@@ -41,7 +41,14 @@ interface ValidationIssue {
 export default function DataQualityPage() {
   const { colors, isDark, card, background, text } = useThemeStyles()
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [activeTab, setActiveTab] = useState<'duplicates' | 'validation'>('duplicates')
+  const [activeTab, setActiveTab] = useState<'duplicates' | 'validation' | 'cleanup'>('duplicates')
+  const [cleanupAction, setCleanupAction] = useState<string>('')
+  const [isCleaning, setIsCleaning] = useState(false)
+  const [cleanupStatus, setCleanupStatus] = useState<{
+    type: 'success' | 'error' | null
+    message: string
+    updatedCount?: number
+  } | null>(null)
   const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([])
   const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([])
   const [qualityScore, setQualityScore] = useState<number>(100)
@@ -97,6 +104,49 @@ export default function DataQualityPage() {
         return colors.warning
       default:
         return colors.text.tertiary
+    }
+  }
+
+  const handleCleanup = async (action: string) => {
+    setIsCleaning(true)
+    setCleanupAction(action)
+    setCleanupStatus(null)
+
+    try {
+      const response = await fetch('/api/contacts/cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        setCleanupStatus({
+          type: 'success',
+          message: result.message || 'Cleanup completed successfully',
+          updatedCount: result.updatedCount
+        })
+        
+        // Refresh data after cleanup
+        setTimeout(() => {
+          handleAnalyze()
+          setCleanupStatus(null)
+        }, 2000)
+      } else {
+        setCleanupStatus({
+          type: 'error',
+          message: result.error || 'Failed to cleanup contacts'
+        })
+      }
+    } catch (error) {
+      setCleanupStatus({
+        type: 'error',
+        message: `Failed to cleanup contacts: ${error instanceof Error ? error.message : 'Unknown error'}`
+      })
+    } finally {
+      setIsCleaning(false)
+      setCleanupAction('')
     }
   }
 
@@ -283,9 +333,28 @@ export default function DataQualityPage() {
                   Data Quality Score
                 </span>
               </div>
-              <p style={{ fontSize: '32px', fontWeight: '700', ...text.primary, margin: '0' }}>
+              <p style={{ fontSize: '32px', fontWeight: '700', ...text.primary, margin: '0 0 4px 0' }}>
                 {qualityScore}%
               </p>
+              <div style={{ marginTop: '8px' }}>
+                <div style={{ 
+                  width: '100%', 
+                  height: '6px', 
+                  backgroundColor: colors.cardHover, 
+                  borderRadius: '3px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    width: `${qualityScore}%`,
+                    height: '100%',
+                    backgroundColor: qualityScore >= 80 ? colors.success : qualityScore >= 60 ? colors.warning : colors.error,
+                    transition: 'width 0.3s ease'
+                  }} />
+                </div>
+                <p style={{ fontSize: '11px', ...text.tertiary, margin: '4px 0 0 0' }}>
+                  {qualityScore >= 80 ? 'Excellent' : qualityScore >= 60 ? 'Good' : qualityScore >= 40 ? 'Fair' : 'Needs Improvement'}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -332,13 +401,13 @@ export default function DataQualityPage() {
                 onClick={() => setActiveTab('duplicates')}
                 style={{
                   flex: '1',
-                  padding: '12px 16px',
-                  backgroundColor: activeTab === 'duplicates' ? colors.success : 'transparent',
-                  color: activeTab === 'duplicates' ? '#ffffff' : colors.text.secondary,
+                  padding: '8px 16px',
+                  backgroundColor: activeTab === 'duplicates' ? colors.card : 'transparent',
+                  color: activeTab === 'duplicates' ? colors.text.primary : colors.text.secondary,
                   border: 'none',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   fontSize: '14px',
-                  fontWeight: '500',
+                  fontWeight: activeTab === 'duplicates' ? '600' : '500',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
@@ -359,27 +428,38 @@ export default function DataQualityPage() {
                 onClick={() => setActiveTab('validation')}
                 style={{
                   flex: '1',
-                  padding: '12px 16px',
-                  backgroundColor: activeTab === 'validation' ? colors.success : 'transparent',
-                  color: activeTab === 'validation' ? '#ffffff' : colors.text.secondary,
+                  padding: '8px 16px',
+                  backgroundColor: activeTab === 'validation' ? colors.card : 'transparent',
+                  color: activeTab === 'validation' ? colors.text.primary : colors.text.secondary,
                   border: 'none',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   fontSize: '14px',
-                  fontWeight: '500',
+                  fontWeight: activeTab === 'validation' ? '600' : '500',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== 'validation') {
-                    e.currentTarget.style.backgroundColor = colors.cardHover
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== 'validation') {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }
+              >
+                Validation
+              </button>
+              <button
+                onClick={() => setActiveTab('cleanup')}
+                style={{
+                  flex: '1',
+                  padding: '8px 16px',
+                  backgroundColor: activeTab === 'cleanup' ? colors.card : 'transparent',
+                  color: activeTab === 'cleanup' ? colors.text.primary : colors.text.secondary,
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: activeTab === 'cleanup' ? '600' : '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
               >
+                Cleanup
+              </button>
+            </div>
+          </div>
                 Data Validation
               </button>
             </div>
@@ -551,6 +631,230 @@ export default function DataQualityPage() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'cleanup' && (
+            <div style={{ padding: '24px', ...card }}>
+              <div style={{ marginBottom: '24px' }}>
+                <h2 
+                  style={{
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    ...text.primary,
+                    marginBottom: '8px'
+                  }}
+                >
+                  Bulk Cleanup Operations
+                </h2>
+                <p style={{ fontSize: '14px', ...text.secondary }}>
+                  Clean and normalize contact data across all contacts
+                </p>
+              </div>
+
+              {/* Cleanup Status */}
+              {cleanupStatus && (
+                <div 
+                  style={{
+                    marginBottom: '24px',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    backgroundColor: cleanupStatus.type === 'success' 
+                      ? (isDark ? '#064e3b' : '#f0fdf4') 
+                      : (isDark ? '#7f1d1d' : '#fef2f2'),
+                    border: `1px solid ${cleanupStatus.type === 'success' ? colors.success : colors.error}`
+                  }}
+                >
+                  {cleanupStatus.type === 'success' ? (
+                    <CheckCircle style={{ width: '20px', height: '20px', color: colors.success }} />
+                  ) : (
+                    <XCircle style={{ width: '20px', height: '20px', color: colors.error }} />
+                  )}
+                  <p style={{ fontSize: '14px', color: cleanupStatus.type === 'success' 
+                    ? (isDark ? '#6ee7b7' : '#15803d') 
+                    : (isDark ? '#fca5a5' : '#dc2626'), margin: '0' }}>
+                    {cleanupStatus.message}
+                  </p>
+                </div>
+              )}
+
+              {/* Cleanup Actions */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <button
+                  onClick={() => handleCleanup('format-phones')}
+                  disabled={isCleaning}
+                  style={{
+                    padding: '16px',
+                    backgroundColor: isCleaning ? colors.text.tertiary : colors.cardHover,
+                    ...text.secondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: isCleaning ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isCleaning) {
+                      e.currentTarget.style.backgroundColor = colors.borderHover
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isCleaning) {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '16px', fontWeight: '600', ...text.primary, marginBottom: '4px' }}>
+                      Format Phone Numbers
+                    </div>
+                    <div style={{ fontSize: '12px', ...text.tertiary }}>
+                      Format all phone numbers to (XXX) XXX-XXXX format
+                    </div>
+                  </div>
+                  {isCleaning && cleanupAction === 'format-phones' ? (
+                    <RefreshCw style={{ width: '20px', height: '20px', animation: 'spin 1s linear infinite', color: colors.success }} />
+                  ) : (
+                    <FileCheck style={{ width: '20px', height: '20px', color: colors.success }} />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleCleanup('normalize-emails')}
+                  disabled={isCleaning}
+                  style={{
+                    padding: '16px',
+                    backgroundColor: isCleaning ? colors.text.tertiary : colors.cardHover,
+                    ...text.secondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: isCleaning ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isCleaning) {
+                      e.currentTarget.style.backgroundColor = colors.borderHover
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isCleaning) {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '16px', fontWeight: '600', ...text.primary, marginBottom: '4px' }}>
+                      Normalize Email Addresses
+                    </div>
+                    <div style={{ fontSize: '12px', ...text.tertiary }}>
+                      Convert all emails to lowercase and trim whitespace
+                    </div>
+                  </div>
+                  {isCleaning && cleanupAction === 'normalize-emails' ? (
+                    <RefreshCw style={{ width: '20px', height: '20px', animation: 'spin 1s linear infinite', color: colors.success }} />
+                  ) : (
+                    <FileCheck style={{ width: '20px', height: '20px', color: colors.success }} />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleCleanup('normalize-zip')}
+                  disabled={isCleaning}
+                  style={{
+                    padding: '16px',
+                    backgroundColor: isCleaning ? colors.text.tertiary : colors.cardHover,
+                    ...text.secondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: isCleaning ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isCleaning) {
+                      e.currentTarget.style.backgroundColor = colors.borderHover
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isCleaning) {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '16px', fontWeight: '600', ...text.primary, marginBottom: '4px' }}>
+                      Normalize ZIP Codes
+                    </div>
+                    <div style={{ fontSize: '12px', ...text.tertiary }}>
+                      Format ZIP codes to 5-digit standard format
+                    </div>
+                  </div>
+                  {isCleaning && cleanupAction === 'normalize-zip' ? (
+                    <RefreshCw style={{ width: '20px', height: '20px', animation: 'spin 1s linear infinite', color: colors.success }} />
+                  ) : (
+                    <FileCheck style={{ width: '20px', height: '20px', color: colors.success }} />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleCleanup('normalize-names')}
+                  disabled={isCleaning}
+                  style={{
+                    padding: '16px',
+                    backgroundColor: isCleaning ? colors.text.tertiary : colors.cardHover,
+                    ...text.secondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: isCleaning ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isCleaning) {
+                      e.currentTarget.style.backgroundColor = colors.borderHover
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isCleaning) {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '16px', fontWeight: '600', ...text.primary, marginBottom: '4px' }}>
+                      Normalize Names
+                    </div>
+                    <div style={{ fontSize: '12px', ...text.tertiary }}>
+                      Format names to proper case (First Last)
+                    </div>
+                  </div>
+                  {isCleaning && cleanupAction === 'normalize-names' ? (
+                    <RefreshCw style={{ width: '20px', height: '20px', animation: 'spin 1s linear infinite', color: colors.success }} />
+                  ) : (
+                    <FileCheck style={{ width: '20px', height: '20px', color: colors.success }} />
+                  )}
+                </button>
+              </div>
             </div>
           )}
 
