@@ -341,8 +341,15 @@ export default function DocumentsPage() {
           }))
           setLetterheads(mapped)
         }
+        // Close modal and reset form
         setShowLetterheadModal(false)
-        handleOpenLetterheadModal() // Reset form
+        setEditingLetterhead(null)
+        setLetterheadName('')
+        setLetterheadDescription('')
+        setLetterheadHeaderHtml('')
+        setLetterheadHeaderText('')
+        setLetterheadFooterHtml('')
+        setLetterheadIsDefault(false)
       } else {
         const error = await response.json()
         alert(`Error: ${error.error || 'Failed to save letterhead'}`)
@@ -1258,7 +1265,13 @@ export default function DocumentsPage() {
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowLetterheadModal(false)
-              handleOpenLetterheadModal() // Reset form
+              setEditingLetterhead(null)
+              setLetterheadName('')
+              setLetterheadDescription('')
+              setLetterheadHeaderHtml('')
+              setLetterheadHeaderText('')
+              setLetterheadFooterHtml('')
+              setLetterheadIsDefault(false)
             }
           }}
         >
@@ -1486,7 +1499,13 @@ export default function DocumentsPage() {
               <button
                 onClick={() => {
                   setShowLetterheadModal(false)
-                  handleOpenLetterheadModal() // Reset form
+                  setEditingLetterhead(null)
+                  setLetterheadName('')
+                  setLetterheadDescription('')
+                  setLetterheadHeaderHtml('')
+                  setLetterheadHeaderText('')
+                  setLetterheadFooterHtml('')
+                  setLetterheadIsDefault(false)
                 }}
                 style={{
                   padding: '12px 24px',
