@@ -265,10 +265,12 @@ export default function PrintLabelsPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
                   {/* Farm Selection */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', ...text.secondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <label htmlFor="farm-select" style={{ display: 'block', fontSize: '12px', fontWeight: '600', ...text.secondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Farm
                     </label>
                     <select
+                      id="farm-select"
+                      name="farm-select"
                       value={selectedFarm}
                       onChange={(e) => {
                         setSelectedFarm(e.target.value)
@@ -299,10 +301,12 @@ export default function PrintLabelsPage() {
 
                   {/* Label Format */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', ...text.secondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <label htmlFor="format-select" style={{ display: 'block', fontSize: '12px', fontWeight: '600', ...text.secondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Label Format
                     </label>
                     <select
+                      id="format-select"
+                      name="format-select"
                       value={selectedFormat}
                       onChange={(e) => {
                         setSelectedFormat(e.target.value as LabelFormatId)
@@ -329,10 +333,12 @@ export default function PrintLabelsPage() {
 
                   {/* Address Type */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', ...text.secondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <label htmlFor="address-type-select" style={{ display: 'block', fontSize: '12px', fontWeight: '600', ...text.secondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Address Type
                     </label>
                     <select
+                      id="address-type-select"
+                      name="address-type-select"
                       value={addressType}
                       onChange={(e) => setAddressType(e.target.value as AddressType)}
                       style={{
@@ -353,10 +359,12 @@ export default function PrintLabelsPage() {
 
                   {/* Font Family */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', ...text.secondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <label htmlFor="font-select" style={{ display: 'block', fontSize: '12px', fontWeight: '600', ...text.secondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Font
                     </label>
                     <select
+                      id="font-select"
+                      name="font-select"
                       value={fontFamily}
                       onChange={(e) => setFontFamily(e.target.value as FontFamily)}
                       style={{
@@ -521,52 +529,74 @@ export default function PrintLabelsPage() {
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                       }}
                     >
-                      {pageContacts.map((contact, idx) => {
-                        const position = calculateLabelPosition(idx, format)
-                        const addressLines = formatAddressForLabel(contact, addressType)
-                        return (
-                          <div
-                            key={`preview-${contact.id}-${idx}`}
-                            style={{
-                              position: 'absolute',
-                              top: `${(position.top / zoom).toFixed(2)}px`,
-                              left: `${(position.left / zoom).toFixed(2)}px`,
-                              width: `${(format.labelWidth / zoom).toFixed(2)}px`,
-                              height: `${(format.labelHeight / zoom).toFixed(2)}px`,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              fontFamily: FONT_FAMILIES[fontFamily],
-                              fontSize: `${(13 / zoom).toFixed(1)}px`,
-                              lineHeight: '1.35',
-                              textAlign: 'center',
-                              padding: `${(2 / zoom).toFixed(1)}px ${(4 / zoom).toFixed(1)}px`,
-                              boxSizing: 'border-box',
-                              border: isDark ? '1px solid #333' : '1px dashed #ddd',
-                              overflow: 'hidden',
-                              wordWrap: 'break-word',
-                              whiteSpace: 'normal',
-                              color: isDark ? '#ffffff' : '#000000', // Explicit color for visibility
-                            }}
-                          >
-                            {addressLines.map((line, lineIdx) => (
-                              <div 
-                                key={lineIdx} 
-                                style={{ 
-                                  margin: 0, 
-                                  padding: `0 ${(2 / zoom).toFixed(1)}px`,
-                                  wordWrap: 'break-word',
-                                  maxWidth: '100%',
-                                  color: isDark ? '#ffffff' : '#000000', // Explicit color
-                                }}
-                              >
-                                {line || '\u00A0'} {/* Non-breaking space if empty */}
-                              </div>
-                            ))}
-                          </div>
-                        )
-                      })}
+                      {(() => {
+                        let previewLabelIndex = 0
+                        return pageContacts.map((contact) => {
+                          const position = calculateLabelPosition(previewLabelIndex, format)
+                          const addressLines = formatAddressForLabel(contact, addressType)
+                          previewLabelIndex++
+                          
+                          // Debug: log what we're rendering
+                          if (addressLines.length === 0) {
+                            console.warn('Preview: Empty addressLines for', contact.firstName, contact.lastName)
+                          }
+                          
+                          return (
+                            <div
+                              key={`preview-${contact.id}-${previewLabelIndex - 1}`}
+                              style={{
+                                position: 'absolute',
+                                top: `${(position.top / zoom).toFixed(2)}px`,
+                                left: `${(position.left / zoom).toFixed(2)}px`,
+                                width: `${(format.labelWidth / zoom).toFixed(2)}px`,
+                                height: `${(format.labelHeight / zoom).toFixed(2)}px`,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                fontFamily: FONT_FAMILIES[fontFamily],
+                                fontSize: `${(13 / zoom).toFixed(1)}px`,
+                                lineHeight: '1.35',
+                                textAlign: 'center',
+                                padding: `${(2 / zoom).toFixed(1)}px ${(4 / zoom).toFixed(1)}px`,
+                                boxSizing: 'border-box',
+                                border: isDark ? '1px solid #333' : '1px dashed #ddd',
+                                overflow: 'visible', // Changed from hidden to see text
+                                wordWrap: 'break-word',
+                                whiteSpace: 'normal',
+                                color: '#000000', // Always black for visibility
+                                zIndex: 10, // Ensure text is on top
+                              }}
+                            >
+                              {addressLines.length > 0 ? (
+                                addressLines.map((line, lineIdx) => (
+                                  <div 
+                                    key={lineIdx} 
+                                    style={{ 
+                                      margin: 0, 
+                                      padding: `0 ${(2 / zoom).toFixed(1)}px`,
+                                      wordWrap: 'break-word',
+                                      maxWidth: '100%',
+                                      color: '#000000', // Always black
+                                      display: 'block',
+                                      visibility: 'visible',
+                                      opacity: 1,
+                                      position: 'relative',
+                                      zIndex: 11,
+                                    }}
+                                  >
+                                    {line}
+                                  </div>
+                                ))
+                              ) : (
+                                <div style={{ color: '#000000', visibility: 'visible', opacity: 1 }}>
+                                  {contact.firstName} {contact.lastName}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })
+                      })()}
                     </div>
                   </div>
                 </div>
