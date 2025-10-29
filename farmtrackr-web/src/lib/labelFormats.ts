@@ -26,9 +26,9 @@ export const AVERY_FORMATS: Record<string, AveryLabelFormat> = {
     columns: 3,
     rows: 10,
     labelsPerSheet: 30,
-    marginTop: 36, // 0.5 inch top margin
-    marginLeft: 14, // 0.19 inch left margin (Avery standard)
-    gapHorizontal: 8.5, // ~0.12 inch gap between columns (calculated from sheet width)
+    marginTop: 36, // 0.5 inch top margin (0.5" = 36pt)
+    marginLeft: 13.5, // 0.1875 inch (3/16") left margin - Avery standard
+    gapHorizontal: 9, // 0.125 inch gap between columns - calculated for perfect fit
     gapVertical: 0, // no vertical gap (labels touch)
   },
   '5161': {

@@ -105,13 +105,19 @@ export default function PrintLabelsPage() {
         const position = calculateLabelPosition(idx, format)
         const addressLines = formatAddressForLabel(contact, addressType)
         
+        // Convert points to inches for more accurate printing
+        const topInch = (position.top / 72).toFixed(4)
+        const leftInch = (position.left / 72).toFixed(4)
+        const widthInch = (format.labelWidth / 72).toFixed(4)
+        const heightInch = (format.labelHeight / 72).toFixed(4)
+        
         pageHTML += `
           <div class="label" style="
             position: absolute;
-            top: ${position.top}px;
-            left: ${position.left}px;
-            width: ${format.labelWidth}px;
-            height: ${format.labelHeight}px;
+            top: ${topInch}in;
+            left: ${leftInch}in;
+            width: ${widthInch}in;
+            height: ${heightInch}in;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -146,17 +152,25 @@ export default function PrintLabelsPage() {
               size: letter;
               margin: 0;
             }
+            html, body {
+              width: 8.5in;
+              height: 11in;
+              margin: 0;
+              padding: 0;
+              overflow: hidden;
+            }
             * {
               margin: 0;
               padding: 0;
               box-sizing: border-box;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
             body {
-              margin: 0;
-              padding: 0;
               font-family: ${FONT_FAMILIES[fontFamily]};
               background: white;
               color: black;
+              position: relative;
             }
             .label-page {
               width: 8.5in;
@@ -167,6 +181,7 @@ export default function PrintLabelsPage() {
               margin: 0;
               padding: 0;
               background: white;
+              overflow: hidden;
             }
             .label {
               position: absolute;
@@ -205,9 +220,17 @@ export default function PrintLabelsPage() {
     // Wait for content to load, then print
     printWindow.onload = () => {
       setTimeout(() => {
+        // Prevent browser from scaling/fitting to page
         printWindow.print()
-      }, 250)
+      }, 300)
     }
+    
+    // Also handle print with no scaling
+    printWindow.addEventListener('beforeprint', () => {
+      // Ensure no scaling is applied
+      printWindow.document.body.style.zoom = '1'
+      printWindow.document.body.style.transform = 'scale(1)'
+    })
   }
 
   return (
