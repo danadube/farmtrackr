@@ -29,6 +29,7 @@ interface Signature {
   closing: string
   signature: string
   type: string
+  isDefault?: boolean
 }
 
 export default function CreateLetterPage() {
