@@ -101,7 +101,7 @@ export default function PrintLabelsPage() {
       
       let pageHTML = '<div class="label-page" style="width: 612px; height: 792px; position: relative; page-break-after: always;">'
       
-      let labelIndex = 0 // Track actual label position (not array index)
+      let labelIndex = 0 // Track actual label position within this page (0-29 for 5160)
       pageContacts.forEach((contact) => {
         const addressLines = formatAddressForLabel(contact, addressType)
         
