@@ -10,10 +10,9 @@ export const metadata: Metadata = {
   description: 'Comprehensive farm contact management system',
   icons: {
     icon: [
-      { url: '/favicon.png', type: 'image/png', sizes: 'any' },
       { url: '/favicon-32.png', type: 'image/png', sizes: '32x32' },
       { url: '/favicon-16.png', type: 'image/png', sizes: '16x16' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png', sizes: 'any' },
     ],
   },
 }
@@ -26,6 +25,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+          <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+          <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+          <link rel="icon" type="image/png" href="/favicon.png" />
           {/* Prevent theme flash: hide until theme class is applied */}
           <style
             dangerouslySetInnerHTML={{
