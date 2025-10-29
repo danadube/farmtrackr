@@ -95,21 +95,34 @@ export default function PrintLabelsPage() {
 
     // Get all pages of labels
     const allPages: string[] = []
+    console.log('[PRINT] Total filtered contacts:', filteredContacts.length)
+    console.log('[PRINT] Total pages:', totalPages, 'Contacts per page:', contactsPerPage)
+    
     Array.from({ length: totalPages }).forEach((_, pageIdx) => {
       const pageStart = pageIdx * contactsPerPage
       const pageContacts = filteredContacts.slice(pageStart, pageStart + contactsPerPage)
+      console.log(`[PRINT] Page ${pageIdx}: slice(${pageStart}, ${pageStart + contactsPerPage}) = ${pageContacts.length} contacts`)
       
       let pageHTML = '<div class="label-page" style="width: 612px; height: 792px; position: relative; page-break-after: always;">'
       
       let labelIndex = 0 // Track actual label position within this page (0-29 for 5160)
+      let labelsGenerated = 0
       
       // CRITICAL: Print ALL contacts - use labelIndex for position to ensure sequential column-major order
-      pageContacts.forEach((contact) => {
+      pageContacts.forEach((contact, arrayIdx) => {
         const addressLines = formatAddressForLabel(contact, addressType)
+        
+        if (addressLines.length === 0) {
+          console.warn(`[PRINT] Contact ${arrayIdx} (label ${labelIndex}) has no address lines:`, contact.firstName, contact.lastName)
+        }
         
         // Use labelIndex for positioning (NOT arrayIdx) - ensures sequential positioning
         const position = calculateLabelPosition(labelIndex, format)
+        const column = Math.floor(labelIndex / format.rows)
+        const row = labelIndex % format.rows
+        console.log(`[PRINT] Contact ${arrayIdx} -> Label ${labelIndex} (col ${column}, row ${row}): ${contact.firstName} ${contact.lastName}`)
         labelIndex++ // Always increment for next label position
+        labelsGenerated++
         
         // Convert points to inches for more accurate printing
         const topInch = (position.top / 72).toFixed(4)
@@ -143,9 +156,12 @@ export default function PrintLabelsPage() {
         `
       })
       
+      console.log(`[PRINT] Page ${pageIdx}: Generated ${labelsGenerated} labels from ${pageContacts.length} contacts`)
       pageHTML += '</div>'
       allPages.push(pageHTML)
     })
+    
+    console.log(`[PRINT] Total labels generated across all pages:`, allPages.length, 'pages')
 
     // Write the print document
     printWindow.document.write(`
