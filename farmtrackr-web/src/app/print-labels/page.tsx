@@ -123,8 +123,8 @@ export default function PrintLabelsPage() {
             justify-content: center;
             align-items: center;
             font-family: ${FONT_FAMILIES[fontFamily]};
-            font-size: 11px;
-            line-height: 1.3;
+            font-size: 13px;
+            line-height: 1.35;
             text-align: center;
             padding: 2px 4px;
             box-sizing: border-box;
@@ -199,11 +199,11 @@ export default function PrintLabelsPage() {
               white-space: normal;
             }
             .label-line {
-              line-height: 1.3;
+              line-height: 1.35;
               margin: 0;
               padding: 0 2px;
               color: black;
-              font-size: 11px;
+              font-size: 13px;
               word-wrap: break-word;
               max-width: 100%;
             }
@@ -532,8 +532,8 @@ export default function PrintLabelsPage() {
                               justifyContent: 'center',
                               alignItems: 'center',
                               fontFamily: FONT_FAMILIES[fontFamily],
-                              fontSize: `${(11 / zoom).toFixed(1)}px`,
-                              lineHeight: '1.3',
+                              fontSize: `${(13 / zoom).toFixed(1)}px`,
+                              lineHeight: '1.35',
                               textAlign: 'center',
                               padding: `${(2 / zoom).toFixed(1)}px ${(4 / zoom).toFixed(1)}px`,
                               boxSizing: 'border-box',
