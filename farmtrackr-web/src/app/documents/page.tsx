@@ -201,6 +201,34 @@ export default function DocumentsPage() {
                     <Upload style={{ width: '16px', height: '16px' }} />
                     Upload
                   </button>
+                  <Link href="/documents/create-letter" style={{ textDecoration: 'none' }}>
+                    <button
+                      style={{
+                        padding: '12px 16px',
+                        backgroundColor: colors.primary,
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'background-color 0.2s ease',
+                        marginRight: '12px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = isDark ? '#2563eb' : '#1d4ed8'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.primary
+                      }}
+                    >
+                      <Plus style={{ width: '16px', height: '16px' }} />
+                      Mail Merge
+                    </button>
+                  </Link>
                   <button
                     style={{
                       padding: '12px 16px',

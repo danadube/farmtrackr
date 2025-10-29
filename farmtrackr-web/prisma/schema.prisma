@@ -72,3 +72,37 @@ model Document {
 
   @@map("documents")
 }
+
+model LetterTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  content     String // Template content with variables like {{farm}}, {{contact_name}}
+  variables   Json? // Available variables as JSON array
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("letter_templates")
+}
+
+enum SignatureType {
+  SINCERELY
+  BEST_REGARDS
+  WARMEST_REGARDS
+  THANK_YOU
+  RESPECTFULLY
+  CUSTOM
+}
+
+model Signature {
+  id        String        @id @default(cuid())
+  name      String // Display name for the signature
+  type      SignatureType @default(CUSTOM)
+  closing   String // Closing text (e.g., "Sincerely,")
+  signature String // Signature line (e.g., "John Doe" or "FarmTrackr Team")
+  isDefault Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("signatures")
+}
