@@ -52,18 +52,19 @@ export function FarmTrackrLogo({
 
   // Logo variant - show full logo with title (if showTitle is true)
   const sizeConfig = logoSizes[size]
-  const logoSrc = isDark ? "/images/title-logo-dark.png" : "/images/title-logo-light.png"
+  // Use transparent version for dark mode, light version for light mode
+  const logoSrc = isDark ? "/images/title-logo-transparent.png" : "/images/title-logo-light.png"
   
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: showTitle ? '12px' : '0' }} className={className}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: showTitle ? '12px' : '0', width: '100%' }} className={className}>
       <Image
         src={logoSrc}
         alt="FarmTrackr"
         width={sizeConfig.width}
         height={sizeConfig.height}
         style={{ 
-          width: 'auto',
-          height: sizeConfig.height, 
+          width: '100%',
+          height: 'auto', 
           objectFit: 'contain',
           maxWidth: '100%'
         }}

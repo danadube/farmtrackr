@@ -163,8 +163,8 @@ export function Sidebar({ children }: SidebarProps) {
         id="sidebar"
       >
         {/* Logo */}
-        <div style={{ marginBottom: '32px' }}>
-          <Link href="/" style={{ textDecoration: 'none', color: colors.text.primary }}>
+        <div style={{ marginBottom: '32px', width: '100%', padding: '0 8px' }}>
+          <Link href="/" style={{ textDecoration: 'none', color: colors.text.primary, display: 'block', width: '100%' }}>
             <FarmTrackrLogo size="lg" variant="logo" showTitle={false} />
           </Link>
         </div>
