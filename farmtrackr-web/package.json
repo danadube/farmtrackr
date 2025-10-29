@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
+    "vercel-build": "prisma generate && next build",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "import-data": "tsx scripts/import-local-data.ts"
