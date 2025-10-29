@@ -1335,7 +1335,57 @@ export default function DocumentsPage() {
                 ...text.secondary,
                 borderLeft: `3px solid ${colors.primary}20`
               }}>
-                <strong style={{ ...text.primary }}>💡 Tip:</strong> Click <strong>"Load Janice Glaab Template"</strong> to auto-fill a template, or paste your own HTML.
+                <strong style={{ ...text.primary }}>💡 Tip:</strong> If you have a Word letterhead, you can:
+                <ul style={{ marginTop: '8px', marginBottom: '8px', paddingLeft: '20px' }}>
+                  <li>Save Word doc as "Web Page, Filtered" HTML, then copy the relevant HTML</li>
+                  <li>Or copy from Word → paste into Gmail/Docs → copy as HTML</li>
+                  <li>Or manually convert: use &lt;div&gt;, &lt;strong&gt;, &lt;br/&gt; tags with inline styles</li>
+                </ul>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/letterhead-template-janice-glaab-simple.html')
+                      const html = await response.text()
+                      // Remove HTML comments
+                      const cleanHtml = html.replace(/<!--[\s\S]*?-->/g, '').trim()
+                      
+                      // Extract header section (everything before FOOTER SECTION comment)
+                      const headerMatch = cleanHtml.match(/<!-- HEADER SECTION -->([\s\S]*?)(?:<!-- FOOTER SECTION -->|$)/)
+                      const footerMatch = cleanHtml.match(/<!-- FOOTER SECTION -->([\s\S]*?)$/)
+                      
+                      if (headerMatch && headerMatch[1]) {
+                        setLetterheadHeaderHtml(headerMatch[1].trim())
+                      } else {
+                        // Fallback: if no markers, use first div as header
+                        const firstDivMatch = cleanHtml.match(/<div[^>]*>[\s\S]*?<\/div>/)
+                        if (firstDivMatch) {
+                          setLetterheadHeaderHtml(cleanHtml.split(/<!-- FOOTER SECTION -->/)[0].trim())
+                        }
+                      }
+                      
+                      if (footerMatch && footerMatch[1]) {
+                        setLetterheadFooterHtml(footerMatch[1].trim())
+                      }
+                    } catch (error) {
+                      console.error('Failed to load template:', error)
+                      alert('Template not found. Make sure the file exists in /public/ folder.')
+                    }
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: colors.primary,
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    marginTop: '8px'
+                  }}
+                >
+                  📋 Load Janice Glaab Template (Simple)
+                </button>
               </div>
               <textarea
                 value={letterheadHeaderHtml}
