@@ -157,6 +157,7 @@ export default function PrintLabelsPage() {
             @page {
               size: letter;
               margin: 0;
+              padding: 0;
             }
             html, body {
               width: 8.5in;
@@ -181,13 +182,15 @@ export default function PrintLabelsPage() {
             .label-page {
               width: 8.5in;
               height: 11in;
+              min-height: 11in;
+              max-height: 11in;
               position: relative;
               page-break-after: always;
               page-break-inside: avoid;
               margin: 0;
               padding: 0;
               background: white;
-              overflow: hidden;
+              overflow: visible; /* Changed from hidden to ensure all labels are visible */
             }
             .label {
               position: absolute;
@@ -197,12 +200,14 @@ export default function PrintLabelsPage() {
               align-items: center;
               text-align: center;
               box-sizing: border-box;
-              overflow: hidden;
+              overflow: visible; /* Changed to ensure text is visible */
               border: none;
               background: white;
               color: black;
               word-wrap: break-word;
               white-space: normal;
+              visibility: visible !important;
+              opacity: 1 !important;
             }
             .label-line {
               line-height: 1.35;
