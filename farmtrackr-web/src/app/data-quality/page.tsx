@@ -460,10 +460,6 @@ export default function DataQualityPage() {
               </button>
             </div>
           </div>
-                Data Validation
-              </button>
-            </div>
-          </div>
 
           {/* Content */}
           {activeTab === 'duplicates' && (
