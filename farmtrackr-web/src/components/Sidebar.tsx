@@ -150,7 +150,7 @@ export function Sidebar({ children }: SidebarProps) {
           width: '256px',
           background: colors.surface,
           borderRight: `1px solid ${colors.border}`,
-          padding: '24px',
+          padding: '16px 24px',
           display: 'flex',
           flexDirection: 'column',
           zIndex: 40,
@@ -163,7 +163,7 @@ export function Sidebar({ children }: SidebarProps) {
         id="sidebar"
       >
         {/* Logo */}
-        <div style={{ marginBottom: '32px', width: '100%', padding: '0 8px' }}>
+        <div style={{ marginBottom: '16px', marginTop: '8px', width: '100%', padding: '0 8px' }}>
           <Link href="/" style={{ textDecoration: 'none', color: colors.text.primary, display: 'block', width: '100%' }}>
             <FarmTrackrLogo size="lg" variant="logo" showTitle={false} />
           </Link>
