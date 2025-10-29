@@ -102,12 +102,19 @@ export default function PrintLabelsPage() {
       let pageHTML = '<div class="label-page" style="width: 612px; height: 792px; position: relative; page-break-after: always;">'
       
       let labelIndex = 0 // Track actual label position within this page (0-29 for 5160)
-      pageContacts.forEach((contact) => {
+      console.log(`Page ${pageIdx}: Processing ${pageContacts.length} contacts, should generate ${Math.min(pageContacts.length, contactsPerPage)} labels`)
+      
+      pageContacts.forEach((contact, arrayIdx) => {
         const addressLines = formatAddressForLabel(contact, addressType)
         
-        // Always print label, even if only name exists
+        // Always print label - addressLines will always have at least the name
+        console.log(`Page ${pageIdx}, Contact ${arrayIdx} (label ${labelIndex}): ${contact.firstName} ${contact.lastName}, addressLines: ${addressLines.length}`)
+        
         // Use labelIndex for positioning to ensure column-major order is maintained
         const position = calculateLabelPosition(labelIndex, format)
+        const column = Math.floor(labelIndex / format.rows)
+        const row = labelIndex % format.rows
+        console.log(`  Position: labelIndex=${labelIndex}, column=${column}, row=${row}, top=${position.top}, left=${position.left}`)
         labelIndex++ // Increment for next label position
         
         // Convert points to inches for more accurate printing
