@@ -349,8 +349,8 @@ Based on Swift app challenges:
 
 ---
 
-### **v0.5.0 - Document Management & Google Sheets Integration** (Target: Q4 2025)
-**Focus:** Complete document management and Google Sheets sync capabilities
+### **v0.5.0 - Google Integration (Sheets & Contacts)** (Target: Q4 2025)
+**Focus:** Complete Google Sheets sync and Google Contacts integration
 
 #### Google Sheets Sync
 - [ ] **Authentication**
@@ -379,11 +379,41 @@ Based on Swift app challenges:
   - Separate sync per farm
   - Bulk operations across farms
 
-**Estimated Development Time:** 3-4 weeks
+#### Google Contacts Integration
+- [ ] **People API Setup**
+  - Enable People API (replaces deprecated Contacts API)
+  - OAuth 2.0 with contacts scope
+  - Token management and refresh
+
+- [ ] **Import from Google Contacts**
+  - Connect Google account
+  - One-time import of all contacts
+  - Field mapping (Google → FarmTrackr)
+  - Duplicate detection during import
+  - Import preview and selection
+
+- [ ] **Export to Google Contacts**
+  - Export FarmTrackr contacts to Google Contacts
+  - Create new Google contacts
+  - Update existing contacts (match by email/name)
+  - Handle merge conflicts
+
+- [ ] **Bidirectional Sync** (Optional Advanced)
+  - Two-way synchronization
+  - Conflict resolution UI
+  - Sync status dashboard
+  - Choose sync direction per contact
+  - Automatic sync scheduling
+
+**Estimated Development Time:** 4-5 weeks
+- Google Sheets: 2-3 weeks
+- Google Contacts: 2 weeks (basic), +1 week for full sync
 
 **Dependencies:**
-- Google Sheets API credentials
-- OAuth setup
+- Google Cloud Project setup
+- People API enabled
+- Google Sheets API enabled
+- OAuth 2.0 credentials
 - Secure backend for token storage
 
 ---
@@ -519,6 +549,7 @@ Based on Swift app challenges:
 | Data Validation | ✅ Complete | ✅ Complete | ✅ Done | Validation + cleanup UI working |
 | Data Quality UI | ✅ Complete | ✅ Complete | ✅ Done | Full page with tabs implemented |
 | Google Sheets Sync | 🟡 Partial | 🟡 Partial | 🟡 Medium | OAuth needed |
+| Google Contacts Integration | ❌ Not Started | ❌ Not Started | 🟡 Medium | People API + OAuth |
 | Import Templates | ✅ Complete | ❌ Not Started | 🟡 Medium | Future enhancement |
 | Document Management | ✅ Complete | 🟡 API Complete, UI Partial | 🟡 Medium | CRUD API done, file upload pending |
 | Batch Operations | ✅ Complete | ❌ Not Started | 🟡 Medium | Future enhancement |
@@ -551,8 +582,9 @@ Based on Swift app challenges:
 ### Medium Priority (Nice to Have)
 1. **Excel Import/Export** - Additional format support
 2. **Google Sheets Full Integration** - Enhanced sync
-3. **Document Management** - File organization
-4. **Import Templates** - Reusability
+3. **Google Contacts Integration** - Import/export contacts
+4. **Document Management** - File organization
+5. **Import Templates** - Reusability
 
 ---
 
@@ -584,7 +616,7 @@ Based on Swift app challenges:
 | v0.3.0 | Q1 2025 ✅ | Export + Data Quality |
 | v0.4.0 | Oct 2025 ✅ | **Label Printing & PDF Export** |
 | v0.4.1 | Q4 2025 🚧 | Document Management (In Progress) |
-| v0.5.0 | Q4 2025 | Google Sheets Integration |
+| v0.5.0 | Q4 2025 | Google Integration (Sheets & Contacts) |
 | v0.6.0 | Q3 2025 | Advanced Features |
 | v1.0.0 | Q4 2025 | Production Release |
 
@@ -635,14 +667,35 @@ This roadmap should be reviewed and updated:
 
 **Estimated Time:** 2-3 days
 
-### Priority 2: Google Sheets Authentication (v0.5.0)
-**Status:** API Structure Exists 🟡
+### Priority 2: Google Integration (v0.5.0)
+**Status:** API Structure Exists for Sheets 🟡, Contacts Not Started ❌
 
-**Tasks:**
+**Google Sheets Tasks:**
 1. **OAuth 2.0 Setup**
    - Google Cloud Console configuration
    - OAuth flow implementation
    - Token storage (secure backend)
+
+2. **Complete Sync Implementation**
+   - Import from Google Sheets
+   - Export to Google Sheets
+   - Sync status UI
+
+**Google Contacts Tasks:**
+1. **People API Setup**
+   - Enable People API in Google Cloud Console
+   - Add contacts scope to OAuth
+
+2. **Import from Google Contacts**
+   - Connect Google account
+   - Fetch contacts via People API
+   - Field mapping wizard
+   - Import to FarmTrackr
+
+3. **Export to Google Contacts**
+   - Create/update Google contacts
+   - Match existing contacts
+   - Handle duplicates
 
 2. **Complete Sync Implementation**
    - Import from Google Sheets
