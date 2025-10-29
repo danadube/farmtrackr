@@ -206,3 +206,60 @@
     margin-bottom: 8px; /* 1 * 8 */
   }
 }
+
+/* Print styles for label printing */
+@media print {
+  @page {
+    size: letter;
+    margin: 0;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  /* Hide everything except label pages */
+  body > *:not(.label-page-container) {
+    display: none !important;
+  }
+  
+  .label-page {
+    width: 8.5in;
+    height: 11in;
+    position: relative;
+    page-break-after: always;
+    page-break-inside: avoid;
+    margin: 0;
+    padding: 0;
+    background: white;
+    box-sizing: border-box;
+  }
+  
+  .label {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-sizing: border-box;
+    overflow: hidden;
+    border: none !important;
+    background: white !important;
+    color: black !important;
+  }
+  
+  .label-line {
+    line-height: 1.4;
+    margin: 0;
+    padding: 0;
+    color: black !important;
+  }
+  
+  /* No borders, shadows, or backgrounds when printing */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
