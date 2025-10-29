@@ -404,45 +404,55 @@ export default function ImportExportPage() {
                     </div>
                   )}
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
-                        Start Date
-                      </label>
-                      <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          border: `1px solid ${colors.border}`,
-                          borderRadius: '10px',
-                          fontSize: '14px',
-                          backgroundColor: colors.card,
-                          color: colors.text.primary
-                        }}
-                      />
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                      Filter by Date Created (Optional)
+                    </label>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+                      <div style={{ flex: '1' }}>
+                        <label style={{ display: 'block', fontSize: '11px', ...text.tertiary, marginBottom: '4px' }}>
+                          From
+                        </label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '8px',
+                            fontSize: '13px',
+                            backgroundColor: colors.card,
+                            color: colors.text.primary,
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+                      <div style={{ flex: '1' }}>
+                        <label style={{ display: 'block', fontSize: '11px', ...text.tertiary, marginBottom: '4px' }}>
+                          To
+                        </label>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '8px',
+                            fontSize: '13px',
+                            backgroundColor: colors.card,
+                            color: colors.text.primary,
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
-                        End Date
-                      </label>
-                      <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          border: `1px solid ${colors.border}`,
-                          borderRadius: '10px',
-                          fontSize: '14px',
-                          backgroundColor: colors.card,
-                          color: colors.text.primary
-                        }}
-                      />
-                    </div>
+                    <p style={{ fontSize: '11px', ...text.tertiary, marginTop: '6px', marginBottom: '0' }}>
+                      Export contacts created within this date range
+                    </p>
                   </div>
                 </div>
 

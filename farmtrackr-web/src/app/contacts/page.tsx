@@ -8,7 +8,10 @@ import {
   Filter,
   MoreHorizontal,
   Plus,
-  Building2
+  Building2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react'
 import Link from 'next/link'
 import { Sidebar } from '@/components/Sidebar'
@@ -22,6 +25,8 @@ export default function ContactsPage() {
   const [selectedFarm, setSelectedFarm] = useState<string>('all')
   const [selectedState, setSelectedState] = useState<string>('all')
   const [showFilters, setShowFilters] = useState(false)
+  const [sortBy, setSortBy] = useState<'firstName' | 'lastName' | 'city' | 'farm' | 'state' | 'dateCreated'>('lastName')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   useEffect(() => {
     async function fetchContacts() {
@@ -76,6 +81,51 @@ export default function ContactsPage() {
     }
     
     return true
+  }).sort((a, b) => {
+    let aValue: string | number | Date | undefined
+    let bValue: string | number | Date | undefined
+
+    switch (sortBy) {
+      case 'firstName':
+        aValue = a.firstName || ''
+        bValue = b.firstName || ''
+        break
+      case 'lastName':
+        aValue = a.lastName || ''
+        bValue = b.lastName || ''
+        break
+      case 'city':
+        aValue = a.city || ''
+        bValue = b.city || ''
+        break
+      case 'farm':
+        aValue = a.farm || ''
+        bValue = b.farm || ''
+        break
+      case 'state':
+        aValue = a.state || ''
+        bValue = b.state || ''
+        break
+      case 'dateCreated':
+        aValue = a.dateCreated instanceof Date ? a.dateCreated.getTime() : new Date(a.dateCreated).getTime()
+        bValue = b.dateCreated instanceof Date ? b.dateCreated.getTime() : new Date(b.dateCreated).getTime()
+        break
+      default:
+        return 0
+    }
+
+    // Handle string comparisons
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      const comparison = aValue.localeCompare(bValue)
+      return sortOrder === 'asc' ? comparison : -comparison
+    }
+
+    // Handle number/date comparisons
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortOrder === 'asc' ? aValue - bValue : bValue - aValue
+    }
+
+    return 0
   })
 
   if (loading) {
@@ -301,6 +351,75 @@ export default function ContactsPage() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Sort Controls */}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ padding: '12px 16px', ...card, display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ArrowUpDown style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, whiteSpace: 'nowrap' }}>
+                  Sort by:
+                </label>
+              </div>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                style={{
+                  padding: '8px 12px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  backgroundColor: colors.card,
+                  color: colors.text.primary,
+                  cursor: 'pointer',
+                  minWidth: '140px'
+                }}
+              >
+                <option value="lastName">Last Name</option>
+                <option value="firstName">First Name</option>
+                <option value="city">City</option>
+                <option value="farm">Farm</option>
+                <option value="state">State</option>
+                <option value="dateCreated">Date Created</option>
+              </select>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                style={{
+                  padding: '8px 12px',
+                  backgroundColor: colors.cardHover,
+                  ...text.secondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'background-color 0.2s ease',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.borderHover
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.cardHover
+                }}
+              >
+                {sortOrder === 'asc' ? (
+                  <>
+                    <ArrowUp style={{ width: '14px', height: '14px' }} />
+                    Ascending
+                  </>
+                ) : (
+                  <>
+                    <ArrowDown style={{ width: '14px', height: '14px' }} />
+                    Descending
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
