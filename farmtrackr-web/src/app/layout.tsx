@@ -21,6 +21,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+          {/* Prevent theme flash: hide until theme class is applied */}
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+                html { visibility: hidden; }
+                html.dark, html.light { visibility: visible; }
+              `,
+            }}
+          />
           <script
             dangerouslySetInnerHTML={{
               __html: `
@@ -44,10 +53,13 @@ export default function RootLayout({
                     document.documentElement.setAttribute('data-theme', resolvedTheme);
                     // Prevent flash by setting style immediately
                     document.documentElement.style.colorScheme = resolvedTheme;
+                    // Reveal page once the theme class is applied
+                    document.documentElement.style.visibility = 'visible';
                   } catch (e) {
                     document.documentElement.classList.remove('light', 'dark', 'system');
                     document.documentElement.classList.add('light');
                     document.documentElement.setAttribute('data-theme', 'light');
+                    document.documentElement.style.visibility = 'visible';
                   }
                 })();
               `,
