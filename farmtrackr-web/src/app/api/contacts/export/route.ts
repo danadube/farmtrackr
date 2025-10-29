@@ -154,13 +154,12 @@ export async function POST(request: NextRequest) {
       const generationDate = new Date()
       const fileName = `farmtrackr_report_${generationDate.toISOString().split('T')[0]}.pdf`
       
-      doc.info({
-        Title: 'FarmTrackr Contact Report',
-        Author: 'FarmTrackr',
-        Subject: `Contact Export - ${exportData.length} contacts`,
-        Keywords: 'FarmTrackr, Contacts, Export',
-        CreationDate: generationDate,
-      })
+      // Set PDF metadata - pdfkit requires setting these properties directly
+      doc.info.Title = 'FarmTrackr Contact Report'
+      doc.info.Author = 'FarmTrackr'
+      doc.info.Subject = `Contact Export - ${exportData.length} contacts`
+      doc.info.Keywords = 'FarmTrackr, Contacts, Export'
+      doc.info.CreationDate = generationDate
       
       // Helper function to add page number
       const addPageNumber = () => {
