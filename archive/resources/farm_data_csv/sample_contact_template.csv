@@ -1,0 +1,4 @@
+firstname,lastname,address,city,state,zipcode,email,email2,phone,phone2,phone3,phone4,phone5,phone6,siteaddress,sitecity,sitestate,sitezipcode,notes,farm
+John,Doe,123 Main St,Anytown,CA,90210,john.doe@email.com,jane.doe@email.com,555-123-4567,555-987-6543,,,,456 Farm Rd,Farmville,CA,90211,Primary contact for deliveries,Alicante
+Jane,Smith,456 Oak Ave,Somewhere,TX,75001,jane.smith@email.com,,555-234-5678,,,,,,,Reliable supplier,Cielo
+Bob,Johnson,789 Pine St,Elsewhere,FL,33101,bob.johnson@email.com,,555-345-6789,555-111-2222,,,,,,,Seasonal contractor,Escala 
