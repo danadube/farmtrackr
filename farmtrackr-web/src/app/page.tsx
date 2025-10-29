@@ -14,6 +14,8 @@ import {
   Home
 } from 'lucide-react'
 import Link from 'next/link'
+import { FarmTrackrLogo } from '@/components/FarmTrackrLogo'
+import { Sidebar } from '@/components/Sidebar'
 
 // Mock data - replace with real API calls
 const mockContacts: FarmContact[] = [
@@ -98,69 +100,13 @@ export default function DashboardPage() {
     .slice(0, 5)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      {/* Navigation Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg border-r border-gray-200">
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-              <Home className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">FarmTrackr</h1>
-              <p className="text-sm text-gray-500">Farm CRM</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="p-4 space-y-2">
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">MAIN</h3>
-            <Link href="/" className="flex items-center space-x-3 px-3 py-2 bg-green-100 text-green-700 rounded-lg">
-              <Home className="w-4 h-4" />
-              <span className="font-medium">Home</span>
-            </Link>
-            <Link href="/contacts" className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-              <Users className="w-4 h-4" />
-              <span>Contacts</span>
-            </Link>
-            <Link href="/documents" className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-              <FileText className="w-4 h-4" />
-              <span>Documents</span>
-            </Link>
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">TOOLS</h3>
-            <Link href="/data-quality" className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-              <TrendingUp className="w-4 h-4" />
-              <span>Data Quality</span>
-            </Link>
-            <Link href="/import-export" className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-              <Upload className="w-4 h-4" />
-              <span>Import & Export</span>
-            </Link>
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">SETTINGS</h3>
-            <Link href="/settings" className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-              <Building2 className="w-4 h-4" />
-              <span>Settings</span>
-            </Link>
-          </div>
-        </nav>
-      </div>
-
-      {/* Main Content */}
-      <div className="ml-64 p-8">
+    <Sidebar>
+      <div className="p-8">
         {/* Page Header */}
         <div className="mb-8">
           <div className="bg-gradient-to-r from-green-100 to-green-200 rounded-xl p-6">
             <div className="flex items-center space-x-3">
-              <Home className="w-6 h-6 text-green-700" />
+              <FarmTrackrLogo size="lg" variant="icon" className="text-green-700" />
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Home</h1>
                 <p className="text-gray-700 mt-1">Welcome to your farm dashboard.</p>
@@ -279,6 +225,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+    </Sidebar>
   )
 }
