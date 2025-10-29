@@ -349,8 +349,8 @@ Based on Swift app challenges:
 
 ---
 
-### **v0.5.0 - Google Integration (Sheets & Contacts)** (Target: Q4 2025)
-**Focus:** Complete Google Sheets sync and Google Contacts integration
+### **v0.5.0 - Google Integration (Sheets, Contacts & Drive)** (Target: Q4 2025)
+**Focus:** Complete Google ecosystem integration for data and document management
 
 #### Google Sheets Sync
 - [ ] **Authentication**
@@ -429,16 +429,42 @@ Based on Swift app challenges:
   - Follow-up reminders from calendar
   - Meeting notes attached to events
 
-**Estimated Development Time:** 5-6 weeks total
+#### Google Drive Integration
+- [ ] **Drive API Setup**
+  - Enable Google Drive API
+  - OAuth 2.0 with Drive scope
+  - Token management and refresh
+
+- [ ] **File Management**
+  - Access files from Google Drive
+  - Upload documents to Drive
+  - Link Drive files to contacts/documents
+  - Organize by folders
+
+- [ ] **Document Storage Integration**
+  - Store documents in Google Drive (alternative to Vercel Blob/S3)
+  - Sync FarmTrackr documents to Drive
+  - Access Drive documents from FarmTrackr
+  - File preview for Drive documents
+
+- [ ] **Backup & Sync**
+  - Automatic backup to Google Drive
+  - Export all data to Drive
+  - Restore from Drive backups
+  - Version history
+
+**Estimated Development Time:** 6-7 weeks total
 - Google Sheets: 2-3 weeks
 - Google Contacts: 2 weeks (basic), +1 week for full sync
 - Google Calendar: 1-2 weeks
+- Google Drive: 1 week
 
 **Dependencies:**
 - Google Cloud Project setup
 - People API enabled
 - Google Calendar API enabled
 - Google Sheets API enabled
+- Google Drive API enabled
 - OAuth 2.0 credentials with multiple scopes
 - Secure backend for token storage
 
@@ -577,6 +603,7 @@ Based on Swift app challenges:
 | Google Sheets Sync | 🟡 Partial | 🟡 Partial | 🟡 Medium | OAuth needed |
 | Google Contacts Integration | ❌ Not Started | ❌ Not Started | 🟡 Medium | People API + OAuth |
 | Google Calendar Integration | ❌ Not Started | ❌ Not Started | 🟡 Medium | Calendar API + OAuth |
+| Google Drive Integration | ❌ Not Started | ❌ Not Started | 🟡 Medium | Drive API + OAuth |
 | Import Templates | ✅ Complete | ❌ Not Started | 🟡 Medium | Future enhancement |
 | Document Management | ✅ Complete | 🟡 API Complete, UI Partial | 🟡 Medium | CRUD API done, file upload pending |
 | Batch Operations | ✅ Complete | ❌ Not Started | 🟡 Medium | Future enhancement |
@@ -611,8 +638,9 @@ Based on Swift app challenges:
 2. **Google Sheets Full Integration** - Enhanced sync
 3. **Google Contacts Integration** - Import/export contacts
 4. **Google Calendar Integration** - Schedule meetings/visits
-5. **Document Management** - File organization
-6. **Import Templates** - Reusability
+5. **Google Drive Integration** - Document storage and file management
+6. **Document Management** - File organization
+7. **Import Templates** - Reusability
 
 ---
 
@@ -644,7 +672,7 @@ Based on Swift app challenges:
 | v0.3.0 | Q1 2025 ✅ | Export + Data Quality |
 | v0.4.0 | Oct 2025 ✅ | **Label Printing & PDF Export** |
 | v0.4.1 | Q4 2025 🚧 | Document Management (In Progress) |
-| v0.5.0 | Q4 2025 | Google Integration (Sheets & Contacts) |
+| v0.5.0 | Q4 2025 | Google Integration (Sheets, Contacts, Calendar & Drive) |
 | v0.6.0 | Q3 2025 | Advanced Features |
 | v1.0.0 | Q4 2025 | Production Release |
 
