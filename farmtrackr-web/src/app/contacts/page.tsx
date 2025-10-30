@@ -27,7 +27,7 @@ export default function ContactsPage() {
   const [selectedFarm, setSelectedFarm] = useState<string>('all')
   const [selectedState, setSelectedState] = useState<string>('all')
   const [showFilters, setShowFilters] = useState(false)
-  const [sortBy, setSortBy] = useState<'firstName' | 'lastName' | 'city' | 'farm' | 'state' | 'dateCreated'>('lastName')
+  const [sortBy, setSortBy] = useState<'name' | 'firstName' | 'lastName' | 'city' | 'farm' | 'state' | 'dateCreated'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   useEffect(() => {
@@ -62,9 +62,9 @@ export default function ContactsPage() {
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
+      const displayName = (contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim()).toLowerCase()
       const matchesSearch = (
-        contact.firstName?.toLowerCase().includes(query) ||
-        contact.lastName?.toLowerCase().includes(query) ||
+        displayName.includes(query) ||
         contact.farm?.toLowerCase().includes(query) ||
         contact.email1?.toLowerCase().includes(query) ||
         contact.city?.toLowerCase().includes(query)
@@ -88,6 +88,13 @@ export default function ContactsPage() {
     let bValue: string | number | Date | undefined
 
     switch (sortBy) {
+      case 'name': {
+        const aName = (a.organizationName || `${a.lastName || ''}, ${a.firstName || ''}`.trim()).toLowerCase()
+        const bName = (b.organizationName || `${b.lastName || ''}, ${b.firstName || ''}`.trim()).toLowerCase()
+        aValue = aName
+        bValue = bName
+        break
+      }
       case 'firstName':
         aValue = a.firstName || ''
         bValue = b.firstName || ''
@@ -420,6 +427,7 @@ export default function ContactsPage() {
                     minWidth: '140px'
                   }}
                 >
+                  <option value="name">Name</option>
                   <option value="lastName">Last Name</option>
                   <option value="firstName">First Name</option>
                   <option value="city">City</option>

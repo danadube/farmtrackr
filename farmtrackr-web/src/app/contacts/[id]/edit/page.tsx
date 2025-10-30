@@ -24,6 +24,7 @@ export default function EditContactPage() {
           setInitialData({
             firstName: data.firstName || '',
             lastName: data.lastName || '',
+            organizationName: data.organizationName || '',
             farm: data.farm || '',
             mailingAddress: data.mailingAddress || '',
             city: data.city || '',
