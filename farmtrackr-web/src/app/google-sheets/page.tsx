@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { FARM_SPREADSHEETS, FarmName } from '@/lib/farmSpreadsheets'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
@@ -23,6 +23,20 @@ export default function GoogleSheetsPage() {
     type: 'success' | 'error' | null
     message: string
   }>({ type: null, message: '' })
+  const [farmCounts, setFarmCounts] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/api/contacts/farm-status')
+        if (res.ok) {
+          const data = await res.json()
+          setFarmCounts(data.counts || {})
+        }
+      } catch (_) {}
+    }
+    load()
+  }, [])
 
   const handleImport = async () => {
     if (!selectedFarm) return
@@ -228,9 +242,27 @@ export default function GoogleSheetsPage() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '16px', margin: '0' }}>
-                      {farmName}
-                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '16px', margin: '0' }}>
+                        {farmName}
+                      </h3>
+                      {farmCounts[farmName] ? (
+                        <span
+                          title={`${farmCounts[farmName]} in app`}
+                          style={{
+                            padding: '2px 8px',
+                            borderRadius: '9999px',
+                            backgroundColor: isDark ? '#064e3b' : '#ecfdf5',
+                            border: `1px solid ${colors.success}`,
+                            color: colors.success,
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Imported
+                        </span>
+                      ) : null}
+                    </div>
                     <ExternalLink style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
                   </div>
                   <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 8px 0' }}>
