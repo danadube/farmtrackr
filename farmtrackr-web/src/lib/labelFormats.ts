@@ -127,11 +127,11 @@ export function formatAddressForLabel(
     mailingAddress?: string | null
     city?: string | null
     state?: string | null
-    zipCode?: number | null
+    zipCode?: string | number | null
     siteMailingAddress?: string | null
     siteCity?: string | null
     siteState?: string | null
-    siteZipCode?: number | null
+    siteZipCode?: string | number | null
   },
   addressType: 'mailing' | 'site'
 ): string[] {
