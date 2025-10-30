@@ -64,14 +64,14 @@ export async function POST(request: NextRequest) {
         const fullName = getField(['Name', 'Full Name', 'FULL NAME'])
         let firstName = getField(['First Name', 'firstName', 'First', 'first name', 'FIRST NAME']) || ''
         let lastName = getField(['Last Name', 'lastName', 'Last', 'last name', 'LAST NAME']) || ''
-        let org = farm
+        let organizationName = getField(['Organization', 'organization', 'Organization Name', 'organizationName', 'Trust', 'trust', 'ORGANIZATION', 'TRUST'])
 
-        // Business/Trust rule: if only one name provided and org not set differently, move to farm field
-        if (!org) {
+        // Business/Trust rule: if only one name provided, move to organizationName field
+        if (!organizationName) {
           if (fullName && !firstName && !lastName) {
-            org = fullName
+            organizationName = fullName
           } else if ((firstName && !lastName) || (lastName && !firstName)) {
-            org = (firstName || lastName) as string
+            organizationName = (firstName || lastName) as string
             firstName = ''
             lastName = ''
           }
@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
         return {
           firstName,
           lastName,
-          farm: org,
+          organizationName,
+          farm: farm,
           mailingAddress: getField(['Mailing Address', 'mailingAddress', 'Address', 'address', 'MAILING ADDRESS']),
           city: getField(['City', 'city', 'CITY']),
           state: getField(['State', 'state', 'STATE']),
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
           const contactData = mapRow(row)
 
           // Skip if no useful identifiers at all
-          if (!contactData.firstName && !contactData.lastName && !contactData.farm) {
+          if (!contactData.firstName && !contactData.lastName && !contactData.organizationName && !contactData.farm) {
             skipped++
             continue
           }
@@ -138,9 +139,17 @@ export async function POST(request: NextRequest) {
                   lastName: contactData.lastName || '',
                   farm: contactData.farm || farm,
                 }
+              : contactData.organizationName
+              ? {
+                  firstName: '',
+                  lastName: '',
+                  organizationName: contactData.organizationName,
+                  farm: contactData.farm || farm,
+                }
               : {
                   firstName: '',
                   lastName: '',
+                  organizationName: '',
                   farm: contactData.farm || farm,
                 },
           })

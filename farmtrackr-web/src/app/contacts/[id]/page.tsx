@@ -228,16 +228,67 @@ export default function ContactDetailPage() {
                   </div>
                   
                   <div>
-                    <h1 style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0 0 4px 0' }}>
-                      {contact.firstName} {contact.lastName}
+                    <h1 style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0 0 8px 0' }}>
+                      {contact.organizationName || `${contact.firstName} ${contact.lastName}`.trim() || 'Contact'}
                     </h1>
-                    <p style={{ ...text.secondary, fontSize: '16px', margin: '0' }}>
-                      {contact.farm} • Contact Details
-                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      {(contact.firstName || contact.lastName) && !contact.organizationName && (
+                        <span style={{ padding: '6px 10px', backgroundColor: colors.cardHover, border: `1px solid ${colors.border}`, borderRadius: '999px', fontSize: '12px', ...text.secondary }}>
+                          {contact.firstName} {contact.lastName}
+                        </span>
+                      )}
+                      {contact.farm && (
+                        <span style={{ padding: '6px 10px', backgroundColor: colors.cardHover, border: `1px solid ${colors.border}`, borderRadius: '999px', fontSize: '12px', ...text.secondary }}>
+                          {contact.farm}
+                        </span>
+                      )}
+                      {(contact.city || contact.state) && (
+                        <span style={{ padding: '6px 10px', backgroundColor: colors.cardHover, border: `1px solid ${colors.border}`, borderRadius: '999px', fontSize: '12px', ...text.secondary }}>
+                          {[contact.city, contact.state].filter(Boolean).join(', ')}
+                        </span>
+                      )}
+                      {contact.email1 && (
+                        <a href={`mailto:${contact.email1}`} style={{ padding: '6px 10px', backgroundColor: colors.cardHover, border: `1px solid ${colors.border}`, borderRadius: '999px', fontSize: '12px', color: colors.success, textDecoration: 'none' }}>
+                          {contact.email1}
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {contact.email1 && (
+                    <a
+                      href={`mailto:${contact.email1}`}
+                      style={{
+                        padding: '10px 12px',
+                        backgroundColor: colors.cardHover,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        ...text.secondary,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      Email
+                    </a>
+                  )}
+                  {contact.phoneNumber1 && (
+                    <a
+                      href={`tel:${contact.phoneNumber1}`}
+                      style={{
+                        padding: '10px 12px',
+                        backgroundColor: colors.cardHover,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        ...text.secondary,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      Call
+                    </a>
+                  )}
                   <Link
                     href={`/contacts/${contact.id}/edit`}
                     style={{
@@ -318,6 +369,17 @@ export default function ContactDetailPage() {
                         {contact.firstName} {contact.lastName}
                       </p>
                     </div>
+                    
+                    {contact.organizationName && (
+                      <div>
+                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Organization/Trust Name
+                        </label>
+                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
+                          {contact.organizationName}
+                        </p>
+                      </div>
+                    )}
                     
                     {contact.farm && (
                       <div>

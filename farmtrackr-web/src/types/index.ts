@@ -5,6 +5,7 @@ export type FarmContact = PrismaFarmContact
 export interface ContactFormData {
   firstName: string
   lastName: string
+  organizationName?: string
   farm?: string
   mailingAddress?: string
   city?: string

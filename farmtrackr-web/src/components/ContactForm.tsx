@@ -20,6 +20,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
     initialData || {
       firstName: '',
       lastName: '',
+      organizationName: '',
       farm: '',
       mailingAddress: '',
       city: '',
@@ -262,6 +263,28 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                         {errors.lastName}
                       </p>
                     )}
+                  </div>
+
+                  <div style={{ boxSizing: 'border-box' }}>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
+                      Organization/Trust Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter organization, trust, or business name"
+                      value={formData.organizationName || ''}
+                      onChange={(e) => handleInputChange('organizationName', e.target.value)}
+                      style={getInputStyle(false)}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = colors.success
+                        e.target.style.outline = 'none'
+                        e.target.style.boxShadow = `0 0 0 3px ${colors.success}20`
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = colors.border
+                        e.target.style.boxShadow = 'none'
+                      }}
+                    />
                   </div>
 
                   <div style={{ boxSizing: 'border-box' }}>

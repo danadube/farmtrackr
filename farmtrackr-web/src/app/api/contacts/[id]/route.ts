@@ -41,6 +41,7 @@ export async function PUT(
       data: {
         firstName: cleanBody.firstName,
         lastName: cleanBody.lastName,
+        organizationName: cleanBody.organizationName,
         farm: cleanBody.farm,
         mailingAddress: cleanBody.mailingAddress,
         city: cleanBody.city,

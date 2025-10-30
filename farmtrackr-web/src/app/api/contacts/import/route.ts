@@ -29,9 +29,10 @@ export async function POST(request: NextRequest) {
       
       contacts = parsed.data.map((row: any) => ({
         // capture potential single field name
-        fullName: row['Name'] || row['Full Name'] || row['name'] || row['fullName'] || undefined,
+        fullName: row['Name'] || row['Full Name'] || row['name'] || row['fullName'] || row['Organization'] || row['organization'] || row['Organization Name'] || row['Trust'] || row['trust'] || undefined,
         firstName: row['First Name'] || row['firstName'] || row['First'] || '',
         lastName: row['Last Name'] || row['lastName'] || row['Last'] || '',
+        organizationName: row['Organization'] || row['organization'] || row['Organization Name'] || row['organizationName'] || row['Trust'] || row['trust'] || undefined,
         farm: row['Farm'] || row['farm'] || undefined,
         mailingAddress: row['Mailing Address'] || row['mailingAddress'] || row['Address'] || undefined,
         city: row['City'] || row['city'] || undefined,
@@ -51,23 +52,28 @@ export async function POST(request: NextRequest) {
         siteZipCode: row['Site Zip Code'] || row['siteZipCode'] ? parseInt(row['Site Zip Code'] || row['siteZipCode']) : undefined,
         notes: row['Notes'] || row['notes'] || undefined,
       })).map((contact: any) => {
-        // Business/Trust rule: if only one name provided and no farm, move it to farm
+        // Business/Trust rule: if only one name provided, move it to organizationName field
         const hasFirst = !!contact.firstName && String(contact.firstName).trim().length > 0
         const hasLast = !!contact.lastName && String(contact.lastName).trim().length > 0
-        const hasFarm = !!contact.farm && String(contact.farm).trim().length > 0
+        const hasOrg = !!contact.organizationName && String(contact.organizationName).trim().length > 0
         const hasFull = !!contact.fullName && String(contact.fullName).trim().length > 0
-        if (!hasFarm) {
-          if (hasFull && !hasFirst && !hasLast) {
-            contact.farm = String(contact.fullName).trim()
-          } else if ((hasFirst && !hasLast) || (hasLast && !hasFirst)) {
-            contact.farm = String(hasFirst ? contact.firstName : contact.lastName).trim()
-            contact.firstName = ''
-            contact.lastName = ''
-          }
+        
+        // If we have a full name or explicit organization field, use it
+        if (hasFull && !hasFirst && !hasLast && !hasOrg) {
+          contact.organizationName = String(contact.fullName).trim()
+        } else if ((hasFirst && !hasLast) || (hasLast && !hasFirst)) {
+          // Single name field - treat as organization
+          contact.organizationName = String(hasFirst ? contact.firstName : contact.lastName).trim()
+          contact.firstName = ''
+          contact.lastName = ''
+        } else if (!hasOrg && hasFull) {
+          // Fallback: if full name exists and no org, use it
+          contact.organizationName = String(contact.fullName).trim()
         }
+        
         delete contact.fullName
         return contact
-      }).filter((contact: any) => contact.firstName || contact.lastName || contact.farm)
+      }).filter((contact: any) => contact.firstName || contact.lastName || contact.organizationName || contact.farm)
     }
     // Parse Excel
     else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
@@ -77,9 +83,10 @@ export async function POST(request: NextRequest) {
       const data: any[] = XLSX.utils.sheet_to_json(worksheet)
       
       contacts = data.map((row: any) => ({
-        fullName: row['Name'] || row['Full Name'] || row['name'] || row['fullName'] || undefined,
+        fullName: row['Name'] || row['Full Name'] || row['name'] || row['fullName'] || row['Organization'] || row['organization'] || row['Organization Name'] || row['Trust'] || row['trust'] || undefined,
         firstName: row['First Name'] || row['firstName'] || row['First'] || '',
         lastName: row['Last Name'] || row['lastName'] || row['Last'] || '',
+        organizationName: row['Organization'] || row['organization'] || row['Organization Name'] || row['organizationName'] || row['Trust'] || row['trust'] || undefined,
         farm: row['Farm'] || row['farm'] || undefined,
         mailingAddress: row['Mailing Address'] || row['mailingAddress'] || row['Address'] || undefined,
         city: row['City'] || row['city'] || undefined,
@@ -101,20 +108,25 @@ export async function POST(request: NextRequest) {
       })).map((contact: any) => {
         const hasFirst = !!contact.firstName && String(contact.firstName).trim().length > 0
         const hasLast = !!contact.lastName && String(contact.lastName).trim().length > 0
-        const hasFarm = !!contact.farm && String(contact.farm).trim().length > 0
+        const hasOrg = !!contact.organizationName && String(contact.organizationName).trim().length > 0
         const hasFull = !!contact.fullName && String(contact.fullName).trim().length > 0
-        if (!hasFarm) {
-          if (hasFull && !hasFirst && !hasLast) {
-            contact.farm = String(contact.fullName).trim()
-          } else if ((hasFirst && !hasLast) || (hasLast && !hasFirst)) {
-            contact.farm = String(hasFirst ? contact.firstName : contact.lastName).trim()
-            contact.firstName = ''
-            contact.lastName = ''
-          }
+        
+        // If we have a full name or explicit organization field, use it
+        if (hasFull && !hasFirst && !hasLast && !hasOrg) {
+          contact.organizationName = String(contact.fullName).trim()
+        } else if ((hasFirst && !hasLast) || (hasLast && !hasFirst)) {
+          // Single name field - treat as organization
+          contact.organizationName = String(hasFirst ? contact.firstName : contact.lastName).trim()
+          contact.firstName = ''
+          contact.lastName = ''
+        } else if (!hasOrg && hasFull) {
+          // Fallback: if full name exists and no org, use it
+          contact.organizationName = String(contact.fullName).trim()
         }
+        
         delete contact.fullName
         return contact
-      }).filter((contact: any) => contact.firstName || contact.lastName || contact.farm)
+      }).filter((contact: any) => contact.firstName || contact.lastName || contact.organizationName || contact.farm)
     } else {
       return NextResponse.json({ error: 'Unsupported file format' }, { status: 400 })
     }
@@ -126,7 +138,7 @@ export async function POST(request: NextRequest) {
     
     for (const contactData of contacts) {
       try {
-        if (contactData.firstName || contactData.lastName || contactData.farm) {
+        if (contactData.firstName || contactData.lastName || contactData.organizationName || contactData.farm) {
           // Check for duplicates
           const existing = await prisma.farmContact.findFirst({
             where: contactData.firstName || contactData.lastName
@@ -135,9 +147,17 @@ export async function POST(request: NextRequest) {
                   lastName: contactData.lastName || '',
                   farm: contactData.farm || undefined,
                 }
+              : contactData.organizationName
+              ? {
+                  firstName: '',
+                  lastName: '',
+                  organizationName: contactData.organizationName,
+                  farm: contactData.farm || undefined,
+                }
               : {
                   firstName: '',
                   lastName: '',
+                  organizationName: '',
                   farm: contactData.farm || undefined,
                 },
           })
@@ -151,6 +171,7 @@ export async function POST(request: NextRequest) {
             data: {
               firstName: contactData.firstName || '',
               lastName: contactData.lastName || '',
+              organizationName: contactData.organizationName,
               farm: contactData.farm,
               mailingAddress: contactData.mailingAddress,
               city: contactData.city,

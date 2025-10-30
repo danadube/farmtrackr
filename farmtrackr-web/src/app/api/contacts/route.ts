@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { firstName: { contains: search } },
         { lastName: { contains: search } },
+        { organizationName: { contains: search } },
         { farm: { contains: search } },
         { email1: { contains: search } },
         { email2: { contains: search } },
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
       data: {
         firstName: cleanBody.firstName || '',
         lastName: cleanBody.lastName || '',
+        organizationName: cleanBody.organizationName,
         farm: cleanBody.farm,
         mailingAddress: cleanBody.mailingAddress,
         city: cleanBody.city,
