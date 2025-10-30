@@ -68,10 +68,10 @@ export function Sidebar({ children }: SidebarProps) {
   const navItems = [
     { href: '/', label: 'Dashboard', icon: Home },
     { href: '/contacts', label: 'Contacts', icon: Users },
-    { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet },
     { href: '/documents', label: 'Documents', icon: FileText },
-    { href: '/data-quality', label: 'Data Quality', icon: TrendingUp },
+    { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet },
     { href: '/import-export', label: 'Import & Export', icon: Upload },
+    { href: '/data-quality', label: 'Data Quality', icon: TrendingUp },
     { href: '/settings', label: 'Settings', icon: Settings },
   ]
 
