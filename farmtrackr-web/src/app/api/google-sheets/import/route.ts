@@ -87,11 +87,12 @@ export async function POST(request: NextRequest) {
           state: getField(['State', 'state', 'STATE']),
           zipCode: (() => {
             const zip = getField(['Zip Code', 'zipCode', 'ZIP', 'zip', 'ZIP CODE', 'Zip'])
-            if (zip) {
-              const zipNum = parseInt(String(zip).replace(/[^0-9]/g, ''))
-              return isNaN(zipNum) ? undefined : zipNum
-            }
-            return undefined
+            if (!zip) return undefined
+            const s = String(zip).trim()
+            const digits = s.replace(/[^0-9]/g, '')
+            if (digits.length === 9) return `${digits.slice(0,5)}-${digits.slice(5)}`
+            if (digits.length === 5) return digits
+            return s
           })(),
           email1: getField(['Email', 'email', 'Email 1', 'email1', 'EMAIL', 'Primary Email']),
           email2: getField(['Email 2', 'email2', 'EMAIL 2', 'Secondary Email']),
@@ -106,11 +107,12 @@ export async function POST(request: NextRequest) {
           siteState: getField(['Site State', 'siteState', 'SITE STATE']),
           siteZipCode: (() => {
             const zip = getField(['Site Zip Code', 'siteZipCode', 'SITE ZIP'])
-            if (zip) {
-              const zipNum = parseInt(String(zip).replace(/[^0-9]/g, ''))
-              return isNaN(zipNum) ? undefined : zipNum
-            }
-            return undefined
+            if (!zip) return undefined
+            const s = String(zip).trim()
+            const digits = s.replace(/[^0-9]/g, '')
+            if (digits.length === 9) return `${digits.slice(0,5)}-${digits.slice(5)}`
+            if (digits.length === 5) return digits
+            return s
           })(),
           notes: getField(['Notes', 'notes', 'NOTES', 'Comments']),
         }

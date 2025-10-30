@@ -46,7 +46,7 @@ export async function PUT(
         mailingAddress: cleanBody.mailingAddress,
         city: cleanBody.city,
         state: cleanBody.state,
-        zipCode: cleanBody.zipCode ? parseInt(String(cleanBody.zipCode)) : undefined,
+        zipCode: cleanBody.zipCode ? String(cleanBody.zipCode).trim() : undefined,
         email1: cleanBody.email1,
         email2: cleanBody.email2,
         phoneNumber1: cleanBody.phoneNumber1,
@@ -58,7 +58,7 @@ export async function PUT(
         siteMailingAddress: cleanBody.siteMailingAddress,
         siteCity: cleanBody.siteCity,
         siteState: cleanBody.siteState,
-        siteZipCode: cleanBody.siteZipCode ? parseInt(String(cleanBody.siteZipCode)) : undefined,
+        siteZipCode: cleanBody.siteZipCode ? String(cleanBody.siteZipCode).trim() : undefined,
         notes: cleanBody.notes,
       },
     })

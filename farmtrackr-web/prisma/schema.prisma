@@ -19,7 +19,7 @@ model FarmContact {
   mailingAddress     String?
   city               String?
   state              String?
-  zipCode            Int?
+  zipCode            String?
   email1             String?
   email2             String?
   phoneNumber1       String?
@@ -31,7 +31,7 @@ model FarmContact {
   siteMailingAddress String?
   siteCity           String?
   siteState          String?
-  siteZipCode        Int?
+  siteZipCode        String?
   notes              String?
   dateCreated        DateTime @default(now())
   dateModified       DateTime @updatedAt

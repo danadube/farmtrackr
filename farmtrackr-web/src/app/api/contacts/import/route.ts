@@ -37,7 +37,15 @@ export async function POST(request: NextRequest) {
         mailingAddress: row['Mailing Address'] || row['mailingAddress'] || row['Address'] || undefined,
         city: row['City'] || row['city'] || undefined,
         state: row['State'] || row['state'] || undefined,
-        zipCode: row['Zip Code'] || row['zipCode'] || row['ZIP'] ? parseInt(row['Zip Code'] || row['zipCode'] || row['ZIP']) : undefined,
+        zipCode: (() => {
+          const raw = row['Zip Code'] || row['zipCode'] || row['ZIP']
+          if (!raw) return undefined
+          const s = String(raw).trim()
+          const digits = s.replace(/[^0-9]/g, '')
+          if (digits.length === 9) return `${digits.slice(0,5)}-${digits.slice(5)}`
+          if (digits.length === 5) return digits
+          return s
+        })(),
         email1: row['Email'] || row['email'] || row['Email 1'] || row['email1'] || undefined,
         email2: row['Email 2'] || row['email2'] || undefined,
         phoneNumber1: row['Phone'] || row['phone'] || row['Phone 1'] || row['phoneNumber1'] || undefined,
@@ -49,7 +57,15 @@ export async function POST(request: NextRequest) {
         siteMailingAddress: row['Site Address'] || row['siteMailingAddress'] || undefined,
         siteCity: row['Site City'] || row['siteCity'] || undefined,
         siteState: row['Site State'] || row['siteState'] || undefined,
-        siteZipCode: row['Site Zip Code'] || row['siteZipCode'] ? parseInt(row['Site Zip Code'] || row['siteZipCode']) : undefined,
+        siteZipCode: (() => {
+          const raw = row['Site Zip Code'] || row['siteZipCode']
+          if (!raw) return undefined
+          const s = String(raw).trim()
+          const digits = s.replace(/[^0-9]/g, '')
+          if (digits.length === 9) return `${digits.slice(0,5)}-${digits.slice(5)}`
+          if (digits.length === 5) return digits
+          return s
+        })(),
         notes: row['Notes'] || row['notes'] || undefined,
       })).map((contact: any) => {
         // Business/Trust rule: if only one name provided, move it to organizationName field
@@ -91,7 +107,15 @@ export async function POST(request: NextRequest) {
         mailingAddress: row['Mailing Address'] || row['mailingAddress'] || row['Address'] || undefined,
         city: row['City'] || row['city'] || undefined,
         state: row['State'] || row['state'] || undefined,
-        zipCode: row['Zip Code'] || row['zipCode'] || row['ZIP'] ? parseInt(row['Zip Code'] || row['zipCode'] || row['ZIP']) : undefined,
+        zipCode: (() => {
+          const raw = row['Zip Code'] || row['zipCode'] || row['ZIP']
+          if (!raw) return undefined
+          const s = String(raw).trim()
+          const digits = s.replace(/[^0-9]/g, '')
+          if (digits.length === 9) return `${digits.slice(0,5)}-${digits.slice(5)}`
+          if (digits.length === 5) return digits
+          return s
+        })(),
         email1: row['Email'] || row['email'] || row['Email 1'] || row['email1'] || undefined,
         email2: row['Email 2'] || row['email2'] || undefined,
         phoneNumber1: row['Phone'] || row['phone'] || row['Phone 1'] || row['phoneNumber1'] || undefined,
@@ -103,7 +127,15 @@ export async function POST(request: NextRequest) {
         siteMailingAddress: row['Site Address'] || row['siteMailingAddress'] || undefined,
         siteCity: row['Site City'] || row['siteCity'] || undefined,
         siteState: row['Site State'] || row['siteState'] || undefined,
-        siteZipCode: row['Site Zip Code'] || row['siteZipCode'] ? parseInt(row['Site Zip Code'] || row['siteZipCode']) : undefined,
+        siteZipCode: (() => {
+          const raw = row['Site Zip Code'] || row['siteZipCode']
+          if (!raw) return undefined
+          const s = String(raw).trim()
+          const digits = s.replace(/[^0-9]/g, '')
+          if (digits.length === 9) return `${digits.slice(0,5)}-${digits.slice(5)}`
+          if (digits.length === 5) return digits
+          return s
+        })(),
         notes: row['Notes'] || row['notes'] || undefined,
       })).map((contact: any) => {
         const hasFirst = !!contact.firstName && String(contact.firstName).trim().length > 0

@@ -10,7 +10,7 @@ export interface ContactFormData {
   mailingAddress?: string
   city?: string
   state?: string
-  zipCode?: number
+  zipCode?: string
   email1?: string
   email2?: string
   phoneNumber1?: string
@@ -22,7 +22,7 @@ export interface ContactFormData {
   siteMailingAddress?: string
   siteCity?: string
   siteState?: string
-  siteZipCode?: number
+  siteZipCode?: string
   notes?: string
 }
 

@@ -25,7 +25,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
       mailingAddress: '',
       city: '',
       state: '',
-      zipCode: undefined,
+      zipCode: '',
       email1: '',
       email2: '',
       phoneNumber1: '',
@@ -37,14 +37,14 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
       siteMailingAddress: '',
       siteCity: '',
       siteState: '',
-      siteZipCode: undefined,
+      siteZipCode: '',
       notes: ''
     }
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const handleInputChange = (field: keyof ContactFormData, value: string | number) => {
+  const handleInputChange = (field: keyof ContactFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
@@ -61,11 +61,12 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
     if (formData.email2 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email2)) {
       newErrors.email2 = 'Please enter a valid email address'
     }
-    if (formData.zipCode && (formData.zipCode < 10000 || formData.zipCode > 99999)) {
-      newErrors.zipCode = 'Please enter a valid 5-digit ZIP code'
+    const zipRegex = /^\d{5}(?:-\d{4})?$/
+    if (formData.zipCode && !zipRegex.test(String(formData.zipCode).trim())) {
+      newErrors.zipCode = 'Enter 5-digit ZIP or ZIP+4 (12345 or 12345-6789)'
     }
-    if (formData.siteZipCode && (formData.siteZipCode < 10000 || formData.siteZipCode > 99999)) {
-      newErrors.siteZipCode = 'Please enter a valid 5-digit ZIP code'
+    if (formData.siteZipCode && !zipRegex.test(String(formData.siteZipCode).trim())) {
+      newErrors.siteZipCode = 'Enter 5-digit ZIP or ZIP+4 (12345 or 12345-6789)'
     }
 
     setErrors(newErrors)
@@ -502,10 +503,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                       ZIP Code
                     </label>
                     <input
-                      type="number"
-                      placeholder="12345"
+                      type="text"
+                      placeholder="12345 or 12345-6789"
                       value={formData.zipCode || ''}
-                      onChange={(e) => handleInputChange('zipCode', parseInt(e.target.value) || undefined)}
+                      onChange={(e) => handleInputChange('zipCode', e.target.value)}
                       style={getInputStyle(!!errors.zipCode)}
                       onFocus={(e) => {
                         e.target.style.borderColor = colors.success
@@ -610,10 +611,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                       ZIP Code
                     </label>
                     <input
-                      type="number"
-                      placeholder="12345"
+                      type="text"
+                      placeholder="12345 or 12345-6789"
                       value={formData.siteZipCode || ''}
-                      onChange={(e) => handleInputChange('siteZipCode', parseInt(e.target.value) || undefined)}
+                      onChange={(e) => handleInputChange('siteZipCode', e.target.value)}
                       style={getInputStyle(!!errors.siteZipCode)}
                       onFocus={(e) => {
                         e.target.style.borderColor = colors.success
