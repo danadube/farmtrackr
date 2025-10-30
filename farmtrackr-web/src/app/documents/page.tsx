@@ -45,7 +45,7 @@ interface Letterhead {
 }
 
 export default function DocumentsPage() {
-  const { colors, isDark, card, background, text } = useThemeStyles()
+  const { colors, isDark, card, headerCard, headerDivider, background, text } = useThemeStyles()
   const [activeTab, setActiveTab] = useState<'documents' | 'letterheads'>('documents')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'template' | 'contact' | 'report'>('all')
@@ -573,7 +573,7 @@ export default function DocumentsPage() {
             <div 
               style={{
                 padding: '24px',
-                ...card
+                ...headerCard
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -612,6 +612,7 @@ export default function DocumentsPage() {
                 </div>
                 <div />
               </div>
+              <div style={headerDivider} />
             </div>
           </div>
 

@@ -23,8 +23,8 @@ export function useThemeStyles() {
     },
     headerCard: {
       background: isDark
-        ? 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))'
-        : 'linear-gradient(180deg, #ffffff, #fafafa)',
+        ? 'linear-gradient(180deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))'
+        : 'linear-gradient(180deg, rgba(59,130,246,0.06), rgba(59,130,246,0.03)), linear-gradient(180deg, #ffffff, #fafafa)',
       border: `1px solid ${colors.border}`,
       borderTop: `3px solid ${colors.primary}`,
       boxShadow: isDark
