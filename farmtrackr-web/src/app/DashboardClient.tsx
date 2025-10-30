@@ -29,7 +29,7 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ contacts, stats }: DashboardClientProps) {
   const [mounted, setMounted] = useState(false)
-  const { colors, isDark, card, background, text } = useThemeStyles()
+  const { colors, isDark, card, headerCard, headerDivider, background, text } = useThemeStyles()
 
   useEffect(() => {
     setMounted(true)
@@ -77,7 +77,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             <div 
               style={{
                 padding: '24px',
-                ...card
+                ...headerCard
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
@@ -112,6 +112,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </p>
                 </div>
               </div>
+              <div style={headerDivider} />
             </div>
           </div>
 

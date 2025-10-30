@@ -21,7 +21,7 @@ import { getFarmColor } from '@/lib/farmColors'
 import { normalizeFarmName, getContactBadgeLetter } from '@/lib/farmNames'
 
 export default function ContactDetailPage() {
-  const { colors, isDark, card, background, text } = useThemeStyles()
+  const { colors, isDark, card, headerCard, headerDivider, background, text } = useThemeStyles()
   const router = useRouter()
   const params = useParams()
   const contactId = params?.id as string
@@ -185,7 +185,7 @@ export default function ContactDetailPage() {
         >
           {/* Header */}
           <div style={{ marginBottom: '32px' }}>
-            <div style={{ padding: '24px', ...card }}>
+            <div style={{ padding: '24px', ...headerCard }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <button
@@ -362,6 +362,7 @@ export default function ContactDetailPage() {
                   </button>
                 </div>
               </div>
+              <div style={headerDivider} />
             </div>
           </div>
 
