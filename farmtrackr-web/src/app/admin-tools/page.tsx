@@ -46,7 +46,8 @@ export default function AdminToolsPage() {
   return (
     <Sidebar>
       <div style={{ padding: 24 }}>
-        <h1 style={{ margin: '0 0 16px 0' }}>Admin Tools (Dev)</h1>
+        <div style={{ maxWidth: 960, margin: '0 auto' }}>
+          <h1 style={{ margin: '0 0 16px 0' }}>Admin Tools (Dev)</h1>
         {process.env.NEXT_PUBLIC_ENABLE_ADMIN !== 'true' && (
           <p style={{ color: '#b91c1c', marginBottom: 16 }}>Disabled. Set NEXT_PUBLIC_ENABLE_ADMIN=true to enable.</p>
         )}
@@ -62,8 +63,11 @@ export default function AdminToolsPage() {
 
           <div style={card}>
             <h3 style={{ marginTop: 0 }}>Log</h3>
-            <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{log.join('\n')}</pre>
+            <div style={{ maxHeight: 240, overflowY: 'auto', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, padding: 12 }}>
+              <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{log.join('\n')}</pre>
+            </div>
           </div>
+        </div>
         </div>
       </div>
     </Sidebar>
