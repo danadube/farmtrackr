@@ -1,31 +1,8 @@
 // Assign consistent colors to farms based on their names
-// Uses a hash function to ensure the same farm always gets the same color
+// Uses a hash function + HSL generation to ensure the same farm always gets the same color,
+// while minimizing collisions across many farms.
 
 import { normalizeFarmName } from './farmNames'
-
-const FARM_COLORS = [
-  // Green palette (for farms/growth theme)
-  { bg: '#10b981', text: '#ffffff', border: '#059669' }, // emerald-500
-  { bg: '#059669', text: '#ffffff', border: '#047857' }, // emerald-600
-  { bg: '#34d399', text: '#064e3b', border: '#10b981' }, // emerald-400
-  { bg: '#047857', text: '#ffffff', border: '#065f46' }, // emerald-700
-  // Blue palette
-  { bg: '#3b82f6', text: '#ffffff', border: '#2563eb' }, // blue-500
-  { bg: '#2563eb', text: '#ffffff', border: '#1d4ed8' }, // blue-600
-  { bg: '#60a5fa', text: '#1e3a8a', border: '#3b82f6' }, // blue-400
-  // Purple palette
-  { bg: '#8b5cf6', text: '#ffffff', border: '#7c3aed' }, // violet-500
-  { bg: '#7c3aed', text: '#ffffff', border: '#6d28d9' }, // violet-600
-  // Amber/Orange palette
-  { bg: '#f59e0b', text: '#ffffff', border: '#d97706' }, // amber-500
-  { bg: '#fb923c', text: '#78350f', border: '#f59e0b' }, // orange-400
-  // Teal/Cyan palette
-  { bg: '#14b8a6', text: '#ffffff', border: '#0d9488' }, // teal-500
-  { bg: '#06b6d4', text: '#ffffff', border: '#0891b2' }, // cyan-500
-  // Rose/Pink palette
-  { bg: '#ec4899', text: '#ffffff', border: '#db2777' }, // pink-500
-  { bg: '#f43f5e', text: '#ffffff', border: '#e11d48' }, // rose-500
-]
 
 // Hash function to convert farm name to a consistent number
 function hashFarm(farmName: string): number {
@@ -42,11 +19,21 @@ export function getFarmColor(farmName: string | null | undefined): { bg: string;
   if (!farmName) {
     return { bg: '#6b7280', text: '#ffffff', border: '#4b5563' } // gray-500 fallback
   }
-  
+
   // Normalize farm name first to ensure consistent colors
   const normalized = normalizeFarmName(farmName)
   const hash = hashFarm(normalized)
-  const colorIndex = hash % FARM_COLORS.length
-  return FARM_COLORS[colorIndex]
+
+  // Derive HSL values from hash for a wide color gamut
+  // Hue: 0..360, Saturation: 60-70%, Lightness: 40-50%
+  const hue = hash % 360
+  const saturation = 60 + (hash % 11) // 60..70
+  const lightness = 42 + (Math.floor(hash / 7) % 7) // 42..48
+
+  const bg = `hsl(${hue}, ${saturation}%, ${lightness}%)`
+  const border = `hsl(${hue}, ${Math.min(saturation + 5, 80)}%, ${Math.max(lightness - 8, 28)}%)`
+  const text = '#ffffff'
+
+  return { bg, text, border }
 }
 

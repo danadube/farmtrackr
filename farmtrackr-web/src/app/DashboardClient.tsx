@@ -18,6 +18,8 @@ import Link from 'next/link'
 import { FarmTrackrLogo } from '@/components/FarmTrackrLogo'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
+import { ContactBadge } from '@/components/ContactBadge'
+import { normalizeFarmName } from '@/lib/farmNames'
 
 interface DashboardClientProps {
   contacts: FarmContact[];
@@ -451,27 +453,13 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   e.currentTarget.style.backgroundColor = 'transparent'
                 }}
                   >
-                    <div 
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        backgroundColor: colors.iconBg,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <span style={{ fontSize: '14px', fontWeight: '600', color: colors.primary }}>
-                        {contact.firstName?.[0]}{contact.lastName?.[0]}
-                      </span>
-                    </div>
+                    <ContactBadge contact={contact} size="md" shape="circle" />
                     <div style={{ flex: '1' }}>
                       <h3 style={{ fontWeight: '500', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
-                        {contact.firstName} {contact.lastName}
+                        {contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim()}
                       </h3>
                       <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
-                        {contact.farm}
+                        {contact.farm ? normalizeFarmName(contact.farm) : ''}
                       </p>
                     </div>
                     <div style={{ textAlign: 'right' }}>

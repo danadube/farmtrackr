@@ -16,6 +16,8 @@ import {
 import Link from 'next/link'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
+import { ContactBadge } from '@/components/ContactBadge'
+import { normalizeFarmName } from '@/lib/farmNames'
 
 export default function ContactsPage() {
   const { colors, isDark, card, background, text } = useThemeStyles()
@@ -53,7 +55,7 @@ export default function ContactsPage() {
   }, [])
 
   // Get unique farms and states for filters
-  const uniqueFarms = Array.from(new Set(contacts.map(c => c.farm).filter(Boolean))).sort()
+  const uniqueFarms = Array.from(new Set(contacts.map(c => c.farm ? normalizeFarmName(c.farm) : c.farm).filter(Boolean))).sort()
   const uniqueStates = Array.from(new Set(contacts.map(c => c.state).filter(Boolean))).sort()
 
   const filteredContacts = contacts.filter(contact => {
@@ -531,27 +533,13 @@ export default function ContactsPage() {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div 
-                        style={{
-                          width: '40px',
-                          height: '40px',
-                          backgroundColor: colors.iconBg,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <span style={{ fontSize: '14px', fontWeight: '600', color: colors.primary }}>
-                          {contact.firstName?.[0]}{contact.lastName?.[0]}
-                        </span>
-                      </div>
+                      <ContactBadge contact={contact} size="md" shape="circle" />
                       <div style={{ flex: '1' }}>
                         <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
-                          {contact.firstName} {contact.lastName}
+                          {contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim()}
                         </h3>
                         <p style={{ fontSize: '13px', ...text.secondary, margin: '0 0 2px 0' }}>
-                          {contact.farm}
+                          {contact.farm ? normalizeFarmName(contact.farm) : ''}
                         </p>
                         {contact.email1 && (
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
