@@ -551,25 +551,38 @@ export default function ContactDetailPage() {
                 </h2>
               </div>
               
-              <div 
-                style={{
-                  padding: '16px',
-                  backgroundColor: colors.cardHover,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  ...text.secondary,
-                  lineHeight: '1.6',
-                  whiteSpace: 'pre-wrap',
-                  minHeight: '80px'
-                }}
-              >
-                {contact.notes || (
+              {contact.notes ? (
+                <div 
+                  style={{
+                    padding: '16px',
+                    backgroundColor: colors.cardHover,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    color: colors.text.primary,
+                    lineHeight: '1.6',
+                    minHeight: '80px'
+                  }}
+                  dangerouslySetInnerHTML={{ __html: String(contact.notes) }}
+                />
+              ) : (
+                <div 
+                  style={{
+                    padding: '16px',
+                    backgroundColor: colors.cardHover,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    ...text.secondary,
+                    lineHeight: '1.6',
+                    minHeight: '80px'
+                  }}
+                >
                   <span style={{ fontStyle: 'italic', color: colors.text.tertiary }}>
                     No notes added yet. Click Edit to add notes for this contact.
                   </span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Record Information Card */}

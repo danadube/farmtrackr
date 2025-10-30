@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ContactFormData } from '@/types'
 import { X, Save, User, Building2, Mail, Phone, MapPin, FileText } from 'lucide-react'
@@ -43,6 +43,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const notesRef = useRef<HTMLDivElement | null>(null)
 
   const handleInputChange = (field: keyof ContactFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -644,7 +645,53 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                   </h2>
                 </div>
                 
+                {/* Rich text toolbar */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  {[
+                    { label: 'B', title: 'Bold', cmd: 'bold', style: { fontWeight: 700 } },
+                    { label: 'I', title: 'Italic', cmd: 'italic', style: { fontStyle: 'italic' } },
+                    { label: 'U', title: 'Underline', cmd: 'underline', style: { textDecoration: 'underline' } },
+                    { label: '• List', title: 'Bulleted List', cmd: 'insertUnorderedList' },
+                    { label: '1. List', title: 'Numbered List', cmd: 'insertOrderedList' },
+                  ].map((btn) => (
+                    <button
+                      key={btn.title}
+                      type="button"
+                      title={btn.title}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        // Focus editor before command
+                        if (notesRef.current) {
+                          notesRef.current.focus()
+                        }
+                        try {
+                          document.execCommand(btn.cmd as any, false)
+                          // Update state after command
+                          if (notesRef.current) {
+                            handleInputChange('notes', notesRef.current.innerHTML)
+                          }
+                        } catch {}
+                      }}
+                      style={{
+                        padding: '6px 10px',
+                        backgroundColor: colors.cardHover,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        color: colors.text.secondary,
+                        ...(btn.style || {})
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.cardHover }}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+
                 <div
+                  ref={notesRef}
                   contentEditable
                   suppressContentEditableWarning
                   onInput={(e) => handleInputChange('notes', (e.currentTarget as HTMLDivElement).innerHTML)}
