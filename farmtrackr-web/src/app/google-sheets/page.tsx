@@ -166,6 +166,21 @@ export default function GoogleSheetsPage() {
             </div>
           </div>
 
+          {/* Sync Note */}
+          <div 
+            style={{
+              marginBottom: '24px',
+              padding: '12px 16px',
+              borderRadius: '10px',
+              backgroundColor: isDark ? '#1f2937' : '#f9fafb',
+              border: `1px solid ${colors.border}`,
+              color: colors.text.secondary,
+              fontSize: '13px'
+            }}
+          >
+            Edits made in the app do not auto-sync to Google Sheets. Use Export to push updates. We can add optional "auto-sync on save" later for selected farms.
+          </div>
+
           {/* Status Messages */}
           {importStatus.type && (
             <div 
