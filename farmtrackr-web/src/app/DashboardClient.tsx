@@ -32,9 +32,28 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
   const [mounted, setMounted] = useState(false)
   const { colors, isDark, card, headerCard, headerDivider, background, text, spacing } = useThemeStyles()
 
+  // Validation issue counts (subtract dismissed) – must be declared before any early returns
+  const [issuesCount, setIssuesCount] = useState(0)
+  const [errorsCount, setErrorsCount] = useState(0)
+  const [warningsCount, setWarningsCount] = useState(0)
+
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    const allIssues = validateAllContacts(contacts)
+    let dismissed = new Set<string>()
+    try {
+      const raw = localStorage.getItem('dq.dismissedIssues')
+      if (raw) dismissed = new Set<string>(JSON.parse(raw))
+    } catch {}
+    const visible = allIssues.filter(i => !dismissed.has(i.id))
+    setIssuesCount(visible.length)
+    setErrorsCount(visible.filter(i => i.severity === 'error').length)
+    setWarningsCount(visible.filter(i => i.severity === 'warning').length)
+  }, [mounted, contacts])
 
   if (!mounted) {
     return null
@@ -51,25 +70,6 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
         .filter(Boolean)
     )
   ).sort()
-
-  // Validation issue counts (subtract dismissed)
-  const [issuesCount, setIssuesCount] = useState(0)
-  const [errorsCount, setErrorsCount] = useState(0)
-  const [warningsCount, setWarningsCount] = useState(0)
-
-  useEffect(() => {
-    if (!mounted) return
-    const allIssues = validateAllContacts(contacts)
-    let dismissed = new Set<string>()
-    try {
-      const raw = localStorage.getItem('dq.dismissedIssues')
-      if (raw) dismissed = new Set<string>(JSON.parse(raw))
-    } catch {}
-    const visible = allIssues.filter(i => !dismissed.has(i.id))
-    setIssuesCount(visible.length)
-    setErrorsCount(visible.filter(i => i.severity === 'error').length)
-    setWarningsCount(visible.filter(i => i.severity === 'warning').length)
-  }, [mounted, contacts])
 
   return (
     <Sidebar>
