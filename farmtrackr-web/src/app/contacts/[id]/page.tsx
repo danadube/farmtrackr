@@ -7,6 +7,7 @@ import {
   ArrowLeft, 
   Edit, 
   Trash2, 
+  User,
   Mail, 
   MapPin, 
   Calendar,
@@ -516,32 +517,35 @@ export default function ContactDetailPage() {
               </div>
             )}
 
-            {/* Notes Card (if exists) */}
-            {contact.notes && (
-              <div style={{ padding: '24px', ...card }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                  <FileText style={{ width: '18px', height: '18px', color: colors.success }} />
-                  <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                    Notes
-                  </h2>
-                </div>
-                
-                <div 
-                  style={{
-                    padding: '16px',
-                    backgroundColor: colors.cardHover,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    ...text.secondary,
-                    lineHeight: '1.6',
-                    whiteSpace: 'pre-wrap'
-                  }}
-                >
-                  {contact.notes}
-                </div>
+            {/* Notes Card - Always visible, full width */}
+            <div style={{ padding: '24px', ...card, gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                <FileText style={{ width: '18px', height: '18px', color: colors.success }} />
+                <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                  Notes
+                </h2>
               </div>
-            )}
+              
+              <div 
+                style={{
+                  padding: '16px',
+                  backgroundColor: colors.cardHover,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  ...text.secondary,
+                  lineHeight: '1.6',
+                  whiteSpace: 'pre-wrap',
+                  minHeight: '80px'
+                }}
+              >
+                {contact.notes || (
+                  <span style={{ fontStyle: 'italic', color: colors.text.tertiary }}>
+                    No notes added yet. Click Edit to add notes for this contact.
+                  </span>
+                )}
+              </div>
+            </div>
 
             {/* Record Information Card */}
             <div style={{ padding: '24px', ...card }}>
