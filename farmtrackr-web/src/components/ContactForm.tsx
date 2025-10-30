@@ -704,7 +704,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                         if (notesRef.current) notesRef.current.focus()
                         try {
                           document.execCommand(btn.cmd as any, false)
-                          if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
+                          if (notesRef.current) setNewNoteHtml(notesRef.current.innerHTML)
                         } catch {}
                       }}
                       style={{
@@ -734,7 +734,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                       if (url) {
                         try {
                           document.execCommand('createLink', false, url)
-                          if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
+                          if (notesRef.current) setNewNoteHtml(notesRef.current.innerHTML)
                         } catch {}
                       }
                     }}
@@ -758,10 +758,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     onClick={(e) => {
                       e.preventDefault()
                       if (notesRef.current) notesRef.current.focus()
-                      try {
-                        document.execCommand('unlink', false)
-                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
-                      } catch {}
+                        try {
+                          document.execCommand('unlink', false)
+                          if (notesRef.current) setNewNoteHtml(notesRef.current.innerHTML)
+                        } catch {}
                     }}
                     style={{
                       padding: '6px 10px',
@@ -784,10 +784,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     onClick={(e) => {
                       e.preventDefault()
                       if (notesRef.current) notesRef.current.focus()
-                      try {
-                        document.execCommand('removeFormat', false)
-                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
-                      } catch {}
+                        try {
+                          document.execCommand('removeFormat', false)
+                          if (notesRef.current) setNewNoteHtml(notesRef.current.innerHTML)
+                        } catch {}
                     }}
                     style={{
                       padding: '6px 10px',
@@ -809,10 +809,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     onClick={(e) => {
                       e.preventDefault()
                       if (notesRef.current) notesRef.current.focus()
-                      try {
-                        document.execCommand('justifyLeft', false)
-                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
-                      } catch {}
+                        try {
+                          document.execCommand('justifyLeft', false)
+                          if (notesRef.current) setNewNoteHtml(notesRef.current.innerHTML)
+                        } catch {}
                     }}
                     style={{
                       padding: '6px 10px',
@@ -834,10 +834,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     onClick={(e) => {
                       e.preventDefault()
                       if (notesRef.current) notesRef.current.focus()
-                      try {
-                        document.execCommand('justifyCenter', false)
-                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
-                      } catch {}
+                        try {
+                          document.execCommand('justifyCenter', false)
+                          if (notesRef.current) setNewNoteHtml(notesRef.current.innerHTML)
+                        } catch {}
                     }}
                     style={{
                       padding: '6px 10px',
@@ -859,10 +859,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     onClick={(e) => {
                       e.preventDefault()
                       if (notesRef.current) notesRef.current.focus()
-                      try {
-                        document.execCommand('justifyRight', false)
-                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
-                      } catch {}
+                        try {
+                          document.execCommand('justifyRight', false)
+                          if (notesRef.current) setNewNoteHtml(notesRef.current.innerHTML)
+                        } catch {}
                     }}
                     style={{
                       padding: '6px 10px',
@@ -884,10 +884,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     onClick={(e) => {
                       e.preventDefault()
                       if (notesRef.current) notesRef.current.focus()
-                      try {
-                        document.execCommand('formatBlock', false, 'blockquote')
-                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
-                      } catch {}
+                        try {
+                          document.execCommand('formatBlock', false, 'blockquote')
+                          if (notesRef.current) setNewNoteHtml(notesRef.current.innerHTML)
+                        } catch {}
                     }}
                     style={{
                       padding: '6px 10px',
@@ -909,10 +909,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     onClick={(e) => {
                       e.preventDefault()
                       if (notesRef.current) notesRef.current.focus()
-                      try {
-                        document.execCommand('formatBlock', false, 'pre')
-                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
-                      } catch {}
+                        try {
+                          document.execCommand('formatBlock', false, 'pre')
+                          if (notesRef.current) setNewNoteHtml(notesRef.current.innerHTML)
+                        } catch {}
                     }}
                     style={{
                       padding: '6px 10px',
