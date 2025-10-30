@@ -130,9 +130,10 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Import contacts
+      // Import contacts (upsert: update existing, create new)
       let imported = 0
       let skipped = 0
+      let updated = 0
       let errors = 0
 
       for (const row of rows) {
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
             continue
           }
 
-          // Check for duplicates
+          // Find existing by person (first+last) or by organization
           const existing = await prisma.farmContact.findFirst({
             where: contactData.firstName || contactData.lastName
               ? {
@@ -160,24 +161,28 @@ export async function POST(request: NextRequest) {
                   organizationName: contactData.organizationName,
                   farm: contactData.farm || farm,
                 }
-              : {
-                  firstName: '',
-                  lastName: '',
-                  organizationName: '',
-                  farm: contactData.farm || farm,
-                },
+              : undefined,
           })
 
           if (existing) {
-            skipped++
-            continue
+            // Only update fields that are provided in sheet
+            const updateData: any = {}
+            Object.keys(contactData).forEach((k) => {
+              const key = k as keyof typeof contactData
+              if (contactData[key] !== undefined && key !== 'farm') {
+                updateData[key] = contactData[key as keyof typeof contactData]
+              }
+            })
+            if (Object.keys(updateData).length > 0) {
+              await prisma.farmContact.update({ where: { id: existing.id }, data: updateData })
+              updated++
+            } else {
+              skipped++
+            }
+          } else {
+            await prisma.farmContact.create({ data: contactData })
+            imported++
           }
-
-          await prisma.farmContact.create({
-            data: contactData,
-          })
-
-          imported++
         } catch (error) {
           errors++
           console.error('Error importing contact:', error)
@@ -187,10 +192,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         imported,
+        updated,
         skipped,
         errors,
         total: rows.length,
-        message: `Successfully imported ${imported} of ${rows.length} contacts${skipped > 0 ? ` (${skipped} skipped)` : ''}`
+        message: `Imported ${imported}, updated ${updated}, skipped ${skipped} of ${rows.length}`
       })
     } catch (fetchError) {
       console.error('Error fetching Google Sheet:', fetchError)

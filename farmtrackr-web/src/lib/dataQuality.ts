@@ -1,5 +1,6 @@
 // Duplicate detection and data validation utilities
 import { FarmContact } from '@/types'
+import { normalizeFarmName } from '@/lib/farmNames'
 
 export interface DuplicateGroup {
   id: string
@@ -45,11 +46,22 @@ function areDuplicates(contact1: FarmContact, contact2: FarmContact): {
   const matchFields: string[] = []
   let matchCount = 0
 
+  const farm1 = normalizeFarmName(contact1.farm || '')
+  const farm2 = normalizeFarmName(contact2.farm || '')
+
   // Exact name match (high confidence)
   const name1 = normalizeName(`${contact1.firstName} ${contact1.lastName}`)
   const name2 = normalizeName(`${contact2.firstName} ${contact2.lastName}`)
   if (name1 && name2 && name1 === name2) {
     matchFields.push('name')
+    matchCount += 2
+  }
+
+  // Organization match within same farm (high confidence)
+  const org1 = normalizeName(contact1.organizationName)
+  const org2 = normalizeName(contact2.organizationName)
+  if (org1 && org2 && org1 === org2 && farm1 && farm1 === farm2) {
+    matchFields.push('organizationName')
     matchCount += 2
   }
 
@@ -69,13 +81,20 @@ function areDuplicates(contact1: FarmContact, contact2: FarmContact): {
     matchCount += 1.5
   }
 
-  // Same farm with similar name (medium confidence)
-  if (contact1.farm && contact2.farm && 
-      normalizeName(contact1.farm) === normalizeName(contact2.farm) &&
+  // Same farm with similar person name (medium confidence)
+  if (farm1 && farm2 && farm1 === farm2 &&
       name1 && name2 && 
       (name1.includes(name2) || name2.includes(name1))) {
     if (!matchFields.includes('name')) {
       matchFields.push('name')
+      matchCount += 1
+    }
+  }
+
+  // Same farm with similar organization name (medium confidence)
+  if (farm1 && farm2 && farm1 === farm2 && org1 && org2 && (org1.includes(org2) || org2.includes(org1))) {
+    if (!matchFields.includes('organizationName')) {
+      matchFields.push('organizationName')
       matchCount += 1
     }
   }

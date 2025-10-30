@@ -165,13 +165,13 @@ export async function POST(request: NextRequest) {
 
     // Import contacts
     let imported = 0
+    let updated = 0
     let skipped = 0
     let errors = 0
     
     for (const contactData of contacts) {
       try {
         if (contactData.firstName || contactData.lastName || contactData.organizationName || contactData.farm) {
-          // Check for duplicates
           const existing = await prisma.farmContact.findFirst({
             where: contactData.firstName || contactData.lastName
               ? {
@@ -186,45 +186,50 @@ export async function POST(request: NextRequest) {
                   organizationName: contactData.organizationName,
                   farm: contactData.farm || undefined,
                 }
-              : {
-                  firstName: '',
-                  lastName: '',
-                  organizationName: '',
-                  farm: contactData.farm || undefined,
-                },
+              : undefined,
           })
-          
           if (existing) {
-            skipped++
-            continue
+            const updateData: any = {}
+            Object.keys(contactData).forEach((k) => {
+              const key = k as keyof typeof contactData
+              if (contactData[key] !== undefined && key !== 'farm') {
+                updateData[key] = contactData[key]
+              }
+            })
+            if (Object.keys(updateData).length > 0) {
+              await prisma.farmContact.update({ where: { id: existing.id }, data: updateData })
+              updated++
+            } else {
+              skipped++
+            }
+          } else {
+            await prisma.farmContact.create({
+              data: {
+                firstName: contactData.firstName || '',
+                lastName: contactData.lastName || '',
+                organizationName: contactData.organizationName,
+                farm: contactData.farm,
+                mailingAddress: contactData.mailingAddress,
+                city: contactData.city,
+                state: contactData.state,
+                zipCode: contactData.zipCode,
+                email1: contactData.email1,
+                email2: contactData.email2,
+                phoneNumber1: contactData.phoneNumber1,
+                phoneNumber2: contactData.phoneNumber2,
+                phoneNumber3: contactData.phoneNumber3,
+                phoneNumber4: contactData.phoneNumber4,
+                phoneNumber5: contactData.phoneNumber5,
+                phoneNumber6: contactData.phoneNumber6,
+                siteMailingAddress: contactData.siteMailingAddress,
+                siteCity: contactData.siteCity,
+                siteState: contactData.siteState,
+                siteZipCode: contactData.siteZipCode,
+                notes: contactData.notes,
+              },
+            })
+            imported++
           }
-          
-          await prisma.farmContact.create({
-            data: {
-              firstName: contactData.firstName || '',
-              lastName: contactData.lastName || '',
-              organizationName: contactData.organizationName,
-              farm: contactData.farm,
-              mailingAddress: contactData.mailingAddress,
-              city: contactData.city,
-              state: contactData.state,
-              zipCode: contactData.zipCode,
-              email1: contactData.email1,
-              email2: contactData.email2,
-              phoneNumber1: contactData.phoneNumber1,
-              phoneNumber2: contactData.phoneNumber2,
-              phoneNumber3: contactData.phoneNumber3,
-              phoneNumber4: contactData.phoneNumber4,
-              phoneNumber5: contactData.phoneNumber5,
-              phoneNumber6: contactData.phoneNumber6,
-              siteMailingAddress: contactData.siteMailingAddress,
-              siteCity: contactData.siteCity,
-              siteState: contactData.siteState,
-              siteZipCode: contactData.siteZipCode,
-              notes: contactData.notes,
-            },
-          })
-          imported++
         }
       } catch (error) {
         errors++
@@ -232,14 +237,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      imported,
-      skipped,
-      errors,
-      total: contacts.length,
-      message: `Successfully imported ${imported} of ${contacts.length} contacts${skipped > 0 ? ` (${skipped} duplicates skipped)` : ''}`
-    })
+      return NextResponse.json({
+        success: true,
+        imported,
+        updated,
+        skipped,
+        errors,
+        total: contacts.length,
+        message: `Imported ${imported}, updated ${updated}, skipped ${skipped} of ${contacts.length}`
+      })
   } catch (error) {
     console.error('Import error:', error)
     return NextResponse.json(
