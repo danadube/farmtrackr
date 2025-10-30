@@ -7,11 +7,8 @@ import {
   ArrowLeft, 
   Edit, 
   Trash2, 
-  User, 
   Mail, 
-  Phone, 
   MapPin, 
-  Building2,
   Calendar,
   FileText
 } from 'lucide-react'
@@ -19,6 +16,7 @@ import Link from 'next/link'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { formatPhoneNumber, formatCityStateZip } from '@/lib/formatters'
+import { getFarmColor } from '@/lib/farmColors'
 
 export default function ContactDetailPage() {
   const { colors, isDark, card, background, text } = useThemeStyles()
@@ -232,26 +230,22 @@ export default function ContactDetailPage() {
                       {contact.organizationName || `${contact.firstName} ${contact.lastName}`.trim() || 'Contact'}
                     </h1>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      {(contact.firstName || contact.lastName) && !contact.organizationName && (
-                        <span style={{ padding: '6px 10px', backgroundColor: colors.cardHover, border: `1px solid ${colors.border}`, borderRadius: '999px', fontSize: '12px', ...text.secondary }}>
-                          {contact.firstName} {contact.lastName}
-                        </span>
-                      )}
-                      {contact.farm && (
-                        <span style={{ padding: '6px 10px', backgroundColor: colors.cardHover, border: `1px solid ${colors.border}`, borderRadius: '999px', fontSize: '12px', ...text.secondary }}>
-                          {contact.farm}
-                        </span>
-                      )}
-                      {(contact.city || contact.state) && (
-                        <span style={{ padding: '6px 10px', backgroundColor: colors.cardHover, border: `1px solid ${colors.border}`, borderRadius: '999px', fontSize: '12px', ...text.secondary }}>
-                          {[contact.city, contact.state].filter(Boolean).join(', ')}
-                        </span>
-                      )}
-                      {contact.email1 && (
-                        <a href={`mailto:${contact.email1}`} style={{ padding: '6px 10px', backgroundColor: colors.cardHover, border: `1px solid ${colors.border}`, borderRadius: '999px', fontSize: '12px', color: colors.success, textDecoration: 'none' }}>
-                          {contact.email1}
-                        </a>
-                      )}
+                      {contact.farm && (() => {
+                        const farmColor = getFarmColor(contact.farm)
+                        return (
+                          <span style={{ 
+                            padding: '6px 12px', 
+                            backgroundColor: farmColor.bg, 
+                            border: `1px solid ${farmColor.border}`, 
+                            borderRadius: '999px', 
+                            fontSize: '12px', 
+                            fontWeight: '500',
+                            color: farmColor.text
+                          }}>
+                            {contact.farm}
+                          </span>
+                        )
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -346,296 +340,244 @@ export default function ContactDetailPage() {
             </div>
           </div>
 
-          {/* Contact Information */}
-          <div style={{ padding: '32px', ...card }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '32px' }}>
-              {/* Left Column */}
-              <div>
-                {/* Basic Information */}
-                <div style={{ marginBottom: '32px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <User style={{ width: '16px', height: '16px', color: colors.success }} />
-                    <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Basic Information
-                    </h2>
-                  </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Full Name
-                      </label>
-                      <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                        {contact.firstName} {contact.lastName}
-                      </p>
-                    </div>
-                    
-                    {contact.organizationName && (
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Organization/Trust Name
-                        </label>
-                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                          {contact.organizationName}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {contact.farm && (
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Farm
-                        </label>
-                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                          {contact.farm}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div style={{ marginBottom: '32px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <Mail style={{ width: '16px', height: '16px', color: colors.success }} />
-                    <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Contact Information
-                    </h2>
-                  </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {contact.email1 && (
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Primary Email
-                        </label>
-                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                          <a 
-                            href={`mailto:${contact.email1}`}
-                            style={{ color: colors.success, textDecoration: 'none' }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.textDecoration = 'underline'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.textDecoration = 'none'
-                            }}
-                          >
-                            {contact.email1}
-                          </a>
-                        </p>
-                      </div>
-                    )}
-                    
-                    {contact.email2 && (
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Secondary Email
-                        </label>
-                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                          <a 
-                            href={`mailto:${contact.email2}`}
-                            style={{ color: colors.success, textDecoration: 'none' }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.textDecoration = 'underline'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.textDecoration = 'none'
-                            }}
-                          >
-                            {contact.email2}
-                          </a>
-                        </p>
-                      </div>
-                    )}
-                    
-                    {contact.phoneNumber1 && (
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Primary Phone
-                        </label>
-                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                          <a 
-                            href={`tel:${contact.phoneNumber1}`}
-                            style={{ color: colors.success, textDecoration: 'none' }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.textDecoration = 'underline'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.textDecoration = 'none'
-                            }}
-                          >
-                            {formatPhoneNumber(contact.phoneNumber1)}
-                          </a>
-                        </p>
-                      </div>
-                    )}
-                    
-                    {contact.phoneNumber2 && (
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Secondary Phone
-                        </label>
-                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                          <a 
-                            href={`tel:${contact.phoneNumber2}`}
-                            style={{ color: colors.success, textDecoration: 'none' }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.textDecoration = 'underline'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.textDecoration = 'none'
-                            }}
-                          >
-                            {formatPhoneNumber(contact.phoneNumber2)}
-                          </a>
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+          {/* Contact Details - Card Layout */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            {/* Contact Information Card */}
+            <div style={{ padding: '24px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                <Mail style={{ width: '18px', height: '18px', color: colors.success }} />
+                <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                  Contact Information
+                </h2>
               </div>
-
-              {/* Right Column */}
-              <div>
-                {/* Mailing Address */}
-                <div style={{ marginBottom: '32px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <MapPin style={{ width: '16px', height: '16px', color: colors.success }} />
-                    <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Mailing Address
-                    </h2>
-                  </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {contact.mailingAddress ? (
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Street Address
-                        </label>
-                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                          {contact.mailingAddress}
-                        </p>
-                      </div>
-                    ) : (
-                      <p style={{ fontSize: '14px', ...text.tertiary, fontStyle: 'italic' }}>
-                        No mailing address on file
-                      </p>
-                    )}
-                    
-                    {(contact.city || contact.state || contact.zipCode) ? (
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          City, State ZIP
-                        </label>
-                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                          {formatCityStateZip(contact.city, contact.state, contact.zipCode)}
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                {/* Site Address */}
-                <div style={{ marginBottom: '32px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <MapPin style={{ width: '16px', height: '16px', color: colors.success }} />
-                    <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Site Address
-                    </h2>
-                  </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {contact.siteMailingAddress ? (
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Street Address
-                        </label>
-                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                          {contact.siteMailingAddress}
-                        </p>
-                      </div>
-                    ) : (
-                      <p style={{ fontSize: '14px', ...text.tertiary, fontStyle: 'italic' }}>
-                        No site address on file
-                      </p>
-                    )}
-                    
-                    {(contact.siteCity || contact.siteState || contact.siteZipCode) ? (
-                      <div>
-                        <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          City, State ZIP
-                        </label>
-                        <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                          {formatCityStateZip(contact.siteCity, contact.siteState, contact.siteZipCode) || '—'}
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                {/* Metadata */}
-                <div style={{ marginBottom: '32px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <Calendar style={{ width: '16px', height: '16px', color: colors.success }} />
-                    <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Record Information
-                    </h2>
-                  </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Created
-                      </label>
-                      <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                        {contact.dateCreated.toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Last Modified
-                      </label>
-                      <p style={{ fontSize: '16px', ...text.primary, margin: '4px 0 0 0' }}>
-                        {contact.dateModified.toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Notes */}
-                {contact.notes && (
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {contact.email1 && (
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                      <FileText style={{ width: '16px', height: '16px', color: colors.success }} />
-                      <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                        Notes
-                      </h2>
-                    </div>
-                    
-                    <div 
-                      style={{
-                        padding: '16px',
-                        backgroundColor: colors.cardHover,
-                        border: `1px solid ${colors.border}`,
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        ...text.secondary,
-                        lineHeight: '1.5'
-                      }}
-                    >
-                      {contact.notes}
-                    </div>
+                    <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                      Primary Email
+                    </label>
+                    <p style={{ fontSize: '16px', ...text.primary, margin: '0' }}>
+                      <a 
+                        href={`mailto:${contact.email1}`}
+                        style={{ color: colors.success, textDecoration: 'none' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.textDecoration = 'underline'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.textDecoration = 'none'
+                        }}
+                      >
+                        {contact.email1}
+                      </a>
+                    </p>
                   </div>
                 )}
+                
+                {contact.email2 && (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                      Secondary Email
+                    </label>
+                    <p style={{ fontSize: '16px', ...text.primary, margin: '0' }}>
+                      <a 
+                        href={`mailto:${contact.email2}`}
+                        style={{ color: colors.success, textDecoration: 'none' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.textDecoration = 'underline'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.textDecoration = 'none'
+                        }}
+                      >
+                        {contact.email2}
+                      </a>
+                    </p>
+                  </div>
+                )}
+                
+                {contact.phoneNumber1 && (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                      Primary Phone
+                    </label>
+                    <p style={{ fontSize: '16px', ...text.primary, margin: '0' }}>
+                      <a 
+                        href={`tel:${contact.phoneNumber1}`}
+                        style={{ color: colors.success, textDecoration: 'none' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.textDecoration = 'underline'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.textDecoration = 'none'
+                        }}
+                      >
+                        {formatPhoneNumber(contact.phoneNumber1)}
+                      </a>
+                    </p>
+                  </div>
+                )}
+                
+                {contact.phoneNumber2 && (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                      Secondary Phone
+                    </label>
+                    <p style={{ fontSize: '16px', ...text.primary, margin: '0' }}>
+                      <a 
+                        href={`tel:${contact.phoneNumber2}`}
+                        style={{ color: colors.success, textDecoration: 'none' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.textDecoration = 'underline'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.textDecoration = 'none'
+                        }}
+                      >
+                        {formatPhoneNumber(contact.phoneNumber2)}
+                      </a>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Mailing Address Card */}
+            <div style={{ padding: '24px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                <MapPin style={{ width: '18px', height: '18px', color: colors.success }} />
+                <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                  Mailing Address
+                </h2>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {contact.mailingAddress ? (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                      Street Address
+                    </label>
+                    <p style={{ fontSize: '16px', ...text.primary, margin: '0' }}>
+                      {contact.mailingAddress}
+                    </p>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '14px', ...text.tertiary, fontStyle: 'italic', margin: '0' }}>
+                    No mailing address on file
+                  </p>
+                )}
+                
+                {(contact.city || contact.state || contact.zipCode) && (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                      City, State ZIP
+                    </label>
+                    <p style={{ fontSize: '16px', ...text.primary, margin: '0' }}>
+                      {formatCityStateZip(contact.city, contact.state, contact.zipCode)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Site Address Card (if different) */}
+            {(contact.siteMailingAddress || contact.siteCity || contact.siteState || contact.siteZipCode) && (
+              <div style={{ padding: '24px', ...card }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                  <MapPin style={{ width: '18px', height: '18px', color: colors.success }} />
+                  <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                    Site Address
+                  </h2>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {contact.siteMailingAddress && (
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                        Street Address
+                      </label>
+                      <p style={{ fontSize: '16px', ...text.primary, margin: '0' }}>
+                        {contact.siteMailingAddress}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {(contact.siteCity || contact.siteState || contact.siteZipCode) && (
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                        City, State ZIP
+                      </label>
+                      <p style={{ fontSize: '16px', ...text.primary, margin: '0' }}>
+                        {formatCityStateZip(contact.siteCity, contact.siteState, contact.siteZipCode)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Notes Card (if exists) */}
+            {contact.notes && (
+              <div style={{ padding: '24px', ...card }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                  <FileText style={{ width: '18px', height: '18px', color: colors.success }} />
+                  <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                    Notes
+                  </h2>
+                </div>
+                
+                <div 
+                  style={{
+                    padding: '16px',
+                    backgroundColor: colors.cardHover,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    ...text.secondary,
+                    lineHeight: '1.6',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                >
+                  {contact.notes}
+                </div>
+              </div>
+            )}
+
+            {/* Record Information Card */}
+            <div style={{ padding: '24px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                <Calendar style={{ width: '18px', height: '18px', color: colors.success }} />
+                <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                  Record Information
+                </h2>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                    Created
+                  </label>
+                  <p style={{ fontSize: '16px', ...text.primary, margin: '0' }}>
+                    {contact.dateCreated.toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+                
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                    Last Modified
+                  </label>
+                  <p style={{ fontSize: '16px', ...text.primary, margin: '0' }}>
+                    {contact.dateModified.toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
