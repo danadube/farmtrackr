@@ -74,6 +74,9 @@ export function Sidebar({ children }: SidebarProps) {
     { href: '/import-export', label: 'Import & Export', icon: Upload },
     { href: '/data-quality', label: 'Data Quality', icon: TrendingUp },
     { href: '/settings', label: 'Settings', icon: Settings },
+    ...(process.env.NEXT_PUBLIC_ENABLE_ADMIN === 'true' ? [
+      { href: '/admin-tools', label: 'Admin Tools (Dev)', icon: Settings },
+    ] : []),
   ]
 
   const isActive = (href: string) => {
