@@ -1,5 +1,6 @@
 'use client'
 
+// ContactForm component for creating and editing contacts
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ContactFormData } from '@/types'
