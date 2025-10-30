@@ -767,6 +767,131 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                   >
                     Clear
                   </button>
+                  <button
+                    type="button"
+                    title="Align Left"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (notesRef.current) notesRef.current.focus()
+                      try {
+                        document.execCommand('justifyLeft', false)
+                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
+                      } catch {}
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      color: colors.text.secondary,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.cardHover }}
+                  >
+                    ⟸
+                  </button>
+                  <button
+                    type="button"
+                    title="Align Center"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (notesRef.current) notesRef.current.focus()
+                      try {
+                        document.execCommand('justifyCenter', false)
+                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
+                      } catch {}
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      color: colors.text.secondary,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.cardHover }}
+                  >
+                    ⎯
+                  </button>
+                  <button
+                    type="button"
+                    title="Align Right"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (notesRef.current) notesRef.current.focus()
+                      try {
+                        document.execCommand('justifyRight', false)
+                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
+                      } catch {}
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      color: colors.text.secondary,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.cardHover }}
+                  >
+                    ⟹
+                  </button>
+                  <button
+                    type="button"
+                    title="Blockquote"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (notesRef.current) notesRef.current.focus()
+                      try {
+                        document.execCommand('formatBlock', false, 'blockquote')
+                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
+                      } catch {}
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      color: colors.text.secondary,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.cardHover }}
+                  >
+                    ❝
+                  </button>
+                  <button
+                    type="button"
+                    title="Code Block"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (notesRef.current) notesRef.current.focus()
+                      try {
+                        document.execCommand('formatBlock', false, 'pre')
+                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
+                      } catch {}
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      color: colors.text.secondary,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.cardHover }}
+                  >
+                    {'</>'}
+                  </button>
                 </div>
 
                 <div
