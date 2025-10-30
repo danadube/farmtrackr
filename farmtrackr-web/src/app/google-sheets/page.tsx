@@ -24,6 +24,8 @@ export default function GoogleSheetsPage() {
     type: 'success' | 'error' | null
     message: string
   }>({ type: null, message: '' })
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
   const [farmCounts, setFarmCounts] = useState<Record<string, number>>({})
   const [totalContacts, setTotalContacts] = useState<number>(0)
   const [lastSyncedAt, setLastSyncedAt] = useState<string>('')
@@ -52,6 +54,7 @@ export default function GoogleSheetsPage() {
     
     setIsImporting(true)
     setImportStatus({ type: null, message: '' })
+    setShowImportModal(true)
     
     try {
       const response = await fetch('/api/google-sheets/import', {
@@ -103,6 +106,7 @@ export default function GoogleSheetsPage() {
     if (!selectedFarm) return
     
     setIsExporting(true)
+    setShowExportModal(true)
     
     try {
       const response = await fetch('/api/google-sheets/export', {
@@ -229,52 +233,9 @@ export default function GoogleSheetsPage() {
           </div>
         </div>
 
-          {/* Sync Note */}
-          <div 
-            style={{
-              marginBottom: '24px',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              backgroundColor: isDark ? '#1f2937' : '#f9fafb',
-              border: `1px solid ${colors.border}`,
-              color: colors.text.secondary,
-              fontSize: '13px'
-            }}
-          >
-            Edits made in the app do not auto-sync to Google Sheets. Use Export to push updates. We can add optional "auto-sync on save" later for selected farms.
-          </div>
+          {/* (Sync note moved into How To section) */}
 
-          {/* Status Messages */}
-          {importStatus.type && (
-            <div 
-              style={{
-                marginBottom: '24px',
-                padding: '16px',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                backgroundColor: importStatus.type === 'success' 
-                  ? (isDark ? '#064e3b' : '#f0fdf4') 
-                  : (isDark ? '#7f1d1d' : '#fef2f2'),
-                border: `1px solid ${importStatus.type === 'success' ? colors.success : colors.error}`
-              }}
-            >
-              {importStatus.type === 'success' ? (
-                <CheckCircle style={{ width: '20px', height: '20px', color: colors.success }} />
-              ) : (
-                <AlertCircle style={{ width: '20px', height: '20px', color: colors.error }} />
-              )}
-              <span style={{ 
-                fontSize: '14px', 
-                color: importStatus.type === 'success' 
-                  ? (isDark ? '#6ee7b7' : '#166534') 
-                  : (isDark ? '#fca5a5' : '#991b1b') 
-              }}>
-                {importStatus.message}
-              </span>
-            </div>
-          )}
+          {/* Status messages moved into modal */}
 
           {/* Farm Selection */}
           <div style={{ marginBottom: '32px' }}>
@@ -564,10 +525,93 @@ export default function GoogleSheetsPage() {
               <p style={{ margin: '0' }}>
                 <strong>Setup:</strong> Make sure your Google Sheets have the correct column headers for proper data mapping.
               </p>
+              <p style={{ margin: '0' }}>
+                <strong>Note:</strong> Edits made in the app do not auto-sync to Google Sheets. Use Export to push updates. We can add optional "auto-sync on save" later for selected farms.
+              </p>
             </div>
           </div>
         </div>
       </div>
+    {/* Import Modal */}
+    {showImportModal && (
+      <div
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}
+        onClick={(e) => { if (e.target === e.currentTarget) setShowImportModal(false) }}
+      >
+        <div style={{ ...card, padding: '24px', maxWidth: '520px', width: '92%' }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            {importStatus.type === 'error' ? (
+              <AlertCircle style={{ width: '20px', height: '20px', color: colors.error }} />
+            ) : (
+              <CheckCircle style={{ width: '20px', height: '20px', color: colors.success }} />
+            )}
+            <h3 style={{ fontSize: '16px', fontWeight: 600, ...text.primary, margin: 0 }}>Import Status</h3>
+          </div>
+          <p style={{ fontSize: '14px', ...text.secondary, margin: 0 }}>
+            {isImporting ? 'Importing... This may take a moment.' : (importStatus.message || 'Done.')}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', gap: '8px' }}>
+            <button
+              onClick={() => setShowImportModal(false)}
+              disabled={isImporting}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: colors.cardHover,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                ...text.secondary,
+                cursor: isImporting ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    {/* Export Modal */}
+    {showExportModal && (
+      <div
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}
+        onClick={(e) => { if (e.target === e.currentTarget) setShowExportModal(false) }}
+      >
+        <div style={{ ...card, padding: '24px', maxWidth: '520px', width: '92%' }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <Download style={{ width: '20px', height: '20px', color: colors.success }} />
+            <h3 style={{ fontSize: '16px', fontWeight: 600, ...text.primary, margin: 0 }}>Export Status</h3>
+          </div>
+          <p style={{ fontSize: '14px', ...text.secondary, margin: 0 }}>
+            {isExporting ? 'Exporting... Your file will download shortly.' : 'Export completed or started.'}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', gap: '8px' }}>
+            <button
+              onClick={() => setShowExportModal(false)}
+              disabled={isExporting}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: colors.cardHover,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                ...text.secondary,
+                cursor: isExporting ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </Sidebar>
   )
 }
