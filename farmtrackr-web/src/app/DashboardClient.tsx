@@ -29,7 +29,7 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ contacts, stats }: DashboardClientProps) {
   const [mounted, setMounted] = useState(false)
-  const { colors, isDark, card, headerCard, headerDivider, background, text } = useThemeStyles()
+  const { colors, isDark, card, headerCard, headerDivider, background, text, spacing } = useThemeStyles()
 
   useEffect(() => {
     setMounted(true)
@@ -66,25 +66,25 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             maxWidth: '1200px',
             marginLeft: 'auto',
             marginRight: 'auto',
-            paddingLeft: '48px',
-            paddingRight: '48px',
-            paddingTop: '32px',
-            paddingBottom: '32px'
+            paddingLeft: spacing(6),
+            paddingRight: spacing(6),
+            paddingTop: spacing(4),
+            paddingBottom: spacing(4)
           }}
         >
           {/* Hero Section */}
-          <div style={{ marginBottom: '48px' }}>
+          <div style={{ marginBottom: spacing(6) }}>
             <div 
               style={{
-                padding: '24px',
+                padding: spacing(3),
                 ...headerCard
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(3) }}>
                 <div 
                   style={{
-                    width: '64px',
-                    height: '64px',
+                    width: spacing(8),
+                    height: spacing(8),
                     backgroundColor: colors.iconBg,
                     borderRadius: '12px',
                     display: 'flex',
@@ -92,7 +92,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     justifyContent: 'center'
                   }}
                 >
-                  <Home style={{ width: '28px', height: '28px', color: colors.success }} />
+                  <Home style={{ width: spacing(3.5), height: spacing(3.5), color: colors.success }} />
                 </div>
                 <div>
                   <h1 
@@ -117,26 +117,26 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
           </div>
 
           {/* Quick Actions */}
-          <div style={{ marginBottom: '32px' }}>
+          <div style={{ marginBottom: spacing(4) }}>
             <h2 
               style={{
                 fontSize: '24px',
                 fontWeight: '600',
                 ...text.primary,
                 lineHeight: '32px',
-                marginBottom: '12px',
-                margin: '0 0 12px 0'
+                marginBottom: spacing(1.5),
+                margin: `0 0 ${spacing(1.5)} 0`
               }}
             >
               Quick Actions
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: spacing(2) }}>
               {/* Add Contact */}
               <Link 
                 href="/contacts/new" 
                 style={{
                   display: 'block',
-                  padding: '16px',
+                  padding: spacing(2),
                   ...card,
                   textDecoration: 'none',
                   transition: 'all 0.2s ease'
@@ -152,11 +152,11 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   e.currentTarget.style.borderColor = colors.border
                 }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: spacing(1.5) }}>
                   <div 
                     style={{
-                      width: '48px',
-                      height: '48px',
+                      width: spacing(6),
+                      height: spacing(6),
                       backgroundColor: colors.iconBg,
                       borderRadius: '12px',
                       display: 'flex',
@@ -164,7 +164,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       justifyContent: 'center'
                     }}
                   >
-                    <Plus style={{ width: '24px', height: '24px', color: colors.primary }} />
+                    <Plus style={{ width: spacing(3), height: spacing(3), color: colors.primary }} />
                   </div>
                   <div>
                     <h3 style={{ fontWeight: '600', marginBottom: '4px', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>

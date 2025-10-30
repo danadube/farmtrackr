@@ -1,6 +1,7 @@
 // Hook to get theme-aware inline styles
 import { useTheme } from '@/components/ThemeProvider'
 import { getThemeColors } from '@/lib/theme'
+import { spacing } from '@/lib/spacing'
 
 export function useThemeStyles() {
   const { resolvedTheme } = useTheme()
@@ -10,6 +11,7 @@ export function useThemeStyles() {
   return {
     colors,
     isDark,
+    spacing,
     // Common style objects
     card: {
       backgroundColor: colors.card,
@@ -28,7 +30,7 @@ export function useThemeStyles() {
         ? '0 4px 12px rgba(0,0,0,0.35)'
         : '0 8px 24px rgba(0,0,0,0.06)',
       borderRadius: '16px',
-      position: 'relative',
+      position: 'relative' as const,
     },
     headerDivider: {
       position: 'absolute' as const,
