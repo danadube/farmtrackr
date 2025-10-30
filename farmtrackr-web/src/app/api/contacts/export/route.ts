@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { normalizeFarmName } from '@/lib/farmNames'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import PDFDocument from 'pdfkit'
@@ -13,10 +14,16 @@ export async function POST(request: NextRequest) {
     const endDate = body.endDate // Optional: filter by date range
     const columns = body.columns // Optional: array of column names to include
     
-    // Build query
+    // Build query (farm normalization handled after fetch to match variants)
     const where: any = {}
-    if (farm) {
-      where.farm = farm
+    if (startDate || endDate) {
+      where.dateCreated = {}
+      if (startDate) {
+        where.dateCreated.gte = new Date(startDate)
+      }
+      if (endDate) {
+        where.dateCreated.lte = new Date(endDate)
+      }
     }
     if (startDate || endDate) {
       where.dateCreated = {}
@@ -29,10 +36,14 @@ export async function POST(request: NextRequest) {
     }
     
     // Get all contacts from database
-    const contacts = await prisma.farmContact.findMany({
+    let contacts = await prisma.farmContact.findMany({
       where,
       orderBy: { dateCreated: 'desc' },
     })
+    if (farm) {
+      const target = normalizeFarmName(farm)
+      contacts = contacts.filter(c => normalizeFarmName(c.farm || '') === target)
+    }
     
     if (contacts.length === 0) {
       return NextResponse.json({ error: 'No contacts to export' }, { status: 400 })
