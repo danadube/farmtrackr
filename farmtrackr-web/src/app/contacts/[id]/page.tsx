@@ -551,21 +551,45 @@ export default function ContactDetailPage() {
                 </h2>
               </div>
               
-              {contact.notes ? (
-                <div 
-                  style={{
-                    padding: '16px',
-                    backgroundColor: colors.cardHover,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    color: colors.text.primary,
-                    lineHeight: '1.6',
-                    minHeight: '80px'
-                  }}
-                  dangerouslySetInnerHTML={{ __html: String(contact.notes) }}
-                />
-              ) : (
+              {(() => {
+                const raw = contact.notes as any
+                let entries: Array<{ id: string; html: string; createdAt: string }> | null = null
+                try {
+                  const parsed = JSON.parse(typeof raw === 'string' ? raw : '')
+                  if (Array.isArray(parsed)) entries = parsed
+                } catch {}
+                if (entries && entries.length > 0) {
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {entries.map((n) => (
+                        <div key={n.id} style={{ border: `1px solid ${colors.border}`, borderRadius: '12px', overflow: 'hidden' }}>
+                          <div style={{ padding: '10px 12px', backgroundColor: colors.cardHover, fontSize: '12px', ...text.secondary }}>
+                            {new Date(n.createdAt).toLocaleString()}
+                          </div>
+                          <div style={{ padding: '12px', backgroundColor: colors.card, color: colors.text.primary }} dangerouslySetInnerHTML={{ __html: n.html }} />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                }
+                if (contact.notes) {
+                  return (
+                    <div 
+                      style={{
+                        padding: '16px',
+                        backgroundColor: colors.cardHover,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        color: colors.text.primary,
+                        lineHeight: '1.6',
+                        minHeight: '80px'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: String(contact.notes) }}
+                    />
+                  )
+                }
+                return (
                 <div 
                   style={{
                     padding: '16px',
@@ -582,7 +606,7 @@ export default function ContactDetailPage() {
                     No notes added yet. Click Edit to add notes for this contact.
                   </span>
                 </div>
-              )}
+              )})()}
             </div>
 
             {/* Record Information Card */}

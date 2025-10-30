@@ -44,6 +44,21 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const notesRef = useRef<HTMLDivElement | null>(null)
+  const [newNoteHtml, setNewNoteHtml] = useState<string>('')
+
+  type NoteEntry = { id: string; html: string; createdAt: string }
+  const parseNotes = (notesRaw: string | undefined | null): NoteEntry[] => {
+    if (!notesRaw) return []
+    try {
+      const parsed = JSON.parse(notesRaw)
+      if (Array.isArray(parsed)) return parsed as NoteEntry[]
+      // Fallback: treat as single html string
+      return [{ id: String(Date.now()), html: String(notesRaw), createdAt: new Date().toISOString() }]
+    } catch {
+      return [{ id: String(Date.now()), html: String(notesRaw), createdAt: new Date().toISOString() }]
+    }
+  }
+  const notesList = parseNotes(formData.notes)
 
   const handleInputChange = (field: keyof ContactFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -898,7 +913,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                   ref={notesRef}
                   contentEditable
                   suppressContentEditableWarning
-                  onInput={(e) => handleInputChange('notes', (e.currentTarget as HTMLDivElement).innerHTML)}
+                  onInput={(e) => setNewNoteHtml((e.currentTarget as HTMLDivElement).innerHTML)}
                   style={{
                     width: '100%',
                     minHeight: '120px',
@@ -920,11 +935,75 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     (e.currentTarget as HTMLDivElement).style.borderColor = colors.border
                     ;(e.currentTarget as HTMLDivElement).style.boxShadow = 'none'
                   }}
-                  dangerouslySetInnerHTML={{ __html: formData.notes || '' }}
+                  dangerouslySetInnerHTML={{ __html: '' }}
                 />
                 <div style={{ fontSize: '12px', ...text.tertiary, marginTop: '6px' }}>
                   You can format text (bold, italic, lists) with your keyboard shortcuts.
                 </div>
+
+                {/* Add note and list */}
+                <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const trimmed = (newNoteHtml || '').replace(/<br\s*\/?>/g, '').trim()
+                      if (!trimmed) return
+                      const next: NoteEntry[] = [...notesList, { id: String(Date.now()), html: newNoteHtml, createdAt: new Date().toISOString() }]
+                      handleInputChange('notes', JSON.stringify(next))
+                      setNewNoteHtml('')
+                      if (notesRef.current) notesRef.current.innerHTML = ''
+                    }}
+                    style={{
+                      padding: '10px 14px',
+                      backgroundColor: colors.success,
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.success }}
+                  >
+                    Add Note
+                  </button>
+                </div>
+
+                {notesList.length > 0 && (
+                  <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {notesList.map((n) => (
+                      <div key={n.id} style={{ border: `1px solid ${colors.border}`, borderRadius: '10px', overflow: 'hidden' }}>
+                        <div style={{ padding: '10px 12px', backgroundColor: colors.cardHover, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '12px', ...text.secondary }}>
+                            {new Date(n.createdAt).toLocaleString()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = notesList.filter(x => x.id !== n.id)
+                              handleInputChange('notes', JSON.stringify(next))
+                            }}
+                            style={{
+                              padding: '6px 10px',
+                              backgroundColor: 'transparent',
+                              border: `1px solid ${colors.border}`,
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              ...text.secondary
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        <div style={{ padding: '12px', backgroundColor: colors.card }} dangerouslySetInnerHTML={{ __html: n.html }} />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Form Actions */}
