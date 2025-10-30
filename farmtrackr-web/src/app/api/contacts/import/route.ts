@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { FarmContact } from '@/types'
 import Papa from 'papaparse'
+import { normalizeAddressCasing, normalizeCityCasing } from '@/lib/address'
 import * as XLSX from 'xlsx'
 
 export async function POST(request: NextRequest) {
@@ -34,8 +35,8 @@ export async function POST(request: NextRequest) {
         lastName: row['Last Name'] || row['lastName'] || row['Last'] || '',
         organizationName: row['Organization'] || row['organization'] || row['Organization Name'] || row['organizationName'] || row['Trust'] || row['trust'] || undefined,
         farm: row['Farm'] || row['farm'] || undefined,
-        mailingAddress: row['Mailing Address'] || row['mailingAddress'] || row['Address'] || undefined,
-        city: row['City'] || row['city'] || undefined,
+        mailingAddress: normalizeAddressCasing(row['Mailing Address'] || row['mailingAddress'] || row['Address'] || undefined),
+        city: normalizeCityCasing(row['City'] || row['city'] || undefined),
         state: row['State'] || row['state'] || undefined,
         zipCode: (() => {
           const raw = row['Zip Code'] || row['zipCode'] || row['ZIP']
@@ -54,8 +55,8 @@ export async function POST(request: NextRequest) {
         phoneNumber4: row['Phone 4'] || row['phoneNumber4'] || undefined,
         phoneNumber5: row['Phone 5'] || row['phoneNumber5'] || undefined,
         phoneNumber6: row['Phone 6'] || row['phoneNumber6'] || undefined,
-        siteMailingAddress: row['Site Mailing Address'] || row['SITE MAILING ADDRESS'] || row['Site Address'] || row['Site Street Address'] || row['Physical Address'] || row['siteMailingAddress'] || undefined,
-        siteCity: row['Site City'] || row['siteCity'] || undefined,
+        siteMailingAddress: normalizeAddressCasing(row['Site Mailing Address'] || row['SITE MAILING ADDRESS'] || row['Site Address'] || row['Site Street Address'] || row['Physical Address'] || row['siteMailingAddress'] || undefined),
+        siteCity: normalizeCityCasing(row['Site City'] || row['siteCity'] || undefined),
         siteState: row['Site State'] || row['siteState'] || undefined,
         siteZipCode: (() => {
           const raw = row['Site Zip Code'] || row['siteZipCode']
@@ -104,8 +105,8 @@ export async function POST(request: NextRequest) {
         lastName: row['Last Name'] || row['lastName'] || row['Last'] || '',
         organizationName: row['Organization'] || row['organization'] || row['Organization Name'] || row['organizationName'] || row['Trust'] || row['trust'] || undefined,
         farm: row['Farm'] || row['farm'] || undefined,
-        mailingAddress: row['Mailing Address'] || row['mailingAddress'] || row['Address'] || undefined,
-        city: row['City'] || row['city'] || undefined,
+        mailingAddress: normalizeAddressCasing(row['Mailing Address'] || row['mailingAddress'] || row['Address'] || undefined),
+        city: normalizeCityCasing(row['City'] || row['city'] || undefined),
         state: row['State'] || row['state'] || undefined,
         zipCode: (() => {
           const raw = row['Zip Code'] || row['zipCode'] || row['ZIP']
@@ -124,8 +125,8 @@ export async function POST(request: NextRequest) {
         phoneNumber4: row['Phone 4'] || row['phoneNumber4'] || undefined,
         phoneNumber5: row['Phone 5'] || row['phoneNumber5'] || undefined,
         phoneNumber6: row['Phone 6'] || row['phoneNumber6'] || undefined,
-        siteMailingAddress: row['Site Mailing Address'] || row['SITE MAILING ADDRESS'] || row['Site Address'] || row['Site Street Address'] || row['Physical Address'] || row['siteMailingAddress'] || undefined,
-        siteCity: row['Site City'] || row['siteCity'] || undefined,
+        siteMailingAddress: normalizeAddressCasing(row['Site Mailing Address'] || row['SITE MAILING ADDRESS'] || row['Site Address'] || row['Site Street Address'] || row['Physical Address'] || row['siteMailingAddress'] || undefined),
+        siteCity: normalizeCityCasing(row['Site City'] || row['siteCity'] || undefined),
         siteState: row['Site State'] || row['siteState'] || undefined,
         siteZipCode: (() => {
           const raw = row['Site Zip Code'] || row['siteZipCode']

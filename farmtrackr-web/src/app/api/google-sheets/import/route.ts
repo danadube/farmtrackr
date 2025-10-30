@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { FARM_SPREADSHEETS, FarmName } from '@/lib/farmSpreadsheets'
 import { prisma } from '@/lib/prisma'
+import { normalizeAddressCasing, normalizeCityCasing } from '@/lib/address'
 import Papa from 'papaparse'
 
 export async function POST(request: NextRequest) {
@@ -88,8 +89,8 @@ export async function POST(request: NextRequest) {
           lastName,
           organizationName,
           farm: farm,
-          mailingAddress: getField(['Mailing Address', 'mailingAddress', 'Address', 'address', 'MAILING ADDRESS']),
-          city: getField(['City', 'city', 'CITY']),
+          mailingAddress: normalizeAddressCasing(getField(['Mailing Address', 'mailingAddress', 'Address', 'address', 'MAILING ADDRESS'])),
+          city: normalizeCityCasing(getField(['City', 'city', 'CITY'])),
           state: getField(['State', 'state', 'STATE']),
           zipCode: (() => {
             const zip = getField(['Zip Code', 'zipCode', 'ZIP', 'zip', 'ZIP CODE', 'Zip'])
@@ -108,14 +109,14 @@ export async function POST(request: NextRequest) {
           phoneNumber4: getField(['Phone 4', 'phoneNumber4', 'PHONE 4']),
           phoneNumber5: getField(['Phone 5', 'phoneNumber5', 'PHONE 5']),
           phoneNumber6: getField(['Phone 6', 'phoneNumber6', 'PHONE 6']),
-          siteMailingAddress: getField([
+          siteMailingAddress: normalizeAddressCasing(getField([
             'Site Mailing Address',
             'Site Address',
             'Site Street Address',
             'Physical Address',
             'siteMailingAddress'
-          ]),
-          siteCity: getField(['Site City', 'siteCity', 'SITE CITY']),
+          ])),
+          siteCity: normalizeCityCasing(getField(['Site City', 'siteCity', 'SITE CITY'])),
           siteState: getField(['Site State', 'siteState', 'SITE STATE']),
           siteZipCode: (() => {
             const zip = getField(['Site Zip Code', 'siteZipCode', 'SITE ZIP'])
