@@ -163,11 +163,11 @@ export default function DocumentsPage() {
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'template':
-        return isDark ? '#064e3b' : '#f0fdf4'
+        return isDark ? '#064e3b' : (colors as any).successTint || '#dcfce7'
       case 'contact':
-        return isDark ? '#1e3a8a' : '#eff6ff'
+        return isDark ? '#1e3a8a' : (colors as any).primaryTint || '#dbeafe'
       case 'report':
-        return isDark ? '#78350f' : '#fffbeb'
+        return isDark ? '#78350f' : (colors as any).warningTint || '#fef3c7'
       default:
         return colors.cardHover
     }
@@ -583,7 +583,7 @@ export default function DocumentsPage() {
                     style={{
                       width: '48px',
                       height: '48px',
-                      backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
+                      backgroundColor: isDark ? '#064e3b' : (colors as any).successTint || '#dcfce7',
                       borderRadius: '12px',
                       display: 'flex',
                       alignItems: 'center',

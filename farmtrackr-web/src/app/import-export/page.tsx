@@ -232,7 +232,7 @@ export default function ImportExportPage() {
                   style={{
                     width: '48px',
                     height: '48px',
-                    backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
+                    backgroundColor: isDark ? '#064e3b' : (colors as any).successTint || '#dcfce7',
                     borderRadius: '12px',
                     display: 'flex',
                     alignItems: 'center',

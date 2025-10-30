@@ -164,7 +164,7 @@ export default function GoogleSheetsPage() {
                   style={{
                     width: '48px',
                     height: '48px',
-                    backgroundColor: isDark ? '#065f46' : '#f0fdf4',
+                    backgroundColor: isDark ? '#065f46' : (colors as any).successTint || '#dcfce7',
                     borderRadius: '12px',
                     display: 'flex',
                     alignItems: 'center',

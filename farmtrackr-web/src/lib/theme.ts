@@ -44,7 +44,11 @@ export function getThemeColors(isDark: boolean) {
       success: '#10b981',
       error: '#ef4444',
       warning: '#f59e0b',
-      iconBg: '#eff6ff',
+      iconBg: '#dbeafe',
+      // darker, readable tints for light mode icon containers
+      primaryTint: '#dbeafe',
+      successTint: '#dcfce7',
+      warningTint: '#fef3c7',
       gradient: {
         from: '#eff6ff',
         to: '#dbeafe',
