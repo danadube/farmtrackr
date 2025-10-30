@@ -921,7 +921,10 @@ export default function DataQualityPage() {
                     margin: '0 0 8px 0'
                   }}
                 >
-                  Validation Issues ({validationIssues.length})
+                  {(() => {
+                    const visibleCount = validationIssues.filter(issue => !dismissedIssueIds.has(issue.id)).length
+                    return `Validation Issues (${visibleCount})`
+                  })()}
                 </h2>
                 {validationIssues.length > 0 && (
                   <button
@@ -948,7 +951,7 @@ export default function DataQualityPage() {
                 )}
               </div>
 
-              {validationIssues.length === 0 ? (
+              {validationIssues.filter(issue => !dismissedIssueIds.has(issue.id)).length === 0 ? (
                 <div style={{ padding: '48px', textAlign: 'center' }}>
                   <CheckCircle style={{ width: '48px', height: '48px', color: colors.success, margin: '0 auto 16px' }} />
                   <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, marginBottom: '8px' }}>
