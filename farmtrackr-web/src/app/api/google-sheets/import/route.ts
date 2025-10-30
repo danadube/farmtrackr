@@ -61,10 +61,26 @@ export async function POST(request: NextRequest) {
           return undefined
         }
 
+        const fullName = getField(['Name', 'Full Name', 'FULL NAME'])
+        let firstName = getField(['First Name', 'firstName', 'First', 'first name', 'FIRST NAME']) || ''
+        let lastName = getField(['Last Name', 'lastName', 'Last', 'last name', 'LAST NAME']) || ''
+        let org = farm
+
+        // Business/Trust rule: if only one name provided and org not set differently, move to farm field
+        if (!org) {
+          if (fullName && !firstName && !lastName) {
+            org = fullName
+          } else if ((firstName && !lastName) || (lastName && !firstName)) {
+            org = (firstName || lastName) as string
+            firstName = ''
+            lastName = ''
+          }
+        }
+
         return {
-          firstName: getField(['First Name', 'firstName', 'First', 'first name', 'FIRST NAME']) || '',
-          lastName: getField(['Last Name', 'lastName', 'Last', 'last name', 'LAST NAME']) || '',
-          farm: farm,
+          firstName,
+          lastName,
+          farm: org,
           mailingAddress: getField(['Mailing Address', 'mailingAddress', 'Address', 'address', 'MAILING ADDRESS']),
           city: getField(['City', 'city', 'CITY']),
           state: getField(['State', 'state', 'STATE']),
@@ -108,19 +124,25 @@ export async function POST(request: NextRequest) {
         try {
           const contactData = mapRow(row)
 
-          // Skip if no name data
-          if (!contactData.firstName && !contactData.lastName) {
+          // Skip if no useful identifiers at all
+          if (!contactData.firstName && !contactData.lastName && !contactData.farm) {
             skipped++
             continue
           }
 
           // Check for duplicates
           const existing = await prisma.farmContact.findFirst({
-            where: {
-              firstName: contactData.firstName,
-              lastName: contactData.lastName,
-              farm: farm,
-            },
+            where: contactData.firstName || contactData.lastName
+              ? {
+                  firstName: contactData.firstName || '',
+                  lastName: contactData.lastName || '',
+                  farm: contactData.farm || farm,
+                }
+              : {
+                  firstName: '',
+                  lastName: '',
+                  farm: contactData.farm || farm,
+                },
           })
 
           if (existing) {

@@ -53,12 +53,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
     
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required'
-    }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required'
-    }
+    // Names are optional (trusts/businesses may use a single field elsewhere)
     if (formData.email1 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email1)) {
       newErrors.email1 = 'Please enter a valid email address'
     }
@@ -217,7 +212,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', boxSizing: 'border-box' }}>
                   <div style={{ boxSizing: 'border-box' }}>
                     <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
-                      First Name *
+                      First Name
                     </label>
                     <input
                       type="text"
@@ -244,7 +239,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
 
                   <div style={{ boxSizing: 'border-box' }}>
                     <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
-                      Last Name *
+                      Last Name
                     </label>
                     <input
                       type="text"
