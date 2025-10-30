@@ -18,6 +18,7 @@ import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { formatPhoneNumber, formatCityStateZip } from '@/lib/formatters'
 import { getFarmColor } from '@/lib/farmColors'
+import { normalizeFarmName, getContactBadgeLetter } from '@/lib/farmNames'
 
 export default function ContactDetailPage() {
   const { colors, isDark, card, background, text } = useThemeStyles()
@@ -210,21 +211,43 @@ export default function ContactDetailPage() {
                     <ArrowLeft style={{ width: '20px', height: '20px', color: colors.text.secondary }} />
                   </button>
                   
-                  <div 
-                    style={{
-                      width: '64px',
-                      height: '64px',
-                      backgroundColor: colors.iconBg,
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <span style={{ fontSize: '24px', fontWeight: '700', color: colors.success }}>
-                      {contact.firstName?.[0]}{contact.lastName?.[0]}
-                    </span>
-                  </div>
+                  {(() => {
+                    const farmName = contact.farm ? normalizeFarmName(contact.farm) : null
+                    const farmColor = farmName ? getFarmColor(farmName) : null
+                    const badgeLetter = getContactBadgeLetter(contact)
+                    
+                    return (
+                      <div 
+                        style={{
+                          width: '64px',
+                          height: '64px',
+                          backgroundColor: farmColor ? farmColor.bg : colors.iconBg,
+                          border: farmColor ? `2px solid ${farmColor.border}` : `1px solid ${colors.border}`,
+                          borderRadius: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'transform 0.2s ease',
+                          cursor: 'default'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.05)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)'
+                        }}
+                      >
+                        <span style={{ 
+                          fontSize: '28px', 
+                          fontWeight: '700', 
+                          color: farmColor ? farmColor.text : colors.text.primary,
+                          textShadow: farmColor ? '0 1px 2px rgba(0,0,0,0.1)' : 'none'
+                        }}>
+                          {badgeLetter}
+                        </span>
+                      </div>
+                    )
+                  })()}
                   
                   <div>
                     <h1 style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0 0 8px 0' }}>
@@ -232,7 +255,8 @@ export default function ContactDetailPage() {
                     </h1>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       {contact.farm && (() => {
-                        const farmColor = getFarmColor(contact.farm)
+                        const normalizedFarm = normalizeFarmName(contact.farm)
+                        const farmColor = getFarmColor(normalizedFarm)
                         return (
                           <span style={{ 
                             padding: '6px 12px', 
@@ -243,7 +267,7 @@ export default function ContactDetailPage() {
                             fontWeight: '500',
                             color: farmColor.text
                           }}>
-                            {contact.farm}
+                            {normalizedFarm}
                           </span>
                         )
                       })()}

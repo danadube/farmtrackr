@@ -1,6 +1,8 @@
 // Assign consistent colors to farms based on their names
 // Uses a hash function to ensure the same farm always gets the same color
 
+import { normalizeFarmName } from './farmNames'
+
 const FARM_COLORS = [
   // Green palette (for farms/growth theme)
   { bg: '#10b981', text: '#ffffff', border: '#059669' }, // emerald-500
@@ -41,7 +43,9 @@ export function getFarmColor(farmName: string | null | undefined): { bg: string;
     return { bg: '#6b7280', text: '#ffffff', border: '#4b5563' } // gray-500 fallback
   }
   
-  const hash = hashFarm(farmName)
+  // Normalize farm name first to ensure consistent colors
+  const normalized = normalizeFarmName(farmName)
+  const hash = hashFarm(normalized)
   const colorIndex = hash % FARM_COLORS.length
   return FARM_COLORS[colorIndex]
 }
