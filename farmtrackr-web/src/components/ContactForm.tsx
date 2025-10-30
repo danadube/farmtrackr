@@ -646,13 +646,18 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                 </div>
                 
                 {/* Rich text toolbar */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
                   {[
                     { label: 'B', title: 'Bold', cmd: 'bold', style: { fontWeight: 700 } },
                     { label: 'I', title: 'Italic', cmd: 'italic', style: { fontStyle: 'italic' } },
                     { label: 'U', title: 'Underline', cmd: 'underline', style: { textDecoration: 'underline' } },
+                    { label: 'S', title: 'Strikethrough', cmd: 'strikeThrough', style: { textDecoration: 'line-through' } },
                     { label: '• List', title: 'Bulleted List', cmd: 'insertUnorderedList' },
                     { label: '1. List', title: 'Numbered List', cmd: 'insertOrderedList' },
+                    { label: '➜', title: 'Indent', cmd: 'indent' },
+                    { label: '↤', title: 'Outdent', cmd: 'outdent' },
+                    { label: '⤺', title: 'Undo', cmd: 'undo' },
+                    { label: '⤻', title: 'Redo', cmd: 'redo' },
                   ].map((btn) => (
                     <button
                       key={btn.title}
@@ -660,16 +665,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                       title={btn.title}
                       onClick={(e) => {
                         e.preventDefault()
-                        // Focus editor before command
-                        if (notesRef.current) {
-                          notesRef.current.focus()
-                        }
+                        if (notesRef.current) notesRef.current.focus()
                         try {
                           document.execCommand(btn.cmd as any, false)
-                          // Update state after command
-                          if (notesRef.current) {
-                            handleInputChange('notes', notesRef.current.innerHTML)
-                          }
+                          if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
                         } catch {}
                       }}
                       style={{
@@ -688,6 +687,86 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                       {btn.label}
                     </button>
                   ))}
+                  {/* Link / Unlink */}
+                  <button
+                    type="button"
+                    title="Insert Link"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (notesRef.current) notesRef.current.focus()
+                      const url = window.prompt('Enter URL:')
+                      if (url) {
+                        try {
+                          document.execCommand('createLink', false, url)
+                          if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
+                        } catch {}
+                      }
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      color: colors.text.secondary,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.cardHover }}
+                  >
+                    Link
+                  </button>
+                  <button
+                    type="button"
+                    title="Remove Link"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (notesRef.current) notesRef.current.focus()
+                      try {
+                        document.execCommand('unlink', false)
+                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
+                      } catch {}
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      color: colors.text.secondary,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.cardHover }}
+                  >
+                    Unlink
+                  </button>
+                  {/* Clear formatting */}
+                  <button
+                    type="button"
+                    title="Clear Formatting"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (notesRef.current) notesRef.current.focus()
+                      try {
+                        document.execCommand('removeFormat', false)
+                        if (notesRef.current) handleInputChange('notes', notesRef.current.innerHTML)
+                      } catch {}
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      color: colors.text.secondary,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.cardHover }}
+                  >
+                    Clear
+                  </button>
                 </div>
 
                 <div
