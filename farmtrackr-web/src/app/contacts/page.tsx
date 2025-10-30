@@ -20,7 +20,7 @@ import { ContactBadge } from '@/components/ContactBadge'
 import { normalizeFarmName } from '@/lib/farmNames'
 
 export default function ContactsPage() {
-  const { colors, isDark, card, background, text } = useThemeStyles()
+  const { colors, isDark, card, headerCard, headerDivider, background, text } = useThemeStyles()
   const [contacts, setContacts] = useState<FarmContact[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
