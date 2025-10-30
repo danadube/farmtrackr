@@ -644,36 +644,35 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                   </h2>
                 </div>
                 
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
-                    Additional Notes
-                  </label>
-                  <textarea
-                    placeholder="Enter any additional notes or information about this contact..."
-                    value={formData.notes || ''}
-                    onChange={(e) => handleInputChange('notes', e.target.value)}
-                    rows={4}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: '10px',
-                      fontSize: '14px',
-                      backgroundColor: colors.card,
-                      color: colors.text.primary,
-                      transition: 'border-color 0.2s ease',
-                      resize: 'vertical'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = colors.success
-                      e.target.style.outline = 'none'
-                      e.target.style.boxShadow = `0 0 0 3px ${colors.success}20`
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = colors.border
-                      e.target.style.boxShadow = 'none'
-                    }}
-                  />
+                <div
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={(e) => handleInputChange('notes', (e.currentTarget as HTMLDivElement).innerHTML)}
+                  style={{
+                    width: '100%',
+                    minHeight: '120px',
+                    padding: '12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    backgroundColor: colors.card,
+                    color: colors.text.primary,
+                    transition: 'border-color 0.2s ease',
+                    lineHeight: '1.6'
+                  }}
+                  onFocus={(e) => {
+                    (e.currentTarget as HTMLDivElement).style.borderColor = colors.success
+                    ;(e.currentTarget as HTMLDivElement).style.outline = 'none'
+                    ;(e.currentTarget as HTMLDivElement).style.boxShadow = `0 0 0 3px ${colors.success}20`
+                  }}
+                  onBlur={(e) => {
+                    (e.currentTarget as HTMLDivElement).style.borderColor = colors.border
+                    ;(e.currentTarget as HTMLDivElement).style.boxShadow = 'none'
+                  }}
+                  dangerouslySetInnerHTML={{ __html: formData.notes || '' }}
+                />
+                <div style={{ fontSize: '12px', ...text.tertiary, marginTop: '6px' }}>
+                  You can format text (bold, italic, lists) with your keyboard shortcuts.
                 </div>
               </div>
 
