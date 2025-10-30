@@ -92,7 +92,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     justifyContent: 'center'
                   }}
                 >
-                  <Home style={{ width: spacing(3.5), height: spacing(3.5), color: colors.success }} />
+                  <Home style={{ width: spacing(3.5), height: spacing(3.5), color: colors.primary }} />
                 </div>
                 <div>
                   <h1 

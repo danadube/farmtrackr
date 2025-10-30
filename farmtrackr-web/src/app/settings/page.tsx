@@ -121,7 +121,7 @@ export default function SettingsPage() {
                       justifyContent: 'center'
                     }}
                   >
-                    <Settings style={{ width: '24px', height: '24px', color: colors.success }} />
+                    <Settings style={{ width: '24px', height: '24px', color: colors.primary }} />
                   </div>
                   <div>
                     <h1 style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0 0 4px 0' }}>
