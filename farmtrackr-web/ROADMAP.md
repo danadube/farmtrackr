@@ -536,6 +536,37 @@ Based on Swift app challenges:
 
 ---
 
+### Future: Data Accuracy & Address Validation (Planned)
+**Focus:** Validate/normalize addresses and score person-to-address confidence
+
+#### Provider Evaluation
+- [ ] Google Maps Geocoding
+  - Strengths: global coverage, strong geocoding + reverse geocoding, easy setup
+  - Limits/Pricing: pay-as-you-go; free monthly credits, beyond that billed per request
+  - Reliability: very high for locating and normalizing addresses; not USPS-certified deliverability
+- [ ] Smarty (US-focused)
+  - Strengths: USPS CASS Certified, DPV deliverability codes, high-fidelity US address standardization
+  - Limits/Pricing: generous free tier for basic lookups; paid tiers for DPV/NCOA; US-centric
+  - Reliability: excellent for US mailing deliverability and normalization
+
+#### Scope
+- [ ] Address normalization & geocoding on import and edit
+- [ ] Store formatted address + lat/lng
+- [ ] Person-to-address confidence score (name/address/farm-geo consistency)
+- [ ] Duplicate/mismatch surfacing (fuzzy name + street comparisons)
+- [ ] Data Quality dashboard with suggested fixes
+
+#### Dependencies
+- API keys (Google or Smarty)
+- Backend endpoints to validate/normalize addresses
+- DB fields for lat/lng and normalized address
+
+#### Estimated Development Time
+- 1.5–3 weeks (basic normalization + dashboard)
+- +1 week for advanced duplicate/mismatch heuristics
+
+---
+
 ### **v1.0.0 - Production Ready** (Target: Q4 2025)
 **Focus:** Polish, performance, and production deployment
 
