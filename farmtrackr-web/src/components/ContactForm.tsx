@@ -101,13 +101,31 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
     try {
       const url = isEditing ? `/api/contacts/${contactId}` : '/api/contacts'
       const method = isEditing ? 'PUT' : 'POST'
-      
+
+      // Migrate legacy single-note HTML to structured array on save
+      const payload = { ...formData }
+      if (payload.notes && typeof payload.notes === 'string') {
+        let isArray = false
+        try {
+          const parsed = JSON.parse(payload.notes as unknown as string)
+          if (Array.isArray(parsed)) isArray = true
+        } catch {}
+        if (!isArray) {
+          const entry = {
+            id: String(Date.now()),
+            html: String(payload.notes),
+            createdAt: new Date().toISOString(),
+          }
+          payload.notes = JSON.stringify([entry]) as unknown as any
+        }
+      }
+
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
