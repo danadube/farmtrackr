@@ -17,7 +17,7 @@ interface ContactData {
   mailingAddress: string | null
   city: string | null
   state: string | null
-  zipCode: number | null
+  zipCode: string | number | null
   email1: string | null
   email2: string | null
   phoneNumber1: string | null
@@ -29,7 +29,7 @@ interface ContactData {
   siteMailingAddress: string | null
   siteCity: string | null
   siteState: string | null
-  siteZipCode: number | null
+  siteZipCode: string | number | null
   notes: string | null
   dateCreated: number
   dateModified: number
@@ -88,7 +88,7 @@ async function importData() {
             mailingAddress: contact.mailingAddress,
             city: contact.city,
             state: contact.state,
-            zipCode: contact.zipCode,
+            zipCode: contact.zipCode == null ? undefined : String(contact.zipCode),
             email1: contact.email1,
             email2: contact.email2,
             phoneNumber1: contact.phoneNumber1,
@@ -100,7 +100,7 @@ async function importData() {
             siteMailingAddress: contact.siteMailingAddress,
             siteCity: contact.siteCity,
             siteState: contact.siteState,
-            siteZipCode: contact.siteZipCode,
+            siteZipCode: contact.siteZipCode == null ? undefined : String(contact.siteZipCode),
             notes: contact.notes,
             dateCreated,
             dateModified,
