@@ -25,6 +25,8 @@ export default function GoogleSheetsPage() {
     message: string
   }>({ type: null, message: '' })
   const [farmCounts, setFarmCounts] = useState<Record<string, number>>({})
+  const [totalContacts, setTotalContacts] = useState<number>(0)
+  const [lastSyncedAt, setLastSyncedAt] = useState<string>('')
 
   useEffect(() => {
     const load = async () => {
@@ -33,6 +35,12 @@ export default function GoogleSheetsPage() {
         if (res.ok) {
           const data = await res.json()
           setFarmCounts(data.counts || {})
+        }
+        const statsRes = await fetch('/api/contacts/stats')
+        if (statsRes.ok) {
+          const stats = await statsRes.json()
+          setTotalContacts(stats.totalContacts || 0)
+          setLastSyncedAt(stats.lastSyncedAt ? new Date(stats.lastSyncedAt).toLocaleString() : '')
         }
       } catch (_) {}
     }
@@ -166,6 +174,42 @@ export default function GoogleSheetsPage() {
               </div>
             </div>
           </div>
+
+        {/* Totals Card */}
+        <div style={{ marginBottom: '24px' }}>
+          <div 
+            style={{
+              padding: '16px',
+              ...card,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px'
+            }}
+          >
+            <div>
+              <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '16px', margin: '0 0 4px 0' }}>
+                Total Farm Contacts
+              </h3>
+              <p style={{ fontSize: '12px', ...text.secondary, margin: 0 }}>
+                {lastSyncedAt ? `Last synced: ${lastSyncedAt}` : 'Last synced: —'}
+              </p>
+            </div>
+            <div 
+              style={{
+                padding: '8px 12px',
+                borderRadius: '10px',
+                backgroundColor: isDark ? '#064e3b' : '#ecfdf5',
+                border: `1px solid ${colors.success}`,
+                color: colors.success,
+                fontWeight: 700,
+                fontSize: '16px'
+              }}
+            >
+              {totalContacts.toLocaleString()}
+            </div>
+          </div>
+        </div>
 
           {/* Sync Note */}
           <div 

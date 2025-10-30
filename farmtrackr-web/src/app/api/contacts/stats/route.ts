@@ -23,10 +23,16 @@ export async function GET() {
       },
     })
 
+    const latest = await prisma.farmContact.findFirst({
+      select: { dateModified: true },
+      orderBy: { dateModified: 'desc' },
+    })
+
     return NextResponse.json({
       totalContacts,
       farmsWithContacts,
       recentContacts,
+      lastSyncedAt: latest?.dateModified ?? null,
     })
   } catch (error) {
     console.error('Error fetching stats:', error)
