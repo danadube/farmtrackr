@@ -45,6 +45,8 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const notesRef = useRef<HTMLDivElement | null>(null)
   const [newNoteHtml, setNewNoteHtml] = useState<string>('')
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  const [editingHtml, setEditingHtml] = useState<string>('')
 
   type NoteEntry = { id: string; html: string; createdAt: string }
   const parseNotes = (notesRaw: string | undefined | null): NoteEntry[] => {
@@ -992,32 +994,84 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                   <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {notesList.map((n) => (
                       <div key={n.id} style={{ border: `1px solid ${colors.border}`, borderRadius: '10px', overflow: 'hidden' }}>
-                        <div style={{ padding: '10px 12px', backgroundColor: colors.cardHover, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ padding: '10px 12px', backgroundColor: colors.cardHover, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '12px', ...text.secondary }}>
                             {new Date(n.createdAt).toLocaleString()}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const next = notesList.filter(x => x.id !== n.id)
-                              handleInputChange('notes', JSON.stringify(next))
-                            }}
-                            style={{
-                              padding: '6px 10px',
-                              backgroundColor: 'transparent',
-                              border: `1px solid ${colors.border}`,
-                              borderRadius: '8px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              ...text.secondary
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
-                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                          >
-                            Delete
-                          </button>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            {editingNoteId === n.id ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const next = notesList.map(x => x.id === n.id ? { ...x, html: editingHtml } : x)
+                                    handleInputChange('notes', JSON.stringify(next))
+                                    setEditingNoteId(null)
+                                    setEditingHtml('')
+                                  }}
+                                  style={{
+                                    padding: '6px 10px', backgroundColor: colors.success, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', cursor: 'pointer'
+                                  }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = (isDark ? '#059669' : '#15803d') }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.success }}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => { setEditingNoteId(null); setEditingHtml('') }}
+                                  style={{
+                                    padding: '6px 10px', backgroundColor: 'transparent', border: `1px solid ${colors.border}`, borderRadius: '8px', fontSize: '12px', cursor: 'pointer', ...text.secondary
+                                  }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => { setEditingNoteId(n.id); setEditingHtml(n.html) }}
+                                  style={{
+                                    padding: '6px 10px', backgroundColor: 'transparent', border: `1px solid ${colors.border}`, borderRadius: '8px', fontSize: '12px', cursor: 'pointer', ...text.secondary
+                                  }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!confirm('Delete this note?')) return
+                                    const next = notesList.filter(x => x.id !== n.id)
+                                    handleInputChange('notes', JSON.stringify(next))
+                                  }}
+                                  style={{
+                                    padding: '6px 10px', backgroundColor: 'transparent', border: `1px solid ${colors.border}`, borderRadius: '8px', fontSize: '12px', cursor: 'pointer', ...text.secondary
+                                  }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </div>
-                        <div style={{ padding: '12px', backgroundColor: colors.card }} dangerouslySetInnerHTML={{ __html: n.html }} />
+                        {editingNoteId === n.id ? (
+                          <div
+                            contentEditable
+                            suppressContentEditableWarning
+                            onInput={(e) => setEditingHtml((e.currentTarget as HTMLDivElement).innerHTML)}
+                            style={{ padding: '12px', backgroundColor: colors.card, minHeight: '60px', outline: 'none' }}
+                            dangerouslySetInnerHTML={{ __html: editingHtml }}
+                          />
+                        ) : (
+                          <div style={{ padding: '12px', backgroundColor: colors.card }} dangerouslySetInnerHTML={{ __html: n.html }} />
+                        )}
                       </div>
                     ))}
                   </div>
