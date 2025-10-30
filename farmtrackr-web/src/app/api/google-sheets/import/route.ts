@@ -102,7 +102,16 @@ export async function POST(request: NextRequest) {
           phoneNumber4: getField(['Phone 4', 'phoneNumber4', 'PHONE 4']),
           phoneNumber5: getField(['Phone 5', 'phoneNumber5', 'PHONE 5']),
           phoneNumber6: getField(['Phone 6', 'phoneNumber6', 'PHONE 6']),
-          siteMailingAddress: getField(['Site Address', 'siteMailingAddress', 'Site', 'SITE ADDRESS']),
+          siteMailingAddress: getField([
+            'Site Address',
+            'Site Street Address',
+            'Physical Address',
+            'siteMailingAddress',
+            'Site',
+            'SITE ADDRESS',
+            'SITE STREET ADDRESS',
+            'PHYSICAL ADDRESS'
+          ]),
           siteCity: getField(['Site City', 'siteCity', 'SITE CITY']),
           siteState: getField(['Site State', 'siteState', 'SITE STATE']),
           siteZipCode: (() => {

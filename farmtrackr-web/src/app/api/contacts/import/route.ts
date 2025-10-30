@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         phoneNumber4: row['Phone 4'] || row['phoneNumber4'] || undefined,
         phoneNumber5: row['Phone 5'] || row['phoneNumber5'] || undefined,
         phoneNumber6: row['Phone 6'] || row['phoneNumber6'] || undefined,
-        siteMailingAddress: row['Site Address'] || row['siteMailingAddress'] || undefined,
+        siteMailingAddress: row['Site Address'] || row['Site Street Address'] || row['Physical Address'] || row['siteMailingAddress'] || undefined,
         siteCity: row['Site City'] || row['siteCity'] || undefined,
         siteState: row['Site State'] || row['siteState'] || undefined,
         siteZipCode: (() => {
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
         phoneNumber4: row['Phone 4'] || row['phoneNumber4'] || undefined,
         phoneNumber5: row['Phone 5'] || row['phoneNumber5'] || undefined,
         phoneNumber6: row['Phone 6'] || row['phoneNumber6'] || undefined,
-        siteMailingAddress: row['Site Address'] || row['siteMailingAddress'] || undefined,
+        siteMailingAddress: row['Site Address'] || row['Site Street Address'] || row['Physical Address'] || row['siteMailingAddress'] || undefined,
         siteCity: row['Site City'] || row['siteCity'] || undefined,
         siteState: row['Site State'] || row['siteState'] || undefined,
         siteZipCode: (() => {
