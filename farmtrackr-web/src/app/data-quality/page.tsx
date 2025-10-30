@@ -378,7 +378,7 @@ export default function DataQualityPage() {
                 </span>
               </div>
               <p style={{ fontSize: '32px', fontWeight: '700', ...text.primary, margin: '0' }}>
-                {validationIssues.length}
+                {validationIssues.filter(issue => !dismissedIssueIds.has(issue.id)).length}
               </p>
             </div>
 
