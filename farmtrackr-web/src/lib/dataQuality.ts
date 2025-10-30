@@ -169,37 +169,15 @@ export function detectDuplicates(contacts: FarmContact[]): DuplicateGroup[] {
 export function validateContact(contact: FarmContact): ValidationIssue[] {
   const issues: ValidationIssue[] = []
 
-  // Required fields
-  if (!contact.firstName?.trim()) {
-    issues.push({
-      id: `missing-firstname-${contact.id}`,
-      contactId: contact.id,
-      contactName: `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unknown',
-      type: 'missing',
-      field: 'firstName',
-      message: 'First name is required',
-      severity: 'error',
-    })
-  }
-
-  if (!contact.lastName?.trim()) {
-    issues.push({
-      id: `missing-lastname-${contact.id}`,
-      contactId: contact.id,
-      contactName: `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unknown',
-      type: 'missing',
-      field: 'lastName',
-      message: 'Last name is required',
-      severity: 'error',
-    })
-  }
+  // Names are optional (organizations/trusts are supported). No required name errors.
+  const displayName = (contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unknown')
 
   // Email validation
   if (contact.email1 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email1)) {
     issues.push({
       id: `invalid-email1-${contact.id}`,
       contactId: contact.id,
-      contactName: `${contact.firstName} ${contact.lastName}`,
+      contactName: displayName,
       type: 'invalid',
       field: 'email1',
       message: 'Invalid email format',
@@ -211,7 +189,7 @@ export function validateContact(contact: FarmContact): ValidationIssue[] {
     issues.push({
       id: `invalid-email2-${contact.id}`,
       contactId: contact.id,
-      contactName: `${contact.firstName} ${contact.lastName}`,
+      contactName: displayName,
       type: 'invalid',
       field: 'email2',
       message: 'Invalid email format',
@@ -228,7 +206,7 @@ export function validateContact(contact: FarmContact): ValidationIssue[] {
     issues.push({
       id: `invalid-zip-${contact.id}`,
       contactId: contact.id,
-      contactName: `${contact.firstName} ${contact.lastName}`,
+      contactName: displayName,
       type: 'format',
       field: 'zipCode',
       message: 'ZIP must be 5-digit or ZIP+4 (12345 or 12345-6789)',
@@ -245,7 +223,7 @@ export function validateContact(contact: FarmContact): ValidationIssue[] {
     issues.push({
       id: `invalid-sitezip-${contact.id}`,
       contactId: contact.id,
-      contactName: `${contact.firstName} ${contact.lastName}`,
+      contactName: displayName,
       type: 'format',
       field: 'siteZipCode',
       message: 'Site ZIP must be 5-digit or ZIP+4 (12345 or 12345-6789)',
@@ -259,7 +237,7 @@ export function validateContact(contact: FarmContact): ValidationIssue[] {
     issues.push({
       id: `missing-contact-${contact.id}`,
       contactId: contact.id,
-      contactName: `${contact.firstName} ${contact.lastName}`,
+      contactName: displayName,
       type: 'missing',
       field: 'contactInfo',
       message: 'Missing email and phone number',

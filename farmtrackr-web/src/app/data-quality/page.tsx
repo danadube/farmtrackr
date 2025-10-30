@@ -645,9 +645,9 @@ export default function DataQualityPage() {
                           >
                             <div style={{ flex: '1' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                                  {contact.firstName} {contact.lastName}
-                                </h3>
+                            <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                              {contact.organizationName || `${contact.firstName} ${contact.lastName}`.trim()}
+                            </h3>
                                 {contact.farm && (
                                   <span style={{ fontSize: '12px', ...text.secondary }}>
                                     {contact.farm}
