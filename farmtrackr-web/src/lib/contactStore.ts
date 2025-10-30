@@ -8,6 +8,7 @@ let contacts: FarmContact[] = [
     id: '1',
     firstName: 'Donald',
     lastName: 'Shelton',
+    organizationName: undefined,
     farm: 'Cielo',
     mailingAddress: '123 Farm Road',
     city: 'Farm City',
@@ -33,6 +34,7 @@ let contacts: FarmContact[] = [
     id: '2',
     firstName: 'Tawna',
     lastName: 'Baxter',
+    organizationName: undefined,
     farm: 'Cielo',
     mailingAddress: '456 Ranch Lane',
     city: 'Ranch Town',
@@ -58,6 +60,7 @@ let contacts: FarmContact[] = [
     id: '3',
     firstName: 'Diana',
     lastName: 'Johnson',
+    organizationName: undefined,
     farm: 'Cielo',
     mailingAddress: '789 Orchard Way',
     city: 'Orchard City',
@@ -83,6 +86,7 @@ let contacts: FarmContact[] = [
     id: '4',
     firstName: 'Stephen',
     lastName: 'Maitland-lewis',
+    organizationName: undefined,
     farm: 'Cielo',
     mailingAddress: '321 Vineyard Drive',
     city: 'Vineyard Valley',
@@ -108,6 +112,7 @@ let contacts: FarmContact[] = [
     id: '5',
     firstName: 'Gerald',
     lastName: 'Morris',
+    organizationName: undefined,
     farm: 'Cielo',
     mailingAddress: '654 Harvest Hill',
     city: 'Harvest Heights',
@@ -143,6 +148,7 @@ export const contactStore = {
       result = result.filter(contact =>
         contact.firstName?.toLowerCase().includes(searchLower) ||
         contact.lastName?.toLowerCase().includes(searchLower) ||
+        contact.organizationName?.toLowerCase().includes(searchLower) ||
         contact.farm?.toLowerCase().includes(searchLower) ||
         contact.email1?.toLowerCase().includes(searchLower) ||
         contact.email2?.toLowerCase().includes(searchLower)
