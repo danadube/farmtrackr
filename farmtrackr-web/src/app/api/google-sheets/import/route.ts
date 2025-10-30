@@ -53,9 +53,15 @@ export async function POST(request: NextRequest) {
 
       // Map fields flexibly
       const mapRow = (row: any) => {
+        // Case-insensitive getter for header names
+        const lowerKeyToActual: Record<string, string> = {}
+        Object.keys(row).forEach((k) => {
+          lowerKeyToActual[k.trim().toLowerCase()] = k
+        })
         const getField = (keys: string[]) => {
           for (const key of keys) {
-            const value = row[key]
+            const actual = lowerKeyToActual[key.trim().toLowerCase()]
+            const value = actual ? row[actual] : undefined
             if (value && String(value).trim()) return String(value).trim()
           }
           return undefined
@@ -103,14 +109,11 @@ export async function POST(request: NextRequest) {
           phoneNumber5: getField(['Phone 5', 'phoneNumber5', 'PHONE 5']),
           phoneNumber6: getField(['Phone 6', 'phoneNumber6', 'PHONE 6']),
           siteMailingAddress: getField([
+            'Site Mailing Address',
             'Site Address',
             'Site Street Address',
             'Physical Address',
-            'siteMailingAddress',
-            'Site',
-            'SITE ADDRESS',
-            'SITE STREET ADDRESS',
-            'PHYSICAL ADDRESS'
+            'siteMailingAddress'
           ]),
           siteCity: getField(['Site City', 'siteCity', 'SITE CITY']),
           siteState: getField(['Site State', 'siteState', 'SITE STATE']),
