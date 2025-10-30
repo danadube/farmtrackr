@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } else if (action === 'normalize-zip') {
-      // Normalize ZIP codes (remove non-digits, ensure 5 digits)
+      // Normalize ZIP codes: keep 5 digits or ZIP+4 as string
       for (const contact of contacts) {
         const updates: any = {}
         let hasChanges = false
@@ -103,23 +103,21 @@ export async function POST(request: NextRequest) {
         zipFields.forEach(field => {
           const value = contact[field as keyof typeof contact]
           if (value) {
-            const valueStr = value.toString()
+            const valueStr = String(value)
             const digitsOnly = valueStr.replace(/\D/g, '')
-            
-            // Use first 5 digits
-            if (digitsOnly.length >= 5) {
-              const normalized = parseInt(digitsOnly.slice(0, 5))
-              if (normalized !== value) {
-                updates[field] = normalized
-                hasChanges = true
-              }
+
+            let normalized: string | undefined
+            if (digitsOnly.length >= 9) {
+              normalized = `${digitsOnly.slice(0,5)}-${digitsOnly.slice(5,9)}`
+            } else if (digitsOnly.length >= 5) {
+              normalized = digitsOnly.slice(0,5)
             } else if (digitsOnly.length > 0) {
-              // If less than 5 digits, pad with zeros (or handle differently)
-              const normalized = parseInt(digitsOnly.padEnd(5, '0'))
-              if (normalized !== value) {
-                updates[field] = normalized
-                hasChanges = true
-              }
+              normalized = digitsOnly
+            }
+
+            if (normalized && normalized !== valueStr) {
+              updates[field] = normalized
+              hasChanges = true
             }
           }
         })
