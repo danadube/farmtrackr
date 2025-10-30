@@ -33,12 +33,12 @@ export default function GoogleSheetsPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/contacts/farm-status')
+        const res = await fetch('/api/contacts/farm-status', { cache: 'no-store' })
         if (res.ok) {
           const data = await res.json()
           setFarmCounts(data.counts || {})
         }
-        const statsRes = await fetch('/api/contacts/stats')
+        const statsRes = await fetch('/api/contacts/stats', { cache: 'no-store' })
         if (statsRes.ok) {
           const stats = await statsRes.json()
           setTotalContacts(stats.totalContacts || 0)
@@ -73,8 +73,8 @@ export default function GoogleSheetsPage() {
         // Refresh counts and totals
         try {
           const [statusRes, statsRes] = await Promise.all([
-            fetch('/api/contacts/farm-status'),
-            fetch('/api/contacts/stats')
+            fetch('/api/contacts/farm-status', { cache: 'no-store' }),
+            fetch('/api/contacts/stats', { cache: 'no-store' })
           ])
           if (statusRes.ok) {
             const data = await statusRes.json()
