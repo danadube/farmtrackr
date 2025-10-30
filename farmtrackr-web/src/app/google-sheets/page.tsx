@@ -65,8 +65,24 @@ export default function GoogleSheetsPage() {
       if (response.ok) {
         setImportStatus({ 
           type: 'success', 
-          message: `Successfully imported ${result.count} contacts from ${selectedFarm}` 
+          message: `Successfully imported ${result.imported ?? result.count ?? 0} contacts from ${selectedFarm}` 
         })
+        // Refresh counts and totals
+        try {
+          const [statusRes, statsRes] = await Promise.all([
+            fetch('/api/contacts/farm-status'),
+            fetch('/api/contacts/stats')
+          ])
+          if (statusRes.ok) {
+            const data = await statusRes.json()
+            setFarmCounts(data.counts || {})
+          }
+          if (statsRes.ok) {
+            const stats = await statsRes.json()
+            setTotalContacts(stats.totalContacts || 0)
+            setLastSyncedAt(stats.lastSyncedAt ? new Date(stats.lastSyncedAt).toLocaleString() : '')
+          }
+        } catch (_) {}
       } else {
         setImportStatus({ 
           type: 'error', 
