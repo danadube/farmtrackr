@@ -28,6 +28,7 @@ interface Document {
   createdAt: Date
   updatedAt: Date
   fileSize?: string
+  fileUrl?: string | null
 }
 
 interface Letterhead {
@@ -56,6 +57,11 @@ export default function DocumentsPage() {
   const [newDocDescription, setNewDocDescription] = useState('')
   const [newDocContent, setNewDocContent] = useState('')
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [editingDoc, setEditingDoc] = useState<Document | null>(null)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
+  const [previewDoc, setPreviewDoc] = useState<Document | null>(null)
+  const [previewContent, setPreviewContent] = useState<string>('')
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string>('')
 
   // Letterheads state
   const [letterheads, setLetterheads] = useState<Letterhead[]>([])
@@ -69,31 +75,34 @@ export default function DocumentsPage() {
   const [letterheadFooterHtml, setLetterheadFooterHtml] = useState('')
   const [letterheadIsDefault, setLetterheadIsDefault] = useState(false)
 
-  useEffect(() => {
-    const fetchDocs = async () => {
-      try {
-        setLoading(true)
-        const params = new URLSearchParams()
-        if (searchQuery) params.set('q', searchQuery)
-        const res = await fetch(`/api/documents?${params.toString()}`)
-        if (res.ok) {
-          const data = await res.json()
-          const mapped: Document[] = data.map((d: any) => ({
-            id: d.id,
-            title: d.title,
-            description: d.description || '',
-            createdAt: new Date(d.createdAt),
-            updatedAt: new Date(d.updatedAt),
-          }))
-          setDocs(mapped)
-        }
-      } catch (e) {
-        console.error('Failed to load documents', e)
-      } finally {
-        setLoading(false)
+  const refreshDocuments = async () => {
+    try {
+      setLoading(true)
+      const params = new URLSearchParams()
+      if (searchQuery) params.set('q', searchQuery)
+      const res = await fetch(`/api/documents?${params.toString()}`)
+      if (res.ok) {
+        const data = await res.json()
+        const mapped: Document[] = data.map((d: any) => ({
+          id: d.id,
+          title: d.title,
+          description: d.description || '',
+          createdAt: new Date(d.createdAt),
+          updatedAt: new Date(d.updatedAt),
+          fileUrl: d.fileUrl || null,
+        }))
+        setDocs(mapped)
       }
+    } catch (e) {
+      console.error('Failed to load documents', e)
+    } finally {
+      setLoading(false)
     }
-    fetchDocs()
+  }
+
+  useEffect(() => {
+    refreshDocuments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery])
 
   useEffect(() => {
@@ -177,15 +186,18 @@ export default function DocumentsPage() {
     }
   }
 
-  const handleCreateDocument = async () => {
+  const handleSaveDocument = async () => {
     if (!newDocTitle.trim()) {
       alert('Please enter a document title')
       return
     }
 
     try {
-      const response = await fetch('/api/documents', {
-        method: 'POST',
+      const isEdit = Boolean(editingDoc?.id)
+      const url = isEdit ? `/api/documents/${editingDoc!.id}` : '/api/documents'
+      const method = isEdit ? 'PUT' : 'POST'
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: newDocTitle,
@@ -195,32 +207,64 @@ export default function DocumentsPage() {
       })
 
       if (response.ok) {
-        const created = await response.json()
-        // Refresh the documents list
-        const res = await fetch(`/api/documents?${new URLSearchParams().toString()}`)
-        if (res.ok) {
-          const data = await res.json()
-          const mapped: Document[] = data.map((d: any) => ({
-            id: d.id,
-            title: d.title,
-            description: d.description || '',
-            createdAt: new Date(d.createdAt),
-            updatedAt: new Date(d.updatedAt),
-          }))
-          setDocs(mapped)
-        }
+        await refreshDocuments()
         // Close modal and reset form
         setShowCreateModal(false)
+        setEditingDoc(null)
         setNewDocTitle('')
         setNewDocDescription('')
         setNewDocContent('')
       } else {
         const error = await response.json()
-        alert(`Error: ${error.error || 'Failed to create document'}`)
+        alert(`Error: ${error.error || (editingDoc ? 'Failed to save document' : 'Failed to create document')}`)
       }
     } catch (error) {
-      console.error('Failed to create document:', error)
-      alert('Failed to create document')
+      console.error('Failed to save document:', error)
+      alert('Failed to save document')
+    }
+  }
+
+  const handleOpenDocModal = async (doc?: Document) => {
+    if (doc) {
+      setEditingDoc(doc)
+      // fetch full content
+      try {
+        const res = await fetch(`/api/documents/${doc.id}`)
+        if (res.ok) {
+          const full = await res.json()
+          setNewDocTitle(full.title || '')
+          setNewDocDescription(full.description || '')
+          setNewDocContent(full.content || '')
+        } else {
+          setNewDocTitle(doc.title || '')
+          setNewDocDescription(doc.description || '')
+        }
+      } catch {
+        setNewDocTitle(doc.title || '')
+        setNewDocDescription(doc.description || '')
+      }
+    } else {
+      setEditingDoc(null)
+      setNewDocTitle('')
+      setNewDocDescription('')
+      setNewDocContent('')
+    }
+    setShowCreateModal(true)
+  }
+
+  const handleDeleteDocument = async (id: string) => {
+    if (!confirm('Delete this document? This action cannot be undone.')) return
+    try {
+      const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        await refreshDocuments()
+      } else {
+        const error = await res.json().catch(() => ({}))
+        alert(`Failed to delete document${error.error ? `: ${error.error}` : ''}`)
+      }
+    } catch (e) {
+      console.error('Failed to delete document', e)
+      alert('Failed to delete document')
     }
   }
 
@@ -230,10 +274,21 @@ export default function DocumentsPage() {
 
     setUploadingFile(true)
     try {
-      // For now, we'll create a document with the file name
-      // In the future, you can upload to cloud storage and store the URL
-      const fileContent = await file.text().catch(() => null)
-      
+      // 1) Upload raw file to blob storage
+      const fd = new FormData()
+      fd.append('file', file)
+      const uploadRes = await fetch('/api/uploads', { method: 'POST', body: fd })
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to upload file')
+      }
+      const { url: fileUrl } = await uploadRes.json()
+
+      // 2) Optionally read inline content for preview (text-like types)
+      const isTextLike = /^text\//.test(file.type) || /\.(txt|html|md|csv)$/i.test(file.name)
+      const fileContent = isTextLike ? await file.text().catch(() => null) : null
+
+      // 3) Create document record referencing blob URL
       const response = await fetch('/api/documents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -241,25 +296,12 @@ export default function DocumentsPage() {
           title: file.name,
           description: `Uploaded file: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`,
           content: fileContent,
-          fileUrl: null, // Can be updated when file storage is implemented
+          fileUrl,
         }),
       })
 
       if (response.ok) {
-        const created = await response.json()
-        // Refresh the documents list
-        const res = await fetch(`/api/documents?${new URLSearchParams().toString()}`)
-        if (res.ok) {
-          const data = await res.json()
-          const mapped: Document[] = data.map((d: any) => ({
-            id: d.id,
-            title: d.title,
-            description: d.description || '',
-            createdAt: new Date(d.createdAt),
-            updatedAt: new Date(d.updatedAt),
-          }))
-          setDocs(mapped)
-        }
+        await refreshDocuments()
         alert('Document uploaded successfully!')
       } else {
         const error = await response.json()
@@ -273,6 +315,115 @@ export default function DocumentsPage() {
       // Reset file input
       event.target.value = ''
     }
+  }
+
+  const handleViewDocument = async (doc: Document) => {
+    try {
+      const res = await fetch(`/api/documents/${doc.id}`)
+      if (res.ok) {
+        const full = await res.json()
+        setPreviewDoc(doc)
+        // PDF: prefer embedded preview via iframe
+        if (full.fileUrl && /\.pdf(?:$|\?)/i.test(full.fileUrl)) {
+          setPreviewPdfUrl(full.fileUrl)
+          setPreviewContent('')
+          setShowPreviewModal(true)
+          return
+        }
+        let content = full.content || ''
+        if (!content && full.fileUrl && /\.(html?)$/i.test(full.fileUrl)) {
+          try {
+            const htmlRes = await fetch(full.fileUrl)
+            if (htmlRes.ok) content = await htmlRes.text()
+          } catch (_) {
+            window.open(full.fileUrl, '_blank')
+            return
+          }
+        }
+        setPreviewContent(content)
+        setPreviewPdfUrl('')
+        setShowPreviewModal(true)
+      } else {
+        alert('Failed to load document for preview')
+      }
+    } catch (e) {
+      console.error('Preview error', e)
+      alert('Failed to load document for preview')
+    }
+  }
+
+  const handleDownloadDocument = async (doc: Document) => {
+    try {
+      const res = await fetch(`/api/documents/${doc.id}`)
+      if (!res.ok) {
+        alert('Failed to load document for download')
+        return
+      }
+      const full = await res.json()
+      if (full.fileUrl) {
+        window.open(full.fileUrl, '_blank')
+        return
+      }
+      const content: string = full.content || ''
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const safeTitle = (doc.title || 'document').replace(/[^a-z0-9-_]+/gi, '_')
+      a.download = `${safeTitle}.txt`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('Download error', e)
+      alert('Failed to download document')
+    }
+  }
+
+  const handlePrintPreview = () => {
+    // PDF: open in new tab and let the browser handle printing
+    if (previewPdfUrl) {
+      const w = window.open(previewPdfUrl, '_blank')
+      if (w) {
+        // Attempt to trigger print; may be blocked by cross-origin
+        setTimeout(() => {
+          try {
+            w.focus()
+            w.print()
+          } catch (_) {
+            // ignore
+          }
+        }, 500)
+      }
+      return
+    }
+    // HTML/text content: render into a print-friendly window
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) return
+    const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${(previewDoc?.title || 'Document').replace(/</g, '&lt;')}</title>
+    <style>
+      @page { size: auto; margin: 1in; }
+      html, body { background: #ffffff; color: #000000; }
+      body { margin: 1in; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; }
+      .content pre { white-space: pre-wrap; word-break: break-word; }
+      img { max-width: 100%; height: auto; }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+      ${/<([a-z][^\s>]+)/i.test(previewContent) ? previewContent : `<pre>${previewContent.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>`}
+    </div>
+    <script>window.onload = function(){ window.focus(); window.print(); }<\/script>
+  </body>
+</html>`
+    printWindow.document.open()
+    printWindow.document.write(html)
+    printWindow.document.close()
   }
 
   const handleOpenLetterheadModal = (letterhead?: Letterhead) => {
@@ -459,140 +610,154 @@ export default function DocumentsPage() {
                     </p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {/* Tab Switcher */}
-                  <div style={{ display: 'flex', gap: '8px', marginRight: '12px', padding: '4px', backgroundColor: colors.cardHover, borderRadius: '8px' }}>
-                    <button
-                      onClick={() => setActiveTab('documents')}
-                      style={{
-                        padding: '8px 16px',
-                        backgroundColor: activeTab === 'documents' ? colors.primary : 'transparent',
-                        color: activeTab === 'documents' ? '#ffffff' : colors.text.secondary,
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      Documents
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('letterheads')}
-                      style={{
-                        padding: '8px 16px',
-                        backgroundColor: activeTab === 'letterheads' ? colors.primary : 'transparent',
-                        color: activeTab === 'letterheads' ? '#ffffff' : colors.text.secondary,
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      Letterheads
-                    </button>
-                  </div>
-                  {activeTab === 'letterheads' && (
-                    <button
-                      onClick={() => handleOpenLetterheadModal()}
-                      style={{
-                        padding: '12px 16px',
-                        backgroundColor: colors.success,
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = colors.success
-                      }}
-                    >
-                      <Plus style={{ width: '16px', height: '16px' }} />
-                      New Letterhead
-                    </button>
-                  )}
-                  {activeTab === 'documents' && (
-                    <>
-                  <label
-                    style={{
-                      padding: '12px 16px',
-                      backgroundColor: colors.cardHover,
-                      ...text.secondary,
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: uploadingFile ? 'wait' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      transition: 'background-color 0.2s ease',
-                      opacity: uploadingFile ? 0.6 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!uploadingFile) {
-                        e.currentTarget.style.backgroundColor = colors.borderHover
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.cardHover
-                    }}
-                  >
-                    <Upload style={{ width: '16px', height: '16px' }} />
-                    {uploadingFile ? 'Uploading...' : 'Upload'}
-                    <input
-                      type="file"
-                      accept=".txt,.pdf,.doc,.docx,.html"
-                      onChange={handleFileUpload}
-                      style={{ display: 'none' }}
-                      disabled={uploadingFile}
-                    />
-                  </label>
-                  <Link href="/documents/create-letter" style={{ textDecoration: 'none' }}>
-                    <button
-                      style={{
-                        padding: '12px 16px',
-                        backgroundColor: colors.primary,
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'background-color 0.2s ease',
-                        marginRight: '12px'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = isDark ? '#2563eb' : '#1d4ed8'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = colors.primary
-                      }}
-                    >
-                      <Plus style={{ width: '16px', height: '16px' }} />
-                      Mail Merge
-                    </button>
-                  </Link>
+                <div />
+              </div>
+            </div>
+          </div>
+
+        {/* Actions & Tabs Card */}
+        <div style={{ marginBottom: '24px' }}>
+          <div 
+            style={{
+              padding: '16px',
+              ...card,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px'
+            }}
+          >
+            {/* Tab Switcher */}
+            <div style={{ display: 'flex', gap: '8px', padding: '4px', backgroundColor: colors.cardHover, borderRadius: '8px' }}>
+              <button
+                onClick={() => setActiveTab('documents')}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: activeTab === 'documents' ? colors.primary : 'transparent',
+                  color: activeTab === 'documents' ? '#ffffff' : colors.text.secondary,
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Documents
+              </button>
+              <button
+                onClick={() => setActiveTab('letterheads')}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: activeTab === 'letterheads' ? colors.primary : 'transparent',
+                  color: activeTab === 'letterheads' ? '#ffffff' : colors.text.secondary,
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Letterheads
+              </button>
+              <Link href="/google-sheets" style={{ textDecoration: 'none' }}>
+                <button
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    color: colors.text.secondary,
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.borderHover
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }}
+                >
+                  Google Sheets
+                </button>
+              </Link>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {activeTab === 'letterheads' && (
+                <button
+                  onClick={() => handleOpenLetterheadModal()}
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: colors.success,
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.success
+                  }}
+                >
+                  <Plus style={{ width: '16px', height: '16px' }} />
+                  New Letterhead
+                </button>
+              )}
+              {activeTab === 'documents' && (
+                <>
+                <label
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: colors.cardHover,
+                    ...text.secondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: uploadingFile ? 'wait' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease',
+                    opacity: uploadingFile ? 0.6 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!uploadingFile) {
+                      e.currentTarget.style.backgroundColor = colors.borderHover
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.cardHover
+                  }}
+                >
+                  <Upload style={{ width: '16px', height: '16px' }} />
+                  {uploadingFile ? 'Uploading...' : 'Upload'}
+                  <input
+                    type="file"
+                    accept=".txt,.pdf,.doc,.docx,.html"
+                    onChange={handleFileUpload}
+                    style={{ display: 'none' }}
+                    disabled={uploadingFile}
+                  />
+                </label>
+                <Link href="/documents/create-letter" style={{ textDecoration: 'none' }}>
                   <button
-                    onClick={() => setShowCreateModal(true)}
                     style={{
                       padding: '12px 16px',
-                      backgroundColor: colors.success,
+                      backgroundColor: colors.primary,
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '12px',
@@ -602,25 +767,51 @@ export default function DocumentsPage() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      transition: 'background-color 0.2s ease'
+                      transition: 'background-color 0.2s ease',
+                      marginRight: '12px'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
+                      e.currentTarget.style.backgroundColor = isDark ? '#2563eb' : '#1d4ed8'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.success
+                      e.currentTarget.style.backgroundColor = colors.primary
                     }}
                   >
                     <Plus style={{ width: '16px', height: '16px' }} />
-                    New Document
+                    Mail Merge
                   </button>
-                  </>
-                  )}
-                </div>
-              </div>
+                </Link>
+                <button
+                  onClick={() => handleOpenDocModal()}
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: colors.success,
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.success
+                  }}
+                >
+                  <Plus style={{ width: '16px', height: '16px' }} />
+                  New Document
+                </button>
+                </>
+              )}
             </div>
           </div>
-
+        </div>
           {/* Letterheads Tab Content */}
           {activeTab === 'letterheads' && (
             <div style={{ marginBottom: '24px' }}>
@@ -900,7 +1091,7 @@ export default function DocumentsPage() {
                 </p>
                 {!searchQuery && selectedFilter === 'all' && (
                   <button
-                    onClick={() => setShowCreateModal(true)}
+                    onClick={() => handleOpenDocModal()}
                     style={{
                       padding: '12px 24px',
                       backgroundColor: colors.success,
@@ -1002,14 +1193,38 @@ export default function DocumentsPage() {
                         >
                           {doc.type}
                         </span>
+                        {/* File type badge */}
+                        {(() => {
+                          const source = (doc.fileUrl || doc.title || '').toLowerCase()
+                          const m = source.match(/\.([a-z0-9]+)(?:$|\?)/)
+                          const ext = m ? m[1] : ''
+                          return ext ? (
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                padding: '2px 6px',
+                                borderRadius: '6px',
+                                backgroundColor: colors.cardHover,
+                                border: `1px solid ${colors.border}`,
+                                color: colors.text.secondary,
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              {ext}
+                            </span>
+                          ) : null
+                        })()}
                         {doc.contactName && (
                           <span style={{ fontSize: '12px', ...text.secondary }}>
                             {doc.contactName}
                           </span>
                         )}
-                        <span style={{ fontSize: '12px', ...text.secondary }}>
-                          {doc.fileSize}
-                        </span>
+                        {doc.description && /\(([^)]+\s(?:KB|MB|B))\)/i.test(doc.description) && (
+                          <span style={{ fontSize: '12px', ...text.secondary }}>
+                            {doc.description.match(/\(([^)]+\s(?:KB|MB|B))\)/i)?.[1]}
+                          </span>
+                        )}
                       </div>
                     </div>
                     
@@ -1040,6 +1255,7 @@ export default function DocumentsPage() {
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = 'transparent'
                           }}
+                          onClick={() => handleViewDocument(doc)}
                         >
                           <Eye style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
                         </button>
@@ -1062,6 +1278,7 @@ export default function DocumentsPage() {
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = 'transparent'
                           }}
+                          onClick={() => handleDownloadDocument(doc)}
                         >
                           <Download style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
                         </button>
@@ -1084,8 +1301,31 @@ export default function DocumentsPage() {
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = 'transparent'
                           }}
+                          onClick={() => handleOpenDocModal(doc)}
                         >
-                          <MoreHorizontal style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                          <Edit style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                        </button>
+                        <button
+                          style={{
+                            padding: '8px',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'background-color 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = colors.cardHover
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }}
+                          onClick={() => handleDeleteDocument(doc.id)}
+                        >
+                          <Trash2 style={{ width: '16px', height: '16px', color: colors.error || '#ef4444' }} />
                         </button>
                       </div>
                     </div>
@@ -1130,7 +1370,7 @@ export default function DocumentsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, marginBottom: '24px' }}>
-              Create New Document
+              {editingDoc ? 'Edit Document' : 'Create New Document'}
             </h2>
             
             <div style={{ marginBottom: '16px' }}>
@@ -1154,7 +1394,7 @@ export default function DocumentsPage() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
-                    handleCreateDocument()
+                    handleSaveDocument()
                   }
                 }}
               />
@@ -1208,6 +1448,7 @@ export default function DocumentsPage() {
               <button
                 onClick={() => {
                   setShowCreateModal(false)
+                  setEditingDoc(null)
                   setNewDocTitle('')
                   setNewDocDescription('')
                   setNewDocContent('')
@@ -1226,7 +1467,7 @@ export default function DocumentsPage() {
                 Cancel
               </button>
               <button
-                onClick={handleCreateDocument}
+                onClick={handleSaveDocument}
                 disabled={!newDocTitle.trim()}
                 style={{
                   padding: '12px 24px',
@@ -1240,12 +1481,149 @@ export default function DocumentsPage() {
                   opacity: newDocTitle.trim() ? 1 : 0.6,
                 }}
               >
-                Create Document
+                {editingDoc ? 'Save Changes' : 'Create Document'}
               </button>
             </div>
             </div>
           </div>
         )}
+
+    {/* Preview Document Modal */}
+    {showPreviewModal && (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setShowPreviewModal(false)
+            setPreviewDoc(null)
+            setPreviewContent('')
+          }
+        }}
+      >
+        <div
+          style={{
+            ...card,
+            padding: '24px',
+            maxWidth: '800px',
+            width: '95%',
+            maxHeight: '85vh',
+            overflowY: 'auto',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, marginBottom: '16px' }}>
+            Preview: {previewDoc?.title}
+          </h2>
+          {previewPdfUrl ? (
+            <div style={{ height: '70vh' }}>
+              <iframe
+                src={previewPdfUrl}
+                style={{ width: '100%', height: '100%', border: '1px solid ' + colors.border, borderRadius: '8px' }}
+              />
+            </div>
+          ) : previewContent ? (
+            /<([a-z][^\s>]+)/i.test(previewContent) ? (
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <div
+                  style={{
+                    width: '100%',
+                    maxWidth: '850px',
+                    backgroundColor: '#ffffff',
+                    color: '#000000',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.08)',
+                    borderRadius: '8px',
+                    padding: '24px',
+                  }}
+                  dangerouslySetInnerHTML={{ __html: previewContent }}
+                />
+              </div>
+            ) : (
+              <pre
+                style={{
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  padding: '16px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  backgroundColor: colors.card,
+                  color: colors.text.primary,
+                  fontFamily: 'monospace',
+                  fontSize: '13px',
+                }}
+              >{previewContent}</pre>
+            )
+          ) : (
+            <p style={{ ...text.secondary }}>
+              No inline content to preview. Try downloading this document instead.
+            </p>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', gap: '8px' }}>
+            <button
+              onClick={handlePrintPreview}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: colors.success,
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+              }}
+            >
+              Print
+            </button>
+            <button
+              onClick={() => {
+                if (previewDoc) handleDownloadDocument(previewDoc)
+              }}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: colors.primary,
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+              }}
+            >
+              Download
+            </button>
+            <button
+              onClick={() => {
+                setShowPreviewModal(false)
+                setPreviewDoc(null)
+                setPreviewContent('')
+              }}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: colors.cardHover,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                ...text.secondary,
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
       {/* Letterhead Modal */}
       {showLetterheadModal && (

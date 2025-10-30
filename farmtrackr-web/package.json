@@ -14,6 +14,7 @@
     "import-data": "tsx scripts/import-local-data.ts"
   },
   "dependencies": {
+    "@vercel/blob": "^0.25.1",
     "@prisma/client": "^6.18.0",
     "@types/papaparse": "^5.3.16",
     "@types/pdfkit": "^0.17.3",
