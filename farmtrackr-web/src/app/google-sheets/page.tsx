@@ -13,6 +13,7 @@ import {
   RefreshCw,
   FileSpreadsheet
 } from 'lucide-react'
+import { normalizeFarmName } from '@/lib/farmNames'
 
 export default function GoogleSheetsPage() {
   const { colors, isDark, card, background, text } = useThemeStyles()
@@ -261,9 +262,9 @@ export default function GoogleSheetsPage() {
                       <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '16px', margin: '0' }}>
                         {farmName}
                       </h3>
-                      {farmCounts[farmName] ? (
+                      {farmCounts[normalizeFarmName(farmName)] ? (
                         <span
-                          title={`${farmCounts[farmName]} in app`}
+                          title={`${farmCounts[normalizeFarmName(farmName)]} in app`}
                           style={{
                             padding: '2px 8px',
                             borderRadius: '9999px',
@@ -280,6 +281,15 @@ export default function GoogleSheetsPage() {
                     </div>
                     <ExternalLink style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
                   </div>
+                  {farmCounts[normalizeFarmName(farmName)] ? (
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 8px 0' }}>
+                      {farmCounts[normalizeFarmName(farmName)]} contacts in app
+                    </p>
+                  ) : (
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 8px 0' }}>
+                      Not yet imported
+                    </p>
+                  )}
                   <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 8px 0' }}>
                     Google Sheet
                   </p>

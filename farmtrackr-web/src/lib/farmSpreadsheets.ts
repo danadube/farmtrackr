@@ -13,14 +13,14 @@ export const FARM_SPREADSHEETS = {
     id: '10RtH6xqaJVSdEgP3vL1voea7orJNGgnjnl4kxjEcUR8',
     sheetName: 'Sheet1'
   },
-  'Ivy': {
-    name: 'Ivy',
+  'Ivy League Estates': {
+    name: 'Ivy League Estates',
     url: 'https://docs.google.com/spreadsheets/d/1LernlV9bfBYxpu0-4jbUq-qWZHiM68CstY36Iba6gDc/edit?usp=sharing',
     id: '1LernlV9bfBYxpu0-4jbUq-qWZHiM68CstY36Iba6gDc',
     sheetName: 'Sheet1'
   },
-  'Presidential': {
-    name: 'Presidential',
+  'Presidential Estates': {
+    name: 'Presidential Estates',
     url: 'https://docs.google.com/spreadsheets/d/1lQuifw4iBBKKPYY7eLBHeOkmq4iNVRkBZerp2Fu-hWA/edit?usp=sharing',
     id: '1lQuifw4iBBKKPYY7eLBHeOkmq4iNVRkBZerp2Fu-hWA',
     sheetName: 'Sheet1'
