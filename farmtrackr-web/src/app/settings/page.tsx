@@ -107,14 +107,14 @@ export default function SettingsPage() {
         >
           {/* Page Header */}
           <div style={{ marginBottom: '32px' }}>
-            <div style={{ padding: '24px', ...headerCard, ...headerTint(colors.success) }}>
+            <div style={{ padding: '24px', ...headerCard, ...headerTint(colors.primary) }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div 
                     style={{
                       width: '48px',
                       height: '48px',
-                      backgroundColor: colors.iconBg,
+                      backgroundColor: isDark ? '#1e3a8a' : (colors as any).primaryTint || '#dbeafe',
                       borderRadius: '12px',
                       display: 'flex',
                       alignItems: 'center',
