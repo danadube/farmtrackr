@@ -39,7 +39,7 @@ interface ValidationIssue {
 }
 
 export default function DataQualityPage() {
-  const { colors, isDark, card, headerCard, headerDivider, background, text } = useThemeStyles()
+  const { colors, isDark, card, headerCard, headerDivider, headerTint, background, text } = useThemeStyles()
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [activeTab, setActiveTab] = useState<'duplicates' | 'validation' | 'cleanup'>('duplicates')
   const [cleanupAction, setCleanupAction] = useState<string>('')
@@ -225,7 +225,8 @@ export default function DataQualityPage() {
             <div 
               style={{
                 padding: '24px',
-                ...headerCard
+                ...headerCard,
+                ...headerTint(colors.warning)
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

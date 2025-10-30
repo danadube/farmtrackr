@@ -7,6 +7,14 @@ export function useThemeStyles() {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const colors = getThemeColors(isDark)
+  const hexToRgba = (hex: string, alpha: number) => {
+    const h = hex.replace('#', '')
+    const bigint = parseInt(h, 16)
+    const r = (bigint >> 16) & 255
+    const g = (bigint >> 8) & 255
+    const b = bigint & 255
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
   
   return {
     colors,
@@ -41,6 +49,12 @@ export function useThemeStyles() {
       height: '1px',
       background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
     },
+    headerTint: (hexColor: string) => ({
+      background: isDark
+        ? `linear-gradient(180deg, ${hexToRgba(hexColor, 0.12)}, ${hexToRgba(hexColor, 0.06)}), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))`
+        : `linear-gradient(180deg, ${hexToRgba(hexColor, 0.06)}, ${hexToRgba(hexColor, 0.03)}), linear-gradient(180deg, #ffffff, #fafafa)`,
+      borderTop: `3px solid ${hexColor}`,
+    } as const),
     background: {
       backgroundColor: colors.background,
     },

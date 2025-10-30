@@ -16,7 +16,7 @@ import {
 import { normalizeFarmName } from '@/lib/farmNames'
 
 export default function GoogleSheetsPage() {
-  const { colors, isDark, card, headerCard, headerDivider, background, text } = useThemeStyles()
+  const { colors, isDark, card, headerCard, headerDivider, headerTint, background, text } = useThemeStyles()
   const [selectedFarm, setSelectedFarm] = useState<FarmName | null>(null)
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -155,7 +155,8 @@ export default function GoogleSheetsPage() {
             <div 
               style={{
                 padding: '24px',
-                ...headerCard
+                ...headerCard,
+                ...headerTint(colors.success)
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

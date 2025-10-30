@@ -17,7 +17,7 @@ import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 
 export default function ImportExportPage() {
-  const { colors, isDark, card, background, text } = useThemeStyles()
+  const { colors, isDark, card, headerCard, headerDivider, headerTint, background, text } = useThemeStyles()
   const [importStatus, setImportStatus] = useState<{
     type: 'success' | 'error' | null
     message: string
@@ -226,7 +226,7 @@ export default function ImportExportPage() {
         >
           {/* Page Header */}
           <div style={{ marginBottom: '32px' }}>
-            <div style={{ padding: '24px', ...card }}>
+            <div style={{ padding: '24px', ...headerCard, ...headerTint(colors.success) }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <div 
                   style={{
@@ -250,6 +250,7 @@ export default function ImportExportPage() {
                   </p>
                 </div>
               </div>
+              <div style={headerDivider} />
             </div>
           </div>
 

@@ -19,7 +19,7 @@ import { getVersionInfo } from '@/lib/version'
 
 export default function SettingsPage() {
   const { theme, setTheme: setThemeState } = useTheme()
-  const { colors, isDark, card, background, text } = useThemeStyles()
+  const { colors, isDark, card, headerCard, headerDivider, headerTint, background, text } = useThemeStyles()
   const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'data' | 'appearance' | 'about'>('general')
   const [isSaving, setIsSaving] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
@@ -107,7 +107,7 @@ export default function SettingsPage() {
         >
           {/* Page Header */}
           <div style={{ marginBottom: '32px' }}>
-            <div style={{ padding: '24px', ...card }}>
+            <div style={{ padding: '24px', ...headerCard, ...headerTint(colors.success) }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div 
@@ -174,6 +174,7 @@ export default function SettingsPage() {
                   )}
                 </button>
               </div>
+              <div style={headerDivider} />
             </div>
           </div>
 
