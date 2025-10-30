@@ -54,11 +54,12 @@ export async function POST(request: NextRequest) {
         return undefined
       }
 
-      const parseZip = (zip: string | undefined): number | undefined => {
+      const parseZip = (zip: string | undefined): string | undefined => {
         if (!zip) return undefined
-        const zipStr = String(zip).replace(/[^0-9]/g, '')
-        const zipNum = parseInt(zipStr)
-        return isNaN(zipNum) || zipNum < 10000 || zipNum > 99999 ? undefined : zipNum
+        const digits = String(zip).replace(/[^0-9]/g, '')
+        if (digits.length === 9) return `${digits.slice(0,5)}-${digits.slice(5)}`
+        if (digits.length === 5) return digits
+        return String(zip).trim()
       }
 
       return {
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
         phoneNumber4: getField(['Phone Number 4', 'phoneNumber4']),
         phoneNumber5: getField(['Phone Number 5', 'phoneNumber5']),
         phoneNumber6: getField(['Phone Number 6', 'phoneNumber6']),
-        siteMailingAddress: getField(['Site Mailing Address', 'siteMailingAddress']),
+        siteMailingAddress: getField(['Site Mailing Address', 'Site Address', 'Site Street Address', 'Physical Address', 'siteMailingAddress']),
         siteCity: getField(['Site City', 'siteCity']),
         siteState: getField(['Site State', 'siteState']),
         siteZipCode: parseZip(getField(['Site Zip Code', 'siteZipCode'])),
