@@ -200,29 +200,39 @@ export function validateContact(contact: FarmContact): ValidationIssue[] {
     })
   }
 
-  // ZIP code validation
-  if (contact.zipCode && (contact.zipCode < 10000 || contact.zipCode > 99999)) {
+  // ZIP code validation (allow 5-digit or ZIP+4)
+  if (contact.zipCode) {
+    const z = String(contact.zipCode)
+    const isFive = /^\d{5}$/.test(z)
+    const isPlus4 = /^\d{5}-\d{4}$/.test(z)
+    if (!isFive && !isPlus4) {
     issues.push({
       id: `invalid-zip-${contact.id}`,
       contactId: contact.id,
       contactName: `${contact.firstName} ${contact.lastName}`,
       type: 'format',
       field: 'zipCode',
-      message: 'ZIP code must be a 5-digit number',
+      message: 'ZIP must be 5-digit or ZIP+4 (12345 or 12345-6789)',
       severity: 'warning',
     })
   }
+  }
 
-  if (contact.siteZipCode && (contact.siteZipCode < 10000 || contact.siteZipCode > 99999)) {
+  if (contact.siteZipCode) {
+    const z = String(contact.siteZipCode)
+    const isFive = /^\d{5}$/.test(z)
+    const isPlus4 = /^\d{5}-\d{4}$/.test(z)
+    if (!isFive && !isPlus4) {
     issues.push({
       id: `invalid-sitezip-${contact.id}`,
       contactId: contact.id,
       contactName: `${contact.firstName} ${contact.lastName}`,
       type: 'format',
       field: 'siteZipCode',
-      message: 'Site ZIP code must be a 5-digit number',
+      message: 'Site ZIP must be 5-digit or ZIP+4 (12345 or 12345-6789)',
       severity: 'warning',
     })
+  }
   }
 
   // Warning for missing contact info
