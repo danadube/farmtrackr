@@ -38,7 +38,7 @@ export function FarmTrackrLogo({
     return (
       <div style={{ width: sizeConfig.width, height: sizeConfig.height }} className={className}>
         <Image
-          src="/images/farmtrackr-icon.png"
+          src={isDark ? "/images/title-logo-transparent.png" : "/images/title-logo-light.png"}
           alt="FarmTrackr"
           width={sizeConfig.width}
           height={sizeConfig.height}
