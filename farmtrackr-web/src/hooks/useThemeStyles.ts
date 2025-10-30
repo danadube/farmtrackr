@@ -26,6 +26,7 @@ export function useThemeStyles() {
         ? 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))'
         : 'linear-gradient(180deg, #ffffff, #fafafa)',
       border: `1px solid ${colors.border}`,
+      borderTop: `3px solid ${colors.primary}`,
       boxShadow: isDark
         ? '0 4px 12px rgba(0,0,0,0.35)'
         : '0 8px 24px rgba(0,0,0,0.06)',
