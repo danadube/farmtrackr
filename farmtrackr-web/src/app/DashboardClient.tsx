@@ -42,6 +42,14 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
     .sort((a, b) => b.dateCreated.getTime() - a.dateCreated.getTime())
     .slice(0, 4)
 
+  const activeFarms = Array.from(
+    new Set(
+      contacts
+        .map(c => c.farm ? normalizeFarmName(c.farm) : '')
+        .filter(Boolean)
+    )
+  ).sort()
+
   return (
     <Sidebar>
       <div 
@@ -378,11 +386,28 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       Active Farms
                     </p>
                     <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
-                      {stats.farmsWithContacts}
+                      {activeFarms.length}
                     </p>
-                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
-                      Cielo
-                    </p>
+                    {activeFarms.length > 0 && (
+                      <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {activeFarms.map((farm) => (
+                          <span
+                            key={farm}
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '9999px',
+                              backgroundColor: colors.cardHover,
+                              border: `1px solid ${colors.border}`,
+                              fontSize: '11px',
+                              color: colors.text.secondary,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {farm}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
