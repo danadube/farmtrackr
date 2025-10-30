@@ -20,6 +20,7 @@ import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { ContactBadge } from '@/components/ContactBadge'
 import { normalizeFarmName } from '@/lib/farmNames'
+import { getFarmColor } from '@/lib/farmColors'
 
 interface DashboardClientProps {
   contacts: FarmContact[];
@@ -330,10 +331,24 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               Overview
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
-              <div 
+              <Link 
+                href="/contacts"
                 style={{
+                  display: 'block',
+                  textDecoration: 'none',
                   padding: '24px',
-                  ...card
+                  ...card,
+                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
+                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
+                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -359,12 +374,26 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     </p>
                   </div>
                 </div>
-              </div>
+              </Link>
 
-              <div 
+              <Link 
+                href="/google-sheets"
                 style={{
+                  display: 'block',
+                  textDecoration: 'none',
                   padding: '24px',
-                  ...card
+                  ...card,
+                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
+                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
+                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -390,27 +419,30 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     </p>
                     {activeFarms.length > 0 && (
                       <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {activeFarms.map((farm) => (
+                        {activeFarms.map((farm) => {
+                          const c = getFarmColor(farm)
+                          return (
                           <span
                             key={farm}
                             style={{
                               padding: '2px 8px',
                               borderRadius: '9999px',
-                              backgroundColor: colors.cardHover,
-                              border: `1px solid ${colors.border}`,
+                              backgroundColor: c.bg,
+                              border: `1px solid ${c.border}`,
                               fontSize: '11px',
-                              color: colors.text.secondary,
+                              color: c.text,
                               fontWeight: 600,
                             }}
                           >
                             {farm}
                           </span>
-                        ))}
+                          )
+                        })}
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
 
