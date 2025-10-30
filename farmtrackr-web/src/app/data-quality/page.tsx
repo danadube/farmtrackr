@@ -259,6 +259,7 @@ export default function DataQualityPage() {
                     </p>
                   </div>
                 </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <button
                   onClick={handleAnalyze}
                   disabled={isAnalyzing}
@@ -296,6 +297,54 @@ export default function DataQualityPage() {
                   />
                   {isAnalyzing ? 'Analyzing...' : 'Analyze Data'}
                 </button>
+                <button
+                  onClick={async () => {
+                    setMergeStatus(null)
+                    setIsAnalyzing(true)
+                    try {
+                      const res = await fetch('/api/contacts/merge', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mergeAll: true })
+                      })
+                      const result = await res.json()
+                      if (res.ok) {
+                        setMergeStatus({ type: 'success', message: result.message || 'Merged all duplicates' })
+                        handleAnalyze()
+                      } else {
+                        setMergeStatus({ type: 'error', message: result.error || 'Failed to merge duplicates' })
+                      }
+                    } catch (e) {
+                      setMergeStatus({ type: 'error', message: 'Failed to merge duplicates' })
+                    } finally {
+                      setIsAnalyzing(false)
+                    }
+                  }}
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
+                    color: colors.success,
+                    border: `1px solid ${colors.success}`,
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? '#065f46' : '#dcfce7'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? '#064e3b' : '#f0fdf4'
+                  }}
+                >
+                  <Merge style={{ width: '16px', height: '16px' }} />
+                  Merge All Duplicates
+                </button>
+                </div>
               </div>
             </div>
           </div>
