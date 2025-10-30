@@ -41,8 +41,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (!mounted) return
+  const computeCounts = () => {
     const allIssues = validateAllContacts(contacts)
     let dismissed = new Set<string>()
     try {
@@ -53,6 +52,23 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
     setIssuesCount(visible.length)
     setErrorsCount(visible.filter(i => i.severity === 'error').length)
     setWarningsCount(visible.filter(i => i.severity === 'warning').length)
+  }
+
+  useEffect(() => {
+    if (!mounted) return
+    computeCounts()
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'dq.dismissedIssues') computeCounts()
+    }
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') computeCounts()
+    }
+    window.addEventListener('storage', onStorage)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [mounted, contacts])
 
   if (!mounted) {
