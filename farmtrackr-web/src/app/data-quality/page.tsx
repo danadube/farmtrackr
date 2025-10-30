@@ -58,6 +58,7 @@ export default function DataQualityPage() {
     type: 'success' | 'error' | null
     message: string
   } | null>(null)
+  const [dismissedIssueIds, setDismissedIssueIds] = useState<Set<string>>(new Set())
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true)
@@ -79,6 +80,10 @@ export default function DataQualityPage() {
 
   // Load data on mount
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('dq.dismissedIssues')
+      if (saved) setDismissedIssueIds(new Set(JSON.parse(saved)))
+    } catch {}
     handleAnalyze()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -907,7 +912,7 @@ export default function DataQualityPage() {
 
           {activeTab === 'validation' && (
             <div style={{ padding: '24px', ...card }}>
-              <div style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
                 <h2 
                   style={{
                     fontSize: '20px',
@@ -918,9 +923,29 @@ export default function DataQualityPage() {
                 >
                   Validation Issues ({validationIssues.length})
                 </h2>
-                <p style={{ ...text.secondary, fontSize: '14px', margin: '0' }}>
-                  Data quality issues that need your attention
-                </p>
+                {validationIssues.length > 0 && (
+                  <button
+                    onClick={() => {
+                      const next = new Set(dismissedIssueIds)
+                      validationIssues.forEach(v => next.add(v.id))
+                      setDismissedIssueIds(next)
+                      try { localStorage.setItem('dq.dismissedIssues', JSON.stringify(Array.from(next))) } catch {}
+                    }}
+                    style={{
+                      padding: '10px 12px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '13px',
+                      ...text.secondary,
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.borderHover }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.cardHover }}
+                  >
+                    Dismiss All
+                  </button>
+                )}
               </div>
 
               {validationIssues.length === 0 ? (
@@ -935,7 +960,7 @@ export default function DataQualityPage() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {validationIssues.map((issue) => (
+                  {validationIssues.filter(issue => !dismissedIssueIds.has(issue.id)).map((issue) => (
                     <div 
                       key={issue.id}
                       style={{
@@ -1000,6 +1025,27 @@ export default function DataQualityPage() {
                         >
                           View Contact
                         </Link>
+                        <button
+                          onClick={() => {
+                            const next = new Set(dismissedIssueIds)
+                            next.add(issue.id)
+                            setDismissedIssueIds(next)
+                            try { localStorage.setItem('dq.dismissedIssues', JSON.stringify(Array.from(next))) } catch {}
+                          }}
+                          style={{
+                            padding: '8px 12px',
+                            backgroundColor: 'transparent',
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '10px',
+                            fontSize: '12px',
+                            ...text.secondary,
+                            cursor: 'pointer'
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.cardHover }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                        >
+                          Dismiss
+                        </button>
                       </div>
                     </div>
                   ))}

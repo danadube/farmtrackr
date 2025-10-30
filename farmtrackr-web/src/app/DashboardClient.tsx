@@ -21,6 +21,7 @@ import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { ContactBadge } from '@/components/ContactBadge'
 import { normalizeFarmName } from '@/lib/farmNames'
 import { getFarmColor } from '@/lib/farmColors'
+import { validateAllContacts } from '@/lib/dataQuality'
 
 interface DashboardClientProps {
   contacts: FarmContact[];
@@ -50,6 +51,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
         .filter(Boolean)
     )
   ).sort()
+
+  const validationIssuesCount = validateAllContacts(contacts).length
 
   return (
     <Sidebar>
@@ -444,6 +447,52 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </div>
                 </div>
               </Link>
+
+            {/* Validation Issues Card */}
+            <Link 
+              href="/data-quality"
+              style={{
+                display: 'block',
+                textDecoration: 'none',
+                padding: '24px',
+                ...card,
+                transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.boxShadow = isDark 
+                  ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                  : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                ;(e.currentTarget as HTMLElement).style.borderColor = validationIssuesCount > 0 ? (isDark ? '#dc2626' : '#dc2626') : colors.border
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
+                ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div 
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    backgroundColor: isDark ? '#7f1d1d' : '#fef2f2',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <TrendingUp style={{ width: '24px', height: '24px', color: validationIssuesCount > 0 ? colors.error : colors.success }} />
+                </div>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Validation Issues
+                  </p>
+                  <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    {validationIssuesCount}
+                  </p>
+                </div>
+              </div>
+            </Link>
             </div>
           </div>
 
