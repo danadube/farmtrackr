@@ -32,7 +32,7 @@ export function formatPhoneNumber(phone: string | undefined | null): string {
 export function formatCityStateZip(
   city: string | undefined | null,
   state: string | undefined | null,
-  zipCode: number | undefined | null
+  zipCode: string | number | undefined | null
 ): string {
   const parts: string[] = []
   
@@ -46,12 +46,12 @@ export function formatCityStateZip(
   }
   
   // State and ZIP together (space between them)
-  if (state && zipCode) {
-    parts.push(`${state} ${zipCode}`)
+  if (state && zipCode != null && zipCode !== '') {
+    parts.push(`${state} ${String(zipCode)}`)
   } else if (state) {
     parts.push(state)
   } else if (zipCode) {
-    parts.push(zipCode.toString())
+    parts.push(String(zipCode))
   }
   
   // Join parts with spaces
