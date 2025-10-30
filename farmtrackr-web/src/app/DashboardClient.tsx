@@ -52,7 +52,24 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
     )
   ).sort()
 
-  const validationIssuesCount = validateAllContacts(contacts).length
+  // Validation issue counts (subtract dismissed)
+  const [issuesCount, setIssuesCount] = useState(0)
+  const [errorsCount, setErrorsCount] = useState(0)
+  const [warningsCount, setWarningsCount] = useState(0)
+
+  useEffect(() => {
+    if (!mounted) return
+    const allIssues = validateAllContacts(contacts)
+    let dismissed = new Set<string>()
+    try {
+      const raw = localStorage.getItem('dq.dismissedIssues')
+      if (raw) dismissed = new Set<string>(JSON.parse(raw))
+    } catch {}
+    const visible = allIssues.filter(i => !dismissed.has(i.id))
+    setIssuesCount(visible.length)
+    setErrorsCount(visible.filter(i => i.severity === 'error').length)
+    setWarningsCount(visible.filter(i => i.severity === 'warning').length)
+  }, [mounted, contacts])
 
   return (
     <Sidebar>
@@ -321,20 +338,20 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
           </div>
 
           {/* Statistics */}
-          <div style={{ marginBottom: '32px' }}>
+          <div style={{ marginBottom: spacing(4) }}>
             <h2 
               style={{
                 fontSize: '24px',
                 fontWeight: '600',
                 ...text.primary,
                 lineHeight: '32px',
-                marginBottom: '12px',
-                margin: '0 0 12px 0'
+                marginBottom: spacing(1.5),
+                margin: `0 0 ${spacing(1.5)} 0`
               }}
             >
               Overview
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', alignItems: 'stretch' }}>
               <Link 
                 href="/contacts"
                 style={{
@@ -342,7 +359,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   textDecoration: 'none',
                   padding: '24px',
                   ...card,
-                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
+                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+                  height: '100%'
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.boxShadow = isDark 
@@ -387,7 +405,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   textDecoration: 'none',
                   padding: '24px',
                   ...card,
-                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
+                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+                  height: '100%'
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.boxShadow = isDark 
@@ -448,51 +467,60 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
               </Link>
 
-            {/* Validation Issues Card */}
-            <Link 
-              href="/data-quality"
-              style={{
-                display: 'block',
-                textDecoration: 'none',
-                padding: '24px',
-                ...card,
-                transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.boxShadow = isDark 
-                  ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
-                  : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                ;(e.currentTarget as HTMLElement).style.borderColor = validationIssuesCount > 0 ? (isDark ? '#dc2626' : '#dc2626') : colors.border
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div 
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    backgroundColor: isDark ? '#7f1d1d' : '#fef2f2',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <TrendingUp style={{ width: '24px', height: '24px', color: validationIssuesCount > 0 ? colors.error : colors.success }} />
+              {/* Validation Issues Card */}
+              <Link 
+                href="/data-quality"
+                style={{
+                  display: 'block',
+                  textDecoration: 'none',
+                  padding: '24px',
+                  ...card,
+                transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+                height: '100%'
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
+                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                  ;(e.currentTarget as HTMLElement).style.borderColor = issuesCount > 0 ? (isDark ? '#dc2626' : '#dc2626') : colors.border
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
+                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div 
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      backgroundColor: isDark ? '#7f1d1d' : '#fef2f2',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                  <TrendingUp style={{ width: '24px', height: '24px', color: issuesCount > 0 ? colors.error : colors.success }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                      Validation Issues
+                    </p>
+                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                      {issuesCount}
+                      {issuesCount === 0 && (
+                        <span style={{ fontSize: '12px', marginLeft: '8px', color: colors.success, fontWeight: 600 }}>
+                          Fixed
+                        </span>
+                      )}
+                    </p>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
+                      Errors {errorsCount} • Warnings {warningsCount}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                    Validation Issues
-                  </p>
-                  <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
-                    {validationIssuesCount}
-                  </p>
-                </div>
-              </div>
-            </Link>
+              </Link>
             </div>
           </div>
 
