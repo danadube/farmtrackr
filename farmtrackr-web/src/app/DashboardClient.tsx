@@ -83,7 +83,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     justifyContent: 'center'
                   }}
                 >
-                  <FarmTrackrLogo size="lg" variant="icon" className="text-green-600" />
+                  <Home style={{ width: '28px', height: '28px', color: colors.success }} />
                 </div>
                 <div>
                   <h1 
