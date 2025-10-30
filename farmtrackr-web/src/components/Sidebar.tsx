@@ -11,6 +11,7 @@ import {
   Upload, 
   Settings,
   FileSpreadsheet,
+  LayoutDashboard,
   Menu,
   X
 } from 'lucide-react'
@@ -66,7 +67,7 @@ export function Sidebar({ children }: SidebarProps) {
   }, [])
 
   const navItems = [
-    { href: '/', label: 'Dashboard', icon: Home },
+    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/contacts', label: 'Contacts', icon: Users },
     { href: '/documents', label: 'Documents', icon: FileText },
     { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet },
