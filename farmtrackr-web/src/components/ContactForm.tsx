@@ -164,6 +164,35 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
 
   return (
     <Sidebar>
+      <style>{`
+        div[contenteditable] ul, div[contenteditable] ol { 
+          padding-left: 24px; 
+          margin: 8px 0; 
+        }
+        div[contenteditable] ul { 
+          list-style-type: disc; 
+        }
+        div[contenteditable] ol { 
+          list-style-type: decimal; 
+        }
+        div[contenteditable] li { 
+          margin: 4px 0; 
+        }
+        /* Also apply to rendered notes */
+        div[dangerouslysetinnerhtml] ul, div[dangerouslysetinnerhtml] ol { 
+          padding-left: 24px; 
+          margin: 8px 0; 
+        }
+        div[dangerouslysetinnerhtml] ul { 
+          list-style-type: disc; 
+        }
+        div[dangerouslysetinnerhtml] ol { 
+          list-style-type: decimal; 
+        }
+        div[dangerouslysetinnerhtml] li { 
+          margin: 4px 0; 
+        }
+      `}</style>
       <div 
         style={{ 
           marginLeft: '256px', 
