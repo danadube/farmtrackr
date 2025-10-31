@@ -4,8 +4,9 @@
 
 This roadmap outlines the development plan to bring the web application to feature parity with the Swift app, with special attention to the label printing functionality that had implementation challenges.
 
-**Last Updated:** October 29, 2025  
-**Current Version:** v0.4.0 (Label Printing & PDF Export) - ✅ COMPLETE  
+**Last Updated:** October 30, 2025  
+**Current Version:** v0.4.1 (Farm Dropdown & Settings Enhancement) - ✅ COMPLETE  
+**Previous Version:** v0.4.0 (Label Printing & PDF Export) - ✅ COMPLETE  
 **Next Target:** v0.5.0 (Documents & Google Sheets Integration)
 
 ---
@@ -481,7 +482,35 @@ Based on Swift app challenges:
   - Bulk export
   - Bulk import updates
 
-### **v0.4.1 - Document Management** (In Progress)
+### **v0.4.1 - Farm Dropdown & Settings Enhancement** ✅ COMPLETE (October 30, 2025)
+**Focus:** Improved farm selection and settings personalization
+
+#### Farm Management
+- [x] **Farm Field Dropdown** ✅ COMPLETE
+  - Converted farm input to dropdown populated from existing contacts
+  - Automatic farm normalization and deduplication
+  - Sorted alphabetically for easy selection
+  - Prevents typos and ensures consistency
+
+#### Settings Enhancement
+- [x] **Personalization Settings** ✅ COMPLETE
+  - Updated "Farm Name" to "Agent Name" for welcome screen
+  - Updated "Default Farm" to "Brokerage Name" for welcome screen
+  - Added helpful descriptions for future welcome screen usage
+  - Prepared for future personalization features
+
+#### Documentation
+- [x] **Future Architecture Documentation** ✅ COMPLETE
+  - Created comprehensive architecture document
+  - Documented dual contact list system vision
+  - Documented Transaction Coordinator module plan
+  - Added zipForm integration research and options
+
+**Status:** ✅ **v0.4.1 is COMPLETE** - Farm dropdown and settings enhancements ready for use
+
+---
+
+### **v0.4.2 - Document Management** (In Progress)
 **Focus:** Complete document CRUD and file management
 
 #### Document Management Core (Started)
@@ -701,8 +730,9 @@ Based on Swift app challenges:
 |---------|-------------|------------------|
 | v0.2.0 | Q1 2025 ✅ | Database + Import System |
 | v0.3.0 | Q1 2025 ✅ | Export + Data Quality |
-| v0.4.0 | Oct 2025 ✅ | **Label Printing & PDF Export** |
-| v0.4.1 | Q4 2025 🚧 | Document Management (In Progress) |
+| v0.4.0 | Oct 29, 2025 ✅ | **Label Printing & PDF Export** |
+| v0.4.1 | Oct 30, 2025 ✅ | **Farm Dropdown & Settings Enhancement** |
+| v0.4.2 | Q4 2025 🚧 | Document Management (In Progress) |
 | v0.5.0 | Q4 2025 | Google Integration (Sheets, Contacts, Calendar & Drive) |
 | v0.6.0 | Q3 2025 | Advanced Features |
 | v1.0.0 | Q4 2025 | Production Release |
@@ -727,13 +757,13 @@ This roadmap should be reviewed and updated:
 - When technical challenges are discovered
 - Quarterly for strategic planning
 
-**Last Reviewed:** October 29, 2025
+**Last Reviewed:** October 30, 2025
 
 ---
 
-## 🎯 Immediate Next Steps (v0.4.1 & v0.5.0)
+## 🎯 Immediate Next Steps (v0.4.2 & v0.5.0)
 
-### Priority 1: Complete Document Management (v0.4.1)
+### Priority 1: Complete Document Management (v0.4.2)
 **Status:** API Complete, UI Partial ✅🚧
 
 **Remaining Tasks:**
@@ -818,7 +848,8 @@ This roadmap should be reviewed and updated:
 | v0.2.0 | ✅ Complete | Database, Basic CRUD |
 | v0.3.0 | ✅ Complete | Export, Data Quality |
 | v0.4.0 | ✅ Complete | Label Printing, PDF Export |
-| v0.4.1 | 🚧 In Progress | Document Management UI |
+| v0.4.1 | ✅ Complete | Farm Dropdown, Settings Enhancement |
+| v0.4.2 | 🚧 In Progress | Document Management UI |
 | v0.5.0 | 📋 Planned | Google Sheets Integration |
 | v0.6.0 | 📋 Planned | Advanced Features |
 | v1.0.0 | 📋 Planned | Production Release |
