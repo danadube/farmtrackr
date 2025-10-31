@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     const response = await people.people.connections.list({
       resourceName: 'people/me',
       pageSize: 1000,
-      personFields: 'names,emailAddresses,phoneNumbers,addresses,organizations,biographies,tagLine,miscKeywords'
+      personFields: 'names,emailAddresses,phoneNumbers,addresses,organizations,biographies,miscKeywords'
     })
 
     const connections = response.data.connections || []
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         const zipCode = person.addresses?.[0]?.postalCode || ''
 
         // Extract notes/biography
-        const notes = person.biographies?.[0]?.value || person.taglines?.[0]?.value || ''
+        const notes = person.biographies?.[0]?.value || ''
 
         // Extract tags from miscKeywords (Google Contacts labels)
         const tags: string[] = []
