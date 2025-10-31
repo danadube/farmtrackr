@@ -1,7 +1,7 @@
 'use client'
 
 // ContactForm component for creating and editing contacts
-import { useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ContactFormData } from '@/types'
 import { X, Save, User, Building2, Mail, Phone, MapPin, FileText } from 'lucide-react'
