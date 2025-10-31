@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
+import Link from 'next/link'
 import { 
   CheckCircle, 
   AlertCircle,
@@ -679,16 +680,14 @@ export default function GoogleContactsPage() {
               
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {filteredContacts.map((contact, index) => (
-                  <div
+                  <Link
                     key={contact.id}
-                    onClick={() => {
-                      setSelectedContact(contact)
-                      setShowContactModal(true)
-                    }}
+                    href={`/google-contacts/${contact.id}`}
                     style={{
+                      display: 'block',
                       padding: '20px 24px',
                       borderBottom: index < filteredContacts.length - 1 ? `1px solid ${colors.border}` : 'none',
-                      cursor: 'pointer',
+                      textDecoration: 'none',
                       transition: 'background-color 0.2s ease'
                     }}
                     onMouseEnter={(e) => {
@@ -767,7 +766,7 @@ export default function GoogleContactsPage() {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
