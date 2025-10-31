@@ -37,6 +37,8 @@ export default function GoogleContactsPage() {
   const [totalContacts, setTotalContacts] = useState<number>(0)
   const [lastSyncedAt, setLastSyncedAt] = useState<string>('')
   const [googleConnectionStatus, setGoogleConnectionStatus] = useState<'connected' | 'not-connected' | 'checking'>('checking')
+  const [contacts, setContacts] = useState<GeneralContact[]>([])
+  const [isLoadingContacts, setIsLoadingContacts] = useState(false)
 
   useEffect(() => {
     // Check Google OAuth connection status
@@ -67,7 +69,25 @@ export default function GoogleContactsPage() {
         }
       } catch (_) {}
     }
+    
+    // Load contacts list
+    const loadContacts = async () => {
+      setIsLoadingContacts(true)
+      try {
+        const res = await fetch('/api/google-contacts')
+        if (res.ok) {
+          const contactsData = await res.json()
+          setContacts(contactsData || [])
+        }
+      } catch (_) {
+        setContacts([])
+      } finally {
+        setIsLoadingContacts(false)
+      }
+    }
+    
     loadStats()
+    loadContacts()
   }, [])
 
   const handleImport = async () => {
@@ -97,13 +117,20 @@ export default function GoogleContactsPage() {
           type: 'success', 
           message: `Successfully imported ${result.imported || 0} contacts, updated ${result.updated || 0}, skipped ${result.skipped || 0}` 
         })
-        // Refresh stats
+        // Refresh stats and reload contacts
         try {
-          const statsRes = await fetch('/api/google-contacts/stats')
+          const [statsRes, contactsRes] = await Promise.all([
+            fetch('/api/google-contacts/stats'),
+            fetch('/api/google-contacts')
+          ])
           if (statsRes.ok) {
             const stats = await statsRes.json()
             setTotalContacts(stats.totalContacts || 0)
             setLastSyncedAt(stats.lastSyncedAt ? new Date(stats.lastSyncedAt).toLocaleString() : '')
+          }
+          if (contactsRes.ok) {
+            const contactsData = await contactsRes.json()
+            setContacts(contactsData || [])
           }
         } catch (_) {}
       } else {
@@ -320,6 +347,82 @@ export default function GoogleContactsPage() {
               </div>
             </div>
           </div>
+
+          {/* Contacts List */}
+          {contacts.length > 0 && (
+            <div 
+              style={{
+                padding: '24px',
+                ...card,
+                marginBottom: '24px'
+              }}
+            >
+              <h2 
+                style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  ...text.primary,
+                  marginBottom: '16px'
+                }}
+              >
+                Your Google Contacts ({contacts.length})
+              </h2>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {contacts.map((contact) => (
+                  <div
+                    key={contact.id}
+                    style={{
+                      padding: '16px',
+                      backgroundColor: colors.cardHover,
+                      borderRadius: '10px',
+                      border: `1px solid ${colors.border}`
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <div>
+                        <h3 style={{ fontSize: '15px', fontWeight: '600', ...text.primary, margin: '0 0 4px 0' }}>
+                          {contact.firstName || contact.lastName || contact.organizationName 
+                            ? `${contact.firstName || ''} ${contact.lastName || ''}${contact.organizationName ? ` - ${contact.organizationName}` : ''}`.trim()
+                            : 'Unnamed Contact'}
+                        </h3>
+                        {contact.tags && contact.tags.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                            {contact.tags.map((tag, idx) => (
+                              <span
+                                key={idx}
+                                style={{
+                                  padding: '2px 8px',
+                                  fontSize: '11px',
+                                  backgroundColor: isDark ? '#1e3a8a' : '#dbeafe',
+                                  color: colors.primary,
+                                  borderRadius: '9999px',
+                                  fontWeight: '500'
+                                }}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', ...text.secondary }}>
+                      {contact.email1 && (
+                        <div>📧 {contact.email1}</div>
+                      )}
+                      {contact.phoneNumber1 && (
+                        <div>📞 {contact.phoneNumber1}</div>
+                      )}
+                      {contact.city && contact.state && (
+                        <div>📍 {contact.city}, {contact.state} {contact.zipCode || ''}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Instructions */}
           <div 
