@@ -164,6 +164,21 @@ export default function ContactDetailPage() {
 
   return (
     <Sidebar>
+      <style>{`
+        .rendered-note ul, .rendered-note ol { 
+          padding-left: 24px; 
+          margin: 8px 0; 
+        }
+        .rendered-note ul { 
+          list-style-type: disc; 
+        }
+        .rendered-note ol { 
+          list-style-type: decimal; 
+        }
+        .rendered-note li { 
+          margin: 4px 0; 
+        }
+      `}</style>
       <div 
         style={{ 
           marginLeft: '256px', 
@@ -566,7 +581,7 @@ export default function ContactDetailPage() {
                           <div style={{ padding: '10px 12px', backgroundColor: colors.cardHover, fontSize: '12px', ...text.secondary }}>
                             {new Date(n.createdAt).toLocaleString()}
                           </div>
-                          <div style={{ padding: '12px', backgroundColor: colors.card, color: colors.text.primary }} dangerouslySetInnerHTML={{ __html: n.html }} />
+                          <div style={{ padding: '12px', backgroundColor: colors.card, color: colors.text.primary }} dangerouslySetInnerHTML={{ __html: n.html }} className="rendered-note" />
                         </div>
                       ))}
                     </div>
