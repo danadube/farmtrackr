@@ -129,25 +129,7 @@ export default function ImportExportPage() {
     setIsDragging(false)
   }
 
-  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-
-    const files = e.dataTransfer.files
-    if (files && files.length > 0) {
-      const file = files[0]
-      // Create a fake event object to reuse the existing handler
-      const fakeEvent = {
-        target: { files: [file] }
-      } as React.ChangeEvent<HTMLInputElement>
-      
-      await handleFileSelect(fakeEvent)
-    }
-  }
-
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+  const processFile = async (file: File) => {
     if (!file) return
 
     // Validate file before upload
@@ -238,6 +220,22 @@ export default function ImportExportPage() {
         fileInputRef.current.value = ''
       }
     }
+  }
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      await processFile(files[0])
+    }
+  }
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    await processFile(file)
   }
 
   const handleExport = async (format: 'csv' | 'excel' | 'json' | 'pdf') => {
