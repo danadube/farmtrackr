@@ -125,13 +125,15 @@ DATABASE_URL="your-database-url"
 
 For **production** (danadube.com), update the values:
 ```bash
-GOOGLE_CLIENT_ID="1095090089380-57rc2o3qbtaoemgspjc9v6274jsgp2v2.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="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"
+GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="your-client-secret"
 GOOGLE_OAUTH_REDIRECT_URI="https://danadube.com/api/google/oauth/callback"
 NEXT_PUBLIC_APP_URL="https://danadube.com"
 ```
 
 **Note:** Make sure you've added `https://danadube.com/api/google/oauth/callback` as an authorized redirect URI in your Google Cloud Console OAuth client settings.
+
+**⚠️ Security:** Never commit actual credentials to git. Store them only in environment variables.
 
 ## Step 6: Add Environment Variables to Vercel
 
@@ -140,8 +142,8 @@ If deploying to Vercel (danadube.com):
 1. Go to your Vercel project settings
 2. Navigate to **"Environment Variables"**
 3. Add all the variables for production:
-   - `GOOGLE_CLIENT_ID` = `1095090089380-57rc2o3qbtaoemgspjc9v6274jsgp2v2.apps.googleusercontent.com`
-   - `GOOGLE_CLIENT_SECRET` = `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`
+   - `GOOGLE_CLIENT_ID` = (your web client ID from Google Cloud Console)
+   - `GOOGLE_CLIENT_SECRET` = (your web client secret from Google Cloud Console)
    - `GOOGLE_OAUTH_REDIRECT_URI` = `https://danadube.com/api/google/oauth/callback`
    - `NEXT_PUBLIC_APP_URL` = `https://danadube.com`
 4. Make sure to select the correct environment (Production, Preview, Development)
@@ -168,9 +170,14 @@ If deploying to Vercel (danadube.com):
 - Verify `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are correct
 - Make sure there are no extra spaces or quotes
 
-### Error: "Access blocked: Authorization Error"
-- Add your email as a test user in OAuth consent screen → Test users section (if in testing mode)
-- Verify the OAuth consent screen is configured correctly (check both Branding and Data Access tabs)
+### Error: "Access blocked: Authorization Error" + "Error 400: invalid_request"
+**Most common causes:**
+1. **Redirect URI mismatch** - Check that `https://danadube.com/api/google/oauth/callback` exactly matches Google Cloud Console (no trailing slash, correct protocol)
+2. **Missing test user** - Add `dana@danadube.com` as a test user in OAuth consent screen → Audience tab → Test users
+3. **Wrong client credentials** - Make sure you're using the Web application client (not iOS client)
+4. **Environment variables not set** - Verify all OAuth env vars are set in Vercel for Production environment
+
+See `docs/google/OAUTH_TROUBLESHOOTING.md` for detailed troubleshooting steps.
 
 ### Tokens not persisting
 - Check that cookies are enabled in your browser
