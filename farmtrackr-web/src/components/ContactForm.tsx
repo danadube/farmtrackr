@@ -92,7 +92,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault()
     
     if (!validateForm()) {
@@ -956,7 +956,6 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     (e.currentTarget as HTMLDivElement).style.borderColor = colors.border
                     ;(e.currentTarget as HTMLDivElement).style.boxShadow = 'none'
                   }}
-                  dangerouslySetInnerHTML={{ __html: '' }}
                 />
                 <div style={{ fontSize: '12px', ...text.tertiary, marginTop: '6px' }}>
                   You can format text (bold, italic, lists) with your keyboard shortcuts.
