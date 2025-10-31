@@ -900,86 +900,113 @@ This roadmap should be reviewed and updated:
 
 ## 🎯 **IMMEDIATE NEXT STEPS** (Recommended Priority Order)
 
-### **1. 🔴 CRITICAL: Implement Label Printing (v0.4.0)**
-**Why First:** This is marked as CRITICAL priority because it had implementation issues in the Swift app and is a core feature.
+### **1. 📊 Commission Tracking Module (v0.6.0)**
+**Status:** Integration plan ready, awaiting approval  
+**See:** `docs/planning/COMMISSION_INTEGRATION.md`
 
-**Tasks:**
-1. Create `/print-labels` route and page component
-2. Implement Avery label template support (start with 5160, most common)
-3. Build label layout engine with precise positioning
-4. Add farm/contact selection UI
-5. Implement print preview functionality
-6. Add font selection and address type (mailing vs site) options
-7. Test with actual Avery label sheets
+**Phase 1: Foundation (Week 1-2)**
+- Transaction database schema (40+ fields)
+- Transaction CRUD API
+- Basic transaction list UI
+- Add "Commissions" to sidebar
 
-**Estimated Time:** 4-5 weeks
-**Dependencies:** None (can start immediately)
+**Phase 2: Analytics (Week 3)**
+- Recharts integration
+- Commission calculations (GCI, NCI)
+- Brokerage-specific calculations (KW/BDH)
+- Charts and metrics dashboard
 
-**Technical Notes:**
-- Use CSS @media print for print-specific styling
-- Consider jsPDF or react-pdf for PDF generation if browser print is insufficient
-- Test extensively across browsers (Chrome, Firefox, Safari)
-- Reference Swift app implementation challenges to avoid same pitfalls
+**Phase 3: Advanced (Week 4-6)**
+- Google Sheets sync
+- Filters and search
+- Export functionality
+- Referral tracking
 
----
-
-### **2. 🟡 HIGH: Verify & Polish CSV/Excel Import**
-**Why Second:** APIs are implemented but UI needs user testing and potential refinement.
-
-**Tasks:**
-1. Test CSV import workflow end-to-end with real data
-2. Test Excel import workflow end-to-end
-3. Verify field mapping works correctly
-4. Check error messages are clear and actionable
-5. Add import preview with validation errors (if not already good)
-6. Test with edge cases (empty rows, missing headers, etc.)
-7. Document any issues found and fix them
-
-**Estimated Time:** 1 week (testing + fixes)
-**Dependencies:** None (can be done in parallel with label printing)
+**Estimated Time:** 4-6 weeks total
 
 ---
 
-### **3. 🟡 MEDIUM: Complete Google Sheets Integration**
-**Why Third:** Core infrastructure exists, just needs OAuth authentication.
+### **2. 🔄 Enhance Google Integration**
+**Status:** OAuth and Contacts complete
 
-**Tasks:**
-1. Set up Google OAuth 2.0 credentials
-2. Implement OAuth flow in UI
-3. Store tokens securely (backend session storage)
-4. Implement token refresh logic
-5. Complete sync functionality (import from Sheets)
-6. Add sync status indicators
-7. Test with actual Google Sheets
+**Google Contacts Enhancements:**
+- Export to Google Contacts
+- Edit sync back to Google
+- Bidirectional sync
+
+**Google Calendar Integration:**
+- Calendar API setup
+- Event management
+- Schedule meetings
+- Activity integration
+
+**Google Drive Integration:**
+- Drive API setup
+- File management
+- Document storage integration
+- Backup & sync
 
 **Estimated Time:** 2-3 weeks
-**Dependencies:** Google Cloud Console setup, OAuth credentials
 
 ---
 
-### **4. 🟢 ENHANCEMENT: PDF Export Enhancement**
-**Why Fourth:** Basic placeholder exists, can be improved with proper library.
+### **3. 🔧 Polish & Testing**
+**Status:** Core features complete, time for refinement
 
 **Tasks:**
-1. Choose PDF library (pdfkit or jsPDF)
-2. Implement proper PDF generation with formatting
-3. Add contact report templates
-4. Test PDF output quality
-5. Add to export options
+- End-to-end testing of all features
+- UX refinements based on usage
+- Performance optimization
+- Mobile responsiveness improvements
+- Accessibility enhancements
 
-**Estimated Time:** 1 week
-**Dependencies:** None
+**Estimated Time:** 1-2 weeks
 
 ---
 
-### **5. 🟢 ENHANCEMENT: Future Features (v0.6.0+)**
+### **4. 📦 Batch Operations**
+**Status:** Not started
+
+**Tasks:**
+- Multi-select contacts
+- Bulk edit (farm, notes, etc.)
+- Bulk delete with confirmation
+- Bulk export
+- Bulk import updates
+
+**Estimated Time:** 1 week
+
+---
+
+### **5. 🌟 Advanced Features**
 **Lower Priority but Valuable:**
-- Batch Operations (multi-select, bulk edit/delete)
-- Import Templates (save/reuse field mappings)
-- Document Management (real storage, not just mock data)
 - Advanced Search/Filter (filter builder, saved searches)
+- Import Templates (save/reuse field mappings)
+- Goal tracking and projections (for commissions)
+- Year-over-year comparisons
+- Commission forecasting
 
 **Estimated Time:** Varies (4-5 weeks total for all)
+
+---
+
+## 📝 **COMPLETION SUMMARY**
+
+### ✅ Fully Complete Versions
+- **v0.2.0** - Data Persistence & Basic CRUD
+- **v0.3.0** - Export & Data Quality Tools
+- **v0.4.0** - Label Printing & PDF Export
+- **v0.4.1** - Farm Dropdown & Settings Enhancement
+- **v0.4.2** - Document Management
+- **v0.5.0** - Google OAuth & Contacts Integration
+
+### 🚧 In Planning
+- **v0.6.0** - Commission Tracking Module (integration plan created)
+
+### 📋 Future Versions
+- **v1.0.0** - Production Release (polish, performance, testing)
+
+**Current Focus:** v0.6.0 Commission Tracking Module integration
 
 ---
 
@@ -988,14 +1015,19 @@ This roadmap should be reviewed and updated:
 **Current Status:**
 - ✅ **v0.2.0 (Data Persistence)** - COMPLETE
 - ✅ **v0.3.0 (Export & Data Quality)** - COMPLETE
-- 🎯 **Next: v0.4.0 (Label Printing)** - CRITICAL PRIORITY
+- ✅ **v0.4.0 (Label Printing & PDF)** - COMPLETE
+- ✅ **v0.4.1 (Farm Dropdown & Settings)** - COMPLETE
+- ✅ **v0.4.2 (Document Management)** - COMPLETE
+- ✅ **v0.5.0 (Google Integration)** - COMPLETE
+- 🎯 **Next: v0.6.0 (Commission Tracking)** - IN PLANNING
 
 **Completion Rate:**
-- Core Features: ~75% complete
-- Critical Features: 66% complete (2 of 3 critical features done - need Label Printing)
-- Overall: Strong foundation, ready for next major feature
+- Core Features: ~90% complete
+- Google Integration: Complete (OAuth, Contacts, Sheets)
+- Document Management: Complete with file upload
+- Next Major Feature: Commission Tracking Module
 
-**Recommendation:** Focus on Label Printing (v0.4.0) as it's the highest priority remaining feature and addresses a known challenge from the Swift app implementation.
+**Recommendation:** Proceed with v0.6.0 Commission Tracking Module integration. Integration plan is comprehensive and ready for implementation.
 
 ## 🎨 UI/UX Enhancements & Refinements (Ongoing)
 
