@@ -4,10 +4,10 @@
 
 This roadmap outlines the development plan to bring the web application to feature parity with the Swift app, with special attention to the label printing functionality that had implementation challenges.
 
-**Last Updated:** October 30, 2025  
-**Current Version:** v0.4.1 (Farm Dropdown & Settings Enhancement) - ✅ COMPLETE  
-**Previous Version:** v0.4.0 (Label Printing & PDF Export) - ✅ COMPLETE  
-**Next Target:** v0.5.0 (Documents & Google Sheets Integration)
+**Last Updated:** November 1, 2025  
+**Current Version:** v0.5.0 (Google Contacts Integration) - ✅ COMPLETE  
+**Previous Version:** v0.4.2 (Document Management) - ✅ COMPLETE  
+**Next Target:** v0.6.0 (Commission Tracking Module)
 
 ---
 
@@ -471,8 +471,73 @@ Based on Swift app challenges:
 
 ---
 
-### **v0.6.0 - Advanced Features** (Target: Q3 2025)
-**Focus:** Advanced CRM capabilities
+### **v0.5.0 - Google Integration** ✅ COMPLETE (November 1, 2025)
+**Focus:** Complete Google ecosystem integration
+
+#### Google OAuth & Authentication
+- [x] **OAuth 2.0 Setup** ✅ COMPLETE
+  - Google Cloud Console configuration
+  - OAuth flow implementation
+  - Secure token storage (HTTP-only cookies)
+  - Token refresh handling
+
+#### Google Contacts Integration
+- [x] **People API Setup** ✅ COMPLETE
+  - People API enabled
+  - OAuth with contacts.readonly scope
+  - Token management
+- [x] **Import from Google Contacts** ✅ COMPLETE
+  - Connect Google account
+  - One-time import of all contacts
+  - Field mapping (Google → FarmTrackr)
+  - Contact groups/labels imported as tags
+  - Duplicate detection during import
+- [x] **Google Contacts UI** ✅ COMPLETE
+  - Search, filters, and sort
+  - Contact list with tags
+  - Individual detail pages
+  - Consistent design with Farm Contacts
+
+#### Google Sheets Integration
+- [x] **Authenticated Import** ✅ COMPLETE
+  - Authenticated Google Sheets API
+  - Fallback to public CSV
+- [x] **Export to CSV** ✅ COMPLETE
+  - Mock CSV export (ready for enhancement)
+
+**Status:** ✅ **v0.5.0 is COMPLETE** - Google OAuth and Contacts fully integrated
+
+---
+
+### **v0.6.0 - Commission Tracking Module** (In Planning)
+**Focus:** Commission transaction management and analytics
+
+See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
+
+#### Phase 1: Foundation
+- [ ] Transaction database schema (40+ fields)
+- [ ] Transaction CRUD API
+- [ ] Basic transaction list UI
+- [ ] Add "Commissions" to sidebar
+
+#### Phase 2: Analytics
+- [ ] Recharts integration
+- [ ] Commission calculations (GCI, NCI)
+- [ ] Brokerage-specific calculations (KW/BDH)
+- [ ] Charts and metrics dashboard
+
+#### Phase 3: Advanced Features
+- [ ] Google Sheets sync
+- [ ] Filters and search
+- [ ] Export functionality
+- [ ] Referral tracking
+
+**Estimated Development Time:** 4-6 weeks
+
+---
+
+### **Future: Advanced Features**
+**Focus:** Additional CRM capabilities
 
 #### Batch Operations
 - [ ] **Bulk Actions**
@@ -510,58 +575,35 @@ Based on Swift app challenges:
 
 ---
 
-### **v0.4.2 - Document Management** (In Progress)
+### **v0.4.2 - Document Management** ✅ COMPLETE (November 1, 2025)
 **Focus:** Complete document CRUD and file management
 
-#### Document Management Core (Started)
+#### Document Management Core
 - [x] **Document CRUD API** ✅ COMPLETE
   - [x] GET/POST /api/documents ✅
   - [x] GET/PUT/DELETE /api/documents/[id] ✅
   - [x] Database schema (Prisma) ✅
   - [x] Search and filter support ✅
 
-- [ ] **Document Management UI** 🚧 IN PROGRESS
+- [x] **Document Management UI** ✅ COMPLETE
   - [x] Document list page with search/filter ✅
   - [x] API integration ✅
-  - [ ] Create document modal
-  - [ ] Edit document functionality
-  - [ ] Delete with confirmation
-  - [ ] Document type categorization
+  - [x] Create document modal ✅
+  - [x] Edit document functionality ✅
+  - [x] Delete with confirmation ✅
+  - [x] Document type categorization ✅
 
-#### Document Storage (Planned)
-- [ ] **File Upload & Storage**
-  - [ ] File upload endpoint (Vercel Blob or S3)
-  - [ ] Document association with contacts
-  - [ ] Document organization by type
-  - [ ] Document preview (PDF, images)
-  - [ ] Document download
-  - [ ] File size validation
-  - [ ] Supported file types (PDF, images, docs)
+#### Document Storage
+- [x] **File Upload & Storage** ✅ COMPLETE
+  - [x] File upload API (Vercel Blob) ✅
+  - [x] Document association with contacts (schema ready) ✅
+  - [x] Document organization by type ✅
+  - [x] Document preview modal ✅
+  - [x] Document download ✅
+  - [x] File size validation in UI ✅
+  - [x] Supported file types (.txt, .pdf, .doc, .docx, .html) ✅
 
-#### Document Management
-- [ ] **Document Storage**
-  - Document upload (PDF, images, etc.)
-  - Document association with contacts
-  - Document organization
-  - Document preview
-  - Document download
-
-#### Advanced Search
-- [ ] **Enhanced Search**
-  - Advanced filter builder
-  - Saved search queries
-  - Search across all fields
-  - Fuzzy search
-  - Search history
-
-#### Reporting & Analytics
-- [ ] **Reports**
-  - Contact reports by farm
-  - Data quality reports
-  - Export reports
-  - Custom report builder
-
-**Estimated Development Time:** 4-5 weeks
+**Status:** ✅ **v0.4.2 is COMPLETE** - Full document management with file upload
 
 ---
 
@@ -849,9 +891,9 @@ This roadmap should be reviewed and updated:
 | v0.3.0 | ✅ Complete | Export, Data Quality |
 | v0.4.0 | ✅ Complete | Label Printing, PDF Export |
 | v0.4.1 | ✅ Complete | Farm Dropdown, Settings Enhancement |
-| v0.4.2 | 🚧 In Progress | Document Management UI |
-| v0.5.0 | 📋 Planned | Google Sheets Integration |
-| v0.6.0 | 📋 Planned | Advanced Features |
+| v0.4.2 | ✅ Complete | Document Management UI |
+| v0.5.0 | ✅ Complete | Google OAuth, Contacts Integration |
+| v0.6.0 | 📋 Planned | Commission Tracking Module |
 | v1.0.0 | 📋 Planned | Production Release |
 
 ---
