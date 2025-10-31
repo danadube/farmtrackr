@@ -80,11 +80,73 @@ Transaction Coordinator is an integrated document workflow system for managing r
 - **Document History**: Complete audit trail of all transaction documents
 
 ### Implementation Notes
-- Integrate with CAR form API (if available) or manual update process
+
+#### CAR Integration Options
+CAR (California Association of Realtors) does not offer a public API for forms, but several integration approaches are available:
+
+1. **zipForm Integration** (RECOMMENDED APPROACH):
+   zipForm is CAR's official electronic forms software with multiple integration options:
+   
+   **a. ZipForm Data Integration Developer's Kit**:
+   - Designed for brokers to integrate with back-office systems
+   - Components: TransLink (programming), LMAP (data location mapping), XMAP (field config), DMAP (actual data)
+   - Requires skilled programmers for implementation
+   - Contact: ZipForm sales team at 866.736.7328 or visit zipform.com/brokers/developerskit.asp
+   
+   **b. API Nation Integration Platform**:
+   - Third-party integration service with zipForm support
+   - Webhooks available for real-time data synchronization
+   - Pre-built integrations with Google Contacts, Calendar, MailChimp, Outlook, etc.
+   - Can trigger workflows based on zipForm events
+   - Visit: my.apination.com/zipform/
+   
+   **c. Direct zipForm Integrations**:
+   - **DocuSign**: Native integration already built-in (zipForm Plus)
+   - **RPR (Realtors Property Resource)**: Create transactions from property records
+   - **Single Sign-On (SSO)**: Okta and AuthDigital support (SAML 2.0, OAuth, OpenID Connect)
+   
+   **Implementation Steps**:
+   1. Assess integration needs (Developer's Kit vs. API Nation vs. direct integrations)
+   2. Contact zipForm sales/support for access and pricing
+   3. Evaluate technical resources needed for Developer's Kit
+   4. Consider API Nation for faster implementation without heavy programming
+
+2. **Manual Form Management**:
+   - Download forms from CAR member portal (wap.car.org)
+   - Maintain form library with version tracking
+   - Set up periodic checks for updated form versions
+   - Manual update process when new versions are released
+
+3. **Third-Party Solutions**:
+   - Platforms like airSlate offer automation for CAR forms
+   - Can pre-fill forms from contact data
+   - May require subscription/membership
+
+4. **Direct CAR Contact**:
+   - Contact CAR support/technical team for potential API access
+   - Inquire about member-only integration options
+   - Check CAR Software Engineering resources (softwareengineering.car.org)
+
+#### DocuSign Integration
+**Option A: Via zipForm (if using zipForm)**:
+- DocuSign is natively integrated with zipForm Plus
+- Can send documents for e-signature directly from zipForm
+- Simplified workflow since forms and signatures are in one platform
+
+**Option B: Direct DocuSign API Integration** (if not using zipForm):
 - DocuSign API integration for sending and tracking documents
+- Real-time status webhooks for signature completion
+- Template management and reusable document workflows
+- Would need to handle form population separately from CAR forms
+
+**Recommendation**: If using zipForm, leverage their built-in DocuSign integration. If using manual form management, implement direct DocuSign API.
+
+#### Technical Requirements
 - Transaction data model to link contacts, properties, and documents
-- File storage for completed documents
+- File storage for completed documents (local or cloud)
 - Document templates with merge fields from contact/property data
+- Version control system for CAR forms
+- Audit trail for all transaction documents
 
 ## Current Status
 - ✅ Farm field converted to dropdown in ContactForm
