@@ -22,7 +22,15 @@ export default function ImportExportPage() {
     type: 'success' | 'error' | null
     message: string
     importedCount?: number
+    imported?: number
+    updated?: number
+    skipped?: number
+    errors?: number
+    total?: number
+    fileName?: string
   } | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [fileValidationError, setFileValidationError] = useState<string | null>(null)
   const [exportStatus, setExportStatus] = useState<{
     type: 'success' | 'error' | null
     message: string
@@ -92,10 +100,39 @@ export default function ImportExportPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const validateFile = (file: File): string | null => {
+    // Check file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      return 'File size exceeds 10MB limit. Please use a smaller file.'
+    }
+
+    // Check file extension
+    const extension = file.name.split('.').pop()?.toLowerCase()
+    if (!extension || !['csv', 'xlsx', 'xls'].includes(extension)) {
+      return 'Unsupported file format. Please use CSV (.csv) or Excel (.xlsx, .xls) files.'
+    }
+
+    return null
+  }
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
+    // Validate file before upload
+    const validationError = validateFile(file)
+    if (validationError) {
+      setFileValidationError(validationError)
+      setSelectedFile(null)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      return
+    }
+
+    setFileValidationError(null)
+    setSelectedFile(file)
     setIsImporting(true)
     setImportStatus(null)
 
@@ -113,24 +150,58 @@ export default function ImportExportPage() {
       if (response.ok) {
         setImportStatus({
           type: 'success',
-          message: result.message || `Successfully imported ${result.imported} contacts from ${file.name}`,
-          importedCount: result.imported
+          message: result.message || `Successfully processed ${result.total || 0} contacts from ${file.name}`,
+          importedCount: result.imported,
+          imported: result.imported || 0,
+          updated: result.updated || 0,
+          skipped: result.skipped || 0,
+          errors: result.errors || 0,
+          total: result.total || 0,
+          fileName: file.name
         })
+        setSelectedFile(null)
         // Refresh the page after successful import to show new contacts
         setTimeout(() => {
           window.location.reload()
-        }, 2000)
+        }, 3000)
       } else {
+        // Extract detailed error information
+        let errorMessage = result.error || 'Failed to import contacts'
+        if (result.message) {
+          errorMessage = result.message
+        } else if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+          errorMessage = result.errors.join(', ')
+        } else if (typeof result.error === 'object' && result.error.message) {
+          errorMessage = result.error.message
+        }
+        
         setImportStatus({
           type: 'error',
-          message: result.error || 'Failed to import contacts'
+          message: errorMessage,
+          fileName: file.name,
+          errors: result.errors || 0,
+          total: result.total || 0
         })
+        setSelectedFile(null)
       }
     } catch (error) {
+      let errorMessage = 'Failed to import contacts'
+      if (error instanceof Error) {
+        if (error.message.includes('fetch')) {
+          errorMessage = 'Network error: Could not connect to server. Please check your internet connection and try again.'
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Request timed out. The file may be too large. Please try a smaller file or contact support.'
+        } else {
+          errorMessage = `Import failed: ${error.message}`
+        }
+      }
+      
       setImportStatus({
         type: 'error',
-        message: `Failed to import contacts: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: errorMessage,
+        fileName: file.name
       })
+      setSelectedFile(null)
     } finally {
       setIsImporting(false)
       if (fileInputRef.current) {
@@ -205,6 +276,12 @@ export default function ImportExportPage() {
 
   return (
     <Sidebar>
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
       <div 
         style={{ 
           marginLeft: '256px', 
@@ -307,6 +384,140 @@ export default function ImportExportPage() {
                 />
               </div>
 
+              {/* Selected File Info */}
+              {selectedFile && !isImporting && (
+                <div style={{
+                  padding: '12px 16px',
+                  backgroundColor: colors.cardHover,
+                  borderRadius: '10px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  <FileText style={{ width: '18px', height: '18px', color: colors.success }} />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '13px', fontWeight: '500', ...text.primary, margin: '0 0 2px 0' }}>
+                      {selectedFile.name}
+                    </p>
+                    <p style={{ fontSize: '11px', ...text.tertiary, margin: '0' }}>
+                      {(selectedFile.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* File Validation Error */}
+              {fileValidationError && (
+                <div style={{
+                  padding: '12px 16px',
+                  backgroundColor: isDark ? '#7f1d1d' : '#fef2f2',
+                  border: `1px solid ${colors.error}`,
+                  borderRadius: '10px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  <XCircle style={{ width: '18px', height: '18px', color: colors.error }} />
+                  <p style={{ fontSize: '13px', color: isDark ? '#fca5a5' : '#dc2626', margin: '0' }}>
+                    {fileValidationError}
+                  </p>
+                </div>
+              )}
+
+              {/* Template Downloads */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.secondary, marginBottom: '12px' }}>
+                  Download Template
+                </h3>
+                <p style={{ fontSize: '12px', ...text.tertiary, marginBottom: '12px' }}>
+                  Use our template files to ensure proper formatting:
+                </p>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/contacts/import-template?format=csv')
+                        const blob = await response.blob()
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url
+                        a.download = 'contacts-template.csv'
+                        document.body.appendChild(a)
+                        a.click()
+                        a.remove()
+                        URL.revokeObjectURL(url)
+                      } catch (error) {
+                        console.error('Failed to download CSV template:', error)
+                      }
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      ...text.secondary,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.borderHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }}
+                  >
+                    <Download style={{ width: '14px', height: '14px' }} />
+                    CSV Template
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/contacts/import-template?format=excel')
+                        const blob = await response.blob()
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url
+                        a.download = 'contacts-template.xlsx'
+                        document.body.appendChild(a)
+                        a.click()
+                        a.remove()
+                        URL.revokeObjectURL(url)
+                      } catch (error) {
+                        console.error('Failed to download Excel template:', error)
+                      }
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      ...text.secondary,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.borderHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }}
+                  >
+                    <Download style={{ width: '14px', height: '14px' }} />
+                    Excel Template
+                  </button>
+                </div>
+              </div>
+
               {/* Supported Formats */}
               <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.secondary, marginBottom: '12px' }}>
@@ -328,27 +539,86 @@ export default function ImportExportPage() {
               {importStatus && (
                 <div 
                   style={{
-                    padding: '12px 16px',
+                    padding: '16px',
                     borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
                     backgroundColor: importStatus.type === 'success' 
                       ? (isDark ? '#064e3b' : '#f0fdf4') 
                       : (isDark ? '#7f1d1d' : '#fef2f2'),
                     border: `1px solid ${importStatus.type === 'success' ? colors.success : colors.error}`
                   }}
                 >
-                  {importStatus.type === 'success' ? (
-                    <CheckCircle style={{ width: '20px', height: '20px', color: colors.success }} />
-                  ) : (
-                    <XCircle style={{ width: '20px', height: '20px', color: colors.error }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: importStatus.type === 'success' && (importStatus.imported !== undefined || importStatus.updated !== undefined) ? '12px' : '0' }}>
+                    {importStatus.type === 'success' ? (
+                      <CheckCircle style={{ width: '20px', height: '20px', color: colors.success }} />
+                    ) : (
+                      <XCircle style={{ width: '20px', height: '20px', color: colors.error }} />
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: importStatus.type === 'success' 
+                        ? (isDark ? '#6ee7b7' : '#15803d') 
+                        : (isDark ? '#fca5a5' : '#dc2626'), margin: '0 0 4px 0' }}>
+                        {importStatus.message}
+                      </p>
+                      {importStatus.fileName && (
+                        <p style={{ fontSize: '12px', color: importStatus.type === 'success' 
+                          ? (isDark ? '#34d399' : '#16a34a') 
+                          : (isDark ? '#f87171' : '#ef4444'), margin: '0' }}>
+                          File: {importStatus.fileName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Detailed Import Results */}
+                  {importStatus.type === 'success' && (importStatus.imported !== undefined || importStatus.updated !== undefined) && (
+                    <div style={{
+                      marginTop: '12px',
+                      paddingTop: '12px',
+                      borderTop: `1px solid ${isDark ? '#047857' : '#bbf7d0'}`,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '13px', color: isDark ? '#6ee7b7' : '#15803d' }}>Total Processed:</span>
+                        <span style={{ fontSize: '13px', fontWeight: '600', color: isDark ? '#6ee7b7' : '#15803d' }}>
+                          {importStatus.total || 0}
+                        </span>
+                      </div>
+                      {importStatus.imported !== undefined && importStatus.imported > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '13px', color: isDark ? '#6ee7b7' : '#15803d' }}>✓ Imported:</span>
+                          <span style={{ fontSize: '13px', fontWeight: '600', color: isDark ? '#6ee7b7' : '#15803d' }}>
+                            {importStatus.imported}
+                          </span>
+                        </div>
+                      )}
+                      {importStatus.updated !== undefined && importStatus.updated > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '13px', color: isDark ? '#34d399' : '#16a34a' }}>↻ Updated:</span>
+                          <span style={{ fontSize: '13px', fontWeight: '600', color: isDark ? '#34d399' : '#16a34a' }}>
+                            {importStatus.updated}
+                          </span>
+                        </div>
+                      )}
+                      {importStatus.skipped !== undefined && importStatus.skipped > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '13px', color: isDark ? '#a3a3a3' : '#737373' }}>⊘ Skipped:</span>
+                          <span style={{ fontSize: '13px', fontWeight: '600', color: isDark ? '#a3a3a3' : '#737373' }}>
+                            {importStatus.skipped}
+                          </span>
+                        </div>
+                      )}
+                      {importStatus.errors !== undefined && importStatus.errors > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '13px', color: colors.error }}>✗ Errors:</span>
+                          <span style={{ fontSize: '13px', fontWeight: '600', color: colors.error }}>
+                            {importStatus.errors}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   )}
-                  <p style={{ fontSize: '14px', color: importStatus.type === 'success' 
-                    ? (isDark ? '#6ee7b7' : '#15803d') 
-                    : (isDark ? '#fca5a5' : '#dc2626'), margin: '0' }}>
-                    {importStatus.message}
-                  </p>
                 </div>
               )}
 
@@ -757,17 +1027,44 @@ export default function ImportExportPage() {
           <div style={{ marginTop: '24px', padding: '24px', ...card }}>
             <div style={{ display: 'flex', alignItems: 'start', gap: '12px' }}>
               <AlertCircle style={{ width: '20px', height: '20px', color: colors.warning, flexShrink: '0', marginTop: '2px' }} />
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, marginBottom: '8px' }}>
-                  Import Tips
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, marginBottom: '12px' }}>
+                  Import Tips & Field Mapping
                 </h3>
-                <ul style={{ fontSize: '14px', ...text.secondary, lineHeight: '1.6', margin: '0', paddingLeft: '20px' }}>
-                  <li>Ensure your file includes headers in the first row</li>
-                  <li>Required fields: First Name, Last Name</li>
-                  <li>Optional fields: Email, Phone, Farm, Address, etc.</li>
-                  <li>Dates should be in MM/DD/YYYY format</li>
-                  <li>Maximum file size: 10MB</li>
-                </ul>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: '8px' }}>
+                      Required Fields
+                    </h4>
+                    <ul style={{ fontSize: '13px', ...text.secondary, lineHeight: '1.6', margin: '0', paddingLeft: '20px' }}>
+                      <li>First Name / Last Name <em style={{ ...text.tertiary }}>(or Organization Name)</em></li>
+                      <li>At least one name field must be present</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: '8px' }}>
+                      Supported Headers
+                    </h4>
+                    <ul style={{ fontSize: '13px', ...text.secondary, lineHeight: '1.6', margin: '0', paddingLeft: '20px' }}>
+                      <li><strong>Name:</strong> Name, Full Name, Organization, Trust</li>
+                      <li><strong>Address:</strong> Mailing Address, Address, City, State, Zip Code</li>
+                      <li><strong>Contact:</strong> Email, Email 1, Phone, Phone 1-6</li>
+                      <li><strong>Site:</strong> Site Address, Site City, Site State, Site Zip Code</li>
+                    </ul>
+                  </div>
+                </div>
+                <div style={{ 
+                  padding: '12px', 
+                  backgroundColor: colors.cardHover, 
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  ...text.secondary,
+                  lineHeight: '1.6'
+                }}>
+                  <strong style={{ ...text.primary }}>Note:</strong> Field names are case-insensitive and support common variations. 
+                  Existing contacts with matching names will be updated, not duplicated. 
+                  Maximum file size is 10MB. Dates should be in MM/DD/YYYY format if included.
+                </div>
               </div>
             </div>
           </div>
