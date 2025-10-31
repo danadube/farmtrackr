@@ -179,17 +179,17 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
           margin: 4px 0; 
         }
         /* Also apply to rendered notes */
-        div[dangerouslysetinnerhtml] ul, div[dangerouslysetinnerhtml] ol { 
+        .rendered-note ul, .rendered-note ol { 
           padding-left: 24px; 
           margin: 8px 0; 
         }
-        div[dangerouslysetinnerhtml] ul { 
+        .rendered-note ul { 
           list-style-type: disc; 
         }
-        div[dangerouslysetinnerhtml] ol { 
+        .rendered-note ol { 
           list-style-type: decimal; 
         }
-        div[dangerouslysetinnerhtml] li { 
+        .rendered-note li { 
           margin: 4px 0; 
         }
       `}</style>
@@ -1113,9 +1113,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                             onInput={(e) => setEditingHtml((e.currentTarget as HTMLDivElement).innerHTML)}
                             style={{ padding: '12px', backgroundColor: colors.card, minHeight: '60px', outline: 'none' }}
                             dangerouslySetInnerHTML={{ __html: editingHtml }}
+                            className="rendered-note"
                           />
                         ) : (
-                          <div style={{ padding: '12px', backgroundColor: colors.card }} dangerouslySetInnerHTML={{ __html: n.html }} />
+                          <div style={{ padding: '12px', backgroundColor: colors.card }} dangerouslySetInnerHTML={{ __html: n.html }} className="rendered-note" />
                         )}
                       </div>
                     ))}
