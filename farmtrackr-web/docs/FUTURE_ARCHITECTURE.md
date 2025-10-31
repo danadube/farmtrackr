@@ -44,10 +44,56 @@ The application will support two distinct contact lists with different use cases
 - Tag management interface (create, edit, merge tags)
 - Tag autocomplete when adding/editing general contacts
 
+## Document Pipeline & Transaction Management
+
+### Overview
+Integrated document workflow system for real estate transactions with CAR form management and DocuSign integration.
+
+### CAR (California Association of Realtors) Integration
+- **Form Library**: Maintain up-to-date CAR forms repository
+  - RLA (Residential Listing Agreement)
+  - RPA (Residential Purchase Agreement)
+  - Other standard CAR forms as needed
+- **Auto-updates**: System checks for new form versions periodically
+- **Form Access**: Quick access to current forms for new client transactions
+- **Version Control**: Track which form versions were used for each transaction
+
+### DocuSign Integration
+- **Document Sending**: Send transaction documents directly to clients via DocuSign
+- **Signature Tracking**: Monitor document status and completion
+- **Template Management**: Store and reuse common document templates
+- **Status Notifications**: Real-time updates when documents are signed
+
+### Transaction Workflow
+- **Create Transaction**: Set up new transaction directly from the app
+  - Link transaction to contacts (buyer, seller, agents, etc.)
+  - Select property/listing if applicable
+  - Choose appropriate CAR forms for the transaction type
+- **Document Pipeline**:
+  1. Select or create CAR forms
+  2. Auto-populate forms with contact/property data
+  3. Review and edit documents
+  4. Send via DocuSign
+  5. Track signatures and completion
+  6. Store completed documents in transaction record
+- **Transaction Dashboard**: View all active transactions with status indicators
+- **Document History**: Complete audit trail of all transaction documents
+
+### Implementation Notes
+- Integrate with CAR form API (if available) or manual update process
+- DocuSign API integration for sending and tracking documents
+- Transaction data model to link contacts, properties, and documents
+- File storage for completed documents
+- Document templates with merge fields from contact/property data
+
 ## Current Status
 - ✅ Farm field converted to dropdown in ContactForm
 - ✅ Dropdown populated from existing farm contacts
 - ⏳ Dual contact list architecture (future)
 - ⏳ Google Contacts sync (future)
 - ⏳ Tag system for general contacts (future)
+- ⏳ Document pipeline and transaction management (future)
+- ⏳ CAR form integration and auto-updates (future)
+- ⏳ DocuSign integration (future)
+- ⏳ Transaction workflow from app (future)
 
