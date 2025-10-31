@@ -211,7 +211,7 @@ export default function ContactsPage() {
                   </div>
                   <div>
                     <h1 style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0 0 4px 0' }}>
-                      Contacts
+                      Farm Contacts
                     </h1>
                     <p style={{ ...text.secondary, fontSize: '16px', margin: '0' }}>
                       Manage your farm contacts
