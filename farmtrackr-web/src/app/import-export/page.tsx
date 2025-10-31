@@ -31,6 +31,7 @@ export default function ImportExportPage() {
   } | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileValidationError, setFileValidationError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const [exportStatus, setExportStatus] = useState<{
     type: 'success' | 'error' | null
     message: string
@@ -114,6 +115,35 @@ export default function ImportExportPage() {
     }
 
     return null
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      // Create a fake event object to reuse the existing handler
+      const fakeEvent = {
+        target: { files: [file] }
+      } as React.ChangeEvent<HTMLInputElement>
+      
+      await handleFileSelect(fakeEvent)
+    }
   }
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -348,23 +378,31 @@ export default function ImportExportPage() {
 
                 <div 
                   style={{
-                    border: `2px dashed ${colors.border}`,
+                    border: `2px dashed ${isDragging ? colors.success : colors.border}`,
                     borderRadius: '12px',
                     padding: '32px',
                     textAlign: 'center',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    backgroundColor: colors.cardHover
+                    backgroundColor: isDragging ? (isDark ? '#065f46' : '#f0fdf4') : colors.cardHover,
+                    opacity: isImporting ? 0.6 : 1
                   }}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = colors.success
-                    e.currentTarget.style.backgroundColor = isDark ? '#065f46' : '#f0fdf4'
+                    if (!isDragging && !isImporting) {
+                      e.currentTarget.style.borderColor = colors.success
+                      e.currentTarget.style.backgroundColor = isDark ? '#065f46' : '#f0fdf4'
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = colors.border
-                    e.currentTarget.style.backgroundColor = colors.cardHover
+                    if (!isDragging && !isImporting) {
+                      e.currentTarget.style.borderColor = colors.border
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }
                   }}
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => !isImporting && fileInputRef.current?.click()}
                 >
                   <Upload style={{ width: '32px', height: '32px', color: colors.text.tertiary, margin: '0 auto 12px' }} />
                   <p style={{ fontSize: '14px', fontWeight: '500', ...text.primary, marginBottom: '4px' }}>
