@@ -701,11 +701,27 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                       title={btn.title}
                       onClick={(e) => {
                         e.preventDefault()
-                        if (notesRef.current) notesRef.current.focus()
-                        try {
-                          document.execCommand(btn.cmd as any, false)
-                          if (notesRef.current) setNewNoteHtml(notesRef.current.innerHTML)
-                        } catch {}
+                        if (notesRef.current) {
+                          notesRef.current.focus()
+                          // For list commands, insert a placeholder if no text selected
+                          const selection = window.getSelection()
+                          if ((btn.cmd === 'insertUnorderedList' || btn.cmd === 'insertOrderedList') 
+                              && (!selection || selection.rangeCount === 0 || selection.toString().trim() === '')) {
+                            const range = selection?.rangeCount ? selection.getRangeAt(0) : document.createRange()
+                            range.selectNodeContents(notesRef.current)
+                            range.collapse(false)
+                            const textNode = document.createTextNode('List item')
+                            range.insertNode(textNode)
+                            range.selectNode(textNode)
+                            range.collapse(false)
+                            selection?.removeAllRanges()
+                            selection?.addRange(range)
+                          }
+                          try {
+                            document.execCommand(btn.cmd as any, false)
+                            setNewNoteHtml(notesRef.current.innerHTML)
+                          } catch {}
+                        }
                       }}
                       style={{
                         padding: '6px 10px',
