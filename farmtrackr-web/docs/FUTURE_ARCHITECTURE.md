@@ -44,10 +44,10 @@ The application will support two distinct contact lists with different use cases
 - Tag management interface (create, edit, merge tags)
 - Tag autocomplete when adding/editing general contacts
 
-## Document Pipeline & Transaction Management
+## Transaction Coordinator
 
 ### Overview
-Integrated document workflow system for real estate transactions with CAR form management and DocuSign integration.
+Transaction Coordinator is an integrated document workflow system for managing real estate transactions from setup to completion. It provides seamless CAR form management and DocuSign integration to streamline the entire transaction process.
 
 ### CAR (California Association of Realtors) Integration
 - **Form Library**: Maintain up-to-date CAR forms repository
@@ -64,7 +64,7 @@ Integrated document workflow system for real estate transactions with CAR form m
 - **Template Management**: Store and reuse common document templates
 - **Status Notifications**: Real-time updates when documents are signed
 
-### Transaction Workflow
+### Transaction Coordinator Workflow
 - **Create Transaction**: Set up new transaction directly from the app
   - Link transaction to contacts (buyer, seller, agents, etc.)
   - Select property/listing if applicable
@@ -92,7 +92,7 @@ Integrated document workflow system for real estate transactions with CAR form m
 - ⏳ Dual contact list architecture (future)
 - ⏳ Google Contacts sync (future)
 - ⏳ Tag system for general contacts (future)
-- ⏳ Document pipeline and transaction management (future)
+- ⏳ Transaction Coordinator module (future)
 - ⏳ CAR form integration and auto-updates (future)
 - ⏳ DocuSign integration (future)
 - ⏳ Transaction workflow from app (future)
