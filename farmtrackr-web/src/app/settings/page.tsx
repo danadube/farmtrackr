@@ -844,7 +844,7 @@ export default function SettingsPage() {
                       <ul style={{ fontSize: '13px', color: isDark ? '#bfdbfe' : '#1e3a8a', lineHeight: '1.6', margin: '0', paddingLeft: '20px' }}>
                         <li>Import contacts from Google Sheets (authenticated access)</li>
                         <li>Export contacts to Google Sheets</li>
-                        <li>Sync with Google Contacts (coming soon)</li>
+                        <li>Sync with Google Contacts</li>
                         <li>Access private Google Sheets (not just public)</li>
                       </ul>
                       <p style={{ fontSize: '12px', color: isDark ? '#93c5fd' : '#3b82f6', marginTop: '12px', marginBottom: '0' }}>
