@@ -19,11 +19,22 @@ interface GeneralContact {
   organizationName: string | null
   tags: string[]
   email1: string | null
+  email2: string | null
   phoneNumber1: string | null
+  phoneNumber2: string | null
+  phoneNumber3: string | null
+  phoneNumber4: string | null
+  phoneNumber5: string | null
+  phoneNumber6: string | null
   mailingAddress: string | null
   city: string | null
   state: string | null
   zipCode: string | null
+  siteMailingAddress: string | null
+  siteCity: string | null
+  siteState: string | null
+  siteZipCode: string | null
+  notes: string | null
   googleContactsId: string | null
 }
 
