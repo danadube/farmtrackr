@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         const zipCode = person.addresses?.[0]?.postalCode || ''
 
         // Extract notes/biography
-        const notes = person.biographies?.[0]?.value || person.tagLine?.[0]?.value || ''
+        const notes = person.biographies?.[0]?.value || person.taglines?.[0]?.value || ''
 
         // Extract tags from miscKeywords (Google Contacts labels)
         const tags: string[] = []
