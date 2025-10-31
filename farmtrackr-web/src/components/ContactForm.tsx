@@ -1,12 +1,13 @@
 'use client'
 
 // ContactForm component for creating and editing contacts
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ContactFormData } from '@/types'
 import { X, Save, User, Building2, Mail, Phone, MapPin, FileText } from 'lucide-react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
+import { normalizeFarmName } from '@/lib/farmNames'
 
 interface ContactFormProps {
   initialData?: ContactFormData
@@ -48,6 +49,30 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
   const [newNoteHtml, setNewNoteHtml] = useState<string>('')
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editingHtml, setEditingHtml] = useState<string>('')
+  const [availableFarms, setAvailableFarms] = useState<string[]>([])
+
+  // Fetch unique farms from existing contacts
+  useEffect(() => {
+    const fetchFarms = async () => {
+      try {
+        const response = await fetch('/api/contacts')
+        if (response.ok) {
+          const contacts = await response.json()
+          const uniqueFarms = Array.from(
+            new Set(
+              contacts
+                .map((c: any) => c.farm ? normalizeFarmName(c.farm) : null)
+                .filter(Boolean)
+            )
+          ).sort() as string[]
+          setAvailableFarms(uniqueFarms)
+        }
+      } catch (error) {
+        console.error('Failed to fetch farms:', error)
+      }
+    }
+    fetchFarms()
+  }, [])
 
   type NoteEntry = { id: string; html: string; createdAt: string }
   const parseNotes = (notesRaw: string | undefined | null): NoteEntry[] => {
@@ -162,8 +187,8 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
     margin: 0
   })
 
-  return (
-    <Sidebar>
+  const sidebarContent: React.ReactNode = (
+    <>
       <style>{`
         div[contenteditable] ul, div[contenteditable] ol { 
           padding-left: 24px; 
@@ -358,12 +383,14 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
                       Farm
                     </label>
-                    <input
-                      type="text"
-                      placeholder="Enter farm name"
+                    <select
                       value={formData.farm || ''}
                       onChange={(e) => handleInputChange('farm', e.target.value)}
-                      style={getInputStyle(false)}
+                      style={{
+                        ...getInputStyle(false),
+                        cursor: 'pointer',
+                        appearance: 'auto'
+                      }}
                       onFocus={(e) => {
                         e.target.style.borderColor = colors.success
                         e.target.style.outline = 'none'
@@ -373,7 +400,14 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                         e.target.style.borderColor = colors.border
                         e.target.style.boxShadow = 'none'
                       }}
-                    />
+                    >
+                      <option value="">Select a farm</option>
+                      {availableFarms.map((farm) => (
+                        <option key={farm} value={farm}>
+                          {farm}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
@@ -1185,6 +1219,10 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
           </form>
         </div>
       </div>
-    </Sidebar>
+    </>
+  )
+
+  return (
+    <Sidebar children={sidebarContent} />
   )
 }

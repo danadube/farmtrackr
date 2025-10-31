@@ -39,8 +39,8 @@ export default function SettingsPage() {
     theme: 'light' | 'dark' | 'system'
     compactMode: boolean
   }>({
-    farmName: 'FarmTrackr',
-    defaultFarm: 'Cielo',
+    farmName: '',
+    defaultFarm: '',
     language: 'en',
     timezone: 'America/Los_Angeles',
     dateFormat: 'MM/DD/YYYY',
@@ -237,10 +237,11 @@ export default function SettingsPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
-                        Farm Name
+                        Agent Name
                       </label>
                       <input
                         type="text"
+                        placeholder="Enter your name"
                         value={settings.farmName}
                         onChange={(e) => handleChange('farmName', e.target.value)}
                         style={{
@@ -263,13 +264,18 @@ export default function SettingsPage() {
                           e.target.style.boxShadow = 'none'
                         }}
                       />
+                      <p style={{ fontSize: '12px', ...text.tertiary, marginTop: '4px', marginBottom: '0' }}>
+                        Will be displayed in the welcome screen (e.g., "Welcome Back, Agent Name")
+                      </p>
                     </div>
 
                     <div>
                       <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
-                        Default Farm
+                        Brokerage Name
                       </label>
-                      <select
+                      <input
+                        type="text"
+                        placeholder="Enter brokerage name"
                         value={settings.defaultFarm}
                         onChange={(e) => handleChange('defaultFarm', e.target.value)}
                         style={{
@@ -280,14 +286,21 @@ export default function SettingsPage() {
                           fontSize: '14px',
                           backgroundColor: colors.card,
                           color: colors.text.primary,
-                          cursor: 'pointer'
+                          transition: 'border-color 0.2s ease'
                         }}
-                      >
-                        <option value="Cielo">Cielo</option>
-                        <option value="Versailles">Versailles</option>
-                        <option value="San Marino">San Marino</option>
-                        <option value="Tamarisk CC Ranch">Tamarisk CC Ranch</option>
-                      </select>
+                        onFocus={(e) => {
+                          e.target.style.borderColor = colors.success
+                          e.target.style.outline = 'none'
+                          e.target.style.boxShadow = `0 0 0 3px ${colors.success}20`
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = colors.border
+                          e.target.style.boxShadow = 'none'
+                        }}
+                      />
+                      <p style={{ fontSize: '12px', ...text.tertiary, marginTop: '4px', marginBottom: '0' }}>
+                        Will be displayed below your name in the welcome screen
+                      </p>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
