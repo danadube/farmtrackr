@@ -97,10 +97,12 @@ The OAuth consent screen has three main tabs in the left sidebar:
    - **Name**: `FarmTrackr Web Client` (or `FarmTrackr Web` to distinguish from iOS client)
    - **Authorized JavaScript origins**:
      - `http://localhost:3000` (for development)
-     - `https://danadube.com` (for production - your domain)
+     - `https://farmtrackr-web.vercel.app` (for production Vercel deployment)
+     - `https://danadube.com` (for production custom domain, if configured)
    - **Authorized redirect URIs**:
      - `http://localhost:3000/api/google/oauth/callback` (for development)
-     - `https://danadube.com/api/google/oauth/callback` (for production - your domain)
+     - `https://farmtrackr-web.vercel.app/api/google/oauth/callback` (for production Vercel deployment)
+     - `https://danadube.com/api/google/oauth/callback` (for production custom domain, if configured)
 6. Click **"Create"**
 7. **IMPORTANT**: Copy the **Client ID** and **Client Secret** from the popup
    - These will be different from your iOS client credentials
@@ -123,15 +125,15 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 DATABASE_URL="your-database-url"
 ```
 
-For **production** (danadube.com), update the values:
+For **production** (farmtrackr-web.vercel.app), update the values:
 ```bash
 GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="your-client-secret"
-GOOGLE_OAUTH_REDIRECT_URI="https://danadube.com/api/google/oauth/callback"
-NEXT_PUBLIC_APP_URL="https://danadube.com"
+GOOGLE_OAUTH_REDIRECT_URI="https://farmtrackr-web.vercel.app/api/google/oauth/callback"
+NEXT_PUBLIC_APP_URL="https://farmtrackr-web.vercel.app"
 ```
 
-**Note:** Make sure you've added `https://danadube.com/api/google/oauth/callback` as an authorized redirect URI in your Google Cloud Console OAuth client settings.
+**Note:** Make sure you've added the appropriate redirect URI for your deployment in Google Cloud Console OAuth client settings.
 
 **⚠️ Security:** Never commit actual credentials to git. Store them only in environment variables.
 
