@@ -43,14 +43,28 @@ export async function getTokensFromCode(code: string) {
  * Create authenticated Google API clients
  */
 export function getAuthenticatedSheetsClient(accessToken: string) {
-  const client = google.sheets({ version: 'v4' })
-  oauth2Client.setCredentials({ access_token: accessToken })
+  // Create a new OAuth2 client instance and set credentials
+  const auth = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    REDIRECT_URI
+  )
+  auth.setCredentials({ access_token: accessToken })
+  
+  const client = google.sheets({ version: 'v4', auth })
   return client
 }
 
 export function getAuthenticatedPeopleClient(accessToken: string) {
-  const client = google.people({ version: 'v1' })
-  oauth2Client.setCredentials({ access_token: accessToken })
+  // Create a new OAuth2 client instance and set credentials
+  const auth = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    REDIRECT_URI
+  )
+  auth.setCredentials({ access_token: accessToken })
+  
+  const client = google.people({ version: 'v1', auth })
   return client
 }
 
