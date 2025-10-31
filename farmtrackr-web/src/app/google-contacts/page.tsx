@@ -4,12 +4,19 @@ import { useEffect, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { 
-  Download, 
   CheckCircle, 
   AlertCircle,
   RefreshCw,
   Contact,
-  X
+  X,
+  Search,
+  Filter,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Edit,
+  Mail,
+  MapPin
 } from 'lucide-react'
 
 interface GeneralContact {
@@ -53,6 +60,10 @@ export default function GoogleContactsPage() {
   const [isLoadingContacts, setIsLoadingContacts] = useState(false)
   const [selectedContact, setSelectedContact] = useState<GeneralContact | null>(null)
   const [showContactModal, setShowContactModal] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedTag, setSelectedTag] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<'name' | 'email' | 'city' | 'state'>('name')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   useEffect(() => {
     // Check Google OAuth connection status
@@ -103,6 +114,57 @@ export default function GoogleContactsPage() {
     loadStats()
     loadContacts()
   }, [])
+
+  // Get unique tags for filter
+  const uniqueTags = Array.from(new Set(contacts.flatMap(c => c.tags || []))).sort()
+
+  // Filter and sort contacts
+  const filteredContacts = contacts.filter(contact => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      const displayName = `${contact.firstName || ''} ${contact.lastName || ''}${contact.organizationName ? ` ${contact.organizationName}` : ''}`.trim().toLowerCase()
+      const matchesSearch = (
+        displayName.includes(query) ||
+        contact.email1?.toLowerCase().includes(query) ||
+        contact.city?.toLowerCase().includes(query) ||
+        contact.tags?.some(tag => tag.toLowerCase().includes(query))
+      )
+      if (!matchesSearch) return false
+    }
+    
+    // Tag filter
+    if (selectedTag !== 'all' && !contact.tags?.includes(selectedTag)) {
+      return false
+    }
+    
+    return true
+  }).sort((a, b) => {
+    let aValue: string = ''
+    let bValue: string = ''
+
+    switch (sortBy) {
+      case 'name':
+        aValue = `${a.firstName || ''} ${a.lastName || ''}${a.organizationName ? ` ${a.organizationName}` : ''}`.trim().toLowerCase()
+        bValue = `${b.firstName || ''} ${b.lastName || ''}${b.organizationName ? ` ${b.organizationName}` : ''}`.trim().toLowerCase()
+        break
+      case 'email':
+        aValue = a.email1 || ''
+        bValue = b.email1 || ''
+        break
+      case 'city':
+        aValue = a.city || ''
+        bValue = b.city || ''
+        break
+      case 'state':
+        aValue = a.state || ''
+        bValue = b.state || ''
+        break
+    }
+
+    const comparison = aValue.localeCompare(bValue)
+    return sortOrder === 'asc' ? comparison : -comparison
+  })
 
   const handleImport = async () => {
     if (googleConnectionStatus !== 'connected') {
@@ -165,6 +227,21 @@ export default function GoogleContactsPage() {
 
   return (
     <Sidebar>
+      <style>{`
+        .rendered-note ul, .rendered-note ol { 
+          padding-left: 24px; 
+          margin: 8px 0; 
+        }
+        .rendered-note ul { 
+          list-style-type: disc; 
+        }
+        .rendered-note ol { 
+          list-style-type: decimal; 
+        }
+        .rendered-note li { 
+          margin: 4px 0; 
+        }
+      `}</style>
       <div 
         style={{ 
           marginLeft: '256px', 
@@ -216,10 +293,10 @@ export default function GoogleContactsPage() {
                       margin: '0 0 4px 0'
                     }}
                   >
-                    Google Contacts Integration
+                    Google Contacts
                   </h1>
                   <p style={{ ...text.secondary, fontSize: '16px', margin: '0' }}>
-                    Sync contacts from your Google account
+                    Manage contacts from your Google account
                   </p>
                 </div>
               </div>
@@ -227,50 +304,215 @@ export default function GoogleContactsPage() {
             </div>
           </div>
 
-          {/* Connection Status & Stats */}
-          <div style={{ marginBottom: '24px' }}>
-            <div 
-              style={{
-                padding: '16px',
-                ...card,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '16px'
-              }}
-            >
-              <div>
-                <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '16px', margin: '0 0 4px 0' }}>
-                  Google Contacts
-                </h3>
-                <p style={{ fontSize: '12px', ...text.secondary, margin: 0 }}>
-                  Status: {googleConnectionStatus === 'connected' ? (
-                    <span style={{ color: colors.success }}>Connected</span>
-                  ) : googleConnectionStatus === 'checking' ? (
-                    <span style={{ color: colors.text.tertiary }}>Checking...</span>
-                  ) : (
-                    <span style={{ color: colors.error }}>Not Connected</span>
-                  )}
-                  {lastSyncedAt && ` • Last synced: ${lastSyncedAt}`}
-                </p>
+          {/* Stats Summary */}
+          <div style={{ marginBottom: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            <div style={{ padding: '20px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Total Contacts
+                  </p>
+                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    {contacts.length}
+                  </p>
+                </div>
+                <Contact style={{ width: '32px', height: '32px', color: colors.primary, opacity: 0.6 }} />
               </div>
-              <div 
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '10px',
-                  backgroundColor: isDark ? '#1e3a8a' : '#dbeafe',
-                  border: `1px solid ${colors.primary}`,
-                  color: colors.primary,
-                  fontWeight: 700,
-                  fontSize: '16px'
-                }}
-              >
-                {totalContacts.toLocaleString()}
+            </div>
+            <div style={{ padding: '20px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Filtered Results
+                  </p>
+                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    {filteredContacts.length}
+                  </p>
+                </div>
+                <Filter style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6 }} />
+              </div>
+            </div>
+            <div style={{ padding: '20px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Connection Status
+                  </p>
+                  <p style={{ fontSize: '14px', fontWeight: '600', color: googleConnectionStatus === 'connected' ? colors.success : colors.error, margin: '0' }}>
+                    {googleConnectionStatus === 'connected' ? 'Connected' : googleConnectionStatus === 'checking' ? 'Checking...' : 'Not Connected'}
+                  </p>
+                </div>
+                {googleConnectionStatus === 'connected' ? (
+                  <CheckCircle style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6 }} />
+                ) : (
+                  <AlertCircle style={{ width: '32px', height: '32px', color: colors.error, opacity: 0.6 }} />
+                )}
               </div>
             </div>
           </div>
 
-          {/* Import Action */}
+          {/* Search, Filters, and Sort */}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ padding: '20px', ...card }}>
+              {/* Search and Filters Row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                <div style={{ position: 'relative', minWidth: '200px', maxWidth: '400px', width: '100%' }}>
+                  <Search style={{ 
+                    position: 'absolute', 
+                    left: '12px', 
+                    top: '50%', 
+                    transform: 'translateY(-50%)',
+                    width: '16px',
+                    height: '16px',
+                    color: colors.text.tertiary
+                  }} />
+                  <input
+                    type="text"
+                    placeholder="Search contacts..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 12px 12px 40px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                      transition: 'border-color 0.2s ease'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = colors.primary
+                      e.target.style.outline = 'none'
+                      e.target.style.boxShadow = `0 0 0 3px ${colors.primary}20`
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = colors.border
+                      e.target.style.boxShadow = 'none'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: '0', marginLeft: 'auto' }}>
+                  {uniqueTags.length > 0 && (
+                    <select
+                      value={selectedTag}
+                      onChange={(e) => setSelectedTag(e.target.value)}
+                      style={{
+                        padding: '12px 16px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary,
+                        cursor: 'pointer',
+                        minWidth: '140px'
+                      }}
+                    >
+                      <option value="all">All Tags</option>
+                      {uniqueTags.map(tag => (
+                        <option key={tag} value={tag}>{tag}</option>
+                      ))}
+                    </select>
+                  )}
+                  {(searchQuery || selectedTag !== 'all') && (
+                    <button
+                      onClick={() => {
+                        setSearchQuery('')
+                        setSelectedTag('all')
+                      }}
+                      style={{
+                        padding: '12px 16px',
+                        backgroundColor: colors.cardHover,
+                        ...text.secondary,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.borderHover
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.cardHover
+                      }}
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Sort Row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', paddingTop: '16px', borderTop: `1px solid ${colors.border}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ArrowUpDown style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, whiteSpace: 'nowrap' }}>
+                    Sort by:
+                  </label>
+                </div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  style={{
+                    padding: '8px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    backgroundColor: colors.card,
+                    color: colors.text.primary,
+                    cursor: 'pointer',
+                    minWidth: '140px'
+                  }}
+                >
+                  <option value="name">Name</option>
+                  <option value="email">Email</option>
+                  <option value="city">City</option>
+                  <option value="state">State</option>
+                </select>
+                <button
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: colors.cardHover,
+                    ...text.secondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'background-color 0.2s ease',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.borderHover
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.cardHover
+                  }}
+                >
+                  {sortOrder === 'asc' ? (
+                    <>
+                      <ArrowUp style={{ width: '14px', height: '14px' }} />
+                      Ascending
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDown style={{ width: '14px', height: '14px' }} />
+                      Descending
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Sync Action */}
           <div 
             style={{
               padding: '24px',
@@ -278,16 +520,23 @@ export default function GoogleContactsPage() {
               marginBottom: '24px'
             }}
           >
-            <h2 
-              style={{
-                fontSize: '18px',
-                fontWeight: '600',
-                ...text.primary,
-                marginBottom: '24px'
-              }}
-            >
-              Sync Contacts
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h2 
+                style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  ...text.primary,
+                  margin: '0'
+                }}
+              >
+                Sync from Google
+              </h2>
+              {lastSyncedAt && (
+                <p style={{ fontSize: '12px', ...text.secondary, margin: 0 }}>
+                  Last synced: {lastSyncedAt}
+                </p>
+              )}
+            </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
@@ -363,27 +612,73 @@ export default function GoogleContactsPage() {
           </div>
 
           {/* Contacts List */}
-          {contacts.length > 0 && (
-            <div 
-              style={{
-                padding: '24px',
-                ...card,
-                marginBottom: '24px'
-              }}
-            >
-              <h2 
+          {isLoadingContacts ? (
+            <div style={{ ...card, padding: '48px', textAlign: 'center' }}>
+              <div 
                 style={{
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  ...text.primary,
-                  marginBottom: '16px'
+                  width: '48px',
+                  height: '48px',
+                  border: `4px solid ${colors.border}`,
+                  borderTop: `4px solid ${colors.success}`,
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  margin: '0 auto 16px'
                 }}
-              >
-                Your Google Contacts ({contacts.length})
-              </h2>
+              />
+              <p style={{ ...text.secondary }}>Loading contacts...</p>
+            </div>
+          ) : filteredContacts.length === 0 ? (
+            <div style={{ ...card, padding: '48px', textAlign: 'center' }}>
+              <Contact style={{ width: '48px', height: '48px', color: colors.text.tertiary, margin: '0 auto 16px' }} />
+              <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, marginBottom: '8px' }}>
+                {contacts.length === 0 ? 'No contacts yet' : 'No contacts match your filters'}
+              </h3>
+              <p style={{ ...text.secondary, marginBottom: '24px' }}>
+                {contacts.length === 0 
+                  ? (googleConnectionStatus === 'connected' 
+                      ? 'Click "Sync from Google" to import your contacts.'
+                      : 'Connect your Google account and sync your contacts.')
+                  : 'Try adjusting your search or filter criteria.'}
+              </p>
+              {googleConnectionStatus === 'connected' && contacts.length === 0 && (
+                <button
+                  onClick={handleImport}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: colors.primary,
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.primaryHover
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.primary
+                  }}
+                >
+                  <RefreshCw style={{ width: '16px', height: '16px' }} />
+                  Sync from Google
+                </button>
+              )}
+            </div>
+          ) : (
+            <div style={{ ...card, overflow: 'hidden' }}>
+              <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
+                <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                  All Contacts ({filteredContacts.length})
+                </h2>
+              </div>
               
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {contacts.map((contact) => (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {filteredContacts.map((contact, index) => (
                   <div
                     key={contact.id}
                     onClick={() => {
@@ -391,95 +686,92 @@ export default function GoogleContactsPage() {
                       setShowContactModal(true)
                     }}
                     style={{
-                      padding: '16px',
-                      backgroundColor: colors.cardHover,
-                      borderRadius: '10px',
-                      border: `1px solid ${colors.border}`,
+                      padding: '20px 24px',
+                      borderBottom: index < filteredContacts.length - 1 ? `1px solid ${colors.border}` : 'none',
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease'
+                      transition: 'background-color 0.2s ease'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = colors.primary
-                      e.currentTarget.style.boxShadow = card.boxShadow
+                      e.currentTarget.style.backgroundColor = colors.cardHover
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = colors.border
-                      e.currentTarget.style.boxShadow = 'none'
+                      e.currentTarget.style.backgroundColor = 'transparent'
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '15px', fontWeight: '600', ...text.primary, margin: '0 0 8px 0' }}>
-                          {contact.firstName || contact.lastName || contact.organizationName 
-                            ? `${contact.firstName || ''} ${contact.lastName || ''}${contact.organizationName ? ` - ${contact.organizationName}` : ''}`.trim()
-                            : 'Unnamed Contact'}
-                        </h3>
-                        {contact.tags && contact.tags.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
-                            {contact.tags.map((tag, idx) => (
-                              <span
-                                key={idx}
-                                style={{
-                                  padding: '4px 10px',
-                                  fontSize: '12px',
-                                  backgroundColor: isDark ? '#065f46' : '#dcfce7',
-                                  color: colors.success,
-                                  borderRadius: '9999px',
-                                  fontWeight: '600',
-                                  border: `1px solid ${colors.success}`
-                                }}
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div
+                        style={{
+                          width: '48px',
+                          height: '48px',
+                          borderRadius: '50%',
+                          backgroundColor: colors.iconBg,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        <span style={{ fontSize: '20px', fontWeight: '700', ...text.primary }}>
+                          {(() => {
+                            if (contact.firstName) return contact.firstName[0].toUpperCase()
+                            if (contact.lastName) return contact.lastName[0].toUpperCase()
+                            if (contact.organizationName) return contact.organizationName[0].toUpperCase()
+                            return '?'
+                          })()}
+                        </span>
+                      </div>
+                      <div style={{ flex: '1' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                          <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '14px', margin: '0' }}>
+                            {contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact'}
+                          </h3>
+                          {contact.tags && contact.tags.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                              {contact.tags.slice(0, 3).map((tag, idx) => (
+                                <span
+                                  key={idx}
+                                  style={{
+                                    padding: '2px 8px',
+                                    fontSize: '11px',
+                                    backgroundColor: isDark ? '#065f46' : '#dcfce7',
+                                    color: colors.success,
+                                    borderRadius: '9999px',
+                                    fontWeight: '600',
+                                    border: `1px solid ${colors.success}`
+                                  }}
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                              {contact.tags.length > 3 && (
+                                <span
+                                  style={{
+                                    padding: '2px 8px',
+                                    fontSize: '11px',
+                                    backgroundColor: colors.cardHover,
+                                    ...text.secondary,
+                                    borderRadius: '9999px',
+                                    fontWeight: '600'
+                                  }}
+                                >
+                                  +{contact.tags.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {contact.email1 && (
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                            {contact.email1}
+                          </p>
                         )}
                       </div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', ...text.secondary }}>
-                      {contact.email1 && (
-                        <div>📧 {contact.email1}</div>
-                      )}
-                      {contact.phoneNumber1 && (
-                        <div>📞 {contact.phoneNumber1}</div>
-                      )}
-                      {contact.city && contact.state && (
-                        <div>📍 {contact.city}, {contact.state} {contact.zipCode || ''}</div>
-                      )}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          {/* Instructions */}
-          <div 
-            style={{
-              padding: '24px',
-              backgroundColor: isDark ? '#1e3a8a' : '#eff6ff',
-              border: `1px solid ${colors.primary}`,
-              borderRadius: '12px'
-            }}
-          >
-            <h3 style={{ fontWeight: '600', color: isDark ? '#93c5fd' : '#1e40af', fontSize: '16px', marginBottom: '12px' }}>
-              About Google Contacts Integration
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: isDark ? '#bfdbfe' : '#1e3a8a' }}>
-              <p style={{ margin: '0' }}>
-                <strong>Sync:</strong> Click "Sync from Google" to import all contacts from your Google Contacts account.
-              </p>
-              <p style={{ margin: '0' }}>
-                <strong>Tags:</strong> Labels and tags from Google Contacts will be preserved and imported automatically.
-              </p>
-              <p style={{ margin: '0' }}>
-                <strong>Updates:</strong> Re-syncing will update existing contacts and add new ones. Contacts are matched by Google Contacts ID or email.
-              </p>
-              <p style={{ margin: '0' }}>
-                <strong>Privacy:</strong> Contacts are stored securely in your FarmTrackr database and are not shared.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -536,42 +828,96 @@ export default function GoogleContactsPage() {
           }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowContactModal(false) }}
         >
-          <div style={{ ...card, padding: '24px', maxWidth: '600px', width: '92%', maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ ...card, padding: '24px', maxWidth: '700px', width: '92%', maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: 600, ...text.primary, margin: 0 }}>Contact Details</h2>
-              <button
-                onClick={() => setShowContactModal(false)}
-                style={{
-                  padding: '8px',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: colors.text.tertiary
-                }}
-              >
-                <X style={{ width: '20px', height: '20px' }} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  onClick={() => {
+                    setShowContactModal(false)
+                    // TODO: Navigate to edit page or open edit modal
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: colors.primary,
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.primaryHover
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.primary
+                  }}
+                >
+                  <Edit style={{ width: '16px', height: '16px' }} />
+                  Edit
+                </button>
+                <button
+                  onClick={() => setShowContactModal(false)}
+                  style={{
+                    padding: '8px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: colors.text.tertiary
+                  }}
+                >
+                  <X style={{ width: '20px', height: '20px' }} />
+                </button>
+              </div>
             </div>
 
             {/* Name */}
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, ...text.primary, margin: '0 0 8px 0' }}>
-                {selectedContact.firstName || selectedContact.lastName || selectedContact.organizationName 
-                  ? `${selectedContact.firstName || ''} ${selectedContact.lastName || ''}${selectedContact.organizationName ? ` - ${selectedContact.organizationName}` : ''}`.trim()
-                  : 'Unnamed Contact'}
-              </h3>
-              {selectedContact.organizationName && (selectedContact.firstName || selectedContact.lastName) && (
-                <p style={{ fontSize: '14px', ...text.secondary, margin: '0 0 8px 0' }}>{selectedContact.organizationName}</p>
-              )}
+            <div style={{ marginBottom: '24px', paddingBottom: '24px', borderBottom: `1px solid ${colors.border}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    backgroundColor: colors.iconBg,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <span style={{ fontSize: '28px', fontWeight: '700', ...text.primary }}>
+                    {(() => {
+                      if (selectedContact.firstName) return selectedContact.firstName[0].toUpperCase()
+                      if (selectedContact.lastName) return selectedContact.lastName[0].toUpperCase()
+                      if (selectedContact.organizationName) return selectedContact.organizationName[0].toUpperCase()
+                      return '?'
+                    })()}
+                  </span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: '24px', fontWeight: 600, ...text.primary, margin: '0 0 8px 0' }}>
+                    {selectedContact.organizationName || `${selectedContact.firstName || ''} ${selectedContact.lastName || ''}`.trim() || 'Unnamed Contact'}
+                  </h3>
+                  {selectedContact.organizationName && (selectedContact.firstName || selectedContact.lastName) && (
+                    <p style={{ fontSize: '14px', ...text.secondary, margin: '0' }}>{selectedContact.organizationName}</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Tags */}
             {selectedContact.tags && selectedContact.tags.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 8px 0' }}>Tags</h4>
+              <div style={{ marginBottom: '24px', paddingBottom: '24px', borderBottom: `1px solid ${colors.border}` }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tags</h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {selectedContact.tags.map((tag, idx) => (
                     <span
@@ -594,12 +940,12 @@ export default function GoogleContactsPage() {
             )}
 
             {/* Contact Information */}
-            <div style={{ marginBottom: '20px' }}>
-              <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0' }}>Contact Information</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ marginBottom: '24px', paddingBottom: '24px', borderBottom: `1px solid ${colors.border}` }}>
+              <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Contact Information</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {selectedContact.email1 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '18px' }}>📧</span>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <Mail style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }} />
                     <div>
                       <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Email</div>
                       <a href={`mailto:${selectedContact.email1}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
@@ -609,8 +955,8 @@ export default function GoogleContactsPage() {
                   </div>
                 )}
                 {selectedContact.email2 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '18px' }}>📧</span>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <Mail style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }} />
                     <div>
                       <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Email 2</div>
                       <a href={`mailto:${selectedContact.email2}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
@@ -620,8 +966,8 @@ export default function GoogleContactsPage() {
                   </div>
                 )}
                 {selectedContact.phoneNumber1 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '18px' }}>📞</span>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }}>📞</div>
                     <div>
                       <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Phone</div>
                       <a href={`tel:${selectedContact.phoneNumber1}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
@@ -631,8 +977,8 @@ export default function GoogleContactsPage() {
                   </div>
                 )}
                 {selectedContact.phoneNumber2 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '18px' }}>📞</span>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }}>📞</div>
                     <div>
                       <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Phone 2</div>
                       <a href={`tel:${selectedContact.phoneNumber2}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
@@ -642,8 +988,8 @@ export default function GoogleContactsPage() {
                   </div>
                 )}
                 {selectedContact.phoneNumber3 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '18px' }}>📞</span>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }}>📞</div>
                     <div>
                       <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Phone 3</div>
                       <a href={`tel:${selectedContact.phoneNumber3}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
@@ -657,10 +1003,10 @@ export default function GoogleContactsPage() {
 
             {/* Address */}
             {(selectedContact.mailingAddress || selectedContact.city || selectedContact.state) && (
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0' }}>Mailing Address</h4>
+              <div style={{ marginBottom: '24px', paddingBottom: '24px', borderBottom: `1px solid ${colors.border}` }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mailing Address</h4>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                  <span style={{ fontSize: '18px' }}>📍</span>
+                  <MapPin style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }} />
                   <div style={{ fontSize: '14px', ...text.primary }}>
                     {selectedContact.mailingAddress && <div>{selectedContact.mailingAddress}</div>}
                     {selectedContact.city && selectedContact.state && (
@@ -673,10 +1019,10 @@ export default function GoogleContactsPage() {
 
             {/* Site Address */}
             {(selectedContact.siteMailingAddress || selectedContact.siteCity || selectedContact.siteState) && (
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0' }}>Site Address</h4>
+              <div style={{ marginBottom: '24px', paddingBottom: '24px', borderBottom: `1px solid ${colors.border}` }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Site Address</h4>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                  <span style={{ fontSize: '18px' }}>📍</span>
+                  <MapPin style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }} />
                   <div style={{ fontSize: '14px', ...text.primary }}>
                     {selectedContact.siteMailingAddress && <div>{selectedContact.siteMailingAddress}</div>}
                     {selectedContact.siteCity && selectedContact.siteState && (
@@ -688,37 +1034,72 @@ export default function GoogleContactsPage() {
             )}
 
             {/* Notes */}
-            {selectedContact.notes && (
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0' }}>Notes</h4>
-                <div style={{ fontSize: '14px', ...text.primary, whiteSpace: 'pre-wrap' }}>{selectedContact.notes}</div>
-              </div>
-            )}
+            <div style={{ marginBottom: '24px' }}>
+              <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notes</h4>
+              {(() => {
+                if (selectedContact.notes && selectedContact.notes.trim()) {
+                  return (
+                    <div
+                      className="rendered-note"
+                      style={{
+                        padding: '16px',
+                        backgroundColor: colors.cardHover,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        ...text.primary,
+                        lineHeight: '1.6',
+                        minHeight: '60px'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: String(selectedContact.notes) }}
+                    />
+                  )
+                }
+                return (
+                  <div 
+                    style={{
+                      padding: '16px',
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      ...text.secondary,
+                      lineHeight: '1.6',
+                      minHeight: '60px'
+                    }}
+                  >
+                    <span style={{ fontStyle: 'italic', color: colors.text.tertiary }}>
+                      No notes added yet. Click Edit to add notes for this contact.
+                    </span>
+                  </div>
+                )
+              })()}
+            </div>
 
             {/* Additional Phone Numbers */}
             {(selectedContact.phoneNumber4 || selectedContact.phoneNumber5 || selectedContact.phoneNumber6) && (
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0' }}>Additional Phones</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div>
+                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Additional Phones</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {selectedContact.phoneNumber4 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '16px' }}>📞</span>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                      <div style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }}>📞</div>
                       <a href={`tel:${selectedContact.phoneNumber4}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
                         {selectedContact.phoneNumber4}
                       </a>
                     </div>
                   )}
                   {selectedContact.phoneNumber5 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '16px' }}>📞</span>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                      <div style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }}>📞</div>
                       <a href={`tel:${selectedContact.phoneNumber5}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
                         {selectedContact.phoneNumber5}
                       </a>
                     </div>
                   )}
                   {selectedContact.phoneNumber6 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '16px' }}>📞</span>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                      <div style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }}>📞</div>
                       <a href={`tel:${selectedContact.phoneNumber6}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
                         {selectedContact.phoneNumber6}
                       </a>
@@ -740,4 +1121,3 @@ export default function GoogleContactsPage() {
     </Sidebar>
   )
 }
-
