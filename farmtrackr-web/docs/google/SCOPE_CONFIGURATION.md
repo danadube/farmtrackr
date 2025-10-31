@@ -23,10 +23,7 @@ Based on your Google Cloud Console configuration:
 
 ### Current Implementation (v0.5.0)
 - ✅ `https://www.googleapis.com/auth/spreadsheets` - **Configured** - For Google Sheets import/export
-
-### Future Features (Not Yet Implemented)
-- ⏳ `https://www.googleapis.com/auth/contacts.readonly` - **Not configured** - Needed for Google Contacts import
-  - To add: Go to OAuth consent screen → Data Access → Add or remove scopes → Search for "contacts.readonly"
+- ✅ `https://www.googleapis.com/auth/contacts.readonly` - **Configured** - For Google Contacts import
 
 ## Code Reference
 
@@ -37,6 +34,7 @@ The scopes requested by the application are defined in:
 ```typescript
 export const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets', // ✅ Matches your configuration
+  'https://www.googleapis.com/auth/contacts.readonly', // ✅ Matches your configuration
 ]
 ```
 
