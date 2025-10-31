@@ -11,10 +11,11 @@ export const oauth2Client = new google.auth.OAuth2(
 )
 
 // Google API scopes
+// Note: These must match the scopes configured in Google Cloud Console OAuth consent screen
 export const GOOGLE_SCOPES = [
-  'https://www.googleapis.com/auth/spreadsheets.readonly', // Google Sheets read access
-  'https://www.googleapis.com/auth/spreadsheets', // Google Sheets write access
-  'https://www.googleapis.com/auth/contacts.readonly', // Google Contacts read access
+  'https://www.googleapis.com/auth/spreadsheets', // Google Sheets (read/write access)
+  // Note: contacts.readonly scope needs to be added in Google Cloud Console for Contacts integration
+  // 'https://www.googleapis.com/auth/contacts.readonly', // Google Contacts read access (uncomment when added)
 ]
 
 /**

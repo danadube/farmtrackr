@@ -26,41 +26,85 @@ Google OAuth enables the FarmTrackr web app to:
 
 1. In your project, go to **"APIs & Services"** → **"Library"**
 2. Search and enable the following APIs:
-   - **Google Sheets API**
-   - **People API** (for Google Contacts - coming soon)
+   - **Google Sheets API** (required)
+   - **People API** (optional - for Google Contacts integration, coming soon)
+   - **Note:** Google Drive API may already be enabled if Drive scopes are configured
 
 ## Step 3: Configure OAuth Consent Screen
 
-1. Go to **"APIs & Services"** → **"OAuth consent screen"**
-2. Choose **"External"** user type (or Internal if using Google Workspace)
-3. Fill in required information:
-   - **App name**: `FarmTrackr`
-   - **User support email**: Your email
-   - **Developer contact information**: Your email
-4. Click **"Save and Continue"**
-5. In **Scopes** section, click **"Add or Remove Scopes"**
-   - Add: `https://www.googleapis.com/auth/spreadsheets.readonly`
-   - Add: `https://www.googleapis.com/auth/spreadsheets`
-   - Add: `https://www.googleapis.com/auth/contacts.readonly`
-6. Click **"Save and Continue"**
-7. In **Test users** section (if in testing mode), add your Google account email
-8. Click **"Save and Continue"**
+Navigation: **APIs & Services** → **OAuth consent screen**
 
-## Step 4: Create OAuth 2.0 Credentials
+The OAuth consent screen has three main tabs in the left sidebar:
+- **Audience**: Set user access type and add test users
+- **Branding**: Configure app name and contact information
+- **Data Access**: Configure OAuth scopes (permissions)
+
+### Configure Audience (Audience Tab)
+1. Click on the **"Audience"** tab in the left sidebar
+2. Choose **"External"** user type (or Internal if using Google Workspace)
+3. In the **Test users** section, click **"Add Users"**
+4. Enter your Google account email address
+5. Click **"Add"**
+6. Click **"Save"** at the bottom of the page
+7. **Important:** Only test users can access your app while it's in "Testing" status
+
+### Configure Branding (Branding Tab)
+1. Click on the **"Branding"** tab in the left sidebar
+2. In the **App Information** section:
+   - **App name***: Enter `FarmTrackr` (required)
+   - **User support email***: Enter your email address (required - for users to contact you about consent)
+3. (Optional) Upload an **App Logo**:
+   - Logo should be square, 120px x 120px
+   - Maximum 1MB, formats: JPG, PNG, or BMP
+   - **Note:** Logo upload requires app verification unless app is internal-only or in "Testing" status
+4. (Optional) Configure **App Domain**:
+   - **Application home page**: Link to your home page (optional)
+   - **Application privacy policy link**: Link to privacy policy (optional)
+   - **Application terms of service link**: Link to terms of service (optional)
+   - **Authorized domains**: Click "+ Add domain" if needed (domains must be pre-registered)
+5. In **Developer Contact Information** section:
+   - **Email addresses***: Add your email (required - for Google to notify you about project changes)
+6. Click **"Save"** at the bottom of the page
+
+### Configure Scopes (Data Access Tab)
+1. Click on the **"Data Access"** tab in the left sidebar
+2. You'll see sections for:
+   - **Your non-sensitive scopes** (standard OAuth scopes like userinfo.email, userinfo.profile, openid)
+   - **Your sensitive scopes** (scopes requesting access to private user data)
+   - **Your restricted scopes** (scopes for highly sensitive data like Drive)
+3. Click the **"Add or Remove Scopes"** button
+4. In the popup, search and add the following scopes:
+   - **Required for Sheets integration:**
+     - Search for: `spreadsheets`
+     - Select: `https://www.googleapis.com/auth/spreadsheets` (includes both read and write access)
+   - **Optional for Contacts integration (future):**
+     - Search for: `contacts.readonly`
+     - Select: `https://www.googleapis.com/auth/contacts.readonly`
+   - **Note:** You may see Drive scopes already configured - these are not needed but won't cause issues
+5. Click **"Update"** to save the scopes
+6. Click **"Save"** at the bottom of the Data Access page
+
+
+## Step 4: Create OAuth 2.0 Credentials (Web Application)
+
+**Note:** If you already have an iOS client (e.g., "FarmTrackr" for iOS), you need to create a **separate Web application** client for the web app. iOS and Web clients are different and cannot be used interchangeably.
 
 1. Go to **"APIs & Services"** → **"Credentials"**
 2. Click **"Create Credentials"** → **"OAuth 2.0 Client ID"**
-3. Choose **"Web application"** as the application type
-4. Configure:
-   - **Name**: `FarmTrackr Web Client`
+3. If prompted to configure OAuth consent screen, you've already done this in Step 3, so click through
+4. Choose **"Web application"** as the application type (not iOS)
+5. Configure:
+   - **Name**: `FarmTrackr Web Client` (or `FarmTrackr Web` to distinguish from iOS client)
    - **Authorized JavaScript origins**:
      - `http://localhost:3000` (for development)
-     - `https://yourdomain.com` (for production)
+     - `https://danadube.com` (for production - your domain)
    - **Authorized redirect URIs**:
      - `http://localhost:3000/api/google/oauth/callback` (for development)
-     - `https://yourdomain.com/api/google/oauth/callback` (for production)
-5. Click **"Create"**
-6. **IMPORTANT**: Copy the **Client ID** and **Client Secret**
+     - `https://danadube.com/api/google/oauth/callback` (for production - your domain)
+6. Click **"Create"**
+7. **IMPORTANT**: Copy the **Client ID** and **Client Secret** from the popup
+   - These will be different from your iOS client credentials
+   - You'll use these in your `.env.local` file
 
 ## Step 5: Configure Environment Variables
 
@@ -79,25 +123,30 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 DATABASE_URL="your-database-url"
 ```
 
-For **production**, update the values:
+For **production** (danadube.com), update the values:
 ```bash
-GOOGLE_CLIENT_ID="your-production-client-id.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="your-production-client-secret"
-GOOGLE_OAUTH_REDIRECT_URI="https://yourdomain.com/api/google/oauth/callback"
-NEXT_PUBLIC_APP_URL="https://yourdomain.com"
+GOOGLE_CLIENT_ID="1095090089380-57rc2o3qbtaoemgspjc9v6274jsgp2v2.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="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"
+GOOGLE_OAUTH_REDIRECT_URI="https://danadube.com/api/google/oauth/callback"
+NEXT_PUBLIC_APP_URL="https://danadube.com"
 ```
+
+**Note:** Make sure you've added `https://danadube.com/api/google/oauth/callback` as an authorized redirect URI in your Google Cloud Console OAuth client settings.
 
 ## Step 6: Add Environment Variables to Vercel
 
-If deploying to Vercel:
+If deploying to Vercel (danadube.com):
 
 1. Go to your Vercel project settings
 2. Navigate to **"Environment Variables"**
-3. Add all the variables from Step 5:
-   - `GOOGLE_CLIENT_ID`
-   - `GOOGLE_CLIENT_SECRET`
-   - `GOOGLE_OAUTH_REDIRECT_URI`
-   - `NEXT_PUBLIC_APP_URL`
+3. Add all the variables for production:
+   - `GOOGLE_CLIENT_ID` = `1095090089380-57rc2o3qbtaoemgspjc9v6274jsgp2v2.apps.googleusercontent.com`
+   - `GOOGLE_CLIENT_SECRET` = `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`
+   - `GOOGLE_OAUTH_REDIRECT_URI` = `https://danadube.com/api/google/oauth/callback`
+   - `NEXT_PUBLIC_APP_URL` = `https://danadube.com`
+4. Make sure to select the correct environment (Production, Preview, Development)
+
+**Important:** Before deploying, ensure you've added `https://danadube.com/api/google/oauth/callback` to your Google Cloud Console OAuth client's authorized redirect URIs.
 
 ## Step 7: Test the Integration
 
@@ -113,14 +162,15 @@ If deploying to Vercel:
 ### Error: "redirect_uri_mismatch"
 - Ensure the redirect URI in Google Cloud Console **exactly** matches your environment variable
 - Check for trailing slashes, http vs https, and port numbers
+- For production (danadube.com), make sure `https://danadube.com/api/google/oauth/callback` is added to authorized redirect URIs
 
 ### Error: "invalid_client"
 - Verify `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are correct
 - Make sure there are no extra spaces or quotes
 
 ### Error: "Access blocked: Authorization Error"
-- Add your email as a test user in OAuth consent screen (if in testing mode)
-- Verify the OAuth consent screen is configured correctly
+- Add your email as a test user in OAuth consent screen → Test users section (if in testing mode)
+- Verify the OAuth consent screen is configured correctly (check both Branding and Data Access tabs)
 
 ### Tokens not persisting
 - Check that cookies are enabled in your browser
