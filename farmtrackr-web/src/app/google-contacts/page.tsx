@@ -45,7 +45,7 @@ export default function GoogleContactsPage() {
         const res = await fetch('/api/google/oauth/status')
         if (res.ok) {
           const data = await res.json()
-          setGoogleConnectionStatus(data.status === 'connected' ? 'connected' : 'not-connected')
+          setGoogleConnectionStatus(data.connected ? 'connected' : 'not-connected')
         } else {
           setGoogleConnectionStatus('not-connected')
         }
