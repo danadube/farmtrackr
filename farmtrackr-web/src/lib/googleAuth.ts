@@ -1,8 +1,20 @@
 import { google } from 'googleapis'
 
 // Google OAuth 2.0 configuration
+// Note: In production (Vercel), use GOOGLE_OAUTH_REDIRECT_URI explicitly
+// The fallback construction may use the wrong domain if NEXT_PUBLIC_APP_URL isn't set
 const REDIRECT_URI = process.env.GOOGLE_OAUTH_REDIRECT_URI || 
   `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/google/oauth/callback`
+
+if (!process.env.GOOGLE_CLIENT_ID) {
+  console.error('⚠️ GOOGLE_CLIENT_ID environment variable is not set')
+}
+if (!process.env.GOOGLE_CLIENT_SECRET) {
+  console.error('⚠️ GOOGLE_CLIENT_SECRET environment variable is not set')
+}
+if (!process.env.GOOGLE_OAUTH_REDIRECT_URI && !process.env.NEXT_PUBLIC_APP_URL) {
+  console.warn('⚠️ Neither GOOGLE_OAUTH_REDIRECT_URI nor NEXT_PUBLIC_APP_URL is set, using localhost fallback')
+}
 
 export const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
