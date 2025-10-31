@@ -7,10 +7,26 @@ import { cookies } from 'next/headers'
  * GET /api/google/oauth/callback?code=...
  */
 export async function GET(request: NextRequest) {
+  console.log('OAuth callback route hit!', { 
+    method: request.method,
+    url: request.url,
+    pathname: new URL(request.url).pathname,
+    searchParams: Object.fromEntries(new URL(request.url).searchParams)
+  })
+  
   try {
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
     const error = searchParams.get('error')
+
+    // Debug logging
+    console.log('OAuth callback received:', { 
+      hasCode: !!code, 
+      hasError: !!error,
+      error: error,
+      origin: request.headers.get('origin') || request.headers.get('host'),
+      url: request.url 
+    })
 
     // Handle OAuth errors
     if (error) {
