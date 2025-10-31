@@ -276,7 +276,7 @@ export default function GoogleContactsPage() {
                   style={{
                     width: '48px',
                     height: '48px',
-                    backgroundColor: isDark ? '#1e3a8a' : '#dbeafe',
+                    backgroundColor: colors.iconBg,
                     borderRadius: '12px',
                     display: 'flex',
                     alignItems: 'center',
