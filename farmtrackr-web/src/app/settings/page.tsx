@@ -10,7 +10,10 @@ import {
   Globe, 
   Shield,
   Save,
-  CheckCircle
+  CheckCircle,
+  Link as LinkIcon,
+  X,
+  ExternalLink
 } from 'lucide-react'
 import { Sidebar } from '@/components/Sidebar'
 import { useTheme } from '@/components/ThemeProvider'
@@ -20,7 +23,20 @@ import { getVersionInfo } from '@/lib/version'
 export default function SettingsPage() {
   const { theme, setTheme: setThemeState } = useTheme()
   const { colors, isDark, card, headerCard, headerDivider, headerTint, background, text } = useThemeStyles()
-  const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'data' | 'appearance' | 'about'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'data' | 'appearance' | 'google' | 'about'>('general')
+  const [googleStatus, setGoogleStatus] = useState<{
+    connected: boolean
+    hasAccessToken: boolean
+    hasRefreshToken: boolean
+    expired: boolean
+    loading: boolean
+  }>({
+    connected: false,
+    hasAccessToken: false,
+    hasRefreshToken: false,
+    expired: false,
+    loading: true
+  })
   const [isSaving, setIsSaving] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
 
@@ -81,8 +97,74 @@ export default function SettingsPage() {
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'data', label: 'Data Management', icon: Database },
     { id: 'appearance', label: 'Appearance', icon: Palette },
+    { id: 'google', label: 'Google Integration', icon: Globe },
     { id: 'about', label: 'About', icon: Shield }
   ]
+
+  // Check URL parameters for OAuth callback messages
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const connected = urlParams.get('connected')
+    const error = urlParams.get('error')
+    
+    if (connected === 'google' || error) {
+      // Clean URL
+      window.history.replaceState({}, '', '/settings')
+      // Switch to Google tab if not already there
+      if (connected === 'google') {
+        setActiveTab('google')
+      }
+    }
+  }, [])
+
+  // Check Google OAuth status
+  useEffect(() => {
+    const checkGoogleStatus = async () => {
+      try {
+        const response = await fetch('/api/google/oauth/status')
+        if (response.ok) {
+          const status = await response.json()
+          setGoogleStatus({
+            ...status,
+            loading: false
+          })
+        }
+      } catch (error) {
+        console.error('Failed to check Google status:', error)
+        setGoogleStatus(prev => ({ ...prev, loading: false }))
+      }
+    }
+    checkGoogleStatus()
+    
+    // Refresh status when Google tab is active
+    if (activeTab === 'google') {
+      const interval = setInterval(checkGoogleStatus, 2000)
+      return () => clearInterval(interval)
+    }
+  }, [activeTab])
+
+  const handleConnectGoogle = () => {
+    window.location.href = '/api/google/oauth/authorize'
+  }
+
+  const handleDisconnectGoogle = async () => {
+    try {
+      const response = await fetch('/api/google/oauth/disconnect', {
+        method: 'POST'
+      })
+      if (response.ok) {
+        setGoogleStatus({
+          connected: false,
+          hasAccessToken: false,
+          hasRefreshToken: false,
+          expired: false,
+          loading: false
+        })
+      }
+    } catch (error) {
+      console.error('Failed to disconnect Google:', error)
+    }
+  }
 
   return (
     <Sidebar>
@@ -639,6 +721,140 @@ export default function SettingsPage() {
               )}
 
               {/* About Settings */}
+              {/* Google Integration Settings */}
+              {activeTab === 'google' && (
+                <div>
+                  <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, marginBottom: '24px' }}>
+                    Google Integration
+                  </h2>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {/* Connection Status */}
+                    <div style={{ padding: '24px', backgroundColor: colors.cardHover, borderRadius: '12px', border: `1px solid ${colors.border}` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <Globe style={{ width: '24px', height: '24px', color: colors.primary }} />
+                          <h3 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                            Google Account Connection
+                          </h3>
+                        </div>
+                        {googleStatus.loading ? (
+                          <span style={{ fontSize: '13px', ...text.tertiary }}>Checking...</span>
+                        ) : googleStatus.connected ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <CheckCircle style={{ width: '18px', height: '18px', color: colors.success }} />
+                            <span style={{ fontSize: '13px', color: colors.success, fontWeight: '500' }}>Connected</span>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '13px', ...text.secondary }}>Not Connected</span>
+                        )}
+                      </div>
+                      
+                      {googleStatus.connected && (
+                        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${colors.border}` }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', ...text.secondary }}>Access Token:</span>
+                              <span style={{ fontSize: '13px', color: googleStatus.hasAccessToken ? colors.success : colors.error }}>
+                                {googleStatus.hasAccessToken ? 'Active' : 'Missing'}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', ...text.secondary }}>Refresh Token:</span>
+                              <span style={{ fontSize: '13px', color: googleStatus.hasRefreshToken ? colors.success : colors.error }}>
+                                {googleStatus.hasRefreshToken ? 'Available' : 'Missing'}
+                              </span>
+                            </div>
+                            {googleStatus.expired && (
+                              <div style={{ padding: '8px', backgroundColor: isDark ? '#7f1d1d' : '#fef2f2', borderRadius: '8px', marginTop: '8px' }}>
+                                <span style={{ fontSize: '12px', color: colors.error }}>
+                                  Token expired. Reconnect to refresh access.
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Connection Actions */}
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      {googleStatus.connected ? (
+                        <button
+                          onClick={handleDisconnectGoogle}
+                          style={{
+                            padding: '12px 24px',
+                            backgroundColor: colors.error,
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '10px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'background-color 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = isDark ? '#991b1b' : '#dc2626'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = colors.error
+                          }}
+                        >
+                          <X style={{ width: '16px', height: '16px' }} />
+                          Disconnect Google Account
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleConnectGoogle}
+                          style={{
+                            padding: '12px 24px',
+                            backgroundColor: colors.primary,
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '10px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'background-color 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = colors.primaryHover
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = colors.primary
+                          }}
+                        >
+                          <LinkIcon style={{ width: '16px', height: '16px' }} />
+                          Connect Google Account
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Information */}
+                    <div style={{ padding: '16px', backgroundColor: isDark ? '#1e3a8a' : '#eff6ff', borderRadius: '12px', border: `1px solid ${colors.primary}` }}>
+                      <h3 style={{ fontSize: '14px', fontWeight: '600', color: isDark ? '#93c5fd' : '#1e40af', marginBottom: '8px' }}>
+                        What does Google Integration enable?
+                      </h3>
+                      <ul style={{ fontSize: '13px', color: isDark ? '#bfdbfe' : '#1e3a8a', lineHeight: '1.6', margin: '0', paddingLeft: '20px' }}>
+                        <li>Import contacts from Google Sheets (authenticated access)</li>
+                        <li>Export contacts to Google Sheets</li>
+                        <li>Sync with Google Contacts (coming soon)</li>
+                        <li>Access private Google Sheets (not just public)</li>
+                      </ul>
+                      <p style={{ fontSize: '12px', color: isDark ? '#93c5fd' : '#3b82f6', marginTop: '12px', marginBottom: '0' }}>
+                        Your Google credentials are stored securely and only used to access Google Sheets and Contacts.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'about' && (
                 <div>
                   <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, marginBottom: '24px' }}>
