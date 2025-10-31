@@ -39,6 +39,36 @@ model FarmContact {
   @@map("farm_contacts")
 }
 
+model GeneralContact {
+  id                 String   @id @default(cuid())
+  firstName          String?
+  lastName           String?
+  organizationName   String?  // For businesses
+  tags               String[] // Multi-select tags (e.g., "buyer", "seller", "client", "realtor")
+  mailingAddress     String?
+  city               String?
+  state              String?
+  zipCode            String?
+  email1             String?
+  email2             String?
+  phoneNumber1       String?
+  phoneNumber2       String?
+  phoneNumber3       String?
+  phoneNumber4       String?
+  phoneNumber5       String?
+  phoneNumber6       String?
+  siteMailingAddress String?
+  siteCity           String?
+  siteState          String?
+  siteZipCode        String?
+  notes              String?
+  googleContactsId   String?  // Google Contacts resource ID for syncing
+  dateCreated        DateTime @default(now())
+  dateModified       DateTime @updatedAt
+
+  @@map("general_contacts")
+}
+
 model ImportTemplate {
   id           String   @id @default(cuid())
   name         String

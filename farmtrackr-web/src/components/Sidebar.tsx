@@ -13,7 +13,8 @@ import {
   FileSpreadsheet,
   LayoutDashboard,
   Menu,
-  X
+  X,
+  ContactRound
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -69,6 +70,7 @@ export function Sidebar({ children }: SidebarProps) {
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/contacts', label: 'Contacts', icon: Users },
+    { href: '/google-contacts', label: 'Google Contacts', icon: ContactRound },
     { href: '/documents', label: 'Documents', icon: FileText },
     { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet },
     { href: '/import-export', label: 'Import & Export', icon: Upload },
