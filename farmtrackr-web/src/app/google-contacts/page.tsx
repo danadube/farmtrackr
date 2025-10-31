@@ -8,7 +8,8 @@ import {
   CheckCircle, 
   AlertCircle,
   RefreshCw,
-  Contact
+  Contact,
+  X
 } from 'lucide-react'
 
 interface GeneralContact {
@@ -39,6 +40,8 @@ export default function GoogleContactsPage() {
   const [googleConnectionStatus, setGoogleConnectionStatus] = useState<'connected' | 'not-connected' | 'checking'>('checking')
   const [contacts, setContacts] = useState<GeneralContact[]>([])
   const [isLoadingContacts, setIsLoadingContacts] = useState(false)
+  const [selectedContact, setSelectedContact] = useState<GeneralContact | null>(null)
+  const [showContactModal, setShowContactModal] = useState(false)
 
   useEffect(() => {
     // Check Google OAuth connection status
@@ -372,32 +375,47 @@ export default function GoogleContactsPage() {
                 {contacts.map((contact) => (
                   <div
                     key={contact.id}
+                    onClick={() => {
+                      setSelectedContact(contact)
+                      setShowContactModal(true)
+                    }}
                     style={{
                       padding: '16px',
                       backgroundColor: colors.cardHover,
                       borderRadius: '10px',
-                      border: `1px solid ${colors.border}`
+                      border: `1px solid ${colors.border}`,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = colors.primary
+                      e.currentTarget.style.boxShadow = card.boxShadow
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = colors.border
+                      e.currentTarget.style.boxShadow = 'none'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <div>
-                        <h3 style={{ fontSize: '15px', fontWeight: '600', ...text.primary, margin: '0 0 4px 0' }}>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: '600', ...text.primary, margin: '0 0 8px 0' }}>
                           {contact.firstName || contact.lastName || contact.organizationName 
                             ? `${contact.firstName || ''} ${contact.lastName || ''}${contact.organizationName ? ` - ${contact.organizationName}` : ''}`.trim()
                             : 'Unnamed Contact'}
                         </h3>
                         {contact.tags && contact.tags.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
                             {contact.tags.map((tag, idx) => (
                               <span
                                 key={idx}
                                 style={{
-                                  padding: '2px 8px',
-                                  fontSize: '11px',
-                                  backgroundColor: isDark ? '#1e3a8a' : '#dbeafe',
-                                  color: colors.primary,
+                                  padding: '4px 10px',
+                                  fontSize: '12px',
+                                  backgroundColor: isDark ? '#065f46' : '#dcfce7',
+                                  color: colors.success,
                                   borderRadius: '9999px',
-                                  fontWeight: '500'
+                                  fontWeight: '600',
+                                  border: `1px solid ${colors.success}`
                                 }}
                               >
                                 {tag}
@@ -407,7 +425,7 @@ export default function GoogleContactsPage() {
                         )}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', ...text.secondary }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', ...text.secondary }}>
                       {contact.email1 && (
                         <div>📧 {contact.email1}</div>
                       )}
@@ -493,6 +511,211 @@ export default function GoogleContactsPage() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Detail Modal */}
+      {showContactModal && selectedContact && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowContactModal(false) }}
+        >
+          <div style={{ ...card, padding: '24px', maxWidth: '600px', width: '92%', maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 600, ...text.primary, margin: 0 }}>Contact Details</h2>
+              <button
+                onClick={() => setShowContactModal(false)}
+                style={{
+                  padding: '8px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: colors.text.tertiary
+                }}
+              >
+                <X style={{ width: '20px', height: '20px' }} />
+              </button>
+            </div>
+
+            {/* Name */}
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, ...text.primary, margin: '0 0 8px 0' }}>
+                {selectedContact.firstName || selectedContact.lastName || selectedContact.organizationName 
+                  ? `${selectedContact.firstName || ''} ${selectedContact.lastName || ''}${selectedContact.organizationName ? ` - ${selectedContact.organizationName}` : ''}`.trim()
+                  : 'Unnamed Contact'}
+              </h3>
+              {selectedContact.organizationName && (selectedContact.firstName || selectedContact.lastName) && (
+                <p style={{ fontSize: '14px', ...text.secondary, margin: '0 0 8px 0' }}>{selectedContact.organizationName}</p>
+              )}
+            </div>
+
+            {/* Tags */}
+            {selectedContact.tags && selectedContact.tags.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 8px 0' }}>Tags</h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {selectedContact.tags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '13px',
+                        backgroundColor: isDark ? '#065f46' : '#dcfce7',
+                        color: colors.success,
+                        borderRadius: '9999px',
+                        fontWeight: '600',
+                        border: `1px solid ${colors.success}`
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Contact Information */}
+            <div style={{ marginBottom: '20px' }}>
+              <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0' }}>Contact Information</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {selectedContact.email1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '18px' }}>📧</span>
+                    <div>
+                      <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Email</div>
+                      <a href={`mailto:${selectedContact.email1}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
+                        {selectedContact.email1}
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {selectedContact.email2 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '18px' }}>📧</span>
+                    <div>
+                      <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Email 2</div>
+                      <a href={`mailto:${selectedContact.email2}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
+                        {selectedContact.email2}
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {selectedContact.phoneNumber1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '18px' }}>📞</span>
+                    <div>
+                      <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Phone</div>
+                      <a href={`tel:${selectedContact.phoneNumber1}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
+                        {selectedContact.phoneNumber1}
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {selectedContact.phoneNumber2 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '18px' }}>📞</span>
+                    <div>
+                      <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Phone 2</div>
+                      <a href={`tel:${selectedContact.phoneNumber2}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
+                        {selectedContact.phoneNumber2}
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {selectedContact.phoneNumber3 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '18px' }}>📞</span>
+                    <div>
+                      <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Phone 3</div>
+                      <a href={`tel:${selectedContact.phoneNumber3}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
+                        {selectedContact.phoneNumber3}
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Address */}
+            {(selectedContact.mailingAddress || selectedContact.city || selectedContact.state) && (
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0' }}>Mailing Address</h4>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <span style={{ fontSize: '18px' }}>📍</span>
+                  <div style={{ fontSize: '14px', ...text.primary }}>
+                    {selectedContact.mailingAddress && <div>{selectedContact.mailingAddress}</div>}
+                    {selectedContact.city && selectedContact.state && (
+                      <div>{selectedContact.city}, {selectedContact.state} {selectedContact.zipCode || ''}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Site Address */}
+            {(selectedContact.siteMailingAddress || selectedContact.siteCity || selectedContact.siteState) && (
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0' }}>Site Address</h4>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <span style={{ fontSize: '18px' }}>📍</span>
+                  <div style={{ fontSize: '14px', ...text.primary }}>
+                    {selectedContact.siteMailingAddress && <div>{selectedContact.siteMailingAddress}</div>}
+                    {selectedContact.siteCity && selectedContact.siteState && (
+                      <div>{selectedContact.siteCity}, {selectedContact.siteState} {selectedContact.siteZipCode || ''}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            {selectedContact.notes && (
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0' }}>Notes</h4>
+                <div style={{ fontSize: '14px', ...text.primary, whiteSpace: 'pre-wrap' }}>{selectedContact.notes}</div>
+              </div>
+            )}
+
+            {/* Additional Phone Numbers */}
+            {(selectedContact.phoneNumber4 || selectedContact.phoneNumber5 || selectedContact.phoneNumber6) && (
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 600, ...text.secondary, margin: '0 0 12px 0' }}>Additional Phones</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {selectedContact.phoneNumber4 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '16px' }}>📞</span>
+                      <a href={`tel:${selectedContact.phoneNumber4}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
+                        {selectedContact.phoneNumber4}
+                      </a>
+                    </div>
+                  )}
+                  {selectedContact.phoneNumber5 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '16px' }}>📞</span>
+                      <a href={`tel:${selectedContact.phoneNumber5}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
+                        {selectedContact.phoneNumber5}
+                      </a>
+                    </div>
+                  )}
+                  {selectedContact.phoneNumber6 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '16px' }}>📞</span>
+                      <a href={`tel:${selectedContact.phoneNumber6}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
+                        {selectedContact.phoneNumber6}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
