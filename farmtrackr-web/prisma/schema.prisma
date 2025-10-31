@@ -65,6 +65,7 @@ model Document {
   id          String   @id @default(cuid())
   title       String
   description String?
+  type        String? // Document type: 'template', 'contact', 'report', or null
   content     String? // Store document content as text
   fileUrl     String? // Store file URL if it's a file
   contactId   String? // Optional link to a contact

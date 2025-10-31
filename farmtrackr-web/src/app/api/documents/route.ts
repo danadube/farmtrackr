@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       ]
     }
     if (type && ['template', 'contact', 'report'].includes(type)) {
-      // store in description field prefix for now if needed; schema lacks type field
+      where.type = type
     }
 
     const docs = await prisma.document.findMany({
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, description, content, fileUrl, contactId } = body
+    const { title, description, type, content, fileUrl, contactId } = body
 
     if (!title || typeof title !== 'string') {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       data: {
         title,
         description: description || null,
+        type: type || null,
         content: content || null,
         fileUrl: fileUrl || null,
         contactId: contactId || null,

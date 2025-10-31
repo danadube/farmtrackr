@@ -55,6 +55,7 @@ export default function DocumentsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newDocTitle, setNewDocTitle] = useState('')
   const [newDocDescription, setNewDocDescription] = useState('')
+  const [newDocType, setNewDocType] = useState<'template' | 'contact' | 'report' | ''>('')
   const [newDocContent, setNewDocContent] = useState('')
   const [uploadingFile, setUploadingFile] = useState(false)
   const [editingDoc, setEditingDoc] = useState<Document | null>(null)
@@ -62,6 +63,12 @@ export default function DocumentsPage() {
   const [previewDoc, setPreviewDoc] = useState<Document | null>(null)
   const [previewContent, setPreviewContent] = useState<string>('')
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string>('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [docToDelete, setDocToDelete] = useState<Document | null>(null)
+  const [showSuccessToast, setShowSuccessToast] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [showErrorToast, setShowErrorToast] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   // Letterheads state
   const [letterheads, setLetterheads] = useState<Letterhead[]>([])
@@ -87,6 +94,7 @@ export default function DocumentsPage() {
           id: d.id,
           title: d.title,
           description: d.description || '',
+          type: d.type || undefined,
           createdAt: new Date(d.createdAt),
           updatedAt: new Date(d.updatedAt),
           fileUrl: d.fileUrl || null,
@@ -186,9 +194,21 @@ export default function DocumentsPage() {
     }
   }
 
+  const showToast = (message: string, isError = false) => {
+    if (isError) {
+      setErrorMessage(message)
+      setShowErrorToast(true)
+      setTimeout(() => setShowErrorToast(false), 5000)
+    } else {
+      setSuccessMessage(message)
+      setShowSuccessToast(true)
+      setTimeout(() => setShowSuccessToast(false), 3000)
+    }
+  }
+
   const handleSaveDocument = async () => {
     if (!newDocTitle.trim()) {
-      alert('Please enter a document title')
+      showToast('Please enter a document title', true)
       return
     }
 
@@ -202,25 +222,28 @@ export default function DocumentsPage() {
         body: JSON.stringify({
           title: newDocTitle,
           description: newDocDescription || null,
+          type: newDocType || null,
           content: newDocContent || null,
         }),
       })
 
       if (response.ok) {
         await refreshDocuments()
+        showToast(isEdit ? 'Document updated successfully' : 'Document created successfully')
         // Close modal and reset form
         setShowCreateModal(false)
         setEditingDoc(null)
         setNewDocTitle('')
         setNewDocDescription('')
+        setNewDocType('')
         setNewDocContent('')
       } else {
         const error = await response.json()
-        alert(`Error: ${error.error || (editingDoc ? 'Failed to save document' : 'Failed to create document')}`)
+        showToast(error.error || (isEdit ? 'Failed to save document' : 'Failed to create document'), true)
       }
     } catch (error) {
       console.error('Failed to save document:', error)
-      alert('Failed to save document')
+      showToast('Failed to save document', true)
     }
   }
 
@@ -230,41 +253,53 @@ export default function DocumentsPage() {
       // fetch full content
       try {
         const res = await fetch(`/api/documents/${doc.id}`)
-        if (res.ok) {
-          const full = await res.json()
-          setNewDocTitle(full.title || '')
-          setNewDocDescription(full.description || '')
-          setNewDocContent(full.content || '')
-        } else {
-          setNewDocTitle(doc.title || '')
-          setNewDocDescription(doc.description || '')
-        }
-      } catch {
+      if (res.ok) {
+        const full = await res.json()
+        setNewDocTitle(full.title || '')
+        setNewDocDescription(full.description || '')
+        setNewDocType((full.type as any) || '')
+        setNewDocContent(full.content || '')
+      } else {
         setNewDocTitle(doc.title || '')
         setNewDocDescription(doc.description || '')
+        setNewDocType((doc.type as any) || '')
       }
+    } catch {
+      setNewDocTitle(doc.title || '')
+      setNewDocDescription(doc.description || '')
+      setNewDocType((doc.type as any) || '')
+    }
     } else {
       setEditingDoc(null)
       setNewDocTitle('')
       setNewDocDescription('')
+      setNewDocType('')
       setNewDocContent('')
     }
     setShowCreateModal(true)
   }
 
-  const handleDeleteDocument = async (id: string) => {
-    if (!confirm('Delete this document? This action cannot be undone.')) return
+  const handleDeleteClick = (doc: Document) => {
+    setDocToDelete(doc)
+    setShowDeleteConfirm(true)
+  }
+
+  const handleDeleteDocument = async () => {
+    if (!docToDelete) return
     try {
-      const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/documents/${docToDelete.id}`, { method: 'DELETE' })
       if (res.ok) {
         await refreshDocuments()
+        showToast('Document deleted successfully')
+        setShowDeleteConfirm(false)
+        setDocToDelete(null)
       } else {
         const error = await res.json().catch(() => ({}))
-        alert(`Failed to delete document${error.error ? `: ${error.error}` : ''}`)
+        showToast(error.error ? `Failed to delete: ${error.error}` : 'Failed to delete document', true)
       }
     } catch (e) {
       console.error('Failed to delete document', e)
-      alert('Failed to delete document')
+      showToast('Failed to delete document', true)
     }
   }
 
@@ -302,14 +337,14 @@ export default function DocumentsPage() {
 
       if (response.ok) {
         await refreshDocuments()
-        alert('Document uploaded successfully!')
+        showToast('Document uploaded successfully!')
       } else {
         const error = await response.json()
-        alert(`Error: ${error.error || 'Failed to upload document'}`)
+        showToast(error.error || 'Failed to upload document', true)
       }
     } catch (error) {
       console.error('Failed to upload file:', error)
-      alert('Failed to upload file')
+      showToast('Failed to upload file', true)
     } finally {
       setUploadingFile(false)
       // Reset file input
@@ -344,11 +379,11 @@ export default function DocumentsPage() {
         setPreviewPdfUrl('')
         setShowPreviewModal(true)
       } else {
-        alert('Failed to load document for preview')
+        showToast('Failed to load document for preview', true)
       }
     } catch (e) {
       console.error('Preview error', e)
-      alert('Failed to load document for preview')
+      showToast('Failed to load document for preview', true)
     }
   }
 
@@ -356,7 +391,7 @@ export default function DocumentsPage() {
     try {
       const res = await fetch(`/api/documents/${doc.id}`)
       if (!res.ok) {
-        alert('Failed to load document for download')
+        showToast('Failed to load document for download', true)
         return
       }
       const full = await res.json()
@@ -377,7 +412,7 @@ export default function DocumentsPage() {
       URL.revokeObjectURL(url)
     } catch (e) {
       console.error('Download error', e)
-      alert('Failed to download document')
+      showToast('Failed to download document', true)
     }
   }
 
@@ -449,7 +484,7 @@ export default function DocumentsPage() {
 
   const handleSaveLetterhead = async () => {
     if (!letterheadName.trim() || (!letterheadHeaderHtml.trim() && !letterheadHeaderText.trim())) {
-      alert('Name and at least header HTML or text is required')
+      showToast('Name and at least header HTML or text is required', true)
       return
     }
 
@@ -492,6 +527,7 @@ export default function DocumentsPage() {
           }))
           setLetterheads(mapped)
         }
+        showToast(editingLetterhead ? 'Letterhead updated successfully' : 'Letterhead created successfully')
         // Close modal and reset form
         setShowLetterheadModal(false)
         setEditingLetterhead(null)
@@ -503,15 +539,18 @@ export default function DocumentsPage() {
         setLetterheadIsDefault(false)
       } else {
         const error = await response.json()
-        alert(`Error: ${error.error || 'Failed to save letterhead'}`)
+        showToast(error.error || 'Failed to save letterhead', true)
       }
     } catch (error) {
       console.error('Failed to save letterhead:', error)
-      alert('Failed to save letterhead')
+      showToast('Failed to save letterhead', true)
     }
   }
 
   const handleDeleteLetterhead = async (id: string) => {
+    const letterhead = letterheads.find(l => l.id === id)
+    if (!letterhead) return
+    
     if (!confirm('Are you sure you want to delete this letterhead?')) return
 
     try {
@@ -520,6 +559,7 @@ export default function DocumentsPage() {
       })
 
       if (response.ok) {
+        showToast('Letterhead deleted successfully')
         // Refresh letterheads list
         const res = await fetch('/api/letterheads')
         if (res.ok) {
@@ -539,11 +579,11 @@ export default function DocumentsPage() {
           setLetterheads(mapped)
         }
       } else {
-        alert('Failed to delete letterhead')
+        showToast('Failed to delete letterhead', true)
       }
     } catch (error) {
       console.error('Failed to delete letterhead:', error)
-      alert('Failed to delete letterhead')
+      showToast('Failed to delete letterhead', true)
     }
   }
 
@@ -1325,7 +1365,7 @@ export default function DocumentsPage() {
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = 'transparent'
                           }}
-                          onClick={() => handleDeleteDocument(doc.id)}
+                          onClick={() => handleDeleteClick(doc)}
                         >
                           <Trash2 style={{ width: '16px', height: '16px', color: colors.error || '#ef4444' }} />
                         </button>
@@ -1423,6 +1463,31 @@ export default function DocumentsPage() {
               />
             </div>
 
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
+                Document Type (optional)
+              </label>
+              <select
+                value={newDocType}
+                onChange={(e) => setNewDocType(e.target.value as any)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  backgroundColor: colors.card,
+                  color: colors.text.primary,
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="">None</option>
+                <option value="template">Template</option>
+                <option value="contact">Contact Document</option>
+                <option value="report">Report</option>
+              </select>
+            </div>
+
             <div style={{ marginBottom: '24px' }}>
               <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
                 Content (optional)
@@ -1453,6 +1518,7 @@ export default function DocumentsPage() {
                   setEditingDoc(null)
                   setNewDocTitle('')
                   setNewDocDescription('')
+                  setNewDocType('')
                   setNewDocContent('')
                 }}
                 style={{
@@ -1762,7 +1828,7 @@ export default function DocumentsPage() {
                       }
                     } catch (error) {
                       console.error('Failed to load template:', error)
-                      alert('Template not found. Make sure the file exists in /public/ folder.')
+                      showToast('Template not found. Make sure the file exists in /public/ folder.', true)
                     }
                   }}
                   style={{
@@ -1919,6 +1985,145 @@ export default function DocumentsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && docToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowDeleteConfirm(false)
+              setDocToDelete(null)
+            }
+          }}
+        >
+          <div
+            style={{
+              ...card,
+              padding: '24px',
+              maxWidth: '400px',
+              width: '90%',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, marginBottom: '12px' }}>
+              Delete Document
+            </h2>
+            <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '24px' }}>
+              Are you sure you want to delete "{docToDelete.title}"? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  setDocToDelete(null)
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: colors.cardHover,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  ...text.secondary,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteDocument}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: colors.error || '#ef4444',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            padding: '16px 20px',
+            backgroundColor: colors.success,
+            color: '#ffffff',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            zIndex: 1100,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            maxWidth: '400px',
+            animation: 'slideIn 0.3s ease',
+          }}
+        >
+          <div style={{ fontSize: '16px' }}>✓</div>
+          <div style={{ fontSize: '14px', fontWeight: '500' }}>{successMessage}</div>
+        </div>
+      )}
+
+      {/* Error Toast */}
+      {showErrorToast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            padding: '16px 20px',
+            backgroundColor: colors.error || '#ef4444',
+            color: '#ffffff',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            zIndex: 1100,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            maxWidth: '400px',
+            animation: 'slideIn 0.3s ease',
+          }}
+        >
+          <div style={{ fontSize: '16px' }}>✕</div>
+          <div style={{ fontSize: '14px', fontWeight: '500' }}>{errorMessage}</div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </Sidebar>
   )
 }

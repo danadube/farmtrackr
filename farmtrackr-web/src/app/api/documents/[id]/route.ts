@@ -15,12 +15,13 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const body = await request.json()
-    const { title, description, content, fileUrl, contactId } = body
+    const { title, description, type, content, fileUrl, contactId } = body
     const updated = await prisma.document.update({
       where: { id: params.id },
       data: {
         ...(title !== undefined ? { title } : {}),
         ...(description !== undefined ? { description } : {}),
+        ...(type !== undefined ? { type } : {}),
         ...(content !== undefined ? { content } : {}),
         ...(fileUrl !== undefined ? { fileUrl } : {}),
         ...(contactId !== undefined ? { contactId } : {}),
