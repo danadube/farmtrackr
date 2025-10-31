@@ -22,11 +22,22 @@ export async function POST(request: NextRequest) {
     // Create authenticated People API client
     const people = getAuthenticatedPeopleClient(accessToken)
     
+    // First, fetch contact groups to map group IDs to names
+    const groupsResponse = await people.contactGroups.list()
+    const groups = groupsResponse.data.contactGroups || []
+    const groupMap = new Map<string, string>()
+    groups.forEach(group => {
+      if (group.resourceName && group.name) {
+        const groupId = group.resourceName.replace('contactGroups/', '')
+        groupMap.set(groupId, group.name)
+      }
+    })
+    
     // Fetch all contacts from Google Contacts
     const response = await people.people.connections.list({
       resourceName: 'people/me',
       pageSize: 1000,
-      personFields: 'names,emailAddresses,phoneNumbers,addresses,organizations,biographies,miscKeywords'
+      personFields: 'names,emailAddresses,phoneNumbers,addresses,organizations,biographies,memberships'
     })
 
     const connections = response.data.connections || []
@@ -91,12 +102,16 @@ export async function POST(request: NextRequest) {
         // Extract notes/biography
         const notes = person.biographies?.[0]?.value || ''
 
-        // Extract tags from miscKeywords (Google Contacts labels)
+        // Extract tags from memberships (Google Contacts groups/labels)
         const tags: string[] = []
-        if (person.miscKeywords && person.miscKeywords.length > 0) {
-          person.miscKeywords.forEach(keyword => {
-            if (keyword.value) {
-              tags.push(keyword.value)
+        if (person.memberships && person.memberships.length > 0) {
+          person.memberships.forEach(membership => {
+            if (membership.contactGroupMembership?.contactGroupId) {
+              const groupId = membership.contactGroupMembership.contactGroupId
+              const groupName = groupMap.get(groupId)
+              if (groupName) {
+                tags.push(groupName)
+              }
             }
           })
         }
