@@ -7,7 +7,7 @@
  * 3. Update LAST_UPDATED date
  * 4. Update APP_VERSION here to match package.json
  * 
- * See VERSION_UPDATE.md for detailed instructions
+ * See docs/setup/VERSION_UPDATE.md for detailed instructions
  */
 
 // IMPORTANT: Keep this in sync with package.json version
