@@ -8,7 +8,7 @@ import {
   CheckCircle, 
   AlertCircle,
   RefreshCw,
-  ContactRound
+  Contact
 } from 'lucide-react'
 
 interface GeneralContact {
@@ -164,7 +164,7 @@ export default function GoogleContactsPage() {
                     justifyContent: 'center'
                   }}
                 >
-                  <ContactRound style={{ width: '24px', height: '24px', color: colors.primary }} />
+                  <Contact style={{ width: '24px', height: '24px', color: colors.primary }} />
                 </div>
                 <div>
                   <h1 

@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const people = getAuthenticatedPeopleClient(accessToken)
     
     // Fetch all contacts from Google Contacts
-    const response = await people.people.listConnections({
+    const response = await people.people.connections.list({
       resourceName: 'people/me',
       pageSize: 1000,
       personFields: 'names,emailAddresses,phoneNumbers,addresses,organizations,biographies,tagLine,miscKeywords'
