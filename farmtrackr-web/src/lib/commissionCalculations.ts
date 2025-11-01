@@ -35,6 +35,9 @@ export interface TransactionInput {
   // Universal
   otherDeductions?: string | number
   buyersAgentSplit?: string | number
+  
+  // Pre-calculated NCI from CSV (used for referral transactions)
+  nci?: string | number
 }
 
 export interface CommissionResult {
@@ -85,7 +88,10 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
     
     // Universal
     otherDeductions = 0,
-    buyersAgentSplit = 0
+    buyersAgentSplit = 0,
+    
+    // Pre-calculated NCI from CSV (used for referral transactions)
+    nci: providedNci = undefined
   } = data
 
   // Parse all values as numbers
@@ -103,6 +109,20 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
     gci = refFeeReceived // GCI is the referral fee itself
     referralDollar = 0 // You're not paying a referral
     adjustedGci = gci // No adjustment needed
+    
+    // For referral transactions, use NCI directly from CSV if provided
+    // Referrals are calculated differently and shouldn't use the standard formula
+    if (providedNci !== undefined && providedNci !== null && providedNci !== '') {
+      const csvNci = parseFloat(String(providedNci)) || 0
+      return {
+        gci: gci.toFixed(2),
+        referralDollar: '0.00',
+        adjustedGci: adjustedGci.toFixed(2),
+        totalBrokerageFees: (gci - csvNci).toFixed(2), // Calculate fees as difference for display
+        nci: csvNci.toFixed(2), // Use CSV value directly
+        netVolume: price.toFixed(2)
+      }
+    }
   } 
   // REGULAR SALE or REFERRAL $ PAID: Calculate from property price
   else {

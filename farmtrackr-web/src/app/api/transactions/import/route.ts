@@ -291,6 +291,9 @@ export async function POST(request: NextRequest) {
         
         const buyersAgentSplit = parseMoney(mapField(['buyersagentsplit', 'buyersAgentSplit', "Buyer's Agent Split", 'buyers_agent_split']))
         const assistantBonus = parseMoney(mapField(['assistantbonus', 'assistantBonus', 'Assistant Bonus', 'assistant_bonus']))
+        
+        // NCI from CSV (especially important for referral transactions)
+        const csvNci = parseMoney(mapField(['nci', 'NCI', 'Net Commission Income', 'netCommissionIncome', 'net_commission_income']))
 
         // Validate dates before storing - ensure they're valid Date objects or null
         // Dec 31, 1969 (Unix epoch) indicates invalid date, so reject dates before 1970
@@ -366,6 +369,13 @@ export async function POST(request: NextRequest) {
           // If no exact match found with dates or transaction type, treat as new transaction
         }
 
+        // For referral transactions, store CSV NCI in notes as JSON so we can use it directly
+        // Format: { "csvNci": 1234.56 } or null
+        let notesData: any = null
+        if (transactionType === 'Referral $ Received' && csvNci !== null && csvNci !== undefined) {
+          notesData = JSON.stringify({ csvNci: csvNci })
+        }
+
         const transactionData: any = {
           propertyType,
           clientType,
@@ -384,6 +394,7 @@ export async function POST(request: NextRequest) {
           referralDollar: referralDollar !== null ? referralDollar : undefined,
           referralFeeReceived: referralFeeReceived !== null ? referralFeeReceived : undefined,
           referringAgent: referringAgent || null,
+          notes: notesData, // Store CSV NCI for referral transactions
           
           // KW
           eo: eo !== null ? eo : undefined,

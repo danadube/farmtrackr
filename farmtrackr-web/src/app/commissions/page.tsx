@@ -70,6 +70,7 @@ interface Transaction {
   otherDeductions?: number | null
   buyersAgentSplit?: number | null
   assistantBonus?: number | null
+  notes?: string | null // May contain CSV NCI for referral transactions
 }
 
 export default function CommissionsPage() {
@@ -250,6 +251,19 @@ export default function CommissionsPage() {
 
   // Helper function to get commission calculation for a transaction
   const getCommissionForTransaction = (t: Transaction) => {
+    // For referral transactions, extract CSV NCI from notes if available
+    let csvNci: number | undefined = undefined
+    if (t.transactionType === 'Referral $ Received' && t.notes) {
+      try {
+        const notesData = JSON.parse(t.notes)
+        if (notesData && typeof notesData.csvNci === 'number') {
+          csvNci = notesData.csvNci
+        }
+      } catch (e) {
+        // Notes might not be JSON, ignore
+      }
+    }
+    
     return calculateCommission({
       brokerage: t.brokerage,
       transactionType: t.transactionType,
@@ -257,6 +271,7 @@ export default function CommissionsPage() {
       commissionPct: parseFloat(String(t.commissionPct || 0)),
       referralPct: parseFloat(String(t.referralPct || 0)),
       referralFeeReceived: parseFloat(String(t.referralFeeReceived || 0)),
+      nci: csvNci, // Pass CSV NCI for referral transactions
       eo: parseFloat(String(t.eo || 0)),
       royalty: t.royalty || '',
       companyDollar: t.companyDollar || '',
