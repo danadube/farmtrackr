@@ -217,12 +217,19 @@ export async function POST(request: NextRequest) {
         const asf = parseMoney(mapField(['asf', 'ASF']))
         const foundation10 = parseMoney(mapField(['foundation10', 'Foundation 10', 'foundation_10']))
         const adminFee = parseMoney(mapField(['adminFee', 'Admin Fee', 'admin_fee']))
-        const preSplitDeduction = mapField(['preSplitDeduction', 'Pre-Split Deduction', 'pre_split_deduction'])
+        const preSplitDeduction = parseMoney(mapField(['preSplitDeduction', 'Pre-Split Deduction', 'pre_split_deduction', 'presplitdeduction']))
 
-        // Universal
-        const otherDeductions = parseMoney(mapField(['otherDeductions', 'Other Deductions', 'other_deductions']))
-        const buyersAgentSplit = parseMoney(mapField(['buyersAgentSplit', "Buyer's Agent Split", 'buyers_agent_split']))
-        const assistantBonus = parseMoney(mapField(['assistantBonus', 'Assistant Bonus', 'assistant_bonus']))
+        // Universal - handle combined columns from CSV
+        // adminfees-otherdeductions column needs to be split or mapped to adminFee/otherDeductions
+        const adminfeesOther = parseMoney(mapField(['adminfees-otherdeductions', 'adminfees-otherdeductions', 'adminFees-otherDeductions', 'Admin Fees-Other Deductions']))
+        const brokerageSplit = parseMoney(mapField(['brokeragesplit', 'brokerageSplit', 'Brokerage Split', 'brokerage_split']))
+        
+        const otherDeductions = parseMoney(mapField(['otherDeductions', 'Other Deductions', 'other_deductions'])) || (adminfeesOther ? adminfeesOther : null)
+        // If adminFee wasn't set but adminfeesOther exists, use it (or split if needed)
+        const finalAdminFee = adminFee !== null ? adminFee : (adminfeesOther ? adminfeesOther : null)
+        
+        const buyersAgentSplit = parseMoney(mapField(['buyersagentsplit', 'buyersAgentSplit', "Buyer's Agent Split", 'buyers_agent_split']))
+        const assistantBonus = parseMoney(mapField(['assistantbonus', 'assistantBonus', 'Assistant Bonus', 'assistant_bonus']))
 
         // Validate dates before storing - ensure they're valid Date objects or null
         // Dec 31, 1969 (Unix epoch) indicates invalid date, so reject dates before 1970
@@ -274,7 +281,7 @@ export async function POST(request: NextRequest) {
           bdhSplitPct: bdhSplitPct !== null ? bdhSplitPct : undefined,
           asf: asf !== null ? asf : undefined,
           foundation10: foundation10 !== null ? foundation10 : undefined,
-          adminFee: adminFee !== null ? adminFee : undefined,
+          adminFee: finalAdminFee !== null ? finalAdminFee : undefined,
           preSplitDeduction: preSplitDeduction !== null ? preSplitDeduction : undefined,
           
           // Universal
