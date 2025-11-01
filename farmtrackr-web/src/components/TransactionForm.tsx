@@ -681,7 +681,67 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                     <option value="Referral $ Received">Referral $ Received</option>
                     <option value="Referral $ Paid">Referral $ Paid</option>
                   </select>
+                  <p style={{ fontSize: '12px', ...text.tertiary, marginTop: '4px', marginBottom: '0' }}>
+                    {formData.transactionType === 'Sale' && 'Standard buyer/seller transaction with commission'}
+                    {formData.transactionType === 'Referral $ Received' && 'You refer a client to another agent and receive a referral fee'}
+                    {formData.transactionType === 'Referral $ Paid' && 'Another agent refers a client to you and you pay them a referral fee'}
+                  </p>
                 </div>
+
+                {/* Referral-Specific Fields */}
+                {(formData.transactionType === 'Referral $ Received' || formData.transactionType === 'Referral $ Paid') && (
+                  <>
+                    <div>
+                      <label htmlFor="referringAgent" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                        {formData.transactionType === 'Referral $ Received' ? 'Referring Agent (Who you sent client to)' : 'Referring Agent (Who sent you the client)'}
+                      </label>
+                      <input
+                        id="referringAgent"
+                        name="referringAgent"
+                        type="text"
+                        value={formData.referringAgent}
+                        onChange={(e) => handleInputChange('referringAgent', e.target.value)}
+                        placeholder="Agent Name"
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: '10px',
+                          fontSize: '14px',
+                          backgroundColor: colors.card,
+                          color: colors.text.primary
+                        }}
+                      />
+                    </div>
+
+                    {formData.transactionType === 'Referral $ Received' && (
+                      <div>
+                        <label htmlFor="referralFeeReceived" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                          Referral Fee You Receive *
+                          <span style={{ fontSize: '12px', ...text.tertiary, marginLeft: '8px' }}>(Amount you get paid)</span>
+                        </label>
+                        <input
+                          id="referralFeeReceived"
+                          name="referralFeeReceived"
+                          type="text"
+                          value={formatCurrencyForInput(formData.referralFeeReceived)}
+                          onChange={(e) => handleInputChange('referralFeeReceived', parseCurrencyFromInput(e.target.value))}
+                          placeholder="$0.00"
+                          required={!transactionId && formData.transactionType === 'Referral $ Received'}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '10px',
+                            fontSize: '14px',
+                            backgroundColor: colors.card,
+                            color: colors.text.primary
+                          }}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
 
                 <div>
                   <label htmlFor="address" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
@@ -732,6 +792,29 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 </div>
 
                 <div>
+                  <label htmlFor="listPrice" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                    List Price
+                  </label>
+                  <input
+                    id="listPrice"
+                    name="listPrice"
+                    type="text"
+                    value={formatCurrencyForInput(formData.listPrice)}
+                    onChange={(e) => handleInputChange('listPrice', parseCurrencyFromInput(e.target.value))}
+                    placeholder="$0.00"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary
+                    }}
+                  />
+                </div>
+
+                <div>
                   <label htmlFor="closedPrice" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     Closed Price *
                   </label>
@@ -743,6 +826,28 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                     onChange={(e) => handleInputChange('closedPrice', parseCurrencyFromInput(e.target.value))}
                     required
                     placeholder="$0.00"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="listDate" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                    List Date
+                  </label>
+                  <input
+                    id="listDate"
+                    name="listDate"
+                    type="date"
+                    value={formData.listDate}
+                    onChange={(e) => handleInputChange('listDate', e.target.value)}
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -861,45 +966,543 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                   />
                 </div>
 
-                {/* Calculated Fields */}
-                <div style={{ gridColumn: '1 / -1', padding: '16px', backgroundColor: colors.cardHover, borderRadius: '10px', border: `1px solid ${colors.border}` }}>
-                  <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: '12px' }}>
-                    Calculated Values
-                  </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, display: 'block', marginBottom: '4px' }}>
-                        GCI
-                      </label>
-                      <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                        ${parseFloat(formData.gci || '0').toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, display: 'block', marginBottom: '4px' }}>
-                        Adjusted GCI
-                      </label>
-                      <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                        ${parseFloat(formData.adjustedGci || '0').toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, display: 'block', marginBottom: '4px' }}>
-                        Total Brokerage Fees
-                      </label>
-                      <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                        ${parseFloat(formData.totalBrokerageFees || '0').toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, display: 'block', marginBottom: '4px' }}>
-                        NCI
-                      </label>
-                      <p style={{ fontSize: '16px', fontWeight: '600', color: colors.success, margin: '0' }}>
-                        ${parseFloat(formData.nci || '0').toLocaleString()}
-                      </p>
-                    </div>
+                <div>
+                  <label htmlFor="gci" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                    Gross Commission Income (GCI)
+                  </label>
+                  <input
+                    id="gci"
+                    name="gci"
+                    type="text"
+                    value={formatCurrencyForInput(formData.gci)}
+                    onChange={(e) => handleInputChange('gci', parseCurrencyFromInput(e.target.value))}
+                    placeholder="$0.00"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="referralDollar" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                    Referral Fee Paid ($)
+                  </label>
+                  <input
+                    id="referralDollar"
+                    name="referralDollar"
+                    type="text"
+                    value={formatCurrencyForInput(formData.referralDollar)}
+                    onChange={(e) => handleInputChange('referralDollar', parseCurrencyFromInput(e.target.value))}
+                    placeholder="$0.00"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="adjustedGci" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                    Adjusted GCI
+                  </label>
+                  <input
+                    id="adjustedGci"
+                    name="adjustedGci"
+                    type="text"
+                    value={formatCurrencyForInput(formData.adjustedGci)}
+                    onChange={(e) => handleInputChange('adjustedGci', parseCurrencyFromInput(e.target.value))}
+                    placeholder="$0.00"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Brokerage-Specific Deductions - Keller Williams */}
+            {(formData.brokerage === 'Keller Williams' || formData.brokerage === 'KW') && (
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, marginBottom: '16px' }}>
+                  Keller Williams Deductions
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label htmlFor="eo" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      Errors & Omissions (E&O)
+                    </label>
+                    <input
+                      id="eo"
+                      name="eo"
+                      type="text"
+                      value={formatCurrencyForInput(formData.eo)}
+                      onChange={(e) => handleInputChange('eo', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
                   </div>
+
+                  <div>
+                    <label htmlFor="royalty" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      Royalty (6%)
+                    </label>
+                    <input
+                      id="royalty"
+                      name="royalty"
+                      type="text"
+                      value={formatCurrencyForInput(formData.royalty)}
+                      onChange={(e) => handleInputChange('royalty', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="companyDollar" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      Company Dollar (10%)
+                    </label>
+                    <input
+                      id="companyDollar"
+                      name="companyDollar"
+                      type="text"
+                      value={formatCurrencyForInput(formData.companyDollar)}
+                      onChange={(e) => handleInputChange('companyDollar', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="hoaTransfer" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      HOA Transfer
+                    </label>
+                    <input
+                      id="hoaTransfer"
+                      name="hoaTransfer"
+                      type="text"
+                      value={formatCurrencyForInput(formData.hoaTransfer)}
+                      onChange={(e) => handleInputChange('hoaTransfer', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="homeWarranty" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      Home Warranty
+                    </label>
+                    <input
+                      id="homeWarranty"
+                      name="homeWarranty"
+                      type="text"
+                      value={formatCurrencyForInput(formData.homeWarranty)}
+                      onChange={(e) => handleInputChange('homeWarranty', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="kwCares" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      KW Cares
+                    </label>
+                    <input
+                      id="kwCares"
+                      name="kwCares"
+                      type="text"
+                      value={formatCurrencyForInput(formData.kwCares)}
+                      onChange={(e) => handleInputChange('kwCares', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="kwNextGen" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      NEXT GEN
+                    </label>
+                    <input
+                      id="kwNextGen"
+                      name="kwNextGen"
+                      type="text"
+                      value={formatCurrencyForInput(formData.kwNextGen)}
+                      onChange={(e) => handleInputChange('kwNextGen', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="boldScholarship" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      BOLD Scholarship
+                    </label>
+                    <input
+                      id="boldScholarship"
+                      name="boldScholarship"
+                      type="text"
+                      value={formatCurrencyForInput(formData.boldScholarship)}
+                      onChange={(e) => handleInputChange('boldScholarship', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="tcConcierge" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      TC/Concierge
+                    </label>
+                    <input
+                      id="tcConcierge"
+                      name="tcConcierge"
+                      type="text"
+                      value={formatCurrencyForInput(formData.tcConcierge)}
+                      onChange={(e) => handleInputChange('tcConcierge', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="jelmbergTeam" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      Jelmberg Team
+                    </label>
+                    <input
+                      id="jelmbergTeam"
+                      name="jelmbergTeam"
+                      type="text"
+                      value={formatCurrencyForInput(formData.jelmbergTeam)}
+                      onChange={(e) => handleInputChange('jelmbergTeam', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Brokerage-Specific Deductions - Bennion Deville Homes */}
+            {(formData.brokerage === 'BDH' || formData.brokerage === 'Bennion Deville Homes') && (
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, marginBottom: '16px' }}>
+                  Bennion Deville Homes Deductions
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label htmlFor="bdhSplitPct" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      BDH Split % (Default: 94%)
+                    </label>
+                    <input
+                      id="bdhSplitPct"
+                      name="bdhSplitPct"
+                      type="text"
+                      value={formatPercentageForInput(formData.bdhSplitPct)}
+                      onChange={(e) => handleInputChange('bdhSplitPct', parsePercentageFromInput(e.target.value))}
+                      placeholder="94.00%"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="preSplitDeduction" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      Pre-Split Deduction (6%)
+                    </label>
+                    <input
+                      id="preSplitDeduction"
+                      name="preSplitDeduction"
+                      type="text"
+                      value={formatCurrencyForInput(formData.preSplitDeduction)}
+                      onChange={(e) => handleInputChange('preSplitDeduction', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="asf" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      Agent Services Fee (ASF)
+                    </label>
+                    <input
+                      id="asf"
+                      name="asf"
+                      type="text"
+                      value={formatCurrencyForInput(formData.asf)}
+                      onChange={(e) => handleInputChange('asf', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="foundation10" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      Foundation10
+                    </label>
+                    <input
+                      id="foundation10"
+                      name="foundation10"
+                      type="text"
+                      value={formatCurrencyForInput(formData.foundation10)}
+                      onChange={(e) => handleInputChange('foundation10', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="adminFee" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                      Admin Fee
+                    </label>
+                    <input
+                      id="adminFee"
+                      name="adminFee"
+                      type="text"
+                      value={formatCurrencyForInput(formData.adminFee)}
+                      onChange={(e) => handleInputChange('adminFee', parseCurrencyFromInput(e.target.value))}
+                      placeholder="$0.00"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        backgroundColor: colors.card,
+                        color: colors.text.primary
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Additional Deductions */}
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, marginBottom: '16px' }}>
+                Additional Deductions
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                <div>
+                  <label htmlFor="otherDeductions" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                    Other Deductions
+                  </label>
+                  <input
+                    id="otherDeductions"
+                    name="otherDeductions"
+                    type="text"
+                    value={formatCurrencyForInput(formData.otherDeductions)}
+                    onChange={(e) => handleInputChange('otherDeductions', parseCurrencyFromInput(e.target.value))}
+                    placeholder="$0.00"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="buyersAgentSplit" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                    Buyer's Agent Split
+                  </label>
+                  <input
+                    id="buyersAgentSplit"
+                    name="buyersAgentSplit"
+                    type="text"
+                    value={formatCurrencyForInput(formData.buyersAgentSplit)}
+                    onChange={(e) => handleInputChange('buyersAgentSplit', parseCurrencyFromInput(e.target.value))}
+                    placeholder="$0.00"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="assistantBonus" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                    Assistant Bonus (FYI only)
+                  </label>
+                  <input
+                    id="assistantBonus"
+                    name="assistantBonus"
+                    type="text"
+                    value={formatCurrencyForInput(formData.assistantBonus)}
+                    onChange={(e) => handleInputChange('assistantBonus', parseCurrencyFromInput(e.target.value))}
+                    placeholder="$0.00"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary
+                    }}
+                  />
+                  <p style={{ fontSize: '12px', ...text.tertiary, marginTop: '4px', marginBottom: '0' }}>
+                    Not included in NCI calculation
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Calculated Summary */}
+            <div style={{ padding: '16px', backgroundColor: colors.cardHover, borderRadius: '10px', border: `1px solid ${colors.border}` }}>
+              <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: '12px' }}>
+                Calculated Summary
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, display: 'block', marginBottom: '4px' }}>
+                    Total Brokerage Fees
+                  </label>
+                  <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                    ${parseFloat(formData.totalBrokerageFees || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '500', ...text.tertiary, display: 'block', marginBottom: '4px' }}>
+                    Net Commission Income (NCI)
+                  </label>
+                  <p style={{ fontSize: '16px', fontWeight: '600', color: colors.success, margin: '0' }}>
+                    ${parseFloat(formData.nci || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
                 </div>
               </div>
             </div>
