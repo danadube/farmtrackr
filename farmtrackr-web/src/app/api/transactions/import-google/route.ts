@@ -47,6 +47,16 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`📊 Found ${rows.length} rows in Google Sheets`)
+    
+    // DEBUG: Log first row for column verification
+    if (rows.length > 0) {
+      console.log('\n🔍 First row from Google Sheets:')
+      console.log('   Row data:', rows[0])
+      console.log(`   Total columns: ${rows[0].length}`)
+      for (let i = 0; i < rows[0].length && i < 15; i++) {
+        console.log(`   Column ${String.fromCharCode(65 + i)}: "${rows[0][i]}"`)
+      }
+    }
 
     // Column mapping based on the ACTUAL spreadsheet structure (verified from screenshot)
     // A=propertyType, B=source, C=address, D=city, E=listPrice, F=commissionPct, G=listDate, H=closingDate
