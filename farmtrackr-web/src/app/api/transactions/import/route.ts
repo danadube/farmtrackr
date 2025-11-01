@@ -194,8 +194,19 @@ export async function POST(request: NextRequest) {
         }
 
         // Commission fields - handle percentage conversion
-        const commissionPct = normalizePercentage(mapField(['commissionPct', 'Commission %', 'commission_pct', 'commission', 'Commission', 'commPct']))
-        const referralPct = normalizePercentage(mapField(['referralPct', 'Referral %', 'referral_pct', 'referral', 'Referral']))
+        const commissionPctRaw = mapField(['commissionPct', 'Commission %', 'commission_pct', 'commission', 'Commission', 'commPct'])
+        const commissionPct = normalizePercentage(commissionPctRaw)
+        const referralPctRaw = mapField(['referralPct', 'Referral %', 'referral_pct', 'referral', 'Referral'])
+        const referralPct = normalizePercentage(referralPctRaw)
+        
+        // Debug logging for commission percentage issues
+        if (commissionPctRaw && (!commissionPct || commissionPct === 0)) {
+          console.warn('Commission % may be incorrectly parsed:', {
+            raw: commissionPctRaw,
+            normalized: commissionPct,
+            row: JSON.stringify(row, null, 2)
+          })
+        }
         const referralDollar = parseMoney(mapField(['referralDollar', 'Referral $', 'referral_dollar', 'referralAmount', 'referral_amount']))
         const referralFeeReceived = parseMoney(mapField(['Referral Fee Received', 'referralFeeReceived', 'referral_fee_received', 'feeReceived']))
         const referringAgent = mapField(['Referring Agent', 'referringAgent', 'referring_agent', 'agent'])
@@ -241,12 +252,25 @@ export async function POST(request: NextRequest) {
 
         // Check if transaction already exists
         // Include clientType to allow same address for buyer/seller sides
+        // If closingDate is missing, also check listDate to avoid false duplicates
+        const whereClause: any = {
+          address: address || undefined,
+          clientType: clientType || undefined
+        }
+        // If we have a closing date, use it for matching (most reliable)
+        if (validatedClosingDate) {
+          whereClause.closingDate = validatedClosingDate
+        } else if (validatedListDate) {
+          // If no closing date but we have a list date, use that instead
+          whereClause.listDate = validatedListDate
+        }
+        // If neither date is available, match by address + clientType + transactionType
+        if (!validatedClosingDate && !validatedListDate) {
+          whereClause.transactionType = transactionType
+        }
+        
         const existing = await prisma.transaction.findFirst({
-          where: {
-            address: address || undefined,
-            closingDate: validatedClosingDate || undefined,
-            clientType: clientType || undefined
-          }
+          where: whereClause
         })
 
         const transactionData: any = {
