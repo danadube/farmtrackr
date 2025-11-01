@@ -29,11 +29,13 @@ interface Transaction {
   propertyType: string
   clientType: string
   transactionType: string
+  source?: string | null
   address: string | null
   city: string | null
+  listPrice?: number | null
   closedPrice: number | null
-  closedDate: string | null
   listDate: string | null
+  closedDate: string | null
   brokerage: string
   status: string
   createdAt: string
@@ -64,6 +66,7 @@ interface Transaction {
   // Universal
   otherDeductions?: number | null
   buyersAgentSplit?: number | null
+  assistantBonus?: number | null
 }
 
 export default function CommissionsPage() {

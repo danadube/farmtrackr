@@ -4,10 +4,10 @@
 
 This roadmap outlines the development plan to bring the web application to feature parity with the Swift app, with special attention to the label printing functionality that had implementation challenges.
 
-**Last Updated:** November 1, 2025  
-**Current Version:** v0.5.0 (Google Contacts Integration) - ✅ COMPLETE  
-**Previous Version:** v0.4.2 (Document Management) - ✅ COMPLETE  
-**Next Target:** v0.6.0 (Commission Tracking Module)
+**Last Updated:** November 2, 2025  
+**Current Version:** v0.6.0 (Commission Tracking Module) - ✅ COMPLETE  
+**Previous Version:** v0.5.0 (Google Contacts Integration) - ✅ COMPLETE  
+**Next Target:** v0.7.0 (Enhancements & Polish)
 
 ---
 
