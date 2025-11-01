@@ -224,12 +224,17 @@ export async function POST(request: NextRequest) {
         const bdhSplitPct = null  // Split percentage not in sheet, will use default 94% in calculation
         const adminFee = parseMoney(rowData.adminfees) || null  // S: admin fees
 
+        // Validate dates before storing - ensure they're valid Date objects or null
+        // Dec 31, 1969 (Unix epoch) indicates invalid date, so reject dates before 1970
+        const validatedListDate = listDate && listDate instanceof Date && !isNaN(listDate.getTime()) && listDate.getFullYear() >= 1970 ? listDate : null
+        const validatedClosingDate = closingDate && closingDate instanceof Date && !isNaN(closingDate.getTime()) && closingDate.getFullYear() >= 1970 ? closingDate : null
+
         // Check if transaction already exists
         // Include clientType to allow same address for buyer/seller sides
         const existing = await prisma.transaction.findFirst({
           where: {
             address: address,
-            closingDate: closingDate || undefined,
+            closingDate: validatedClosingDate || undefined,
             clientType: clientType || undefined
           }
         })
@@ -243,8 +248,8 @@ export async function POST(request: NextRequest) {
           city,
           listPrice,
           closedPrice,
-          listDate,
-          closingDate,
+          listDate: validatedListDate,
+          closingDate: validatedClosingDate,
           status,
           brokerage,
           commissionPct,
