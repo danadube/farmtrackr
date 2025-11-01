@@ -557,7 +557,7 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                     )}
                   </label>
                   {scanError && (
-                    <div style={{ padding: '12px', backgroundColor: colors.errorBackground || '#fee2e2', borderRadius: '8px', border: `1px solid ${colors.error}` }}>
+                    <div style={{ padding: '12px', backgroundColor: colors.errorLight || '#fee2e2', borderRadius: '8px', border: `1px solid ${colors.error}` }}>
                       <p style={{ fontSize: '14px', color: colors.error, margin: '0' }}>
                         ⚠️ {scanError}
                       </p>
