@@ -534,7 +534,7 @@ export default function CommissionsPage() {
                           />
                           <Tooltip
                             contentStyle={{
-                              backgroundColor: isDark ? colors.card.backgroundColor : '#ffffff',
+                              backgroundColor: isDark ? card.backgroundColor : '#ffffff',
                               border: `1px solid ${colors.border}`,
                               borderRadius: '8px'
                             }}
