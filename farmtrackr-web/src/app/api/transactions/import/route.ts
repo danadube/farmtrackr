@@ -105,17 +105,18 @@ export async function POST(request: NextRequest) {
     // Process each row
     for (const row of rows) {
       try {
-        // Skip truly empty rows - check if row has any meaningful data
-        const rowKeys = Object.keys(row)
-        const hasAnyData = rowKeys.some(key => {
-          const value = row[key]
-          return value !== null && value !== undefined && String(value).trim() !== ''
-        })
-        
-        if (!hasAnyData) {
-          skipped++
-          continue
-        }
+      // Skip truly empty rows - check if row has any meaningful data
+      const rowKeys = Object.keys(row)
+      const hasAnyData = rowKeys.some(key => {
+        const value = row[key]
+        return value !== null && value !== undefined && String(value).trim() !== ''
+      })
+
+      if (!hasAnyData) {
+        skipped++
+        console.log(`Skipped empty row ${rows.indexOf(row) + 1}`)
+        continue
+      }
 
         // Map column names (flexible field mapping with case-insensitive matching)
         const mapField = (names: string[]): any => {
@@ -359,16 +360,22 @@ export async function POST(request: NextRequest) {
 
         // Validate required fields before attempting to save
         if (!propertyType || !clientType || !transactionType || !brokerage || !status) {
-          console.error('Missing required fields:', {
+          console.error('Missing required fields (skipping):', {
             propertyType,
             clientType,
             transactionType,
             brokerage,
             status,
+            address: address || 'no address',
             row: JSON.stringify(row, null, 2)
           })
           errors++
           continue
+        }
+        
+        // Log if transaction would be skipped due to duplicate
+        if (existing) {
+          console.log(`Duplicate found (will update): ${address || 'no address'}, ${clientType}, closingDate: ${validatedClosingDate ? validatedClosingDate.toISOString() : 'none'}, existing ID: ${existing.id}`)
         }
 
         if (existing) {
@@ -378,6 +385,7 @@ export async function POST(request: NextRequest) {
               data: transactionData
             })
             updated++
+            console.log(`Updated transaction: ${address || 'no address'}, ${clientType}, ${transactionType}`)
           } catch (updateError: any) {
             console.error('Error updating transaction:', updateError)
             console.error('Transaction data:', JSON.stringify(transactionData, null, 2))
@@ -389,6 +397,7 @@ export async function POST(request: NextRequest) {
               data: transactionData
             })
             imported++
+            console.log(`Imported transaction: ${address || 'no address'}, ${clientType}, ${transactionType}`)
           } catch (createError: any) {
             console.error('Error creating transaction:', createError)
             console.error('Transaction data:', JSON.stringify(transactionData, null, 2))
