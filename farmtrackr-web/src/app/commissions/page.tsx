@@ -753,8 +753,8 @@ export default function CommissionsPage() {
     }
     
     // Biggest deal
-    if (transactions.length > 0) {
-      const biggestDeal = [...transactions].sort((a, b) => {
+    if (filtered.length > 0) {
+      const biggestDeal = [...filtered].sort((a, b) => {
         const calcA = getCommissionForTransaction(a)
         const calcB = getCommissionForTransaction(b)
         return (parseFloat(calcB.nci) || 0) - (parseFloat(calcA.nci) || 0)
