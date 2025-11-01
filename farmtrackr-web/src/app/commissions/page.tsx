@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { 
   DollarSign, 
   Plus, 
@@ -13,9 +14,11 @@ import {
   Edit2,
   Trash2,
   X,
-  Save
+  Save,
+  Target
 } from 'lucide-react'
 import { TransactionForm } from '@/components/TransactionForm'
+import { calculateCommission } from '@/lib/commissionCalculations'
 
 interface Transaction {
   id: string
@@ -25,11 +28,38 @@ interface Transaction {
   address: string | null
   city: string | null
   closedPrice: number | null
-  closedDate: Date | null
+  closedDate: string | null
+  listDate: string | null
   brokerage: string
   status: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string
+  updatedAt: string
+  // Commission fields
+  commissionPct?: number | null
+  referralPct?: number | null
+  referralDollar?: number | null
+  referringAgent?: string | null
+  referralFeeReceived?: number | null
+  // KW fields
+  eo?: number | null
+  royalty?: number | null
+  companyDollar?: number | null
+  hoaTransfer?: number | null
+  homeWarranty?: number | null
+  kwCares?: number | null
+  kwNextGen?: number | null
+  boldScholarship?: number | null
+  tcConcierge?: number | null
+  jelmbergTeam?: number | null
+  // BDH fields
+  bdhSplitPct?: number | null
+  asf?: number | null
+  foundation10?: number | null
+  adminFee?: number | null
+  preSplitDeduction?: number | null
+  // Universal
+  otherDeductions?: number | null
+  buyersAgentSplit?: number | null
 }
 
 export default function CommissionsPage() {
@@ -78,10 +108,121 @@ export default function CommissionsPage() {
     }
   }
 
-  // Calculate summary stats
-  const totalTransactions = transactions.length
-  const totalVolume = transactions.reduce((sum, t) => sum + (t.closedPrice || 0), 0)
-  const closedTransactions = transactions.filter(t => t.status === 'Closed').length
+  // Calculate analytics
+  const analytics = useMemo(() => {
+    const totalTransactions = transactions.length
+    const totalVolume = transactions.reduce((sum, t) => sum + (t.closedPrice || 0), 0)
+    const closedTransactions = transactions.filter(t => t.status === 'Closed').length
+    
+    // Monthly data for charts
+    const monthlyData = transactions.reduce((acc, t) => {
+      if (t.closedDate) {
+        const month = new Date(t.closedDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+        if (!acc[month]) {
+          acc[month] = { month, gci: 0, nci: 0, transactions: 0 }
+        }
+        const calc = calculateCommission({
+          brokerage: t.brokerage,
+          transactionType: t.transactionType,
+          closedPrice: t.closedPrice || 0,
+          commissionPct: t.commissionPct || 0,
+          referralPct: t.referralPct || 0,
+          referralFeeReceived: t.referralFeeReceived || 0,
+          // KW
+          eo: t.eo || 0,
+          royalty: t.royalty || '',
+          companyDollar: t.companyDollar || '',
+          hoaTransfer: t.hoaTransfer || 0,
+          homeWarranty: t.homeWarranty || 0,
+          kwCares: t.kwCares || 0,
+          kwNextGen: t.kwNextGen || 0,
+          boldScholarship: t.boldScholarship || 0,
+          tcConcierge: t.tcConcierge || 0,
+          jelmbergTeam: t.jelmbergTeam || 0,
+          // BDH
+          bdhSplitPct: t.bdhSplitPct || 0,
+          asf: t.asf || 0,
+          foundation10: t.foundation10 || 0,
+          adminFee: t.adminFee || 0,
+          preSplitDeduction: t.preSplitDeduction || '',
+          // Universal
+          otherDeductions: t.otherDeductions || 0,
+          buyersAgentSplit: t.buyersAgentSplit || 0
+        })
+        acc[month].gci += parseFloat(calc.gci) || 0
+        acc[month].nci += parseFloat(calc.nci) || 0
+        acc[month].transactions += 1
+      }
+      return acc
+    }, {} as Record<string, { month: string; gci: number; nci: number; transactions: number }>)
+    
+    const chartData = Object.values(monthlyData).sort((a, b) => {
+      const dateA = new Date(a.month)
+      const dateB = new Date(b.month)
+      return dateA.getTime() - dateB.getTime()
+    })
+    
+    const pieData = [
+      { name: 'Buyer', value: transactions.filter(t => t.clientType === 'Buyer').length },
+      { name: 'Seller', value: transactions.filter(t => t.clientType === 'Seller').length }
+    ]
+    
+    const brokerageData = [
+      { 
+        name: 'KW', 
+        value: transactions.filter(t => 
+          t.brokerage === 'KW' || t.brokerage === 'Keller Williams'
+        ).reduce((sum, t) => {
+          const calc = calculateCommission({
+            brokerage: t.brokerage,
+            closedPrice: t.closedPrice || 0,
+            commissionPct: t.commissionPct || 0,
+            referralPct: t.referralPct || 0,
+            referralFeeReceived: t.referralFeeReceived || 0,
+            eo: t.eo || 0,
+            royalty: t.royalty || '',
+            companyDollar: t.companyDollar || '',
+            hoaTransfer: t.hoaTransfer || 0,
+            homeWarranty: t.homeWarranty || 0,
+            kwCares: t.kwCares || 0,
+            kwNextGen: t.kwNextGen || 0,
+            boldScholarship: t.boldScholarship || 0,
+            tcConcierge: t.tcConcierge || 0,
+            jelmbergTeam: t.jelmbergTeam || 0,
+            otherDeductions: t.otherDeductions || 0,
+            buyersAgentSplit: t.buyersAgentSplit || 0
+          })
+          return sum + (parseFloat(calc.nci) || 0)
+        }, 0)
+      },
+      { 
+        name: 'BDH', 
+        value: transactions.filter(t => 
+          t.brokerage === 'BDH' || t.brokerage === 'Bennion Deville Homes'
+        ).reduce((sum, t) => {
+          const calc = calculateCommission({
+            brokerage: t.brokerage,
+            closedPrice: t.closedPrice || 0,
+            commissionPct: t.commissionPct || 0,
+            referralPct: t.referralPct || 0,
+            referralFeeReceived: t.referralFeeReceived || 0,
+            bdhSplitPct: t.bdhSplitPct || 0,
+            asf: t.asf || 0,
+            foundation10: t.foundation10 || 0,
+            adminFee: t.adminFee || 0,
+            preSplitDeduction: t.preSplitDeduction || '',
+            otherDeductions: t.otherDeductions || 0,
+            buyersAgentSplit: t.buyersAgentSplit || 0
+          })
+          return sum + (parseFloat(calc.nci) || 0)
+        }, 0)
+      }
+    ].filter(item => item.value > 0)
+    
+    return { totalTransactions, totalVolume, closedTransactions, chartData, pieData, brokerageData }
+  }, [transactions])
+  
+  const { totalTransactions, totalVolume, closedTransactions, chartData, pieData, brokerageData } = analytics
 
   if (isLoading) {
     return (
@@ -261,6 +402,166 @@ export default function CommissionsPage() {
               </div>
             </div>
           </div>
+
+          {/* Analytics Charts */}
+          {transactions.length > 0 && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+                {/* Monthly Income Trend */}
+                <div style={{ ...card, overflow: 'hidden' }}>
+                  <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Monthly Income Trend
+                    </h3>
+                  </div>
+                  <div style={{ padding: '24px' }}>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+                        <XAxis dataKey="month" tick={{ fontSize: 12, fill: colors.text.secondary }} stroke={colors.text.secondary} />
+                        <YAxis tick={{ fontSize: 12, fill: colors.text.secondary }} stroke={colors.text.secondary} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: isDark ? colors.card.backgroundColor : '#ffffff',
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '8px'
+                          }}
+                          labelStyle={{ color: colors.text.primary }}
+                          formatter={(value: any) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                        />
+                        <Legend />
+                        <Line type="monotone" dataKey="gci" stroke="#f59e0b" strokeWidth={3} name="Gross Commission" dot={{ fill: '#f59e0b', r: 4 }} />
+                        <Line type="monotone" dataKey="nci" stroke="#10b981" strokeWidth={3} name="Net Commission" dot={{ fill: '#10b981', r: 4 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Transactions by Month */}
+                <div style={{ ...card, overflow: 'hidden' }}>
+                  <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Transactions by Month
+                    </h3>
+                  </div>
+                  <div style={{ padding: '24px' }}>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+                        <XAxis dataKey="month" tick={{ fontSize: 12, fill: colors.text.secondary }} stroke={colors.text.secondary} />
+                        <YAxis tick={{ fontSize: 12, fill: colors.text.secondary }} stroke={colors.text.secondary} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: isDark ? colors.card.backgroundColor : '#ffffff',
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '8px'
+                          }}
+                          labelStyle={{ color: colors.text.primary }}
+                        />
+                        <Legend />
+                        <Bar dataKey="transactions" fill="#3b82f6" name="Transactions" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Client Type Distribution */}
+                <div style={{ ...card, overflow: 'hidden' }}>
+                  <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Client Type Distribution
+                    </h3>
+                  </div>
+                  <div style={{ padding: '24px' }}>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={100}
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => {
+                            const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+                            return <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          })}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: isDark ? colors.card.backgroundColor : '#ffffff',
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '8px'
+                          }}
+                          labelStyle={{ color: colors.text.primary }}
+                        />
+                        <Legend 
+                          wrapperStyle={{ 
+                            paddingTop: '20px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            color: colors.text.primary
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Income by Brokerage */}
+                <div style={{ ...card, overflow: 'hidden' }}>
+                  <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Income by Brokerage
+                    </h3>
+                  </div>
+                  <div style={{ padding: '24px' }}>
+                    {brokerageData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={brokerageData} margin={{ top: 30, right: 40, left: 40, bottom: 20 }} barCategoryGap="30%">
+                          <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+                          <XAxis 
+                            dataKey="name" 
+                            tick={{ fontSize: 14, fill: colors.text.secondary }} 
+                            stroke={colors.text.secondary}
+                          />
+                          <YAxis 
+                            tick={{ fontSize: 12, fill: colors.text.secondary }} 
+                            stroke={colors.text.secondary}
+                            tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: isDark ? colors.card.backgroundColor : '#ffffff',
+                              border: `1px solid ${colors.border}`,
+                              borderRadius: '8px'
+                            }}
+                            labelStyle={{ color: colors.text.primary }}
+                            formatter={(value: any) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                          />
+                          <Legend wrapperStyle={{ paddingTop: '10px', color: colors.text.primary }} />
+                          <Bar 
+                            dataKey="value" 
+                            fill="#10b981" 
+                            name="Net Commission Income" 
+                            radius={[8, 8, 0, 0]}
+                            label={{ position: 'top', fill: colors.text.primary, fontSize: 12, formatter: (value: any) => `$${(value / 1000).toFixed(1)}k` }}
+                            minPointSize={5}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', ...text.secondary }}>
+                        <p style={{ fontSize: '14px', margin: '0' }}>No brokerage data available</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Transactions List */}
           <div style={{ ...card, overflow: 'hidden' }}>
@@ -442,32 +743,6 @@ export default function CommissionsPage() {
             )}
           </div>
 
-          {/* Phase 1 Complete Notice */}
-          <div 
-            style={{
-              marginTop: '24px',
-              padding: '24px',
-              backgroundColor: isDark ? '#065f46' : '#dcfce7',
-              border: `1px solid ${colors.success}`,
-              borderRadius: '12px'
-            }}
-          >
-            <h3 style={{ fontWeight: '600', color: colors.success, fontSize: '16px', marginBottom: '12px' }}>
-              ✅ Phase 1: Foundation Complete
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: isDark ? '#a7f3d0' : '#059669' }}>
-              <p style={{ margin: '0' }}>
-                Database and API are ready! Phase 2 features coming soon:
-              </p>
-              <ul style={{ margin: '0', paddingLeft: '20px' }}>
-                <li>Transaction create/edit form</li>
-                <li>Commission calculations (GCI, NCI, Brokerage-specific)</li>
-                <li>Analytics dashboard with charts</li>
-                <li>Google Sheets sync</li>
-                <li>Advanced filters and search</li>
-              </ul>
-            </div>
-          </div>
         </div>
       </div>
 
