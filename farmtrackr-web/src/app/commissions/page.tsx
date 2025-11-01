@@ -255,16 +255,23 @@ export default function CommissionsPage() {
     // For referral transactions, extract CSV NCI from notes or netVolume (temporary storage)
     let csvNci: number | undefined = undefined
     if (t.transactionType === 'Referral $ Received') {
+      console.log(`[Referral Debug] Processing transaction ${t.id} at ${t.address}:`, {
+        notes: t.notes,
+        netVolume: t.netVolume,
+        referralFeeReceived: t.referralFeeReceived
+      })
+      
       // First try notes field (if migration has been run)
       if (t.notes) {
         try {
           const notesData = JSON.parse(t.notes)
           if (notesData && typeof notesData.csvNci === 'number') {
             csvNci = notesData.csvNci
-            console.log(`[Referral] Using CSV NCI from notes: ${csvNci} for transaction ${t.id} at ${t.address}`)
+            console.log(`[Referral] ✓ Using CSV NCI from notes: ${csvNci}`)
           }
         } catch (e) {
           // Notes might not be JSON, ignore
+          console.log(`[Referral] Notes not JSON: ${t.notes}`)
         }
       }
       
@@ -272,16 +279,20 @@ export default function CommissionsPage() {
       // For referrals, netVolume is repurposed to store CSV NCI
       if (csvNci === undefined && t.netVolume) {
         const netVolume = parseFloat(String(t.netVolume))
-        // For referrals, netVolume stores CSV NCI directly
-        // It should be > 0 and <= referralFeeReceived (since NCI is always <= GCI for referrals)
-        if (netVolume > 0) {
+        // For referrals, netVolume stores CSV NCI directly - no need to compare with referralFeeReceived
+        // They can be equal (100% NCI = GCI for some referrals)
+        if (netVolume > 0 && !isNaN(netVolume)) {
           csvNci = netVolume
-          console.log(`[Referral] Using CSV NCI from netVolume (temporary): ${csvNci} for transaction ${t.id} at ${t.address}, referralFeeReceived: ${t.referralFeeReceived}`)
+          console.log(`[Referral] ✓ Using CSV NCI from netVolume: ${csvNci} (referralFeeReceived: ${t.referralFeeReceived})`)
+        } else {
+          console.log(`[Referral] netVolume invalid: ${netVolume}, isNaN: ${isNaN(netVolume)}`)
         }
+      } else if (csvNci === undefined) {
+        console.log(`[Referral] No netVolume found for transaction ${t.id}`)
       }
       
       if (csvNci === undefined) {
-        console.warn(`[Referral] No CSV NCI found for referral transaction ${t.id} at ${t.address}`)
+        console.warn(`[Referral] ✗ No CSV NCI found for referral transaction ${t.id} at ${t.address} - will show 0`)
       }
     }
     
