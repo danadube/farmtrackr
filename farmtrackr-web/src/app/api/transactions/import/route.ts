@@ -507,8 +507,12 @@ export async function POST(request: NextRequest) {
             console.error('Transaction data:', JSON.stringify(transactionData, null, 2))
             
             // If error is about notes field not existing, try without it
-            if (createError?.message && createError.message.includes('notes')) {
-              console.log('[Referral] Retrying without notes field...')
+            // Check both the error message and the error string representation
+            const errorMessage = String(createError?.message || '')
+            const errorString = String(createError || '')
+            
+            if ((errorMessage.includes('notes') || errorMessage.includes('Unknown argument')) && transactionData.notes) {
+              console.log('[Referral] Retrying without notes field (notes column doesn\'t exist in database)...')
               try {
                 const { notes, ...transactionDataWithoutNotes } = transactionData
                 const createResult = await prisma.transaction.create({
