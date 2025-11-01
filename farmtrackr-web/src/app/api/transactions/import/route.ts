@@ -277,16 +277,28 @@ export async function POST(request: NextRequest) {
         }
 
         if (existing) {
-          await prisma.transaction.update({
-            where: { id: existing.id },
-            data: transactionData
-          })
-          updated++
+          try {
+            await prisma.transaction.update({
+              where: { id: existing.id },
+              data: transactionData
+            })
+            updated++
+          } catch (updateError: any) {
+            console.error('Error updating transaction:', updateError)
+            console.error('Transaction data:', JSON.stringify(transactionData, null, 2))
+            errors++
+          }
         } else {
-          await prisma.transaction.create({
-            data: transactionData
-          })
-          imported++
+          try {
+            await prisma.transaction.create({
+              data: transactionData
+            })
+            imported++
+          } catch (createError: any) {
+            console.error('Error creating transaction:', createError)
+            console.error('Transaction data:', JSON.stringify(transactionData, null, 2))
+            errors++
+          }
         }
 
       } catch (error: any) {
