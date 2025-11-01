@@ -1794,7 +1794,15 @@ export default function CommissionsPage() {
                         <div>
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Brokerage</p>
                           <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
-                            {viewingTransaction.brokerage || 'N/A'}
+                            {(() => {
+                              const brokerage = viewingTransaction.brokerage
+                              if (!brokerage) return 'N/A'
+                              if (brokerage === 'KW' || brokerage === 'Keller Williams') return 'Keller Williams'
+                              if (brokerage === 'BDH' || brokerage === 'Bennion Deville Homes') return 'Bennion Deville Homes'
+                              // If it looks like a number/price, return N/A
+                              if (!isNaN(parseFloat(brokerage))) return 'N/A'
+                              return brokerage
+                            })()}
                           </p>
                         </div>
                       </div>
