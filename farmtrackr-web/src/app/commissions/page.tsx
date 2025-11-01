@@ -689,7 +689,7 @@ export default function CommissionsPage() {
     }
     
     // Top property type
-    const propertyTypes = transactions.reduce((acc, t) => {
+    const propertyTypes = filtered.reduce((acc, t) => {
       const calc = getCommissionForTransaction(t)
       acc[t.propertyType] = (acc[t.propertyType] || 0) + (parseFloat(calc.nci) || 0)
       return acc
@@ -785,7 +785,7 @@ export default function CommissionsPage() {
       brokerageData,
       insights
     }
-  }, [transactions])
+  }, [filteredTransactions, getCommissionForTransaction])
   
   const { 
     totalTransactions, 
