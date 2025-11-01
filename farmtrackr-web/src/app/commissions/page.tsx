@@ -1575,7 +1575,16 @@ export default function CommissionsPage() {
                             <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '600', backgroundColor: transaction.clientType === 'Buyer' ? (isDark ? '#1e3a5f' : '#3b82f6') : (isDark ? '#78350f' : '#f59e0b'), color: transaction.clientType === 'Buyer' ? (isDark ? colors.info : '#ffffff') : (isDark ? colors.warning : '#ffffff'), borderRadius: '999px', flexShrink: 0 }}>
                               {transaction.clientType === 'Buyer' ? '🔵 ' : '⭐ '}{transaction.clientType}
                             </span>
-                            <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: isDark ? (transaction.clientType === 'Buyer' ? '#1a2542' : '#451a03') : '#9273FF', color: isDark ? (transaction.clientType === 'Buyer' ? colors.info : colors.warning) : '#ffffff', borderRadius: '999px', flexShrink: 0 }}>
+                            <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: (() => {
+                              const br = transaction.brokerage || ''
+                              if (br === 'KW' || br === 'Keller Williams') {
+                                return isDark ? '#7f1d1d' : '#e63946' // Keller Williams Red
+                              }
+                              if (br === 'BDH' || br === 'Bennion Deville Homes') {
+                                return isDark ? '#0c4a6e' : '#06b6d4' // BDH Aqua/Turquoise
+                              }
+                              return isDark ? '#1a2542' : '#9273FF' // Default purple
+                            })(), color: '#ffffff', borderRadius: '999px', flexShrink: 0 }}>
                               {(() => {
                                 const br = transaction.brokerage || ''
                                 if (br === 'KW' || br === 'Keller Williams') return 'Keller Williams'
