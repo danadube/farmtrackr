@@ -282,6 +282,69 @@ export default function CommissionsPage() {
     })
   }
 
+  // Generate fee breakdown text for tooltip
+  const getFeeBreakdown = (t: Transaction): string => {
+    const calc = getCommissionForTransaction(t)
+    const adjustedGci = parseFloat(calc.adjustedGci) || 0
+    const parts: string[] = []
+    
+    if (t.brokerage === 'KW' || t.brokerage === 'Keller Williams') {
+      // KW Breakdown
+      const eo = parseFloat(String(t.eo || 0))
+      const royalty = t.royalty ? parseFloat(String(t.royalty)) : adjustedGci * 0.06
+      const companyDollar = t.companyDollar ? parseFloat(String(t.companyDollar)) : adjustedGci * 0.10
+      const hoa = parseFloat(String(t.hoaTransfer || 0))
+      const warranty = parseFloat(String(t.homeWarranty || 0))
+      const kwCares = parseFloat(String(t.kwCares || 0))
+      const kwNextGen = parseFloat(String(t.kwNextGen || 0))
+      const bold = parseFloat(String(t.boldScholarship || 0))
+      const tc = parseFloat(String(t.tcConcierge || 0))
+      const jelmberg = parseFloat(String(t.jelmbergTeam || 0))
+      const other = parseFloat(String(t.otherDeductions || 0))
+      const buyers = parseFloat(String(t.buyersAgentSplit || 0))
+      
+      if (eo > 0) parts.push(`E&O: $${eo.toFixed(2)}`)
+      parts.push(`Royalty: $${royalty.toFixed(2)}`)
+      parts.push(`Company Dollar: $${companyDollar.toFixed(2)}`)
+      if (hoa > 0) parts.push(`HOA Transfer: $${hoa.toFixed(2)}`)
+      if (warranty > 0) parts.push(`Home Warranty: $${warranty.toFixed(2)}`)
+      if (kwCares > 0) parts.push(`KW Cares: $${kwCares.toFixed(2)}`)
+      if (kwNextGen > 0) parts.push(`NEXT GEN: $${kwNextGen.toFixed(2)}`)
+      if (bold > 0) parts.push(`BOLD Scholarship: $${bold.toFixed(2)}`)
+      if (tc > 0) parts.push(`TC/Concierge: $${tc.toFixed(2)}`)
+      if (jelmberg > 0) parts.push(`Jelmberg Team: $${jelmberg.toFixed(2)}`)
+      if (other > 0) parts.push(`Other Deductions: $${other.toFixed(2)}`)
+      if (buyers > 0) parts.push(`Buyer's Agent Split: $${buyers.toFixed(2)}`)
+    } else if (t.brokerage === 'BDH' || t.brokerage === 'Bennion Deville Homes') {
+      // BDH Breakdown
+      const preSplit = t.preSplitDeduction ? parseFloat(String(t.preSplitDeduction)) : adjustedGci * 0.06
+      const splitPct = (() => {
+        const val = parseFloat(String(t.bdhSplitPct || 0))
+        return val > 1 ? val / 100 : val
+      })() || 0.94
+      const afterPreSplit = adjustedGci - preSplit
+      const agentSplit = afterPreSplit * splitPct
+      const brokeragePortion = (t as any).brokerageSplit && parseFloat(String((t as any).brokerageSplit)) > 0
+        ? parseFloat(String((t as any).brokerageSplit))
+        : (adjustedGci - agentSplit)
+      const asf = parseFloat(String(t.asf || 0))
+      const foundation = parseFloat(String(t.foundation10 || 0))
+      const admin = parseFloat(String(t.adminFee || 0))
+      const other = parseFloat(String(t.otherDeductions || 0))
+      const buyers = parseFloat(String(t.buyersAgentSplit || 0))
+      
+      parts.push(`Pre-Split Deduction: $${preSplit.toFixed(2)}`)
+      parts.push(`Brokerage Portion: $${brokeragePortion.toFixed(2)}`)
+      if (asf > 0) parts.push(`ASF: $${asf.toFixed(2)}`)
+      if (foundation > 0) parts.push(`Foundation10: $${foundation.toFixed(2)}`)
+      if (admin > 0) parts.push(`Admin Fee: $${admin.toFixed(2)}`)
+      if (other > 0) parts.push(`Other Deductions: $${other.toFixed(2)}`)
+      if (buyers > 0) parts.push(`Buyer's Agent Split: $${buyers.toFixed(2)}`)
+    }
+    
+    return parts.length > 0 ? parts.join('\\n') : 'No fees calculated'
+  }
+
   // Compute filtered and sorted transactions
   const filteredTransactions = useMemo(() => {
     let filtered = transactions.filter(transaction => {
@@ -1910,11 +1973,42 @@ export default function CommissionsPage() {
                             ${adjustedGci.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                           </p>
                         </div>
-                        <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: colors.warningLight, border: `1px solid ${colors.warning}` }}>
+                        <div 
+                          style={{ 
+                            padding: '16px', 
+                            borderRadius: '12px', 
+                            backgroundColor: colors.warningLight, 
+                            border: `1px solid ${colors.warning}`,
+                            position: 'relative',
+                            cursor: 'help'
+                          }}
+                          title={getFeeBreakdown(viewingTransaction).replace(/\\n/g, '\n')}
+                        >
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 8px 0', textTransform: 'uppercase' }}>Total Fees</p>
                           <p style={{ fontSize: '18px', fontWeight: '700', color: colors.warning, margin: '0' }}>
                             ${totalFees.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                           </p>
+                          <div 
+                            style={{
+                              position: 'absolute',
+                              bottom: '8px',
+                              right: '8px',
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              backgroundColor: colors.warning,
+                              color: '#ffffff',
+                              fontSize: '10px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 'bold',
+                              opacity: 0.7
+                            }}
+                            title="Hover to see fee breakdown"
+                          >
+                            i
+                          </div>
                         </div>
                         <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: colors.successLight, border: `1px solid ${colors.success}` }}>
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 8px 0', textTransform: 'uppercase' }}>Net Commission Income</p>
