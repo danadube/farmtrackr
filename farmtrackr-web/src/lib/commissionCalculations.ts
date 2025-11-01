@@ -169,10 +169,11 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
     const afterPreSplit = adjustedGci - preSplitDeductionValue
     const agentSplit = afterPreSplit * splitPct
     
-    // Use pre-calculated brokerageSplit from CSV if provided, otherwise calculate it
-    const brokeragePortion = brokerageSplit && brokerageSplit > 0
-      ? parseFloat(String(brokerageSplit))
-      : (adjustedGci - agentSplit) // Calculate brokerage portion if not provided
+      // Use pre-calculated brokerageSplit from CSV if provided, otherwise calculate it
+      const brokerageSplitNum = brokerageSplit ? parseFloat(String(brokerageSplit)) : 0
+      const brokeragePortion = brokerageSplitNum > 0
+        ? brokerageSplitNum
+        : (adjustedGci - agentSplit) // Calculate brokerage portion if not provided
     
     totalBrokerageFees = 
       preSplitDeductionValue +
