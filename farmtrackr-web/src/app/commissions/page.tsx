@@ -76,6 +76,7 @@ export default function CommissionsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
+  const [viewingTransaction, setViewingTransaction] = useState<Transaction | null>(null)
 
   const fetchTransactions = async () => {
     try {
@@ -548,134 +549,134 @@ export default function CommissionsPage() {
 
           {/* Stats Cards */}
           <div style={{ marginBottom: '32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-            <div style={{ padding: '20px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ flex: '1', minWidth: 0 }}>
                   <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                     Total Transactions
                   </p>
-                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     {totalTransactions}
                   </p>
                 </div>
-                <Briefcase style={{ width: '32px', height: '32px', color: colors.primary, opacity: 0.6 }} />
+                <Briefcase style={{ width: '32px', height: '32px', color: colors.primary, opacity: 0.6, flexShrink: 0 }} />
               </div>
             </div>
             
-            <div style={{ padding: '20px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ flex: '1', minWidth: 0 }}>
                   <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                     Total Volume
                   </p>
-                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     ${totalVolume.toLocaleString()}
                   </p>
                 </div>
-                <TrendingUp style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6 }} />
+                <TrendingUp style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6, flexShrink: 0 }} />
               </div>
             </div>
 
-            <div style={{ padding: '20px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ flex: '1', minWidth: 0 }}>
                   <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                     Closed Deals
                   </p>
-                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     {closedTransactions}
                   </p>
                 </div>
-                <Home style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6 }} />
+                <Home style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6, flexShrink: 0 }} />
               </div>
             </div>
           </div>
 
           {/* Additional Stats Cards */}
           <div style={{ marginBottom: '32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-            <div style={{ padding: '20px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ flex: '1', minWidth: 0 }}>
                   <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                     Gross Commission
                   </p>
-                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     ${totalGCI.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </p>
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
+                    Total earned before fees
+                  </p>
                 </div>
-                <Briefcase style={{ width: '32px', height: '32px', color: colors.info, opacity: 0.6 }} />
+                <Briefcase style={{ width: '32px', height: '32px', color: colors.info, opacity: 0.6, flexShrink: 0 }} />
               </div>
-              <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
-                Total earned before fees
-              </p>
             </div>
 
-            <div style={{ padding: '20px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ flex: '1', minWidth: 0 }}>
                   <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                     Net Commission
                   </p>
-                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     ${totalNCI.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </p>
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
+                    Your take-home pay
+                  </p>
                 </div>
-                <TrendingUp style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6 }} />
+                <TrendingUp style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6, flexShrink: 0 }} />
               </div>
-              <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
-                Your take-home pay
-              </p>
             </div>
 
-            <div style={{ padding: '20px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ flex: '1', minWidth: 0 }}>
                   <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                     Avg Per Deal
                   </p>
-                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     ${avgCommission.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </p>
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
+                    Average commission earned
+                  </p>
                 </div>
-                <DollarSign style={{ width: '32px', height: '32px', color: colors.referral, opacity: 0.6 }} />
+                <DollarSign style={{ width: '32px', height: '32px', color: colors.referral, opacity: 0.6, flexShrink: 0 }} />
               </div>
-              <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
-                Average commission earned
-              </p>
             </div>
 
-            <div style={{ padding: '20px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ flex: '1', minWidth: 0 }}>
                   <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                     Referral Fees Paid
                   </p>
-                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     ${referralFeesPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </p>
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
+                    Paid to referral partners
+                  </p>
                 </div>
-                <TrendingUp style={{ width: '32px', height: '32px', color: colors.warning, opacity: 0.6 }} />
+                <TrendingUp style={{ width: '32px', height: '32px', color: colors.warning, opacity: 0.6, flexShrink: 0 }} />
               </div>
-              <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
-                Paid to referral partners
-              </p>
             </div>
 
-            <div style={{ padding: '20px', ...card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ flex: '1', minWidth: 0 }}>
                   <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                     Referral Fees Received
                   </p>
-                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     ${referralFeesReceived.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </p>
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
+                    Received from referral partners
+                  </p>
                 </div>
-                <TrendingDown style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6 }} />
+                <TrendingDown style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6, flexShrink: 0 }} />
               </div>
-              <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
-                Received from referral partners
-              </p>
             </div>
           </div>
 
@@ -786,7 +787,7 @@ export default function CommissionsPage() {
                       Client Type Distribution
                     </h3>
                   </div>
-                  <div style={{ padding: '24px' }}>
+                  <div style={{ padding: '24px', paddingTop: '40px', paddingBottom: '40px' }}>
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
                         <Pie
@@ -795,7 +796,7 @@ export default function CommissionsPage() {
                           cy="50%"
                           labelLine={false}
                           label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={100}
+                          outerRadius={90}
                           dataKey="value"
                         >
                           {pieData.map((entry, index) => {
@@ -981,149 +982,445 @@ export default function CommissionsPage() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {transactions.map((transaction, index) => (
-                  <div
-                    key={transaction.id}
-                    style={{
-                      padding: '20px 24px',
-                      borderBottom: index < transactions.length - 1 ? `1px solid ${colors.border}` : 'none',
-                      transition: 'background-color 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.cardHover
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ flex: '1' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                          <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '16px', margin: '0' }}>
-                            {transaction.propertyType} - {transaction.clientType}
-                          </h3>
-                          <span
-                            style={{
-                              padding: '4px 12px',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              backgroundColor: transaction.status === 'Closed' 
-                                ? (isDark ? '#065f46' : '#dcfce7')
-                                : transaction.status === 'Pending'
-                                ? (isDark ? '#78350f' : '#fef3c7')
-                                : (isDark ? '#991b1b' : '#fee2e2'),
-                              color: transaction.status === 'Closed'
-                                ? colors.success
-                                : transaction.status === 'Pending'
-                                ? colors.warning
-                                : colors.error,
-                              borderRadius: '9999px',
-                              border: `1px solid ${transaction.status === 'Closed' ? colors.success : transaction.status === 'Pending' ? colors.warning : colors.error}`
-                            }}
-                          >
-                            {transaction.status}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                          {transaction.address && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <Home style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />
-                              <span style={{ fontSize: '13px', ...text.secondary }}>
-                                {transaction.address}{transaction.city ? `, ${transaction.city}` : ''}
-                              </span>
-                            </div>
-                          )}
-                          {transaction.closedPrice && (
-                            <span style={{ fontSize: '15px', fontWeight: '600', ...text.primary }}>
-                              ${transaction.closedPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {transactions.map((transaction) => {
+                  const calc = getCommissionForTransaction(transaction)
+                  const nci = parseFloat(calc.nci) || 0
+                  return (
+                    <div
+                      key={transaction.id}
+                      onClick={() => setViewingTransaction(transaction)}
+                      style={{
+                        padding: '20px 24px',
+                        ...card,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        border: `1px solid ${colors.border}`
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.cardHover
+                        e.currentTarget.style.borderColor = colors.primary
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.card
+                        e.currentTarget.style.borderColor = colors.border
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                        <div style={{ flex: '1', minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                            <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '16px', margin: '0' }}>
+                              {transaction.propertyType} - {transaction.clientType}
+                            </h3>
+                            <span
+                              style={{
+                                padding: '4px 12px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                backgroundColor: transaction.status === 'Closed' 
+                                  ? (isDark ? '#065f46' : '#dcfce7')
+                                  : transaction.status === 'Pending'
+                                  ? (isDark ? '#78350f' : '#fef3c7')
+                                  : (isDark ? '#991b1b' : '#fee2e2'),
+                                color: transaction.status === 'Closed'
+                                  ? colors.success
+                                  : transaction.status === 'Pending'
+                                  ? colors.warning
+                                  : colors.error,
+                                borderRadius: '9999px',
+                                border: `1px solid ${transaction.status === 'Closed' ? colors.success : transaction.status === 'Pending' ? colors.warning : colors.error}`,
+                                flexShrink: 0
+                              }}
+                            >
+                              {transaction.status}
                             </span>
-                          )}
-                          {transaction.closedDate && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <Calendar style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />
-                              <span style={{ fontSize: '13px', ...text.tertiary }}>
-                                {new Date(transaction.closedDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                            {transaction.address && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Home style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />
+                                <span style={{ fontSize: '14px', ...text.secondary }}>
+                                  {transaction.address}{transaction.city ? `, ${transaction.city}` : ''}
+                                </span>
+                              </div>
+                            )}
+                            {transaction.closedPrice && (
+                              <span style={{ fontSize: '16px', fontWeight: '600', ...text.primary }}>
+                                ${transaction.closedPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                               </span>
-                            </div>
-                          )}
-                          <span style={{ fontSize: '13px', ...text.tertiary }}>
-                            {transaction.brokerage}
-                          </span>
-                          {(() => {
-                            const calc = getCommissionForTransaction(transaction)
-                            return (
-                              <span style={{ fontSize: '15px', fontWeight: '700', color: colors.success }}>
-                                NCI: ${(parseFloat(calc.nci) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                              </span>
-                            )
-                          })()}
+                            )}
+                            {transaction.closedDate && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Calendar style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />
+                                <span style={{ fontSize: '14px', ...text.tertiary }}>
+                                  {new Date(transaction.closedDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                                </span>
+                              </div>
+                            )}
+                            <span style={{ fontSize: '14px', ...text.tertiary }}>
+                              {transaction.brokerage}
+                            </span>
+                            <span style={{ fontSize: '16px', fontWeight: '700', color: colors.success }}>
+                              NCI: ${nci.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button
-                          onClick={() => {
-                            setEditingId(transaction.id)
-                            setShowForm(true)
-                          }}
-                          style={{
-                            padding: '8px',
-                            backgroundColor: colors.cardHover,
-                            border: `1px solid ${colors.border}`,
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = colors.primary + '20'
-                            e.currentTarget.style.borderColor = colors.primary
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = colors.cardHover
-                            e.currentTarget.style.borderColor = colors.border
-                          }}
-                          title="Edit"
-                        >
-                          <Edit2 style={{ width: '16px', height: '16px', color: colors.primary }} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(transaction.id)}
-                          style={{
-                            padding: '8px',
-                            backgroundColor: colors.cardHover,
-                            border: `1px solid ${colors.border}`,
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = colors.error + '20'
-                            e.currentTarget.style.borderColor = colors.error
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = colors.cardHover
-                            e.currentTarget.style.borderColor = colors.border
-                          }}
-                          title="Delete"
-                        >
-                          <Trash2 style={{ width: '16px', height: '16px', color: colors.error }} />
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingId(transaction.id)
+                              setShowForm(true)
+                            }}
+                            style={{
+                              padding: '8px',
+                              backgroundColor: colors.cardHover,
+                              border: `1px solid ${colors.border}`,
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = colors.primary + '20'
+                              e.currentTarget.style.borderColor = colors.primary
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = colors.cardHover
+                              e.currentTarget.style.borderColor = colors.border
+                            }}
+                            title="Edit"
+                          >
+                            <Edit2 style={{ width: '16px', height: '16px', color: colors.primary }} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDelete(transaction.id)
+                            }}
+                            style={{
+                              padding: '8px',
+                              backgroundColor: colors.cardHover,
+                              border: `1px solid ${colors.border}`,
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = colors.error + '20'
+                              e.currentTarget.style.borderColor = colors.error
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = colors.cardHover
+                              e.currentTarget.style.borderColor = colors.border
+                            }}
+                            title="Delete"
+                          >
+                            <Trash2 style={{ width: '16px', height: '16px', color: colors.error }} />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
 
         </div>
       </div>
+
+      {/* Transaction Detail Modal */}
+      {viewingTransaction && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => setViewingTransaction(null)}
+        >
+          <div
+            style={{
+              ...card,
+              maxWidth: '600px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              position: 'relative',
+              padding: '0'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                Transaction Details
+              </h2>
+              <button
+                onClick={() => setViewingTransaction(null)}
+                style={{
+                  padding: '8px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X style={{ width: '20px', height: '20px', color: colors.text.secondary }} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: '24px' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0 0 8px 0' }}>
+                  {viewingTransaction.address || 'N/A'}{viewingTransaction.city ? ` • ${viewingTransaction.city}` : ''}
+                </h3>
+              </div>
+
+              {(() => {
+                const calc = getCommissionForTransaction(viewingTransaction)
+                const gci = parseFloat(calc.gci) || 0
+                const adjustedGci = parseFloat(calc.adjustedGci) || 0
+                const totalFees = parseFloat(calc.totalBrokerageFees) || 0
+                const nci = parseFloat(calc.nci) || 0
+
+                return (
+                  <>
+                    {/* Property Information */}
+                    <div style={{ marginBottom: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                        <Home style={{ width: '18px', height: '18px', color: colors.primary }} />
+                        <h4 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                          Property Information
+                        </h4>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                        <div>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Address</p>
+                          <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
+                            {viewingTransaction.address || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>City</p>
+                          <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
+                            {viewingTransaction.city || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Property Type</p>
+                          <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
+                            {viewingTransaction.propertyType || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Client Type</p>
+                          <span
+                            style={{
+                              padding: '4px 12px',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              backgroundColor: viewingTransaction.clientType === 'Buyer'
+                                ? (isDark ? '#1e3a5f' : '#dbeafe')
+                                : (isDark ? '#78350f' : '#fef3c7'),
+                              color: viewingTransaction.clientType === 'Buyer'
+                                ? colors.info
+                                : colors.warning,
+                              borderRadius: '9999px',
+                              display: 'inline-block'
+                            }}
+                          >
+                            {viewingTransaction.clientType || 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Financial Information */}
+                    <div style={{ marginBottom: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                        <DollarSign style={{ width: '18px', height: '18px', color: colors.primary }} />
+                        <h4 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                          Financial Information
+                        </h4>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                        <div>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>List Price</p>
+                          <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
+                            ${(parseFloat(String(viewingTransaction.listPrice || 0))).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Closed Price</p>
+                          <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
+                            ${(parseFloat(String(viewingTransaction.closedPrice || 0))).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Commission %</p>
+                          <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
+                            {((parseFloat(String(viewingTransaction.commissionPct || 0)) * 100).toFixed(3))}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Commission Breakdown */}
+                    <div style={{ marginBottom: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                        <TrendingUp style={{ width: '18px', height: '18px', color: colors.primary }} />
+                        <h4 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                          Commission Breakdown
+                        </h4>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+                        <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: colors.referralLight, border: `1px solid ${colors.primary}` }}>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 8px 0', textTransform: 'uppercase' }}>Gross Commission</p>
+                          <p style={{ fontSize: '18px', fontWeight: '700', color: colors.primary, margin: '0' }}>
+                            ${gci.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                        <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: colors.infoLight, border: `1px solid ${colors.info}` }}>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 8px 0', textTransform: 'uppercase' }}>After Referrals</p>
+                          <p style={{ fontSize: '18px', fontWeight: '700', color: colors.info, margin: '0' }}>
+                            ${adjustedGci.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                        <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: colors.warningLight, border: `1px solid ${colors.warning}` }}>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 8px 0', textTransform: 'uppercase' }}>Total Fees</p>
+                          <p style={{ fontSize: '18px', fontWeight: '700', color: colors.warning, margin: '0' }}>
+                            ${totalFees.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                        <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: colors.successLight, border: `1px solid ${colors.success}` }}>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 8px 0', textTransform: 'uppercase' }}>Net Commission Income</p>
+                          <p style={{ fontSize: '18px', fontWeight: '700', color: colors.success, margin: '0' }}>
+                            ${nci.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dates & Status */}
+                    <div style={{ marginBottom: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                        <Calendar style={{ width: '18px', height: '18px', color: colors.primary }} />
+                        <h4 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                          Dates & Status
+                        </h4>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                        <div>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>List Date</p>
+                          <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
+                            {viewingTransaction.listDate ? new Date(viewingTransaction.listDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Closing Date</p>
+                          <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
+                            {viewingTransaction.closedDate ? new Date(viewingTransaction.closedDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Brokerage</p>
+                          <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
+                            {viewingTransaction.brokerage || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Information */}
+                    {viewingTransaction.source && (
+                      <div>
+                        <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Source</p>
+                        <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
+                          {viewingTransaction.source}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
+            </div>
+
+            {/* Footer Buttons */}
+            <div style={{ padding: '24px', borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setViewingTransaction(null)}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: colors.cardHover,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  ...text.primary
+                }}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  handleDelete(viewingTransaction.id)
+                  setViewingTransaction(null)
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: colors.error,
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  color: '#ffffff'
+                }}
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => {
+                  setEditingId(viewingTransaction.id)
+                  setViewingTransaction(null)
+                  setShowForm(true)
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: colors.primary,
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  color: '#ffffff'
+                }}
+              >
+                Edit Transaction
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Transaction Form Modal */}
       {showForm && (
