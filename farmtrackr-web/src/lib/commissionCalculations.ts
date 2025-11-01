@@ -29,6 +29,7 @@ export interface TransactionInput {
   asf?: string | number
   foundation10?: string | number
   adminFee?: string | number
+  brokerageSplit?: string | number // Pre-calculated brokerage portion from CSV
   
   // Universal
   otherDeductions?: string | number
@@ -77,6 +78,7 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
     asf = 0,
     foundation10 = 0,
     adminFee = 0,
+    brokerageSplit = 0, // Pre-calculated brokerage portion from CSV
     
     // Universal
     otherDeductions = 0,
@@ -167,9 +169,14 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
     const afterPreSplit = adjustedGci - preSplitDeductionValue
     const agentSplit = afterPreSplit * splitPct
     
+    // Use pre-calculated brokerageSplit from CSV if provided, otherwise calculate it
+    const brokeragePortion = brokerageSplit && brokerageSplit > 0
+      ? parseFloat(String(brokerageSplit))
+      : (adjustedGci - agentSplit) // Calculate brokerage portion if not provided
+    
     totalBrokerageFees = 
       preSplitDeductionValue +
-      (adjustedGci - agentSplit) + // Brokerage portion
+      brokeragePortion + // Use CSV value or calculated value
       (parseFloat(String(asf)) || 0) +
       (parseFloat(String(foundation10)) || 0) +
       (parseFloat(String(adminFee)) || 0) +

@@ -276,6 +276,7 @@ export default function CommissionsPage() {
       foundation10: parseFloat(String(t.foundation10 || 0)),
       adminFee: parseFloat(String(t.adminFee || 0)),
       preSplitDeduction: t.preSplitDeduction || '',
+      brokerageSplit: parseFloat(String((t as any).brokerageSplit || 0)), // Use CSV value if stored
       otherDeductions: parseFloat(String(t.otherDeductions || 0)),
       buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0))
     })
