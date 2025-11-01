@@ -81,6 +81,7 @@ export async function PUT(
         foundation10: body.foundation10 ? parseFloat(body.foundation10) : null,
         adminFee: body.adminFee ? parseFloat(body.adminFee) : null,
         preSplitDeduction: body.preSplitDeduction ? parseFloat(body.preSplitDeduction) : null,
+        brokerageSplit: body.brokerageSplit ? parseFloat(body.brokerageSplit) : null,
         
         // Universal
         otherDeductions: body.otherDeductions ? parseFloat(body.otherDeductions) : null,

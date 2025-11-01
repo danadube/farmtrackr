@@ -32,17 +32,7 @@ export async function GET(request: NextRequest) {
       }
     })
     
-    // Add brokerageSplit as computed property
-    // Note: brokerageSplit is calculated from stored values when needed
-    // We don't store it separately, it's computed in the calculation function
-    const transactionsWithExtras = transactions.map(t => {
-      return {
-        ...t,
-        brokerageSplit: null // Will be calculated from stored values in commissionCalculations
-      }
-    })
-    
-    return NextResponse.json(transactionsWithExtras)
+    return NextResponse.json(transactions)
   } catch (error) {
     console.error('Error fetching transactions:', error)
     return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 })
@@ -108,6 +98,7 @@ export async function POST(request: NextRequest) {
         foundation10: body.foundation10 ? parseFloat(body.foundation10) : null,
         adminFee: body.adminFee ? parseFloat(body.adminFee) : null,
         preSplitDeduction: body.preSplitDeduction ? parseFloat(body.preSplitDeduction) : null,
+        brokerageSplit: body.brokerageSplit ? parseFloat(body.brokerageSplit) : null,
         
         // Universal
         otherDeductions: body.otherDeductions ? parseFloat(body.otherDeductions) : null,
