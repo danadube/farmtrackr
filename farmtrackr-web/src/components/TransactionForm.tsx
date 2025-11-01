@@ -60,6 +60,7 @@ interface TransactionFormProps {
 
 export function TransactionForm({ transactionId, onClose, onSuccess }: TransactionFormProps) {
   const { colors, isDark, text } = useThemeStyles()
+  const [manuallyEditedFields, setManuallyEditedFields] = useState<Set<string>>(new Set())
   const [formData, setFormData] = useState<TransactionFormData>({
     propertyType: 'Residential',
     clientType: 'Seller',
@@ -169,6 +170,11 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
 
   // Calculate commissions when relevant fields change
   useEffect(() => {
+    // Don't auto-calculate if user manually edited calculated fields
+    if (manuallyEditedFields.has('gci') || manuallyEditedFields.has('referralDollar')) {
+      return
+    }
+    
     const calculated = calculateCommission(formData)
     setFormData(prev => ({
       ...prev,
@@ -187,10 +193,54 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
     formData.referralPct,
     formData.transactionType,
     formData.referralFeeReceived,
-    formData.brokerage
+    formData.brokerage,
+    manuallyEditedFields
   ])
 
   const handleInputChange = (field: keyof TransactionFormData, value: string) => {
+    // Bidirectional GCI → Commission % calculation
+    if (field === 'gci' && value) {
+      const gciValue = parseFloat(value) || 0
+      const closedPrice = parseFloat(formData.closedPrice) || 0
+      if (closedPrice > 0 && gciValue > 0) {
+        // Calculate percentage (3.0 = 3%) but store as decimal (0.03)
+        const percentageValue = (gciValue / closedPrice) * 100
+        const newCommissionPct = (percentageValue / 100).toFixed(4)
+        setFormData(prev => ({
+          ...prev,
+          commissionPct: newCommissionPct,
+          gci: value
+        }))
+        setManuallyEditedFields(prev => new Set(Array.from(prev).concat('gci')))
+        return
+      }
+    }
+    
+    // Bidirectional Referral $ → Referral % calculation
+    if (field === 'referralDollar' && value) {
+      const referralValue = parseFloat(value) || 0
+      const gci = parseFloat(formData.gci) || 0
+      if (gci > 0 && referralValue > 0) {
+        // Calculate percentage (25.0 = 25%) but store as decimal (0.25)
+        const percentageValue = (referralValue / gci) * 100
+        const newReferralPct = (percentageValue / 100).toFixed(4)
+        setFormData(prev => ({
+          ...prev,
+          referralPct: newReferralPct,
+          referralDollar: value
+        }))
+        setManuallyEditedFields(prev => new Set(Array.from(prev).concat('referralDollar')))
+        return
+      }
+    }
+    
+    // Track manually edited calculated fields
+    const manuallyEditableFields = ['gci', 'referralDollar', 'adjustedGci', 'royalty', 'companyDollar', 'preSplitDeduction', 'totalBrokerageFees', 'nci']
+    if (manuallyEditableFields.includes(field)) {
+      setManuallyEditedFields(prev => new Set(Array.from(prev).concat(field)))
+    }
+    
+    // Normal field update
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 

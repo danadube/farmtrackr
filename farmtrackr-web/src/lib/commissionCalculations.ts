@@ -235,3 +235,28 @@ export function parsePercentageFromInput(value: string): string {
   return isNaN(num) ? '' : (num / 100).toString()
 }
 
+/**
+ * Check if a calculated field should be auto-updated
+ */
+export function shouldAutoUpdate(field: string, manuallyEditedFields: Set<string>): boolean {
+  const autoUpdateableFields = ['gci', 'referralDollar', 'adjustedGci', 'royalty', 'companyDollar', 'preSplitDeduction', 'totalBrokerageFees', 'nci']
+  if (!autoUpdateableFields.includes(field)) return true
+  return !manuallyEditedFields.has(field)
+}
+
+/**
+ * Format percentage for display (decimal to % string)
+ */
+export function formatPercentageDisplay(value: number): string {
+  return `${(value * 100).toFixed(2)}%`
+}
+
+/**
+ * Parse percentage input and return as decimal (for reverse calculations)
+ */
+export function parsePercentageInput(value: string): number {
+  const cleaned = value.replace(/%/g, '')
+  const num = parseFloat(cleaned)
+  return isNaN(num) ? 0 : num / 100
+}
+
