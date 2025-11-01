@@ -584,28 +584,32 @@ export default function CommissionsPage() {
                             (t.transactionType === 'Referral $ Received' && t.referralFeeReceived)
         if (!hasValidData) return acc
         
-        const month = new Date(t.closedDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-        if (!acc[month]) {
-          acc[month] = { month, gci: 0, nci: 0, transactions: 0 }
+        const date = new Date(t.closedDate)
+        // Store both the formatted string and the date timestamp for proper sorting
+        const month = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}` // YYYY-MM for reliable sorting
+        
+        if (!acc[monthKey]) {
+          acc[monthKey] = { 
+            month, 
+            monthKey, // Store sortable key
+            dateTimestamp: date.getTime(), // Store timestamp for sorting
+            gci: 0, 
+            nci: 0, 
+            transactions: 0 
+          }
         }
         const calc = getCommissionForTransaction(t)
-        acc[month].gci += parseFloat(calc.gci) || 0
-        acc[month].nci += parseFloat(calc.nci) || 0
-        acc[month].transactions += 1
+        acc[monthKey].gci += parseFloat(calc.gci) || 0
+        acc[monthKey].nci += parseFloat(calc.nci) || 0
+        acc[monthKey].transactions += 1
       }
       return acc
-    }, {} as Record<string, { month: string; gci: number; nci: number; transactions: number }>)
+    }, {} as Record<string, { month: string; monthKey: string; dateTimestamp: number; gci: number; nci: number; transactions: number }>)
     
     const chartData = Object.values(monthlyData).sort((a, b) => {
-      // Sort by actual date for proper chronological order
-      // Parse "Jan 2024" format to Date objects for comparison
-      const dateA = new Date(a.month)
-      const dateB = new Date(b.month)
-      // Handle invalid dates
-      if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
-        return a.month.localeCompare(b.month) // Fallback to string comparison
-      }
-      return dateA.getTime() - dateB.getTime()
+      // Sort by date timestamp for proper chronological order
+      return a.dateTimestamp - b.dateTimestamp
     })
     
     const pieData = [
