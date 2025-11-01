@@ -144,7 +144,7 @@ export default function CommissionsPage() {
   // Calculate analytics
   const analytics = useMemo(() => {
     const totalTransactions = transactions.length
-    const totalVolume = transactions.reduce((sum, t) => sum + (t.closedPrice || 0), 0)
+    const totalVolume = transactions.reduce((sum, t) => sum + (parseFloat(String(t.closedPrice || 0))), 0)
     const closedTransactions = transactions.filter(t => t.status === 'Closed').length
     
     // Monthly data for charts
@@ -157,30 +157,30 @@ export default function CommissionsPage() {
         const calc = calculateCommission({
           brokerage: t.brokerage,
           transactionType: t.transactionType,
-          closedPrice: t.closedPrice || 0,
-          commissionPct: t.commissionPct || 0,
-          referralPct: t.referralPct || 0,
-          referralFeeReceived: t.referralFeeReceived || 0,
+          closedPrice: parseFloat(String(t.closedPrice || 0)),
+          commissionPct: parseFloat(String(t.commissionPct || 0)),
+          referralPct: parseFloat(String(t.referralPct || 0)),
+          referralFeeReceived: parseFloat(String(t.referralFeeReceived || 0)),
           // KW
-          eo: t.eo || 0,
+          eo: parseFloat(String(t.eo || 0)),
           royalty: t.royalty || '',
           companyDollar: t.companyDollar || '',
-          hoaTransfer: t.hoaTransfer || 0,
-          homeWarranty: t.homeWarranty || 0,
-          kwCares: t.kwCares || 0,
-          kwNextGen: t.kwNextGen || 0,
-          boldScholarship: t.boldScholarship || 0,
-          tcConcierge: t.tcConcierge || 0,
-          jelmbergTeam: t.jelmbergTeam || 0,
+          hoaTransfer: parseFloat(String(t.hoaTransfer || 0)),
+          homeWarranty: parseFloat(String(t.homeWarranty || 0)),
+          kwCares: parseFloat(String(t.kwCares || 0)),
+          kwNextGen: parseFloat(String(t.kwNextGen || 0)),
+          boldScholarship: parseFloat(String(t.boldScholarship || 0)),
+          tcConcierge: parseFloat(String(t.tcConcierge || 0)),
+          jelmbergTeam: parseFloat(String(t.jelmbergTeam || 0)),
           // BDH
-          bdhSplitPct: t.bdhSplitPct || 0,
-          asf: t.asf || 0,
-          foundation10: t.foundation10 || 0,
-          adminFee: t.adminFee || 0,
+          bdhSplitPct: parseFloat(String(t.bdhSplitPct || 0)),
+          asf: parseFloat(String(t.asf || 0)),
+          foundation10: parseFloat(String(t.foundation10 || 0)),
+          adminFee: parseFloat(String(t.adminFee || 0)),
           preSplitDeduction: t.preSplitDeduction || '',
           // Universal
-          otherDeductions: t.otherDeductions || 0,
-          buyersAgentSplit: t.buyersAgentSplit || 0
+          otherDeductions: parseFloat(String(t.otherDeductions || 0)),
+          buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0))
         })
         acc[month].gci += parseFloat(calc.gci) || 0
         acc[month].nci += parseFloat(calc.nci) || 0
@@ -205,25 +205,25 @@ export default function CommissionsPage() {
         name: 'KW', 
         value: transactions.filter(t => 
           t.brokerage === 'KW' || t.brokerage === 'Keller Williams'
-        ).reduce((sum, t) => {
+        )        .reduce((sum, t) => {
           const calc = calculateCommission({
             brokerage: t.brokerage,
-            closedPrice: t.closedPrice || 0,
-            commissionPct: t.commissionPct || 0,
-            referralPct: t.referralPct || 0,
-            referralFeeReceived: t.referralFeeReceived || 0,
-            eo: t.eo || 0,
+            closedPrice: parseFloat(String(t.closedPrice || 0)),
+            commissionPct: parseFloat(String(t.commissionPct || 0)),
+            referralPct: parseFloat(String(t.referralPct || 0)),
+            referralFeeReceived: parseFloat(String(t.referralFeeReceived || 0)),
+            eo: parseFloat(String(t.eo || 0)),
             royalty: t.royalty || '',
             companyDollar: t.companyDollar || '',
-            hoaTransfer: t.hoaTransfer || 0,
-            homeWarranty: t.homeWarranty || 0,
-            kwCares: t.kwCares || 0,
-            kwNextGen: t.kwNextGen || 0,
-            boldScholarship: t.boldScholarship || 0,
-            tcConcierge: t.tcConcierge || 0,
-            jelmbergTeam: t.jelmbergTeam || 0,
-            otherDeductions: t.otherDeductions || 0,
-            buyersAgentSplit: t.buyersAgentSplit || 0
+            hoaTransfer: parseFloat(String(t.hoaTransfer || 0)),
+            homeWarranty: parseFloat(String(t.homeWarranty || 0)),
+            kwCares: parseFloat(String(t.kwCares || 0)),
+            kwNextGen: parseFloat(String(t.kwNextGen || 0)),
+            boldScholarship: parseFloat(String(t.boldScholarship || 0)),
+            tcConcierge: parseFloat(String(t.tcConcierge || 0)),
+            jelmbergTeam: parseFloat(String(t.jelmbergTeam || 0)),
+            otherDeductions: parseFloat(String(t.otherDeductions || 0)),
+            buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0))
           })
           return sum + (parseFloat(calc.nci) || 0)
         }, 0)
@@ -232,20 +232,20 @@ export default function CommissionsPage() {
         name: 'BDH', 
         value: transactions.filter(t => 
           t.brokerage === 'BDH' || t.brokerage === 'Bennion Deville Homes'
-        ).reduce((sum, t) => {
+        )        .reduce((sum, t) => {
           const calc = calculateCommission({
             brokerage: t.brokerage,
-            closedPrice: t.closedPrice || 0,
-            commissionPct: t.commissionPct || 0,
-            referralPct: t.referralPct || 0,
-            referralFeeReceived: t.referralFeeReceived || 0,
-            bdhSplitPct: t.bdhSplitPct || 0,
-            asf: t.asf || 0,
-            foundation10: t.foundation10 || 0,
-            adminFee: t.adminFee || 0,
+            closedPrice: parseFloat(String(t.closedPrice || 0)),
+            commissionPct: parseFloat(String(t.commissionPct || 0)),
+            referralPct: parseFloat(String(t.referralPct || 0)),
+            referralFeeReceived: parseFloat(String(t.referralFeeReceived || 0)),
+            bdhSplitPct: parseFloat(String(t.bdhSplitPct || 0)),
+            asf: parseFloat(String(t.asf || 0)),
+            foundation10: parseFloat(String(t.foundation10 || 0)),
+            adminFee: parseFloat(String(t.adminFee || 0)),
             preSplitDeduction: t.preSplitDeduction || '',
-            otherDeductions: t.otherDeductions || 0,
-            buyersAgentSplit: t.buyersAgentSplit || 0
+            otherDeductions: parseFloat(String(t.otherDeductions || 0)),
+            buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0))
           })
           return sum + (parseFloat(calc.nci) || 0)
         }, 0)
