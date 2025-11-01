@@ -126,28 +126,27 @@ export async function POST(request: NextRequest) {
         const source = mapField(['source', 'Source', 'leadSource', 'lead_source'])
         const address = mapField(['address', 'Address', 'propertyAddress', 'property_address'])
         const city = mapField(['city', 'City', 'propertyCity', 'property_city'])
-        const transactionType = mapField(['transactionType', 'Transaction Type', 'transaction_type', 'type']) || 'Sale'
+        const transactionType = mapField(['Transaction Type', 'transactionType', 'transaction_type', 'type']) || 'Sale'
 
         // Pricing fields
         const listPrice = parseMoney(mapField(['listPrice', 'List Price', 'list_price', 'listingPrice', 'listing_price']))
         const closedPrice = parseMoney(mapField(['closedPrice', 'Closed Price', 'closed_price', 'salePrice', 'sale_price', 'netVolume', 'NetVolume', 'net_volume']))
         
-        // Date fields - try multiple possible column name variations
+        // Date fields - prioritize exact column names from CSV, then try variations
         const listDate = parseDate(mapField([
+          'listdate',        // Exact match from CSV (lowercase)
           'listDate', 
           'List Date', 
           'list_date', 
           'listingDate', 
           'listing_date',
-          'listDate',
-          'listdate',
           'LIST_DATE',
           'LISTING_DATE',
           'Listing Date',
           'ListingDate'
         ]))
         const closingDate = parseDate(mapField([
-          'closingDate', 
+          'closingDate',     // Exact match from CSV (camelCase)
           'Closing Date', 
           'closing_date', 
           'closeDate', 
@@ -183,8 +182,8 @@ export async function POST(request: NextRequest) {
         const commissionPct = normalizePercentage(mapField(['commissionPct', 'Commission %', 'commission_pct', 'commission', 'Commission', 'commPct']))
         const referralPct = normalizePercentage(mapField(['referralPct', 'Referral %', 'referral_pct', 'referral', 'Referral']))
         const referralDollar = parseMoney(mapField(['referralDollar', 'Referral $', 'referral_dollar', 'referralAmount', 'referral_amount']))
-        const referralFeeReceived = parseMoney(mapField(['referralFeeReceived', 'Referral Fee Received', 'referral_fee_received', 'feeReceived']))
-        const referringAgent = mapField(['referringAgent', 'Referring Agent', 'referring_agent', 'agent'])
+        const referralFeeReceived = parseMoney(mapField(['Referral Fee Received', 'referralFeeReceived', 'referral_fee_received', 'feeReceived']))
+        const referringAgent = mapField(['Referring Agent', 'referringAgent', 'referring_agent', 'agent'])
         
         // Status
         const status = mapField(['status', 'Status']) || 'Closed'
