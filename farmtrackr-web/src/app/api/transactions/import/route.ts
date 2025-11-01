@@ -99,13 +99,14 @@ export async function POST(request: NextRequest) {
     // Process each row
     for (const row of rows) {
       try {
-        // Skip empty rows - use case-insensitive check
+        // Skip truly empty rows - check if row has any meaningful data
         const rowKeys = Object.keys(row)
-        const hasAddress = rowKeys.some(key => key.toLowerCase() === 'address') && row[rowKeys.find(key => key.toLowerCase() === 'address') || '']
-        const hasCity = rowKeys.some(key => key.toLowerCase() === 'city') && row[rowKeys.find(key => key.toLowerCase() === 'city') || '']
-        const hasPropertyType = rowKeys.some(key => key.toLowerCase() === 'propertytype') && row[rowKeys.find(key => key.toLowerCase() === 'propertytype') || '']
+        const hasAnyData = rowKeys.some(key => {
+          const value = row[key]
+          return value !== null && value !== undefined && String(value).trim() !== ''
+        })
         
-        if (!hasAddress && !hasCity && !hasPropertyType) {
+        if (!hasAnyData) {
           skipped++
           continue
         }
@@ -274,6 +275,20 @@ export async function POST(request: NextRequest) {
           otherDeductions: otherDeductions !== null ? otherDeductions : undefined,
           buyersAgentSplit: buyersAgentSplit !== null ? buyersAgentSplit : undefined,
           assistantBonus: assistantBonus !== null ? assistantBonus : undefined
+        }
+
+        // Validate required fields before attempting to save
+        if (!propertyType || !clientType || !transactionType || !brokerage || !status) {
+          console.error('Missing required fields:', {
+            propertyType,
+            clientType,
+            transactionType,
+            brokerage,
+            status,
+            row: JSON.stringify(row, null, 2)
+          })
+          errors++
+          continue
         }
 
         if (existing) {
