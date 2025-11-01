@@ -277,7 +277,8 @@ export default function CommissionsPage() {
       foundation10: parseFloat(String(t.foundation10 || 0)),
       adminFee: parseFloat(String(t.adminFee || 0)),
       preSplitDeduction: t.preSplitDeduction || '',
-      brokerageSplit: parseFloat(String((t as any).brokerageSplit || 0)), // Use stored value from CSV
+      brokerageSplit: parseFloat(String((t as any).brokerageSplit || 0)), // Flat value from CSV
+      brokerageSplitPct: (t as any).brokerageSplitPct || undefined, // Percentage if provided
       otherDeductions: parseFloat(String(t.otherDeductions || 0)),
       buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0))
     })
@@ -317,28 +318,21 @@ export default function CommissionsPage() {
       if (other > 0) parts.push(`Other Deductions: $${other.toFixed(2)}`)
       if (buyers > 0) parts.push(`Buyer's Agent Split: $${buyers.toFixed(2)}`)
     } else if (t.brokerage === 'BDH' || t.brokerage === 'Bennion Deville Homes') {
-      // BDH Breakdown
-      const preSplit = t.preSplitDeduction ? parseFloat(String(t.preSplitDeduction)) : adjustedGci * 0.06
-      const splitPct = (() => {
-        const val = parseFloat(String(t.bdhSplitPct || 0))
-        return val > 1 ? val / 100 : val
-      })() || 0.94
-      const afterPreSplit = adjustedGci - preSplit
-      const agentSplit = afterPreSplit * splitPct
-      // Always calculate brokerage portion (matches standalone app logic)
-      const brokeragePortion = adjustedGci - agentSplit
-      const asf = parseFloat(String(t.asf || 0))
-      const foundation = parseFloat(String(t.foundation10 || 0))
+      // BDH Breakdown (per spreadsheet formula)
+      const preSplit = parseFloat(String(t.preSplitDeduction || 0))
+      const brokerageSplit = parseFloat(String((t as any).brokerageSplit || 0))
       const admin = parseFloat(String(t.adminFee || 0))
       const other = parseFloat(String(t.otherDeductions || 0))
+      const adminFeesCombined = admin + other
+      const asf = parseFloat(String(t.asf || 0))
+      const foundation = parseFloat(String(t.foundation10 || 0))
       const buyers = parseFloat(String(t.buyersAgentSplit || 0))
       
-      parts.push(`Pre-Split Deduction: $${preSplit.toFixed(2)}`)
-      parts.push(`Brokerage Portion: $${brokeragePortion.toFixed(2)}`)
+      if (preSplit > 0) parts.push(`Pre-Split Deduction: $${preSplit.toFixed(2)}`)
+      if (brokerageSplit > 0) parts.push(`Brokerage Split: $${brokerageSplit.toFixed(2)}`)
+      if (adminFeesCombined > 0) parts.push(`Admin Fees / Other: $${adminFeesCombined.toFixed(2)}`)
       if (asf > 0) parts.push(`ASF: $${asf.toFixed(2)}`)
       if (foundation > 0) parts.push(`Foundation10: $${foundation.toFixed(2)}`)
-      if (admin > 0) parts.push(`Admin Fee: $${admin.toFixed(2)}`)
-      if (other > 0) parts.push(`Other Deductions: $${other.toFixed(2)}`)
       if (buyers > 0) parts.push(`Buyer's Agent Split: $${buyers.toFixed(2)}`)
     }
     

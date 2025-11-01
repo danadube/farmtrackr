@@ -29,7 +29,8 @@ export interface TransactionInput {
   asf?: string | number
   foundation10?: string | number
   adminFee?: string | number
-  brokerageSplit?: string | number // Pre-calculated brokerage portion from CSV
+  brokerageSplit?: string | number // Brokerage split (flat value OR calculated from percentage)
+  brokerageSplitPct?: string | number // Percentage to calculate brokerageSplit if not provided as flat value
   
   // Universal
   otherDeductions?: string | number
@@ -159,37 +160,44 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
       netVolume: price.toFixed(2)
     }
   } else if (brokerage === 'BDH' || brokerage === 'Bennion Deville Homes' || brokerage?.includes('Bennion Deville')) {
-    // BDH Commission Calculation
-    // bdhSplitPct can be stored as decimal (0.94 = 94%) or whole number (94 = 94%)
-    let splitPctNum = parseFloat(String(bdhSplitPct)) || 0.94
-    // If > 1, it's a whole number percentage (94), convert to decimal (0.94)
-    // If <= 1, it's already decimal (0.94)
-    const splitPct = splitPctNum > 1 ? splitPctNum / 100 : splitPctNum
+    // BDH Commission Calculation (Simplified per spreadsheet)
+    // According to spreadsheet: NCI = adjustedGci - presplitdeduction - brokeragesplit - adminfees
     
-    // Use manual value if provided, otherwise calculate
+    // Pre-Split Deduction: INPUT FIELD (not calculated)
     const preSplitDeductionValue = preSplitDeduction !== '' && preSplitDeduction !== null && preSplitDeduction !== undefined 
       ? parseFloat(String(preSplitDeduction)) 
-      : adjustedGci * 0.06 // 6% pre-split deduction
-    const afterPreSplit = adjustedGci - preSplitDeductionValue
-    const agentSplit = afterPreSplit * splitPct
+      : 0
     
-      // Calculate brokerage portion
-      // IMPORTANT: The standalone app ALWAYS calculates this, never uses CSV value
-      // The CSV "brokeragesplit" column may represent something else or be incorrect
-      // So we always calculate: Brokerage Portion = Adjusted GCI - Agent Split
-      // This ensures consistency with the standalone app logic
-      const brokeragePortion = adjustedGci - agentSplit
+    // Brokerage Split: Can be flat value OR calculated from percentage
+    let brokerageSplitValue = 0
+    if (brokerageSplit !== '' && brokerageSplit !== null && brokerageSplit !== undefined) {
+      // Use flat value if provided
+      brokerageSplitValue = parseFloat(String(brokerageSplit))
+    } else if (brokerageSplitPct !== '' && brokerageSplitPct !== null && brokerageSplitPct !== undefined) {
+      // Calculate from percentage if provided
+      let splitPctNum = parseFloat(String(brokerageSplitPct))
+      // If > 1, it's a whole number percentage (11.64), convert to decimal (0.1164)
+      // If <= 1, it's already decimal (0.1164)
+      const splitPct = splitPctNum > 1 ? splitPctNum / 100 : splitPctNum
+      brokerageSplitValue = adjustedGci * splitPct
+    }
     
+    // Admin Fees / Other Deductions: Combined as per spreadsheet formula
+    const adminFeesCombined = 
+      (parseFloat(String(adminFee)) || 0) +
+      (parseFloat(String(otherDeductions)) || 0)
+    
+    // NCI Formula from spreadsheet: adjustedGci - presplitdeduction - brokeragesplit - adminfees
+    nci = adjustedGci - preSplitDeductionValue - brokerageSplitValue - adminFeesCombined
+    
+    // Total Brokerage Fees includes all deductions (for display purposes)
     totalBrokerageFees = 
       preSplitDeductionValue +
-      brokeragePortion + // Always calculated: Adjusted GCI - Agent Split
+      brokerageSplitValue +
+      adminFeesCombined +
       (parseFloat(String(asf)) || 0) +
       (parseFloat(String(foundation10)) || 0) +
-      (parseFloat(String(adminFee)) || 0) +
-      (parseFloat(String(otherDeductions)) || 0) +
       (parseFloat(String(buyersAgentSplit)) || 0)
-
-    nci = adjustedGci - totalBrokerageFees
 
     return {
       gci: gci.toFixed(2),
