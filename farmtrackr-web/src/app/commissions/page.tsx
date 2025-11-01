@@ -385,8 +385,16 @@ export default function CommissionsPage() {
     
     // Sort by closing date
     return filtered.sort((a, b) => {
-      const dateA = a.closedDate ? new Date(a.closedDate).getTime() : 0
-      const dateB = b.closedDate ? new Date(b.closedDate).getTime() : 0
+      // Handle null dates - put them at the end
+      if (!a.closedDate && !b.closedDate) return 0
+      if (!a.closedDate) return 1 // a goes to end
+      if (!b.closedDate) return -1 // b goes to end
+      
+      const dateA = new Date(a.closedDate).getTime()
+      const dateB = new Date(b.closedDate).getTime()
+      
+      // For newest first: larger dates first (dateB - dateA)
+      // For oldest first: smaller dates first (dateA - dateB)
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB
     })
   }, [transactions, filterYear, filterClientType, filterBrokerage, filterPropertyType, filterReferralType, filterDateRange, searchQuery, sortOrder])
@@ -631,6 +639,21 @@ export default function CommissionsPage() {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        .stats-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+        }
+        @media (max-width: 1024px) {
+          .stats-cards-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        @media (max-width: 640px) {
+          .stats-cards-grid {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
       <div 
         style={{ 
@@ -819,53 +842,235 @@ export default function CommissionsPage() {
             </div>
           </div>
 
-          {/* Stats Cards */}
-          <div style={{ marginBottom: '32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                <div style={{ flex: '1', minWidth: 0 }}>
-                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                    Total Transactions
-                  </p>
-                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                    {totalTransactions}
-                  </p>
+          {/* Filter & Sort Section */}
+          {transactions.length > 0 && (
+            <div style={{ ...card, marginBottom: '24px', padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <Filter style={{ width: '18px', height: '18px', color: colors.primary }} />
+                <h3 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                  Filter & Search Transactions
+                </h3>
+                <div style={{ marginLeft: 'auto', fontSize: '14px', fontWeight: '500', ...text.secondary }}>
+                  {filteredTransactions.length} of {transactions.length} shown
                 </div>
-                <Briefcase style={{ width: '32px', height: '32px', color: colors.primary, opacity: 0.6, flexShrink: 0 }} />
               </div>
-            </div>
-            
-            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                <div style={{ flex: '1', minWidth: 0 }}>
-                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                    Total Volume
-                  </p>
-                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                    ${totalVolume.toLocaleString()}
-                  </p>
-                </div>
-                <TrendingUp style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6, flexShrink: 0 }} />
-              </div>
-            </div>
 
-            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                <div style={{ flex: '1', minWidth: 0 }}>
-                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                    Closed Deals
-                  </p>
-                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                    {closedTransactions}
-                  </p>
-                </div>
-                <Home style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6, flexShrink: 0 }} />
+              {/* Search Box */}
+              <div style={{ position: 'relative', marginBottom: '16px' }}>
+                <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: colors.text.tertiary }} />
+                <input
+                  type="text"
+                  placeholder="Search transactions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px 10px 40px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    backgroundColor: colors.card,
+                    color: text.primary.color,
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease'
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = colors.primary}
+                  onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      padding: '4px',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: colors.text.tertiary
+                    }}
+                  >
+                    <X style={{ width: '16px', height: '16px' }} />
+                  </button>
+                )}
               </div>
-            </div>
-          </div>
 
-          {/* Additional Stats Cards */}
-          <div style={{ marginBottom: '32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+              {/* Filter Dropdowns */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                <select
+                  value={filterYear}
+                  onChange={(e) => setFilterYear(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    backgroundColor: colors.card,
+                    color: text.primary.color,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="all">All Years</option>
+                  {Array.from(new Set(transactions.map(t => t.closedDate ? new Date(t.closedDate).getFullYear() : null))).filter(Boolean).sort((a, b) => (b || 0) - (a || 0)).map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+                <select
+                  value={filterClientType}
+                  onChange={(e) => setFilterClientType(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    backgroundColor: colors.card,
+                    color: text.primary.color,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="all">All Types</option>
+                  <option value="Buyer">Buyer</option>
+                  <option value="Seller">Seller</option>
+                </select>
+                <select
+                  value={filterBrokerage}
+                  onChange={(e) => setFilterBrokerage(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    backgroundColor: colors.card,
+                    color: text.primary.color,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="all">All Brokerages</option>
+                  <option value="KW">Keller Williams</option>
+                  <option value="BDH">Bennion Deville Homes</option>
+                </select>
+                <select
+                  value={filterPropertyType}
+                  onChange={(e) => setFilterPropertyType(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    backgroundColor: colors.card,
+                    color: text.primary.color,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="all">All Properties</option>
+                  <option value="Residential">Residential</option>
+                  <option value="Commercial">Commercial</option>
+                  <option value="Land">Land</option>
+                </select>
+                <select
+                  value={filterReferralType}
+                  onChange={(e) => setFilterReferralType(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    backgroundColor: colors.card,
+                    color: text.primary.color,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="all">All Transactions</option>
+                  <option value="regularOnly">Regular</option>
+                  <option value="referralOnly">Referral</option>
+                  <option value="referralReceived">Referral Received</option>
+                  <option value="referralPaid">Referral Paid</option>
+                </select>
+                <select
+                  value={filterDateRange}
+                  onChange={(e) => setFilterDateRange(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    backgroundColor: colors.card,
+                    color: text.primary.color,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="all">All Time</option>
+                  <option value="3months">3 Months</option>
+                  <option value="6months">6 Months</option>
+                  <option value="12months">12 Months</option>
+                  <option value="ytd">YTD</option>
+                  <option value="lastYear">Last Year</option>
+                </select>
+              </div>
+
+              {/* Active Filter Chips */}
+              {(filterYear !== 'all' || filterClientType !== 'all' || filterBrokerage !== 'all' || filterPropertyType !== 'all' || filterReferralType !== 'all' || filterDateRange !== 'all' || searchQuery.trim()) && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: `1px solid ${colors.border}` }}>
+                  {filterDateRange !== 'all' && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: colors.primaryLight, color: colors.primary, borderRadius: '999px' }}>
+                      {filterDateRange === '3months' ? '3 Months' : filterDateRange === '6months' ? '6 Months' : filterDateRange === '12months' ? '12 Months' : filterDateRange === 'ytd' ? 'YTD' : 'Last Year'}
+                      <button onClick={() => setFilterDateRange('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
+                    </span>
+                  )}
+                  {filterYear !== 'all' && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: colors.primaryLight, color: colors.primary, borderRadius: '999px' }}>
+                      Year: {filterYear}
+                      <button onClick={() => setFilterYear('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
+                    </span>
+                  )}
+                  {filterClientType !== 'all' && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: '#dbeafe', color: '#1e40af', borderRadius: '999px' }}>
+                      {filterClientType}
+                      <button onClick={() => setFilterClientType('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
+                    </span>
+                  )}
+                  {filterBrokerage !== 'all' && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: '#dcfce7', color: '#166534', borderRadius: '999px' }}>
+                      {filterBrokerage}
+                      <button onClick={() => setFilterBrokerage('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
+                    </span>
+                  )}
+                  {filterPropertyType !== 'all' && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: '#f3e8ff', color: '#6b21a8', borderRadius: '999px' }}>
+                      {filterPropertyType}
+                      <button onClick={() => setFilterPropertyType('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
+                    </span>
+                  )}
+                  {filterReferralType !== 'all' && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: colors.primaryLight, color: colors.primary, borderRadius: '999px' }}>
+                      {filterReferralType === 'regularOnly' ? 'Regular' : filterReferralType === 'referralOnly' ? 'Referral' : filterReferralType === 'referralReceived' ? 'Referral Received' : 'Referral Paid'}
+                      <button onClick={() => setFilterReferralType('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
+                    </span>
+                  )}
+                  {searchQuery.trim() && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: colors.primaryLight, color: colors.primary, borderRadius: '999px' }}>
+                      Search: {searchQuery}
+                      <button onClick={() => setSearchQuery('')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Stats Cards - 3 columns, 2 rows */}
+          <div className="stats-cards-grid" style={{ marginBottom: '32px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+            {/* Row 1: Gross Commission, Net Commission, Total Sales Volume */}
             <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
                 <div style={{ flex: '1', minWidth: 0 }}>
@@ -879,7 +1084,7 @@ export default function CommissionsPage() {
                     Total earned before fees
                   </p>
                 </div>
-                <Briefcase style={{ width: '32px', height: '32px', color: colors.info, opacity: 0.6, flexShrink: 0 }} />
+                <DollarSign style={{ width: '32px', height: '32px', color: colors.info, opacity: 0.6, flexShrink: 0 }} />
               </div>
             </div>
 
@@ -904,7 +1109,25 @@ export default function CommissionsPage() {
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
                 <div style={{ flex: '1', minWidth: 0 }}>
                   <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                    Avg Per Deal
+                    Total Sales Volume
+                  </p>
+                  <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                    ${totalVolume.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </p>
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
+                    Combined property value
+                  </p>
+                </div>
+                <Home style={{ width: '32px', height: '32px', color: colors.info, opacity: 0.6, flexShrink: 0 }} />
+              </div>
+            </div>
+
+            {/* Row 2: Average Per Deal, Referral Fees Paid, Referral Fees Received */}
+            <div style={{ padding: '20px', ...card, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ flex: '1', minWidth: 0 }}>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Average Per Deal
                   </p>
                   <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     ${avgCommission.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -913,7 +1136,7 @@ export default function CommissionsPage() {
                     Average commission earned
                   </p>
                 </div>
-                <DollarSign style={{ width: '32px', height: '32px', color: colors.referral, opacity: 0.6, flexShrink: 0 }} />
+                <Target style={{ width: '32px', height: '32px', color: colors.referral, opacity: 0.6, flexShrink: 0 }} />
               </div>
             </div>
 
@@ -1229,232 +1452,6 @@ export default function CommissionsPage() {
             </div>
           )}
 
-          {/* Filter & Sort Section */}
-          {transactions.length > 0 && (
-            <div style={{ ...card, marginBottom: '24px', padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                <Filter style={{ width: '18px', height: '18px', color: colors.primary }} />
-                <h3 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                  Filter & Search Transactions
-                </h3>
-                <div style={{ marginLeft: 'auto', fontSize: '14px', fontWeight: '500', ...text.secondary }}>
-                  {filteredTransactions.length} of {transactions.length} shown
-                </div>
-              </div>
-
-              {/* Search Box */}
-              <div style={{ position: 'relative', marginBottom: '16px' }}>
-                <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: colors.text.tertiary }} />
-                <input
-                  type="text"
-                  placeholder="Search transactions..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px 10px 40px',
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
-                    backgroundColor: colors.card,
-                    color: text.primary.color,
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s ease'
-                  }}
-                  onFocus={(e) => e.currentTarget.style.borderColor = colors.primary}
-                  onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    style={{
-                      position: 'absolute',
-                      right: '8px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      padding: '4px',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: colors.text.tertiary
-                    }}
-                  >
-                    <X style={{ width: '16px', height: '16px' }} />
-                  </button>
-                )}
-              </div>
-
-              {/* Filter Dropdowns */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-                <select
-                  value={filterYear}
-                  onChange={(e) => setFilterYear(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
-                    backgroundColor: colors.card,
-                    color: text.primary.color,
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }}
-                >
-                  <option value="all">All Years</option>
-                  {Array.from(new Set(transactions.map(t => t.closedDate ? new Date(t.closedDate).getFullYear() : null))).filter(Boolean).sort((a, b) => (b || 0) - (a || 0)).map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-                <select
-                  value={filterClientType}
-                  onChange={(e) => setFilterClientType(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
-                    backgroundColor: colors.card,
-                    color: text.primary.color,
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }}
-                >
-                  <option value="all">All Types</option>
-                  <option value="Buyer">Buyer</option>
-                  <option value="Seller">Seller</option>
-                </select>
-                <select
-                  value={filterBrokerage}
-                  onChange={(e) => setFilterBrokerage(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
-                    backgroundColor: colors.card,
-                    color: text.primary.color,
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }}
-                >
-                  <option value="all">All Brokerages</option>
-                  <option value="KW">Keller Williams</option>
-                  <option value="BDH">Bennion Deville Homes</option>
-                </select>
-                <select
-                  value={filterPropertyType}
-                  onChange={(e) => setFilterPropertyType(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
-                    backgroundColor: colors.card,
-                    color: text.primary.color,
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }}
-                >
-                  <option value="all">All Properties</option>
-                  <option value="Residential">Residential</option>
-                  <option value="Commercial">Commercial</option>
-                  <option value="Land">Land</option>
-                </select>
-                <select
-                  value={filterReferralType}
-                  onChange={(e) => setFilterReferralType(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
-                    backgroundColor: colors.card,
-                    color: text.primary.color,
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }}
-                >
-                  <option value="all">All Transactions</option>
-                  <option value="regularOnly">Regular</option>
-                  <option value="referralOnly">Referral</option>
-                  <option value="referralReceived">Referral Received</option>
-                  <option value="referralPaid">Referral Paid</option>
-                </select>
-                <select
-                  value={filterDateRange}
-                  onChange={(e) => setFilterDateRange(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
-                    backgroundColor: colors.card,
-                    color: text.primary.color,
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }}
-                >
-                  <option value="all">All Time</option>
-                  <option value="3months">3 Months</option>
-                  <option value="6months">6 Months</option>
-                  <option value="12months">12 Months</option>
-                  <option value="ytd">YTD</option>
-                  <option value="lastYear">Last Year</option>
-                </select>
-              </div>
-
-              {/* Active Filter Chips */}
-              {(filterYear !== 'all' || filterClientType !== 'all' || filterBrokerage !== 'all' || filterPropertyType !== 'all' || filterReferralType !== 'all' || filterDateRange !== 'all' || searchQuery.trim()) && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: `1px solid ${colors.border}` }}>
-                  {filterDateRange !== 'all' && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: colors.primaryLight, color: colors.primary, borderRadius: '999px' }}>
-                      {filterDateRange === '3months' ? '3 Months' : filterDateRange === '6months' ? '6 Months' : filterDateRange === '12months' ? '12 Months' : filterDateRange === 'ytd' ? 'YTD' : 'Last Year'}
-                      <button onClick={() => setFilterDateRange('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
-                    </span>
-                  )}
-                  {filterYear !== 'all' && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: colors.primaryLight, color: colors.primary, borderRadius: '999px' }}>
-                      Year: {filterYear}
-                      <button onClick={() => setFilterYear('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
-                    </span>
-                  )}
-                  {filterClientType !== 'all' && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: '#dbeafe', color: '#1e40af', borderRadius: '999px' }}>
-                      {filterClientType}
-                      <button onClick={() => setFilterClientType('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
-                    </span>
-                  )}
-                  {filterBrokerage !== 'all' && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: '#dcfce7', color: '#166534', borderRadius: '999px' }}>
-                      {filterBrokerage}
-                      <button onClick={() => setFilterBrokerage('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
-                    </span>
-                  )}
-                  {filterPropertyType !== 'all' && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: '#f3e8ff', color: '#6b21a8', borderRadius: '999px' }}>
-                      {filterPropertyType}
-                      <button onClick={() => setFilterPropertyType('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
-                    </span>
-                  )}
-                  {filterReferralType !== 'all' && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: colors.primaryLight, color: colors.primary, borderRadius: '999px' }}>
-                      {filterReferralType === 'regularOnly' ? 'Regular' : filterReferralType === 'referralOnly' ? 'Referral' : filterReferralType === 'referralReceived' ? 'Referral Received' : 'Referral Paid'}
-                      <button onClick={() => setFilterReferralType('all')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
-                    </span>
-                  )}
-                  {searchQuery.trim() && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: colors.primaryLight, color: colors.primary, borderRadius: '999px' }}>
-                      Search: {searchQuery}
-                      <button onClick={() => setSearchQuery('')} style={{ marginLeft: '8px', padding: '0', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Transactions List */}
           <div style={{ ...card, overflow: 'hidden' }}>
             <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1588,17 +1585,19 @@ export default function CommissionsPage() {
                               })()}
                             </span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', ...text.secondary }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', ...text.secondary, flexWrap: 'wrap' }}>
+                            {transaction.closedDate && (
+                              <span style={{ fontWeight: '600', color: colors.text.primary }}>
+                                📅 {new Date(transaction.closedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                            )}
+                            {transaction.closedDate && transaction.city && <span>•</span>}
                             {transaction.city && (
                               <span>{transaction.city}</span>
                             )}
                             {transaction.city && transaction.closedPrice && <span>•</span>}
                             {transaction.closedPrice && (
                               <span>${transaction.closedPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            )}
-                            {transaction.closedDate && <span>•</span>}
-                            {transaction.closedDate && (
-                              <span>{new Date(transaction.closedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                             )}
                           </div>
                         </div>

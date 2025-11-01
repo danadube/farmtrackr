@@ -162,10 +162,12 @@ export async function POST(request: NextRequest) {
         const assistantBonus = parseMoney(mapField(['assistantBonus', 'Assistant Bonus', 'assistant_bonus']))
 
         // Check if transaction already exists
+        // Include clientType to allow same address for buyer/seller sides
         const existing = await prisma.transaction.findFirst({
           where: {
             address: address || undefined,
-            closingDate: closingDate || undefined
+            closingDate: closingDate || undefined,
+            clientType: clientType || undefined
           }
         })
 

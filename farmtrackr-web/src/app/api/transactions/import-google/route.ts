@@ -205,10 +205,12 @@ export async function POST(request: NextRequest) {
         const adminFee = parseMoney(rowData.adminfees) || null  // S: admin fees
 
         // Check if transaction already exists
+        // Include clientType to allow same address for buyer/seller sides
         const existing = await prisma.transaction.findFirst({
           where: {
             address: address,
-            closingDate: closingDate || undefined
+            closingDate: closingDate || undefined,
+            clientType: clientType || undefined
           }
         })
 
