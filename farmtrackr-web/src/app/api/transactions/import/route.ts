@@ -422,12 +422,11 @@ export async function POST(request: NextRequest) {
           assistantBonus: assistantBonus !== null ? assistantBonus : undefined
         }
         
-        // Only add notes field if we have notes data and migration has been run
-        // Temporarily commented out until migration is applied in production
-        // Uncomment after running: npx prisma migrate deploy
-        // if (notesData !== null) {
-        //   transactionData.notes = notesData
-        // }
+        // Store CSV NCI for referral transactions in notes field
+        // The notes field should exist after prisma db push (which runs during build)
+        if (notesData !== null) {
+          transactionData.notes = notesData
+        }
 
         // Validate required fields before attempting to save
         if (!propertyType || !clientType || !transactionType || !brokerage || !status) {

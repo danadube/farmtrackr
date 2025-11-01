@@ -112,6 +112,7 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
     
     // For referral transactions, use NCI directly from CSV if provided
     // Referrals are calculated differently and shouldn't use the standard formula
+    // If CSV NCI is not provided, we still need to return something, but it should be 0 or error
     if (providedNci !== undefined && providedNci !== null && providedNci !== '') {
       const csvNci = parseFloat(String(providedNci)) || 0
       return {
@@ -119,7 +120,19 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
         referralDollar: '0.00',
         adjustedGci: adjustedGci.toFixed(2),
         totalBrokerageFees: (gci - csvNci).toFixed(2), // Calculate fees as difference for display
-        nci: csvNci.toFixed(2), // Use CSV value directly
+        nci: csvNci.toFixed(2), // Use CSV value directly - NO CALCULATION
+        netVolume: price.toFixed(2)
+      }
+    } else {
+      // If no CSV NCI provided for referral, we can't calculate it - return 0
+      // This should not happen if CSV import is working correctly
+      console.warn('Referral transaction missing CSV NCI - returning 0')
+      return {
+        gci: gci.toFixed(2),
+        referralDollar: '0.00',
+        adjustedGci: adjustedGci.toFixed(2),
+        totalBrokerageFees: gci.toFixed(2), // All fees if no NCI
+        nci: '0.00', // No NCI if not provided in CSV
         netVolume: price.toFixed(2)
       }
     }
