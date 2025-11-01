@@ -50,32 +50,32 @@ export async function POST(request: NextRequest) {
 
     // Column mapping based on the spreadsheet headers
     const HEADERS = [
-      'propertyType',      // A
-      'clientType',        // B
-      'source',            // C
-      'address',           // D
-      'city',              // E
-      'listPrice',         // F
-      'commissionPct',     // G
-      'listdate',          // H
-      'closingDate',       // I
-      'brokerage',         // J
-      'netVolume',         // K
-      'closedPrice',       // L
-      'gci',               // M
-      'referralPct',       // N
-      'referralDollar',    // O
-      'adjustedGci',       // P
-      'presplitdeduction', // Q
-      'brokeragesplit',    // R
-      'adminfees',         // S
-      'nci',               // T
-      'status',            // U
-      'assistantbonus',    // V
-      'buyersagentsplit',  // W
-      'transactionType',   // X
-      'referringAgent',    // Y
-      'referralFeeReceived' // Z
+      'propertyType',      // A: propertyType
+      'type',              // B: type (this is clientType)
+      'source',            // C: source
+      'address',           // D: address
+      'city',              // E: city
+      'listPrice',         // F: listPrice
+      'commission',        // G: commission (this is commissionPct)
+      'pct',               // H: pct (not used)
+      'listdate',          // I: listdate
+      'closingdate',       // J: closingdate (this is closingDate)
+      'brokerage',         // K: brokerage
+      'netVolume',         // L: netVolume
+      'grossProfit',       // M: grossProfit (this is GCI)
+      'commissionPaid',    // N: commissionPaid (not used)
+      'referralPct',       // O: referralPct
+      'referralDollar',    // P: referralDollar
+      'adjustedGCI',       // Q: adjustedGCI
+      'prepaidDeductor',   // R: prepaidDeductor
+      'brokerageSplit',    // S: brokerageSplit
+      'adminFeesOther',    // T: adminFeesOther
+      'status',            // U: status
+      'assistantBonus',    // V: assistantBonus
+      'buyersAgentSplit',  // W: buyersAgentSplit
+      'transactionType',   // X: transactionType
+      'referringAgent',    // Y: referringAgent
+      'referralFeeReceiv'  // Z: referralFeeReceiv
     ]
 
     let imported = 0
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 
         // Map transaction data
         const propertyType = rowData.propertyType || 'Residential'
-        const clientType = rowData.clientType || 'Seller'
+        const clientType = rowData.type || 'Seller'  // Changed from clientType to type
         const transactionType = rowData.transactionType || 'Sale'
         const brokerage = rowData.brokerage || 'Bennion Deville Homes'
         const address = rowData.address || null
@@ -128,15 +128,15 @@ export async function POST(request: NextRequest) {
 
         // Parse numeric fields
         const listPrice = parseMoney(rowData.listPrice)
-        const closedPrice = parseMoney(rowData.closedPrice) || parseMoney(rowData.netVolume)
-        const commissionPct = parseFloat(rowData.commissionPct) || null
+        const closedPrice = parseMoney(rowData.netVolume)  // netVolume is the closed price
+        const commissionPct = parseFloat(rowData.commission) || null  // Changed from commissionPct to commission
         const referralPct = parseFloat(rowData.referralPct) || null
         const referralDollar = parseMoney(rowData.referralDollar)
-        const referralFeeReceived = parseMoney(rowData.referralFeeReceived)
+        const referralFeeReceived = parseMoney(rowData.referralFeeReceiv)  // Fixed case
 
         // Dates
         const listDate = parseDate(rowData.listdate)
-        const closingDate = parseDate(rowData.closingDate)
+        const closingDate = parseDate(rowData.closingdate)  // Fixed case
 
         // Skip if no essential data
         if (!address && !city) {
@@ -156,15 +156,15 @@ export async function POST(request: NextRequest) {
         let tcConcierge: number | null = null
         let jelmbergTeam: number | null = null
 
-        let bdhSplitPct: number | null = null
         let asf: number | null = null
         let foundation10: number | null = null
-        let adminFee: number | null = null
-        let preSplitDeduction: number | null = null
 
-        const otherDeductions = parseMoney(rowData.adminfees) || null
-        const buyersAgentSplit = parseMoney(rowData.buyersagentsplit) || null
-        const assistantBonus = parseMoney(rowData.assistantbonus) || null
+        const otherDeductions = parseMoney(rowData.adminFeesOther) || null  // Fixed case
+        const buyersAgentSplit = parseMoney(rowData.buyersAgentSplit) || null  // Fixed case
+        const assistantBonus = parseMoney(rowData.assistantBonus) || null  // Fixed case
+        const preSplitDeduction = parseMoney(rowData.prepaidDeductor) || null  // Map this field
+        const bdhSplitPct = parseFloat(rowData.brokerageSplit) || null  // Map this field
+        const adminFee = parseMoney(rowData.adminFeesOther) || null  // Same as otherDeductions in this sheet
 
         // Check if transaction already exists
         const existing = await prisma.transaction.findFirst({
@@ -191,6 +191,7 @@ export async function POST(request: NextRequest) {
           referralPct,
           referralDollar,
           referralFeeReceived,
+          referringAgent: rowData.referringAgent || null,
           
           // KW
           eo,

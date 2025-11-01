@@ -1,4 +1,3 @@
-Property Type,Client Type,Source,Address,City,List Price,Closed Price,List Date,Closing Date,Brokerage,Commission %,GCI,Referral %,Referral $,Adjusted GCI,Total Brokerage Fees,NCI,Status
-"Residential","Seller","Farming","123 Main Street","Example City","500000","500000","2024-01-01","2024-03-15","Bennion Deville Homes","0.025","12500","0","0","12500","1175","10275","Closed"
-"Residential","Buyer","Repeat Client","456 Oak Avenue","Example City","750000","750000","2024-02-01","2024-04-30","Keller Williams","0.03","22500","0","0","22500","2115","18585","Closed"
-
+Property Type,Type,Source,Address,City,List Price,Commission %,Percentage,List Date,Closing Date,Brokerage,Net Volume,Gross Profit,Commission Paid,Referral %,Referral $,Adjusted GCI,Prepaid Deduction,Brokerage Split,Admin Fees Other,Status,Assistant Bonus,Buyers Agent Split,Transaction Type,Referring Agent,Referral Fee Received
+"Residential","Seller","Farming","123 Main Street","Example City","500000","0.025","","2024-01-01","2024-03-15","Bennion Deville Homes","500000","12500","","0","0","12500","1175","0","0","Closed","0","0","Sale","","0"
+"Residential","Buyer","Repeat Client","456 Oak Avenue","Example City","750000","0.03","","2024-02-01","2024-04-30","Keller Williams","750000","22500","","0","0","22500","2115","0","0","Closed","500","2473","Sale","","0"

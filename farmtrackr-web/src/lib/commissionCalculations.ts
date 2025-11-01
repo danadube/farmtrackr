@@ -102,7 +102,8 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
   // REGULAR SALE or REFERRAL $ PAID: Calculate from property price
   else {
     // Calculate GCI (Gross Commission Income)
-    gci = price * (commPct / 100)
+    // Note: commissionPct is already a decimal (0.025 = 2.5%), not a percentage
+    gci = price * commPct
     
     // Calculate Referral Dollar if referral percentage is provided
     referralDollar = refPct > 0 ? gci * (refPct / 100) : 0
