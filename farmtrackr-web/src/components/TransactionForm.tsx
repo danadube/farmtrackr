@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { calculateCommission, formatCurrencyForInput, parseCurrencyFromInput, formatPercentageForInput, parsePercentageFromInput } from '@/lib/commissionCalculations'
-import { X, Save, Home, DollarSign } from 'lucide-react'
+import { X, Save, Home, DollarSign, Camera, Loader2 } from 'lucide-react'
 
 interface TransactionFormData {
   propertyType: string
@@ -108,6 +108,8 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
     nci: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isScanning, setIsScanning] = useState(false)
+  const [scanError, setScanError] = useState<string | null>(null)
 
   // Load existing transaction if editing
   useEffect(() => {
@@ -196,6 +198,165 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
     formData.brokerage,
     manuallyEditedFields
   ])
+
+  // ==================== COMMISSION SHEET SCANNER ====================
+  
+  const handleScanCommissionSheet = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Check file type - OpenAI Vision only supports images, not PDFs
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      if (file.type === 'application/pdf') {
+        setScanError('PDFs not supported yet. Please take a screenshot of the PDF and upload the image instead. (JPG, PNG, WebP)')
+      } else {
+        setScanError('Please upload an image file (JPG, PNG, WebP)')
+      }
+      return
+    }
+
+    // Check file size (max 20MB)
+    if (file.size > 20 * 1024 * 1024) {
+      setScanError('File size must be less than 20MB')
+      return
+    }
+
+    setIsScanning(true)
+    setScanError(null)
+
+    try {
+      // Convert file to base64
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        try {
+          const base64Image = reader.result as string
+
+          // Call our API route
+          const response = await fetch('/api/transactions/scan-commission-sheet', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageBase64: base64Image
+            })
+          })
+
+          if (!response.ok) {
+            const error = await response.json()
+            throw new Error(error.error || 'Failed to scan commission sheet')
+          }
+
+          const result = await response.json()
+          
+          if (result.success && result.data) {
+            // Auto-fill form with extracted data
+            const extracted = result.data
+            
+            // Helper function to map brokerage
+            const mapBrokerage = (brokerage: string): string => {
+              const normalized = brokerage?.toLowerCase() || ''
+              if (normalized.includes('keller') || normalized.includes('kw') || normalized === 'kw') {
+                return 'Keller Williams'
+              }
+              if (normalized.includes('bennion') || normalized.includes('deville') || normalized === 'bdh') {
+                return 'BDH'
+              }
+              return brokerage // Return as-is if can't determine
+            }
+
+            // Helper function to map status
+            const mapStatus = (status: string): string => {
+              const normalized = status?.toLowerCase() || ''
+              if (normalized === 'active') {
+                return 'Pending' // Map "Active" to "Pending" since form doesn't have "Active"
+              }
+              // Map common variations
+              if (normalized === 'cancelled' || normalized === 'canceled') {
+                return 'Cancelled'
+              }
+              if (normalized === 'closed' || normalized === 'close') {
+                return 'Closed'
+              }
+              if (normalized === 'pending') {
+                return 'Pending'
+              }
+              return status || 'Closed' // Default to Closed
+            }
+
+            // Helper function to map transaction type
+            const mapTransactionType = (type: string): string => {
+              const normalized = type?.toLowerCase() || ''
+              if (normalized.includes('referral out') || normalized.includes('referral received')) {
+                return 'Referral $ Received'
+              }
+              if (normalized.includes('referral in') || normalized.includes('referral paid')) {
+                return 'Referral $ Paid'
+              }
+              if (normalized === 'sale' || normalized === 'regular sale') {
+                return 'Sale'
+              }
+              return type || 'Sale'
+            }
+
+            setFormData(prev => ({
+              ...prev,
+              // Only update fields that were successfully extracted (not null)
+              ...(extracted.transactionType && { transactionType: mapTransactionType(extracted.transactionType) }),
+              ...(extracted.propertyType && { propertyType: extracted.propertyType }),
+              ...(extracted.clientType && { clientType: extracted.clientType }),
+              ...(extracted.address && { address: extracted.address }),
+              ...(extracted.city && { city: extracted.city }),
+              ...(extracted.listPrice && { listPrice: extracted.listPrice.toString() }),
+              ...(extracted.closedPrice && { closedPrice: extracted.closedPrice.toString() }),
+              ...(extracted.listDate && { listDate: extracted.listDate }),
+              ...(extracted.closingDate && { closingDate: extracted.closingDate }),
+              ...(extracted.brokerage && { brokerage: mapBrokerage(extracted.brokerage) }),
+              // Commission percentage - ensure it's in decimal format (0.03 = 3%)
+              ...(extracted.commissionPct !== null && extracted.commissionPct !== undefined && { 
+                commissionPct: typeof extracted.commissionPct === 'number' ? extracted.commissionPct.toString() : extracted.commissionPct.toString()
+              }),
+              ...(extracted.gci && { gci: extracted.gci.toString() }),
+              ...(extracted.referralPct !== null && extracted.referralPct !== undefined && { 
+                referralPct: typeof extracted.referralPct === 'number' ? extracted.referralPct.toString() : extracted.referralPct.toString()
+              }),
+              ...(extracted.referralDollar && { referralDollar: extracted.referralDollar.toString() }),
+              ...(extracted.adjustedGci && { adjustedGci: extracted.adjustedGci.toString() }),
+              ...(extracted.totalBrokerageFees && { totalBrokerageFees: extracted.totalBrokerageFees.toString() }),
+              ...(extracted.nci && { nci: extracted.nci.toString() }),
+              ...(extracted.status && { status: mapStatus(extracted.status) }),
+              ...(extracted.referringAgent && { referringAgent: extracted.referringAgent }),
+              ...(extracted.referralFeeReceived && { referralFeeReceived: extracted.referralFeeReceived.toString() }),
+            }))
+
+            // Show success message
+            alert(`✅ Commission sheet scanned successfully!\n\nConfidence: ${extracted.confidence}%\n\nPlease review the auto-filled data before saving.`)
+          } else {
+            throw new Error('No data extracted from commission sheet')
+          }
+        } catch (error) {
+          console.error('Scan error:', error)
+          setScanError(error instanceof Error ? error.message : 'Failed to scan commission sheet')
+        } finally {
+          setIsScanning(false)
+          // Reset file input
+          event.target.value = ''
+        }
+      }
+
+      reader.onerror = () => {
+        setScanError('Failed to read file')
+        setIsScanning(false)
+      }
+
+      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('Scan error:', error)
+      setScanError(error instanceof Error ? error.message : 'Failed to scan commission sheet')
+      setIsScanning(false)
+    }
+  }
 
   const handleInputChange = (field: keyof TransactionFormData, value: string) => {
     // Bidirectional GCI → Commission % calculation
@@ -336,6 +497,79 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
         <form onSubmit={handleSubmit} style={{ padding: '24px', overflowY: 'auto', flex: '1' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
+            {/* AI Commission Sheet Scanner */}
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Camera style={{ width: '18px', height: '18px', color: colors.info }} />
+                AI Commission Sheet Scanner
+              </h3>
+              <div style={{ padding: '16px', backgroundColor: colors.cardHover, borderRadius: '10px', border: `1px solid ${colors.border}` }}>
+                <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '12px' }}>
+                  Upload a commission sheet image (JPG, PNG, WebP) to automatically extract transaction data using AI.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={handleScanCommissionSheet}
+                    disabled={isScanning}
+                    style={{ display: 'none' }}
+                    id="commission-sheet-scanner"
+                  />
+                  <label
+                    htmlFor="commission-sheet-scanner"
+                    style={{
+                      padding: '12px 16px',
+                      backgroundColor: isScanning ? colors.text.tertiary : colors.info,
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: isScanning ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isScanning) {
+                        e.currentTarget.style.backgroundColor = colors.infoHover || colors.info
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isScanning) {
+                        e.currentTarget.style.backgroundColor = colors.info
+                      }
+                    }}
+                  >
+                    {isScanning ? (
+                      <>
+                        <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                        Scanning...
+                      </>
+                    ) : (
+                      <>
+                        <Camera style={{ width: '16px', height: '16px' }} />
+                        📷 Scan Commission Sheet
+                      </>
+                    )}
+                  </label>
+                  {scanError && (
+                    <div style={{ padding: '12px', backgroundColor: colors.errorBackground || '#fee2e2', borderRadius: '8px', border: `1px solid ${colors.error}` }}>
+                      <p style={{ fontSize: '14px', color: colors.error, margin: '0' }}>
+                        ⚠️ {scanError}
+                      </p>
+                    </div>
+                  )}
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '0', marginTop: '4px' }}>
+                    💡 Tip: PDFs are not supported. Take a screenshot or convert to JPG/PNG first.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Basic Information */}
             <div>
               <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>

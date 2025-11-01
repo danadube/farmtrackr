@@ -24,6 +24,8 @@ docs/
 │   ├── GOOGLE_SHEETS_SETUP.md
 │   ├── OAUTH_CONSENT_SCREEN_SETUP.md
 │   └── TROUBLESHOOTING_GOOGLE_OAUTH.md
+├── GOOGLE_CLOUD_SETUP_FARMTRACKR.md  # Google Cloud Console setup guide
+├── COMMISSION_SHEET_SCANNER.md       # AI commission sheet scanner guide
 ├── planning/                    # Planning & TODOs
 │   ├── README.md
 │   ├── PLANNING.md (primary consolidated planning doc)

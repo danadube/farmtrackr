@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
@@ -82,6 +82,7 @@ export default function CommissionsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [viewingTransaction, setViewingTransaction] = useState<Transaction | null>(null)
   
   // Filters and search
@@ -691,54 +692,58 @@ export default function CommissionsPage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <label style={{ position: 'relative' }}>
-                    <input
-                      type="file"
-                      accept=".csv,.xlsx,.xls"
-                      onChange={handleImportFromFile}
-                      disabled={isImporting}
-                      style={{ display: 'none' }}
-                    />
-                    <button
-                      disabled={isImporting}
-                      style={{
-                        padding: '12px 24px',
-                        backgroundColor: isImporting ? colors.text.tertiary : colors.success,
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: isImporting ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isImporting) {
-                          e.currentTarget.style.backgroundColor = colors.successHover
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isImporting) {
-                          e.currentTarget.style.backgroundColor = colors.success
-                        }
-                      }}
-                    >
-                      {isImporting ? (
-                        <>
-                          <RefreshCw style={{ width: '16px', height: '16px' }} />
-                          Importing...
-                        </>
-                      ) : (
-                        <>
-                          <Upload style={{ width: '16px', height: '16px' }} />
-                          Import CSV/Excel
-                        </>
-                      )}
-                    </button>
-                  </label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    onChange={handleImportFromFile}
+                    disabled={isImporting}
+                    style={{ display: 'none' }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!isImporting && fileInputRef.current) {
+                        fileInputRef.current.click()
+                      }
+                    }}
+                    disabled={isImporting}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: isImporting ? colors.text.tertiary : colors.success,
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: isImporting ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isImporting) {
+                        e.currentTarget.style.backgroundColor = colors.successHover
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isImporting) {
+                        e.currentTarget.style.backgroundColor = colors.success
+                      }
+                    }}
+                  >
+                    {isImporting ? (
+                      <>
+                        <RefreshCw style={{ width: '16px', height: '16px' }} />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload style={{ width: '16px', height: '16px' }} />
+                        Import CSV/Excel
+                      </>
+                    )}
+                  </button>
                   <button
                     onClick={handleImportFromGoogle}
                     disabled={isImporting}
