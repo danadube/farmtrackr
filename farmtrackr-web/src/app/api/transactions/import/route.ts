@@ -158,10 +158,18 @@ export async function POST(request: NextRequest) {
         const commissionPctCheck = mapField(['commissionPct', 'Commission %', 'commission_pct', 'commission', 'Commission', 'commPct'])
         const commissionPctNum = commissionPctCheck ? parseFloat(String(commissionPctCheck).replace(/[%,]/g, '')) : 0
         
+        // If CSV explicitly says "Referral $ Received" or similar, use that
+        if (transactionType && (
+          transactionType.toLowerCase().includes('referral') && 
+          transactionType.toLowerCase().includes('received')
+        )) {
+          transactionType = 'Referral $ Received'
+        }
         // If referral fee received exists (> 0) and commission % is 0 or missing, it's a referral received transaction
         // This overrides the CSV transaction type if the data indicates it's a referral
-        if (referralFeeReceivedParsed && referralFeeReceivedParsed > 0 && (commissionPctNum === 0 || !commissionPctCheck)) {
+        else if (referralFeeReceivedParsed && referralFeeReceivedParsed > 0 && (commissionPctNum === 0 || !commissionPctCheck)) {
           transactionType = 'Referral $ Received'
+          console.log(`[Referral Detection] Auto-detected referral: address=${address || 'no address'}, referralFeeReceived=${referralFeeReceivedParsed}, commissionPct=${commissionPctNum}`)
         }
 
         // Pricing fields - NetVolume maps to closedPrice in CSV
