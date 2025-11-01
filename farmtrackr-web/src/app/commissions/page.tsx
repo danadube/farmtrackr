@@ -1217,7 +1217,7 @@ export default function CommissionsPage() {
                   }}
                 >
                   <option value="all">All Years</option>
-                  {[...new Set(transactions.map(t => t.closedDate ? new Date(t.closedDate).getFullYear() : null))].filter(Boolean).sort((a, b) => (b || 0) - (a || 0)).map(year => (
+                  {Array.from(new Set(transactions.map(t => t.closedDate ? new Date(t.closedDate).getFullYear() : null))).filter(Boolean).sort((a, b) => (b || 0) - (a || 0)).map(year => (
                     <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
