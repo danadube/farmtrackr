@@ -1,0 +1,235 @@
+/**
+ * Commission Calculation Utilities
+ * Ported from Commission Dashboard for FarmTrackr
+ */
+
+export interface TransactionInput {
+  brokerage: string
+  transactionType?: string
+  closedPrice?: string | number
+  commissionPct?: string | number
+  referralPct?: string | number
+  referralFeeReceived?: string | number
+  
+  // KW specific
+  eo?: string | number
+  royalty?: string | number | ''
+  companyDollar?: string | number | ''
+  hoaTransfer?: string | number
+  homeWarranty?: string | number
+  kwCares?: string | number
+  kwNextGen?: string | number
+  boldScholarship?: string | number
+  tcConcierge?: string | number
+  jelmbergTeam?: string | number
+  
+  // BDH specific
+  bdhSplitPct?: string | number
+  preSplitDeduction?: string | number | ''
+  asf?: string | number
+  foundation10?: string | number
+  adminFee?: string | number
+  
+  // Universal
+  otherDeductions?: string | number
+  buyersAgentSplit?: string | number
+}
+
+export interface CommissionResult {
+  gci: string
+  referralDollar: string
+  adjustedGci: string
+  royalty?: string
+  companyDollar?: string
+  preSplitDeduction?: string
+  totalBrokerageFees: string
+  nci: string
+  netVolume: string
+}
+
+/**
+ * Calculate commission breakdown for a transaction
+ */
+export function calculateCommission(data: TransactionInput): CommissionResult {
+  const {
+    brokerage,
+    transactionType = 'Sale',
+    closedPrice = 0,
+    commissionPct = 0,
+    referralPct = 0,
+    referralFeeReceived = 0,
+    
+    // KW fields
+    eo = 0,
+    royalty = '',
+    companyDollar = '',
+    hoaTransfer = 0,
+    homeWarranty = 0,
+    kwCares = 0,
+    kwNextGen = 0,
+    boldScholarship = 0,
+    tcConcierge = 0,
+    jelmbergTeam = 0,
+    
+    // BDH fields
+    bdhSplitPct = 0,
+    preSplitDeduction = '',
+    asf = 0,
+    foundation10 = 0,
+    adminFee = 0,
+    
+    // Universal
+    otherDeductions = 0,
+    buyersAgentSplit = 0
+  } = data
+
+  // Parse all values as numbers
+  const price = parseFloat(String(closedPrice)) || 0
+  const commPct = parseFloat(String(commissionPct)) || 0
+  const refPct = parseFloat(String(referralPct)) || 0
+  const refFeeReceived = parseFloat(String(referralFeeReceived)) || 0
+
+  let gci: number
+  let referralDollar: number
+  let adjustedGci: number
+
+  // REFERRAL $ RECEIVED: You refer client to another agent, receive referral fee
+  if (transactionType === 'Referral $ Received') {
+    gci = refFeeReceived // GCI is the referral fee itself
+    referralDollar = 0 // You're not paying a referral
+    adjustedGci = gci // No adjustment needed
+  } 
+  // REGULAR SALE or REFERRAL $ PAID: Calculate from property price
+  else {
+    // Calculate GCI (Gross Commission Income)
+    gci = price * (commPct / 100)
+    
+    // Calculate Referral Dollar if referral percentage is provided
+    referralDollar = refPct > 0 ? gci * (refPct / 100) : 0
+    
+    // Calculate Adjusted GCI (after referral)
+    adjustedGci = gci - referralDollar
+  }
+
+  let totalBrokerageFees = 0
+  let nci = 0
+
+  if (brokerage === 'Keller Williams' || brokerage === 'KW') {
+    // KW Commission Calculation
+    // Use manual values if provided, otherwise calculate
+    const royaltyValue = royalty !== '' && royalty !== null && royalty !== undefined 
+      ? parseFloat(String(royalty)) 
+      : adjustedGci * 0.06 // 6% of Adjusted GCI
+    const companyDollarValue = companyDollar !== '' && companyDollar !== null && companyDollar !== undefined 
+      ? parseFloat(String(companyDollar)) 
+      : adjustedGci * 0.10 // 10% of Adjusted GCI
+    
+    totalBrokerageFees = 
+      (parseFloat(String(eo)) || 0) +
+      royaltyValue +
+      companyDollarValue +
+      (parseFloat(String(hoaTransfer)) || 0) +
+      (parseFloat(String(homeWarranty)) || 0) +
+      (parseFloat(String(kwCares)) || 0) +
+      (parseFloat(String(kwNextGen)) || 0) +
+      (parseFloat(String(boldScholarship)) || 0) +
+      (parseFloat(String(tcConcierge)) || 0) +
+      (parseFloat(String(jelmbergTeam)) || 0) +
+      (parseFloat(String(otherDeductions)) || 0) +
+      (parseFloat(String(buyersAgentSplit)) || 0)
+
+    nci = adjustedGci - totalBrokerageFees
+
+    return {
+      gci: gci.toFixed(2),
+      referralDollar: referralDollar.toFixed(2),
+      adjustedGci: adjustedGci.toFixed(2),
+      royalty: royaltyValue.toFixed(2),
+      companyDollar: companyDollarValue.toFixed(2),
+      totalBrokerageFees: totalBrokerageFees.toFixed(2),
+      nci: nci.toFixed(2),
+      netVolume: price.toFixed(2)
+    }
+  } else if (brokerage === 'BDH' || brokerage === 'Bennion Deville Homes') {
+    // BDH Commission Calculation
+    const splitPct = parseFloat(String(bdhSplitPct)) || 94 // Default 94%
+    // Use manual value if provided, otherwise calculate
+    const preSplitDeductionValue = preSplitDeduction !== '' && preSplitDeduction !== null && preSplitDeduction !== undefined 
+      ? parseFloat(String(preSplitDeduction)) 
+      : adjustedGci * 0.06 // 6% pre-split deduction
+    const afterPreSplit = adjustedGci - preSplitDeductionValue
+    const agentSplit = afterPreSplit * (splitPct / 100)
+    
+    totalBrokerageFees = 
+      preSplitDeductionValue +
+      (adjustedGci - agentSplit) + // Brokerage portion
+      (parseFloat(String(asf)) || 0) +
+      (parseFloat(String(foundation10)) || 0) +
+      (parseFloat(String(adminFee)) || 0) +
+      (parseFloat(String(otherDeductions)) || 0) +
+      (parseFloat(String(buyersAgentSplit)) || 0)
+
+    nci = adjustedGci - totalBrokerageFees
+
+    return {
+      gci: gci.toFixed(2),
+      referralDollar: referralDollar.toFixed(2),
+      adjustedGci: adjustedGci.toFixed(2),
+      preSplitDeduction: preSplitDeductionValue.toFixed(2),
+      totalBrokerageFees: totalBrokerageFees.toFixed(2),
+      nci: nci.toFixed(2),
+      netVolume: price.toFixed(2)
+    }
+  }
+
+  return {
+    gci: gci.toFixed(2),
+    referralDollar: referralDollar.toFixed(2),
+    adjustedGci: adjustedGci.toFixed(2),
+    totalBrokerageFees: '0.00',
+    nci: adjustedGci.toFixed(2),
+    netVolume: price.toFixed(2)
+  }
+}
+
+/**
+ * Format currency for display in inputs
+ */
+export function formatCurrencyForInput(value: string | number | null | undefined): string {
+  if (!value || value === '') return ''
+  const num = parseFloat(String(value))
+  if (isNaN(num)) return ''
+  return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+/**
+ * Parse currency from formatted input
+ */
+export function parseCurrencyFromInput(value: string): string {
+  if (!value || value === '') return ''
+  const cleaned = value.replace(/[$,\s]/g, '')
+  const num = parseFloat(cleaned)
+  return isNaN(num) ? '' : num.toString()
+}
+
+/**
+ * Format percentage for display in inputs
+ */
+export function formatPercentageForInput(value: string | number | null | undefined): string {
+  if (!value || value === '') return ''
+  const num = parseFloat(String(value))
+  if (isNaN(num)) return ''
+  // Convert decimal to percentage (0.03 -> 3%)
+  return `${(num * 100).toFixed(2)}%`
+}
+
+/**
+ * Parse percentage from formatted input
+ */
+export function parsePercentageFromInput(value: string): string {
+  if (!value || value === '') return ''
+  const cleaned = value.replace(/%/g, '')
+  const num = parseFloat(cleaned)
+  return isNaN(num) ? '' : (num / 100).toString()
+}
+

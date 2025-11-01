@@ -15,6 +15,7 @@ import {
   X,
   Save
 } from 'lucide-react'
+import { TransactionForm } from '@/components/TransactionForm'
 
 interface Transaction {
   id: string
@@ -41,23 +42,41 @@ export default function CommissionsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    async function fetchTransactions() {
-      try {
-        const response = await fetch('/api/transactions')
-        if (response.ok) {
-          const data = await response.json()
-          setTransactions(data)
-        }
-      } catch (error) {
-        console.error('Error fetching transactions:', error)
-      } finally {
-        setIsLoading(false)
+  const fetchTransactions = async () => {
+    try {
+      const response = await fetch('/api/transactions')
+      if (response.ok) {
+        const data = await response.json()
+        setTransactions(data)
       }
+    } catch (error) {
+      console.error('Error fetching transactions:', error)
+    } finally {
+      setIsLoading(false)
     }
-    
+  }
+
+  useEffect(() => {
     fetchTransactions()
   }, [])
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this transaction?')) {
+      return
+    }
+    
+    try {
+      const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' })
+      if (response.ok) {
+        await fetchTransactions()
+      } else {
+        alert('Failed to delete transaction')
+      }
+    } catch (error) {
+      console.error('Error deleting transaction:', error)
+      alert('Failed to delete transaction')
+    }
+  }
 
   // Calculate summary stats
   const totalTransactions = transactions.length
@@ -165,7 +184,10 @@ export default function CommissionsPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => alert('Transaction form coming soon in Phase 2!')}
+                  onClick={() => {
+                    setEditingId(null)
+                    setShowForm(true)
+                  }}
                   style={{
                     padding: '12px 24px',
                     backgroundColor: colors.primary,
@@ -265,6 +287,10 @@ export default function CommissionsPage() {
                   Start tracking your commissions by adding your first transaction.
                 </p>
                 <button
+                  onClick={() => {
+                    setEditingId(null)
+                    setShowForm(true)
+                  }}
                   style={{
                     padding: '12px 24px',
                     backgroundColor: colors.primary,
@@ -356,7 +382,10 @@ export default function CommissionsPage() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button
-                          onClick={() => alert('Transaction editing coming soon in Phase 2!')}
+                          onClick={() => {
+                            setEditingId(transaction.id)
+                            setShowForm(true)
+                          }}
                           style={{
                             padding: '8px',
                             backgroundColor: colors.cardHover,
@@ -381,7 +410,7 @@ export default function CommissionsPage() {
                           <Edit2 style={{ width: '16px', height: '16px', color: colors.primary }} />
                         </button>
                         <button
-                          onClick={() => alert('Transaction deletion coming soon in Phase 2!')}
+                          onClick={() => handleDelete(transaction.id)}
                           style={{
                             padding: '8px',
                             backgroundColor: colors.cardHover,
@@ -441,6 +470,22 @@ export default function CommissionsPage() {
           </div>
         </div>
       </div>
+
+      {/* Transaction Form Modal */}
+      {showForm && (
+        <TransactionForm
+          transactionId={editingId}
+          onClose={() => {
+            setShowForm(false)
+            setEditingId(null)
+          }}
+          onSuccess={async () => {
+            setShowForm(false)
+            setEditingId(null)
+            await fetchTransactions()
+          }}
+        />
+      )}
     </Sidebar>
   )
 }
