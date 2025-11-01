@@ -48,34 +48,38 @@ export async function POST(request: NextRequest) {
 
     console.log(`📊 Found ${rows.length} rows in Google Sheets`)
 
-    // Column mapping based on the spreadsheet headers
+    // Column mapping based on the ACTUAL spreadsheet structure (verified from screenshot)
+    // A=propertyType, B=source, C=address, D=city, E=listPrice, F=commissionPct, G=listDate, H=closingDate
+    // I=Date, J=brokerage, K=NetVolume, L=grossCommission, M=closePrice, N=referralPct, O=referralDollar
+    // P=adjustedGCI, Q=p_adjustedGCI, R=prededucbrokerageplit, S=adminfeesotherinc, T=adminfees
+    // U=status, V=assistantbonus, W=buyersagentplit, X=transactionType, Y=Referring Agent, Z=Referral Fee Received
     const HEADERS = [
       'propertyType',      // A: propertyType
-      'type',              // B: type (this is clientType)
-      'source',            // C: source
-      'address',           // D: address
-      'city',              // E: city
-      'listPrice',         // F: listPrice
-      'commission',        // G: commission (this is commissionPct)
-      'pct',               // H: pct (not used)
-      'listdate',          // I: listdate
-      'closingdate',       // J: closingdate (this is closingDate)
-      'brokerage',         // K: brokerage
-      'netVolume',         // L: netVolume
-      'grossProfit',       // M: grossProfit (this is GCI)
-      'commissionPaid',    // N: commissionPaid (not used)
-      'referralPct',       // O: referralPct
-      'referralDollar',    // P: referralDollar
-      'adjustedGCI',       // Q: adjustedGCI
-      'prepaidDeductor',   // R: prepaidDeductor
-      'brokerageSplit',    // S: brokerageSplit
-      'adminFeesOther',    // T: adminFeesOther
+      'source',            // B: source (lead source - may contain "Buyer"/"Seller" as clientType)
+      'address',           // C: address
+      'city',              // D: city
+      'listPrice',         // E: listPrice
+      'commissionPct',     // F: commissionPct (decimal, e.g. 0.025)
+      'listDate',          // G: listDate
+      'closingDate',       // H: closingDate
+      'date',              // I: Date (additional date field - may be same as closingDate)
+      'brokerage',         // J: brokerage (e.g. "Bennion Deville Homes")
+      'netVolume',         // K: NetVolume (closed price)
+      'grossCommission',  // L: grossCommission (calculated GCI)
+      'closePrice',        // M: closePrice (another price field)
+      'referralPct',       // N: referralPct (decimal, e.g. 0.25)
+      'referralDollar',    // O: referralDollar
+      'adjustedGCI',       // P: adjustedGCI
+      'p_adjustedGCI',     // Q: p_adjustedGCI
+      'prededucbrokerageplit', // R: pre-deduction brokerage split
+      'adminfeesotherinc', // S: admin fees other income
+      'adminfees',         // T: admin fees
       'status',            // U: status
-      'assistantBonus',    // V: assistantBonus
-      'buyersAgentSplit',  // W: buyersAgentSplit
+      'assistantbonus',    // V: assistantBonus
+      'buyersagentplit',   // W: buyersAgentSplit
       'transactionType',   // X: transactionType
-      'referringAgent',    // Y: referringAgent
-      'referralFeeReceiv'  // Z: referralFeeReceiv
+      'referringAgent',    // Y: Referring Agent
+      'referralFeeReceived' // Z: Referral Fee Received
     ]
 
     let imported = 0
@@ -119,24 +123,36 @@ export async function POST(request: NextRequest) {
 
         // Map transaction data
         const propertyType = rowData.propertyType || 'Residential'
-        const clientType = rowData.type || 'Seller'  // Changed from clientType to type
+        // Extract clientType from source field (if "Buyer" or "Seller", use that; otherwise default to "Seller")
+        const sourceValue = (rowData.source || '').trim()
+        const clientType = sourceValue === 'Buyer' ? 'Buyer' : sourceValue === 'Seller' ? 'Seller' : 'Seller'
+        // Source is the lead source (unless it's Buyer/Seller, then it's empty)
+        const source = (sourceValue === 'Buyer' || sourceValue === 'Seller') ? null : sourceValue || null
         const transactionType = rowData.transactionType || 'Sale'
-        const brokerage = rowData.brokerage || 'Bennion Deville Homes'
+        // Normalize brokerage to 'KW' or 'BDH' format
+        let brokerage = (rowData.brokerage || '').trim()
+        if (brokerage === 'KW' || brokerage === 'Keller Williams') {
+          brokerage = 'KW'
+        } else if (brokerage === 'BDH' || brokerage === 'Bennion Deville Homes' || brokerage.includes('Bennion Deville')) {
+          brokerage = 'BDH'
+        } else if (!brokerage) {
+          brokerage = 'BDH' // Default
+        }
         const address = rowData.address || null
         const city = rowData.city || null
         const status = rowData.status || 'Closed'
 
         // Parse numeric fields
         const listPrice = parseMoney(rowData.listPrice)
-        const closedPrice = parseMoney(rowData.netVolume)  // netVolume is the closed price
-        const commissionPct = parseFloat(rowData.commission) || null  // Changed from commissionPct to commission
-        const referralPct = parseFloat(rowData.referralPct) || null
+        const closedPrice = parseMoney(rowData.netVolume) || parseMoney(rowData.closePrice)  // NetVolume or closePrice
+        const commissionPct = parseFloat(rowData.commissionPct) || null  // Already decimal (0.025 = 2.5%)
+        const referralPct = parseFloat(rowData.referralPct) || null  // Already decimal (0.25 = 25%)
         const referralDollar = parseMoney(rowData.referralDollar)
-        const referralFeeReceived = parseMoney(rowData.referralFeeReceiv)  // Fixed case
+        const referralFeeReceived = parseMoney(rowData.referralFeeReceived)
 
         // Dates
-        const listDate = parseDate(rowData.listdate)
-        const closingDate = parseDate(rowData.closingdate)  // Fixed case
+        const listDate = parseDate(rowData.listDate)
+        const closingDate = parseDate(rowData.closingDate)
 
         // Skip if no essential data
         if (!address && !city) {
@@ -159,12 +175,12 @@ export async function POST(request: NextRequest) {
         let asf: number | null = null
         let foundation10: number | null = null
 
-        const otherDeductions = parseMoney(rowData.adminFeesOther) || null  // Fixed case
-        const buyersAgentSplit = parseMoney(rowData.buyersAgentSplit) || null  // Fixed case
-        const assistantBonus = parseMoney(rowData.assistantBonus) || null  // Fixed case
-        const preSplitDeduction = parseMoney(rowData.prepaidDeductor) || null  // Map this field
-        const bdhSplitPct = parseFloat(rowData.brokerageSplit) || null  // Map this field
-        const adminFee = parseMoney(rowData.adminFeesOther) || null  // Same as otherDeductions in this sheet
+        const otherDeductions = parseMoney(rowData.adminfeesotherinc) || null  // R: admin fees other income
+        const buyersAgentSplit = parseMoney(rowData.buyersagentplit) || null  // V: buyersAgentSplit
+        const assistantBonus = parseMoney(rowData.assistantbonus) || null  // U: assistantBonus
+        const preSplitDeduction = parseMoney(rowData.prededucbrokerageplit) || null  // Q: pre-deduction brokerage split (dollar amount)
+        const bdhSplitPct = null  // Split percentage not in sheet, will use default 94% in calculation
+        const adminFee = parseMoney(rowData.adminfees) || null  // S: admin fees
 
         // Check if transaction already exists
         const existing = await prisma.transaction.findFirst({

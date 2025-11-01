@@ -102,10 +102,12 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
   // REGULAR SALE or REFERRAL $ PAID: Calculate from property price
   else {
     // Calculate GCI (Gross Commission Income)
-    gci = price * (commPct / 100)
+    // commissionPct is stored as decimal (0.025 = 2.5%), not percentage
+    gci = price * commPct
     
     // Calculate Referral Dollar if referral percentage is provided
-    referralDollar = refPct > 0 ? gci * (refPct / 100) : 0
+    // referralPct is also stored as decimal (0.25 = 25%)
+    referralDollar = refPct > 0 ? gci * refPct : 0
     
     // Calculate Adjusted GCI (after referral)
     adjustedGci = gci - referralDollar
@@ -150,7 +152,7 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
       nci: nci.toFixed(2),
       netVolume: price.toFixed(2)
     }
-  } else if (brokerage === 'BDH') {
+  } else if (brokerage === 'BDH' || brokerage === 'Bennion Deville Homes' || brokerage?.includes('Bennion Deville')) {
     // BDH Commission Calculation
     const splitPct = parseFloat(String(bdhSplitPct)) || 94 // Default 94%
     // Use manual value if provided, otherwise calculate
