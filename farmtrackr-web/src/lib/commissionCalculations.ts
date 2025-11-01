@@ -182,25 +182,11 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
       (parseFloat(String(adminFee)) || 0) +
       (parseFloat(String(otherDeductions)) || 0)
     
-    // Step 6: NCI = PreSplitDeduction - BDHSplit - adminOtherFees
-    nci = preSplitDeductionValue - bdhSplitValue - adminFeesCombined
+    // Total Fees = BDHSplit + AdminFees (only these two)
+    totalBrokerageFees = bdhSplitValue + adminFeesCombined
     
-    // Total Brokerage Fees = All deductions from Adjusted GCI
-    // This is what was deducted: (6% + $10) + BDHSplit + adminOtherFees
-    // Which equals: (AdjustedGCI - PreSplitDeduction) + BDHSplit + adminOtherFees
-    // Or: AdjustedGCI - NCI
-    totalBrokerageFees = 
-      (adjustedGci - preSplitDeductionValue) + // The 6% + $10 that was deducted
-      bdhSplitValue + // The 10% BDH split
-      adminFeesCombined // Admin/Other fees
-    
-    // Add optional fees if they exist
-    const optionalFees = 
-      (parseFloat(String(asf)) || 0) +
-      (parseFloat(String(foundation10)) || 0) +
-      (parseFloat(String(buyersAgentSplit)) || 0)
-    
-    totalBrokerageFees = totalBrokerageFees + optionalFees
+    // Step 6: NCI = PreSplitDeduction - Total Fees
+    nci = preSplitDeductionValue - totalBrokerageFees
 
       return {
       gci: gci.toFixed(2),
