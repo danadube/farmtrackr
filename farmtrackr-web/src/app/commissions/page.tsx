@@ -1493,7 +1493,13 @@ export default function CommissionsPage() {
                               {transaction.clientType === 'Buyer' ? '🔵 ' : '⭐ '}{transaction.clientType}
                             </span>
                             <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: transaction.clientType === 'Buyer' ? (isDark ? '#1a2542' : '#eff6ff') : (isDark ? '#451a03' : '#fefce8'), color: transaction.clientType === 'Buyer' ? colors.info : colors.warning, borderRadius: '999px', flexShrink: 0 }}>
-                              {transaction.brokerage === 'KW' || transaction.brokerage === 'Keller Williams' ? 'Keller Williams' : transaction.brokerage === 'BDH' || transaction.brokerage === 'Bennion Deville Homes' ? 'Bennion Deville Homes' : transaction.brokerage}
+                              {(() => {
+                                const br = transaction.brokerage || ''
+                                if (br === 'KW' || br === 'Keller Williams') return 'Keller Williams'
+                                if (br === 'BDH' || br === 'Bennion Deville Homes') return 'Bennion Deville Homes'
+                                if (!br || !isNaN(parseFloat(br))) return 'N/A'  // Numeric or empty = bad data
+                                return br
+                              })()}
                             </span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', ...text.secondary }}>
