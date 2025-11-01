@@ -266,7 +266,12 @@ export default function CommissionsPage() {
       boldScholarship: parseFloat(String(t.boldScholarship || 0)),
       tcConcierge: parseFloat(String(t.tcConcierge || 0)),
       jelmbergTeam: parseFloat(String(t.jelmbergTeam || 0)),
-      bdhSplitPct: parseFloat(String(t.bdhSplitPct || 0)),
+      bdhSplitPct: (() => {
+        const val = parseFloat(String(t.bdhSplitPct || 0))
+        // If > 1, it's a whole number (94), convert to decimal (0.94)
+        // If <= 1, it's already decimal (0.94)
+        return val > 1 ? val / 100 : val
+      })(),
       asf: parseFloat(String(t.asf || 0)),
       foundation10: parseFloat(String(t.foundation10 || 0)),
       adminFee: parseFloat(String(t.adminFee || 0)),

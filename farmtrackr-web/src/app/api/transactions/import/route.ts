@@ -266,27 +266,48 @@ export async function POST(request: NextRequest) {
         const validatedClosingDate = closingDate && closingDate instanceof Date && !isNaN(closingDate.getTime()) && closingDate.getFullYear() >= 1970 ? closingDate : null
 
         // Check if transaction already exists
-        // Include clientType to allow same address for buyer/seller sides
-        // If closingDate is missing, also check listDate to avoid false duplicates
-        const whereClause: any = {
-          address: address || undefined,
-          clientType: clientType || undefined
+        // Match by address + clientType (to allow buyer/seller on same property)
+        // Only match if BOTH address and clientType match (strict matching)
+        // Dates are used as additional criteria but not required for match
+        const whereClause: any = {}
+        
+        // Address and clientType are required for duplicate check
+        if (address) {
+          whereClause.address = address
         }
-        // If we have a closing date, use it for matching (most reliable)
-        if (validatedClosingDate) {
-          whereClause.closingDate = validatedClosingDate
-        } else if (validatedListDate) {
-          // If no closing date but we have a list date, use that instead
-          whereClause.listDate = validatedListDate
-        }
-        // If neither date is available, match by address + clientType + transactionType
-        if (!validatedClosingDate && !validatedListDate) {
-          whereClause.transactionType = transactionType
+        if (clientType) {
+          whereClause.clientType = clientType
         }
         
-        const existing = await prisma.transaction.findFirst({
-          where: whereClause
-        })
+        // Only check for duplicates if we have both address and clientType
+        // Without these, we can't reliably identify duplicates
+        let existing = null
+        if (address && clientType) {
+          // If we have a closing date, require it to match
+          if (validatedClosingDate) {
+            whereClause.closingDate = validatedClosingDate
+            existing = await prisma.transaction.findFirst({
+              where: whereClause
+            })
+          } else if (validatedListDate) {
+            // If no closing date but we have a list date, use that
+            whereClause.listDate = validatedListDate
+            existing = await prisma.transaction.findFirst({
+              where: whereClause
+            })
+          } else {
+            // If neither date, check if there's an exact match without dates
+            // This catches duplicates where dates weren't provided in CSV
+            existing = await prisma.transaction.findFirst({
+              where: {
+                address: address,
+                clientType: clientType,
+                transactionType: transactionType,
+                brokerage: brokerage
+              }
+            })
+          }
+        }
 
         const transactionData: any = {
           propertyType,

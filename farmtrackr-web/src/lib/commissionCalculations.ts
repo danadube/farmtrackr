@@ -154,8 +154,12 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
     }
   } else if (brokerage === 'BDH' || brokerage === 'Bennion Deville Homes' || brokerage?.includes('Bennion Deville')) {
     // BDH Commission Calculation
-    // bdhSplitPct stored as decimal (0.94 = 94%)
-    const splitPct = parseFloat(String(bdhSplitPct)) || 0.94 // Default 94% (0.94)
+    // bdhSplitPct can be stored as decimal (0.94 = 94%) or whole number (94 = 94%)
+    let splitPctNum = parseFloat(String(bdhSplitPct)) || 0.94
+    // If > 1, it's a whole number percentage (94), convert to decimal (0.94)
+    // If <= 1, it's already decimal (0.94)
+    const splitPct = splitPctNum > 1 ? splitPctNum / 100 : splitPctNum
+    
     // Use manual value if provided, otherwise calculate
     const preSplitDeductionValue = preSplitDeduction !== '' && preSplitDeduction !== null && preSplitDeduction !== undefined 
       ? parseFloat(String(preSplitDeduction)) 
