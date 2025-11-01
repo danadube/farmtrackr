@@ -138,7 +138,22 @@ export async function POST(request: NextRequest) {
         const source = mapField(['source', 'Source', 'leadSource', 'lead_source'])
         const address = mapField(['address', 'Address', 'propertyAddress', 'property_address'])
         const city = mapField(['city', 'City', 'propertyCity', 'property_city'])
-        const transactionType = mapField(['Transaction Type', 'transactionType', 'transaction_type', 'type']) || 'Sale'
+        
+        // Determine transaction type - check CSV first, then auto-detect based on data
+        let transactionType = mapField(['Transaction Type', 'transactionType', 'transaction_type', 'type']) || 'Sale'
+        
+        // Auto-detect transaction type based on data patterns
+        // Check referralFeeReceived first (before parsing commissionPct)
+        const referralFeeReceivedCheck = mapField(['Referral Fee Received', 'referralFeeReceived', 'referral_fee_received', 'feeReceived'])
+        const commissionPctCheck = mapField(['commissionPct', 'Commission %', 'commission_pct', 'commission', 'Commission', 'commPct'])
+        
+        // If referral fee received exists and commission % is 0 or missing, it's a referral received transaction
+        if (referralFeeReceivedCheck && (parseFloat(String(referralFeeReceivedCheck)) || 0) > 0) {
+          const commPctNum = commissionPctCheck ? parseFloat(String(commissionPctCheck)) : 0
+          if (commPctNum === 0 || !commissionPctCheck) {
+            transactionType = 'Referral $ Received'
+          }
+        }
 
         // Pricing fields - NetVolume maps to closedPrice in CSV
         const listPrice = parseMoney(mapField(['listPrice', 'List Price', 'list_price', 'listingPrice', 'listing_price']))

@@ -414,12 +414,14 @@ export default function CommissionsPage() {
     // Calculate NCI for all transactions
     // Only include transactions with valid commission data (has closedPrice and commissionPct)
     const totalNCI = transactions.reduce((sum, t) => {
+      // Handle Referral $ Received transactions separately - use referralFeeReceived directly
+      if (t.transactionType === 'Referral $ Received' && t.referralFeeReceived) {
+        // For referral received, NCI = referral fee received (no deductions)
+        return sum + (parseFloat(String(t.referralFeeReceived || 0)))
+      }
+      
       // Skip transactions missing critical commission data
       if (!t.closedPrice || t.closedPrice === 0 || !t.commissionPct || t.commissionPct === 0) {
-        // Only include referral fees received if it's a referral transaction
-        if (t.transactionType === 'Referral $ Received' && t.referralFeeReceived) {
-          return sum + (parseFloat(String(t.referralFeeReceived || 0)))
-        }
         return sum
       }
       const calc = getCommissionForTransaction(t)
@@ -428,12 +430,13 @@ export default function CommissionsPage() {
     
     // Calculate GCI for all transactions
     const totalGCI = transactions.reduce((sum, t) => {
+      // Handle Referral $ Received transactions separately - GCI = referral fee received
+      if (t.transactionType === 'Referral $ Received' && t.referralFeeReceived) {
+        return sum + (parseFloat(String(t.referralFeeReceived || 0)))
+      }
+      
       // Skip transactions missing critical commission data
       if (!t.closedPrice || t.closedPrice === 0 || !t.commissionPct || t.commissionPct === 0) {
-        // Only include referral fees received if it's a referral transaction
-        if (t.transactionType === 'Referral $ Received' && t.referralFeeReceived) {
-          return sum + (parseFloat(String(t.referralFeeReceived || 0)))
-        }
         return sum
       }
       const calc = getCommissionForTransaction(t)
