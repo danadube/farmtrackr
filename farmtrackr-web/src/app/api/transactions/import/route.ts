@@ -430,9 +430,18 @@ export async function POST(request: NextRequest) {
           assistantBonus: assistantBonus !== null ? assistantBonus : undefined
         }
         
-        // Store CSV NCI for referral transactions in notes field
-        // The notes field should exist after prisma db push (which runs during build)
-        if (notesData !== null) {
+        // Store CSV NCI for referral transactions
+        // Since notes field doesn't exist yet, use netVolume to temporarily store CSV NCI for referrals
+        // For referrals, netVolume isn't used, so we can repurpose it
+        if (transactionType === 'Referral $ Received' && csvNci !== null && csvNci !== undefined) {
+          // Store CSV NCI in netVolume for referrals (temporary until notes field migration)
+          transactionData.netVolume = csvNci
+          // Also try to store in notes if field exists (will be removed in retry if it doesn't)
+          if (notesData !== null) {
+            transactionData.notes = notesData
+          }
+        } else if (notesData !== null) {
+          // For non-referrals, try notes if we have notes data (unlikely but handle it)
           transactionData.notes = notesData
         }
 
@@ -513,13 +522,15 @@ export async function POST(request: NextRequest) {
             
             if ((errorMessage.includes('notes') || errorMessage.includes('Unknown argument')) && transactionData.notes) {
               console.log('[Referral] Retrying without notes field (notes column doesn\'t exist in database)...')
+              console.log('[Referral] CSV NCI is stored in netVolume field for this transaction')
               try {
                 const { notes, ...transactionDataWithoutNotes } = transactionData
+                // CSV NCI is already stored in netVolume, so it will be preserved
                 const createResult = await prisma.transaction.create({
                   data: transactionDataWithoutNotes
                 })
                 imported++
-                console.log(`[Referral] ✓ Imported transaction (without notes): ${address || 'no address'}, ${clientType}, ${transactionType}, ID: ${createResult.id}`)
+                console.log(`[Referral] ✓ Imported transaction (CSV NCI in netVolume): ${address || 'no address'}, ${clientType}, ${transactionType}, ID: ${createResult.id}, CSV NCI: ${csvNci}`)
               } catch (retryError: any) {
                 console.error('✗ Retry also failed:', retryError?.message)
                 errors++

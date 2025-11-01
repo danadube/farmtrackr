@@ -251,24 +251,36 @@ export default function CommissionsPage() {
 
   // Helper function to get commission calculation for a transaction
   const getCommissionForTransaction = (t: Transaction) => {
-    // For referral transactions, extract CSV NCI from notes if available
+    // For referral transactions, extract CSV NCI from notes or netVolume (temporary storage)
     let csvNci: number | undefined = undefined
     if (t.transactionType === 'Referral $ Received') {
+      // First try notes field (if migration has been run)
       if (t.notes) {
         try {
           const notesData = JSON.parse(t.notes)
           if (notesData && typeof notesData.csvNci === 'number') {
             csvNci = notesData.csvNci
             console.log(`[Referral] Using CSV NCI from notes: ${csvNci} for transaction ${t.id} at ${t.address}`)
-          } else {
-            console.warn(`[Referral] Notes found but no csvNci property for transaction ${t.id}:`, notesData)
           }
         } catch (e) {
           // Notes might not be JSON, ignore
-          console.warn(`[Referral] Failed to parse notes as JSON for transaction ${t.id}:`, e, 'notes:', t.notes)
         }
-      } else {
-        console.warn(`[Referral] No notes field for referral transaction ${t.id} at ${t.address} - CSV NCI not stored`)
+      }
+      
+      // Fallback: check netVolume (temporary storage until notes migration)
+      // For referrals, netVolume is repurposed to store CSV NCI
+      if (csvNci === undefined && (t as any).netVolume) {
+        const netVolume = parseFloat(String((t as any).netVolume))
+        // For referrals, if netVolume exists and is close to referralFeeReceived or is a reasonable NCI value, use it
+        // ReferralFeeReceived is GCI, so NCI should be less
+        if (netVolume > 0 && netVolume < (parseFloat(String(t.referralFeeReceived || 0)) || Infinity)) {
+          csvNci = netVolume
+          console.log(`[Referral] Using CSV NCI from netVolume (temporary): ${csvNci} for transaction ${t.id} at ${t.address}`)
+        }
+      }
+      
+      if (csvNci === undefined) {
+        console.warn(`[Referral] No CSV NCI found for referral transaction ${t.id} at ${t.address}`)
       }
     }
     
