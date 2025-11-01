@@ -140,9 +140,12 @@ export async function POST(request: NextRequest) {
         const city = mapField(['city', 'City', 'propertyCity', 'property_city'])
         const transactionType = mapField(['Transaction Type', 'transactionType', 'transaction_type', 'type']) || 'Sale'
 
-        // Pricing fields
+        // Pricing fields - NetVolume maps to closedPrice in CSV
         const listPrice = parseMoney(mapField(['listPrice', 'List Price', 'list_price', 'listingPrice', 'listing_price']))
-        const closedPrice = parseMoney(mapField(['closedPrice', 'Closed Price', 'closed_price', 'salePrice', 'sale_price', 'netVolume', 'NetVolume', 'net_volume']))
+        // Closed price might be in closedPrice OR NetVolume column
+        const closedPriceRaw = mapField(['closedPrice', 'Closed Price', 'closed_price', 'salePrice', 'sale_price'])
+        const netVolumeRaw = mapField(['netVolume', 'NetVolume', 'net_volume'])
+        const closedPrice = parseMoney(closedPriceRaw) || parseMoney(netVolumeRaw)
         
         // Date fields - prioritize exact column names from CSV, then try variations
         const listDate = parseDate(mapField([
