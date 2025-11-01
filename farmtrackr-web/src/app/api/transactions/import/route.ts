@@ -266,13 +266,28 @@ export async function POST(request: NextRequest) {
         const preSplitDeduction = parseMoney(mapField(['preSplitDeduction', 'Pre-Split Deduction', 'pre_split_deduction', 'presplitdeduction']))
 
         // Universal - handle combined columns from CSV
-        // adminfees-otherdeductions column needs to be split or mapped to adminFee/otherDeductions
+        // adminfees-otherdeductions column is the TOTAL for both admin fees and other deductions
         const adminfeesOther = parseMoney(mapField(['adminfees-otherdeductions', 'adminfees-otherdeductions', 'adminFees-otherDeductions', 'Admin Fees-Other Deductions']))
         const brokerageSplit = parseMoney(mapField(['brokeragesplit', 'brokerageSplit', 'Brokerage Split', 'brokerage_split']))
         
-        const otherDeductions = parseMoney(mapField(['otherDeductions', 'Other Deductions', 'other_deductions'])) || (adminfeesOther ? adminfeesOther : null)
-        // If adminFee wasn't set but adminfeesOther exists, use it (or split if needed)
-        const finalAdminFee = adminFee !== null ? adminFee : (adminfeesOther ? adminfeesOther : null)
+        // IMPORTANT: adminfees-otherdeductions is a COMBINED total, not separate values
+        // If we have separate columns, use those. Otherwise use the combined value for adminFee only.
+        // Do NOT add adminfeesOther to both adminFee and otherDeductions (that would double count!)
+        let finalAdminFee = adminFee
+        let finalOtherDeductions = parseMoney(mapField(['otherDeductions', 'Other Deductions', 'other_deductions']))
+        
+        // Only use adminfeesOther if we don't have separate values
+        if (finalAdminFee === null && finalOtherDeductions === null && adminfeesOther !== null) {
+          // Use the combined value as adminFee (per spreadsheet formula, adminFeesCombined = adminFee + otherDeductions)
+          // Since we only subtract adminFeesCombined in NCI calculation, assign it to adminFee
+          finalAdminFee = adminfeesOther
+          finalOtherDeductions = null
+        } else if (finalAdminFee === null && adminfeesOther !== null) {
+          // We have adminfeesOther but no separate adminFee, use it for adminFee
+          finalAdminFee = adminfeesOther
+        }
+        
+        // If we have both separate values, use them. Don't double count adminfeesOther.
         
         const buyersAgentSplit = parseMoney(mapField(['buyersagentsplit', 'buyersAgentSplit', "Buyer's Agent Split", 'buyers_agent_split']))
         const assistantBonus = parseMoney(mapField(['assistantbonus', 'assistantBonus', 'Assistant Bonus', 'assistant_bonus']))
@@ -391,7 +406,7 @@ export async function POST(request: NextRequest) {
           brokerageSplit: brokerageSplit !== null ? brokerageSplit : undefined, // Store pre-calculated value from CSV
           
           // Universal
-          otherDeductions: otherDeductions !== null ? otherDeductions : undefined,
+          otherDeductions: finalOtherDeductions !== null ? finalOtherDeductions : undefined,
           buyersAgentSplit: buyersAgentSplit !== null ? buyersAgentSplit : undefined,
           assistantBonus: assistantBonus !== null ? assistantBonus : undefined
         }
