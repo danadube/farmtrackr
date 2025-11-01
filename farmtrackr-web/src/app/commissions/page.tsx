@@ -1882,13 +1882,33 @@ export default function CommissionsPage() {
                         <div>
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>List Date</p>
                           <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
-                            {viewingTransaction.listDate ? new Date(viewingTransaction.listDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : 'N/A'}
+                            {(() => {
+                              const listDate = viewingTransaction.listDate
+                              if (!listDate || listDate.trim() === '') return 'N/A'
+                              try {
+                                const date = new Date(listDate)
+                                if (isNaN(date.getTime())) return 'N/A'
+                                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                              } catch {
+                                return 'N/A'
+                              }
+                            })()}
                           </p>
                         </div>
                         <div>
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Closing Date</p>
                           <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
-                            {viewingTransaction.closedDate ? new Date(viewingTransaction.closedDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : 'N/A'}
+                            {(() => {
+                              const closedDate = viewingTransaction.closedDate
+                              if (!closedDate || closedDate.trim() === '') return 'N/A'
+                              try {
+                                const date = new Date(closedDate)
+                                if (isNaN(date.getTime())) return 'N/A'
+                                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                              } catch {
+                                return 'N/A'
+                              }
+                            })()}
                           </p>
                         </div>
                         <div>
