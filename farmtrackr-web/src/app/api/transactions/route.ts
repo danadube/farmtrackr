@@ -32,24 +32,13 @@ export async function GET(request: NextRequest) {
       }
     })
     
-    // Add brokerageSplit from notes if stored there, or calculate it
-    // For now, we'll pass it via notes field as JSON, but ideally it should be in schema
+    // Add brokerageSplit as computed property
+    // Note: brokerageSplit is calculated from stored values when needed
+    // We don't store it separately, it's computed in the calculation function
     const transactionsWithExtras = transactions.map(t => {
-      let brokerageSplit = null
-      // Try to parse brokerageSplit from notes if stored there
-      if (t.notes) {
-        try {
-          const parsed = JSON.parse(t.notes)
-          if (parsed.brokerageSplit) {
-            brokerageSplit = parsed.brokerageSplit
-          }
-        } catch {
-          // Notes is not JSON, ignore
-        }
-      }
       return {
         ...t,
-        brokerageSplit // Add as computed property for calculations
+        brokerageSplit: null // Will be calculated from stored values in commissionCalculations
       }
     })
     

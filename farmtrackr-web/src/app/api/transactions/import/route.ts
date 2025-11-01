@@ -355,12 +355,11 @@ export async function POST(request: NextRequest) {
           // Universal
           otherDeductions: otherDeductions !== null ? otherDeductions : undefined,
           buyersAgentSplit: buyersAgentSplit !== null ? buyersAgentSplit : undefined,
-          assistantBonus: assistantBonus !== null ? assistantBonus : undefined,
-          
-          // Store brokerageSplit in notes as JSON so we can retrieve it for calculations
-          // This is a workaround since brokerageSplit is not in the schema
-          notes: brokerageSplit && brokerageSplit > 0 ? JSON.stringify({ brokerageSplit }) : null
+          assistantBonus: assistantBonus !== null ? assistantBonus : undefined
         }
+        
+        // Store brokerageSplit separately (we'll use it in calculations but not store in DB)
+        // Since brokerageSplit is not in schema, we calculate it from stored values when needed
 
         // Validate required fields before attempting to save
         if (!propertyType || !clientType || !transactionType || !brokerage || !status) {
