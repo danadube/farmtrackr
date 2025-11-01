@@ -142,7 +142,7 @@ async function importData() {
             preSplitDeduction = totalFees * 0.2
           }
           
-          bdhSplitPct = 0.02 // Default 2% split
+          bdhSplitPct = 0.94 // Default 94% split (as decimal)
         }
         
         await prisma.transaction.create({
