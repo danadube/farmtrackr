@@ -195,6 +195,40 @@ export default function CommissionsPage() {
     }
   }
 
+  // Helper to add button press feedback
+  const getButtonPressHandlers = (buttonId: string) => ({
+    onMouseDown: () => setPressedButtons(prev => new Set(prev).add(buttonId)),
+    onMouseUp: () => setPressedButtons(prev => {
+      const next = new Set(prev)
+      next.delete(buttonId)
+      return next
+    }),
+    onMouseLeave: () => setPressedButtons(prev => {
+      const next = new Set(prev)
+      next.delete(buttonId)
+      return next
+    })
+  })
+
+  const getButtonPressStyle = (buttonId: string, baseStyle: React.CSSProperties, baseBg: string, hoverBg?: string) => ({
+    ...baseStyle,
+    backgroundColor: pressedButtons.has(buttonId) ? (hoverBg || baseBg) : baseBg,
+    transform: pressedButtons.has(buttonId) ? 'scale(0.97)' : 'scale(1)',
+    boxShadow: pressedButtons.has(buttonId) ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : baseStyle.boxShadow || 'none',
+    transition: 'all 0.1s ease'
+  })
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setFilterYear('all')
+    setFilterClientType('all')
+    setFilterBrokerage('all')
+    setFilterPropertyType('all')
+    setFilterReferralType('all')
+    setFilterDateRange('all')
+    setSearchQuery('')
+  }
+
   const handleDownloadTemplate = () => {
     const link = document.createElement('a')
     link.href = '/templates/transactions-template.csv'
