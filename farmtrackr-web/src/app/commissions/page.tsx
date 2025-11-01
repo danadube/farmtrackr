@@ -9,7 +9,11 @@ import {
   TrendingUp, 
   Briefcase, 
   Home,
-  Calendar
+  Calendar,
+  Edit2,
+  Trash2,
+  X,
+  Save
 } from 'lucide-react'
 
 interface Transaction {
@@ -31,6 +35,11 @@ export default function CommissionsPage() {
   const { colors, isDark, card, headerCard, headerDivider, headerTint, background, text } = useThemeStyles()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     async function fetchTransactions() {
@@ -156,6 +165,7 @@ export default function CommissionsPage() {
                   </div>
                 </div>
                 <button
+                  onClick={() => alert('Transaction form coming soon in Phase 2!')}
                   style={{
                     padding: '12px 24px',
                     backgroundColor: colors.primary,
@@ -344,6 +354,58 @@ export default function CommissionsPage() {
                           </span>
                         </div>
                       </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          onClick={() => alert('Transaction editing coming soon in Phase 2!')}
+                          style={{
+                            padding: '8px',
+                            backgroundColor: colors.cardHover,
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = colors.primary + '20'
+                            e.currentTarget.style.borderColor = colors.primary
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = colors.cardHover
+                            e.currentTarget.style.borderColor = colors.border
+                          }}
+                          title="Edit"
+                        >
+                          <Edit2 style={{ width: '16px', height: '16px', color: colors.primary }} />
+                        </button>
+                        <button
+                          onClick={() => alert('Transaction deletion coming soon in Phase 2!')}
+                          style={{
+                            padding: '8px',
+                            backgroundColor: colors.cardHover,
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = colors.error + '20'
+                            e.currentTarget.style.borderColor = colors.error
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = colors.cardHover
+                            e.currentTarget.style.borderColor = colors.border
+                          }}
+                          title="Delete"
+                        >
+                          <Trash2 style={{ width: '16px', height: '16px', color: colors.error }} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -351,29 +413,29 @@ export default function CommissionsPage() {
             )}
           </div>
 
-          {/* Coming Soon Notice */}
+          {/* Phase 1 Complete Notice */}
           <div 
             style={{
               marginTop: '24px',
               padding: '24px',
-              backgroundColor: isDark ? '#1e3a8a' : '#eff6ff',
-              border: `1px solid ${colors.primary}`,
+              backgroundColor: isDark ? '#065f46' : '#dcfce7',
+              border: `1px solid ${colors.success}`,
               borderRadius: '12px'
             }}
           >
-            <h3 style={{ fontWeight: '600', color: isDark ? '#93c5fd' : '#1e40af', fontSize: '16px', marginBottom: '12px' }}>
-              🚧 Commission Tracking in Progress
+            <h3 style={{ fontWeight: '600', color: colors.success, fontSize: '16px', marginBottom: '12px' }}>
+              ✅ Phase 1: Foundation Complete
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: isDark ? '#bfdbfe' : '#1e3a8a' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: isDark ? '#a7f3d0' : '#059669' }}>
               <p style={{ margin: '0' }}>
-                Transaction tracking is now available! Coming soon:
+                Database and API are ready! Phase 2 features coming soon:
               </p>
               <ul style={{ margin: '0', paddingLeft: '20px' }}>
-                <li>Transaction details and editing</li>
+                <li>Transaction create/edit form</li>
                 <li>Commission calculations (GCI, NCI, Brokerage-specific)</li>
-                <li>Analytics and charts</li>
+                <li>Analytics dashboard with charts</li>
                 <li>Google Sheets sync</li>
-                <li>Filters and search</li>
+                <li>Advanced filters and search</li>
               </ul>
             </div>
           </div>
