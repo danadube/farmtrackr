@@ -17,7 +17,8 @@ import {
   Save,
   Target,
   RefreshCw,
-  Upload
+  Upload,
+  Download
 } from 'lucide-react'
 import { TransactionForm } from '@/components/TransactionForm'
 import { calculateCommission } from '@/lib/commissionCalculations'
@@ -129,6 +130,15 @@ export default function CommissionsPage() {
     } finally {
       setIsImporting(false)
     }
+  }
+
+  const handleDownloadTemplate = () => {
+    const link = document.createElement('a')
+    link.href = '/templates/transactions-template.csv'
+    link.download = 'transactions-template.csv'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   // Calculate analytics
@@ -465,6 +475,44 @@ export default function CommissionsPage() {
                 </div>
                 <Home style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6 }} />
               </div>
+            </div>
+          </div>
+
+          {/* Download Template */}
+          <div style={{ ...card, marginBottom: '32px' }}>
+            <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0 0 12px 0' }}>
+                📥 Download Transaction Template
+              </h3>
+              <p style={{ fontSize: '14px', ...text.secondary, margin: '0 0 16px 0' }}>
+                Get a CSV template to prepare your own transaction data for import
+              </p>
+              <button
+                onClick={handleDownloadTemplate}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: colors.info,
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.infoHover
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.info
+                }}
+              >
+                <Download style={{ width: '16px', height: '16px' }} />
+                Download CSV Template
+              </button>
             </div>
           </div>
 
