@@ -422,15 +422,11 @@ export async function POST(request: NextRequest) {
           assistantBonus: assistantBonus !== null ? assistantBonus : undefined
         }
         
-        // Only add notes field if it exists (after database migration)
-        // For now, check if we have notes data and try to add it (will fail gracefully if column doesn't exist)
+        // Only add notes field if we have notes data
+        // NOTE: This requires the database migration to be run first
+        // If you're getting errors about 'notes' column, run: npx prisma migrate deploy
         if (notesData !== null) {
-          try {
-            // Try to add notes field - will only work if migration has been run
-            transactionData.notes = notesData
-          } catch (e) {
-            // Ignore if notes field doesn't exist in schema yet
-          }
+          transactionData.notes = notesData
         }
 
         // Validate required fields before attempting to save
