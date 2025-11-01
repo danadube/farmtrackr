@@ -394,7 +394,7 @@ export async function POST(request: NextRequest) {
           referralPct: referralPct !== null ? referralPct : undefined,
           referralDollar: referralDollar !== null ? referralDollar : undefined,
           referralFeeReceived: referralFeeReceived !== null ? referralFeeReceived : undefined,
-          referringAgent: referringAgent || null
+          referringAgent: referringAgent || null,
           
           // KW
           eo: eo !== null ? eo : undefined,
