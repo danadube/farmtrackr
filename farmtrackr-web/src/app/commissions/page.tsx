@@ -7,7 +7,8 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { 
   DollarSign, 
   Plus, 
-  TrendingUp, 
+  TrendingUp,
+  TrendingDown, 
   Briefcase, 
   Home,
   Calendar,
@@ -141,11 +142,56 @@ export default function CommissionsPage() {
     document.body.removeChild(link)
   }
 
+  // Helper function to get commission calculation for a transaction
+  const getCommissionForTransaction = (t: Transaction) => {
+    return calculateCommission({
+      brokerage: t.brokerage,
+      transactionType: t.transactionType,
+      closedPrice: parseFloat(String(t.closedPrice || 0)),
+      commissionPct: parseFloat(String(t.commissionPct || 0)),
+      referralPct: parseFloat(String(t.referralPct || 0)),
+      referralFeeReceived: parseFloat(String(t.referralFeeReceived || 0)),
+      eo: parseFloat(String(t.eo || 0)),
+      royalty: t.royalty || '',
+      companyDollar: t.companyDollar || '',
+      hoaTransfer: parseFloat(String(t.hoaTransfer || 0)),
+      homeWarranty: parseFloat(String(t.homeWarranty || 0)),
+      kwCares: parseFloat(String(t.kwCares || 0)),
+      kwNextGen: parseFloat(String(t.kwNextGen || 0)),
+      boldScholarship: parseFloat(String(t.boldScholarship || 0)),
+      tcConcierge: parseFloat(String(t.tcConcierge || 0)),
+      jelmbergTeam: parseFloat(String(t.jelmbergTeam || 0)),
+      bdhSplitPct: parseFloat(String(t.bdhSplitPct || 0)),
+      asf: parseFloat(String(t.asf || 0)),
+      foundation10: parseFloat(String(t.foundation10 || 0)),
+      adminFee: parseFloat(String(t.adminFee || 0)),
+      preSplitDeduction: t.preSplitDeduction || '',
+      otherDeductions: parseFloat(String(t.otherDeductions || 0)),
+      buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0))
+    })
+  }
+
   // Calculate analytics
   const analytics = useMemo(() => {
     const totalTransactions = transactions.length
     const totalVolume = transactions.reduce((sum, t) => sum + (parseFloat(String(t.closedPrice || 0))), 0)
     const closedTransactions = transactions.filter(t => t.status === 'Closed').length
+    
+    // Calculate NCI for all transactions
+    const totalNCI = transactions.reduce((sum, t) => {
+      const calc = getCommissionForTransaction(t)
+      return sum + (parseFloat(calc.nci) || 0)
+    }, 0)
+    
+    // Calculate GCI for all transactions
+    const totalGCI = transactions.reduce((sum, t) => {
+      const calc = getCommissionForTransaction(t)
+      return sum + (parseFloat(calc.gci) || 0)
+    }, 0)
+    
+    const avgCommission = totalTransactions > 0 ? totalNCI / totalTransactions : 0
+    const referralFeesPaid = transactions.reduce((sum, t) => sum + (parseFloat(String(t.referralDollar || 0))), 0)
+    const referralFeesReceived = transactions.reduce((sum, t) => sum + (parseFloat(String(t.referralFeeReceived || 0))), 0)
     
     // Monthly data for charts
     const monthlyData = transactions.reduce((acc, t) => {
@@ -154,34 +200,7 @@ export default function CommissionsPage() {
         if (!acc[month]) {
           acc[month] = { month, gci: 0, nci: 0, transactions: 0 }
         }
-        const calc = calculateCommission({
-          brokerage: t.brokerage,
-          transactionType: t.transactionType,
-          closedPrice: parseFloat(String(t.closedPrice || 0)),
-          commissionPct: parseFloat(String(t.commissionPct || 0)),
-          referralPct: parseFloat(String(t.referralPct || 0)),
-          referralFeeReceived: parseFloat(String(t.referralFeeReceived || 0)),
-          // KW
-          eo: parseFloat(String(t.eo || 0)),
-          royalty: t.royalty || '',
-          companyDollar: t.companyDollar || '',
-          hoaTransfer: parseFloat(String(t.hoaTransfer || 0)),
-          homeWarranty: parseFloat(String(t.homeWarranty || 0)),
-          kwCares: parseFloat(String(t.kwCares || 0)),
-          kwNextGen: parseFloat(String(t.kwNextGen || 0)),
-          boldScholarship: parseFloat(String(t.boldScholarship || 0)),
-          tcConcierge: parseFloat(String(t.tcConcierge || 0)),
-          jelmbergTeam: parseFloat(String(t.jelmbergTeam || 0)),
-          // BDH
-          bdhSplitPct: parseFloat(String(t.bdhSplitPct || 0)),
-          asf: parseFloat(String(t.asf || 0)),
-          foundation10: parseFloat(String(t.foundation10 || 0)),
-          adminFee: parseFloat(String(t.adminFee || 0)),
-          preSplitDeduction: t.preSplitDeduction || '',
-          // Universal
-          otherDeductions: parseFloat(String(t.otherDeductions || 0)),
-          buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0))
-        })
+        const calc = getCommissionForTransaction(t)
         acc[month].gci += parseFloat(calc.gci) || 0
         acc[month].nci += parseFloat(calc.nci) || 0
         acc[month].transactions += 1
@@ -206,25 +225,7 @@ export default function CommissionsPage() {
         value: transactions.filter(t => 
           t.brokerage === 'KW' || t.brokerage === 'Keller Williams'
         )        .reduce((sum, t) => {
-          const calc = calculateCommission({
-            brokerage: t.brokerage,
-            closedPrice: parseFloat(String(t.closedPrice || 0)),
-            commissionPct: parseFloat(String(t.commissionPct || 0)),
-            referralPct: parseFloat(String(t.referralPct || 0)),
-            referralFeeReceived: parseFloat(String(t.referralFeeReceived || 0)),
-            eo: parseFloat(String(t.eo || 0)),
-            royalty: t.royalty || '',
-            companyDollar: t.companyDollar || '',
-            hoaTransfer: parseFloat(String(t.hoaTransfer || 0)),
-            homeWarranty: parseFloat(String(t.homeWarranty || 0)),
-            kwCares: parseFloat(String(t.kwCares || 0)),
-            kwNextGen: parseFloat(String(t.kwNextGen || 0)),
-            boldScholarship: parseFloat(String(t.boldScholarship || 0)),
-            tcConcierge: parseFloat(String(t.tcConcierge || 0)),
-            jelmbergTeam: parseFloat(String(t.jelmbergTeam || 0)),
-            otherDeductions: parseFloat(String(t.otherDeductions || 0)),
-            buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0))
-          })
+          const calc = getCommissionForTransaction(t)
           return sum + (parseFloat(calc.nci) || 0)
         }, 0)
       },
@@ -233,29 +234,141 @@ export default function CommissionsPage() {
         value: transactions.filter(t => 
           t.brokerage === 'BDH' || t.brokerage === 'Bennion Deville Homes'
         )        .reduce((sum, t) => {
-          const calc = calculateCommission({
-            brokerage: t.brokerage,
-            closedPrice: parseFloat(String(t.closedPrice || 0)),
-            commissionPct: parseFloat(String(t.commissionPct || 0)),
-            referralPct: parseFloat(String(t.referralPct || 0)),
-            referralFeeReceived: parseFloat(String(t.referralFeeReceived || 0)),
-            bdhSplitPct: parseFloat(String(t.bdhSplitPct || 0)),
-            asf: parseFloat(String(t.asf || 0)),
-            foundation10: parseFloat(String(t.foundation10 || 0)),
-            adminFee: parseFloat(String(t.adminFee || 0)),
-            preSplitDeduction: t.preSplitDeduction || '',
-            otherDeductions: parseFloat(String(t.otherDeductions || 0)),
-            buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0))
-          })
+          const calc = getCommissionForTransaction(t)
           return sum + (parseFloat(calc.nci) || 0)
         }, 0)
       }
     ].filter(item => item.value > 0)
     
-    return { totalTransactions, totalVolume, closedTransactions, chartData, pieData, brokerageData }
+    // Smart Insights
+    const insights = []
+    
+    // Best performing month
+    if (Object.keys(monthlyData).length > 0) {
+      const bestMonth = Object.values(monthlyData).sort((a, b) => b.nci - a.nci)[0]
+      if (bestMonth) {
+        insights.push({
+          icon: '🏆',
+          label: 'Best Month',
+          value: bestMonth.month,
+          subtext: `$${bestMonth.nci.toLocaleString('en-US', { minimumFractionDigits: 2 })} earned`,
+        })
+      }
+    }
+    
+    // Top property type
+    const propertyTypes = transactions.reduce((acc, t) => {
+      const calc = getCommissionForTransaction(t)
+      acc[t.propertyType] = (acc[t.propertyType] || 0) + (parseFloat(calc.nci) || 0)
+      return acc
+    }, {} as Record<string, number>)
+    if (Object.keys(propertyTypes).length > 0) {
+      const topProperty = Object.entries(propertyTypes).sort((a, b) => b[1] - a[1])[0]
+      if (topProperty) {
+        insights.push({
+          icon: '🏠',
+          label: 'Top Property Type',
+          value: topProperty[0],
+          subtext: `$${topProperty[1].toLocaleString('en-US', { minimumFractionDigits: 2 })} in commissions`,
+        })
+      }
+    }
+    
+    // Average days to close
+    const daysToClose = transactions
+      .filter(t => t.listDate && t.closingDate)
+      .map(t => {
+        const start = new Date(t.listDate)
+        const end = new Date(t.closingDate)
+        return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+      })
+      .filter(days => days > 0)
+    
+    if (daysToClose.length > 0) {
+      const avgDays = Math.round(daysToClose.reduce((sum, d) => sum + d, 0) / daysToClose.length)
+      insights.push({
+        icon: '⏱️',
+        label: 'Avg Days to Close',
+        value: `${avgDays} days`,
+        subtext: `Based on ${daysToClose.length} transactions`,
+      })
+    }
+    
+    // Stronger side (Buyer vs Seller)
+    const buyerNCI = transactions
+      .filter(t => t.clientType === 'Buyer')
+      .reduce((sum, t) => {
+        const calc = getCommissionForTransaction(t)
+        return sum + (parseFloat(calc.nci) || 0)
+      }, 0)
+    const sellerNCI = transactions
+      .filter(t => t.clientType === 'Seller')
+      .reduce((sum, t) => {
+        const calc = getCommissionForTransaction(t)
+        return sum + (parseFloat(calc.nci) || 0)
+      }, 0)
+    
+    if (buyerNCI + sellerNCI > 0) {
+      const strongerSide = buyerNCI > sellerNCI ? 'Buyers' : 'Sellers'
+      const percentage = Math.round((Math.max(buyerNCI, sellerNCI) / (buyerNCI + sellerNCI)) * 100)
+      
+      insights.push({
+        icon: strongerSide === 'Buyers' ? '🔵' : '⭐',
+        label: 'Stronger Side',
+        value: strongerSide,
+        subtext: `${percentage}% of total income`,
+      })
+    }
+    
+    // Biggest deal
+    if (transactions.length > 0) {
+      const biggestDeal = [...transactions].sort((a, b) => {
+        const calcA = getCommissionForTransaction(a)
+        const calcB = getCommissionForTransaction(b)
+        return (parseFloat(calcB.nci) || 0) - (parseFloat(calcA.nci) || 0)
+      })[0]
+      
+      if (biggestDeal) {
+        const calc = getCommissionForTransaction(biggestDeal)
+        insights.push({
+          icon: '💎',
+          label: 'Biggest Deal',
+          value: `$${(parseFloat(calc.nci) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          subtext: biggestDeal.address || '',
+        })
+      }
+    }
+    
+    return { 
+      totalTransactions, 
+      totalVolume, 
+      closedTransactions, 
+      totalGCI,
+      totalNCI,
+      avgCommission,
+      referralFeesPaid,
+      referralFeesReceived,
+      chartData, 
+      pieData, 
+      brokerageData,
+      insights
+    }
   }, [transactions])
   
-  const { totalTransactions, totalVolume, closedTransactions, chartData, pieData, brokerageData } = analytics
+  const { 
+    totalTransactions, 
+    totalVolume, 
+    closedTransactions,
+    totalGCI,
+    totalNCI,
+    avgCommission,
+    referralFeesPaid,
+    referralFeesReceived,
+    chartData, 
+    pieData, 
+    brokerageData,
+    insights
+  } = analytics
 
   if (isLoading) {
     return (
@@ -478,6 +591,94 @@ export default function CommissionsPage() {
             </div>
           </div>
 
+          {/* Additional Stats Cards */}
+          <div style={{ marginBottom: '32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            <div style={{ padding: '20px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Gross Commission
+                  </p>
+                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    ${totalGCI.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <Briefcase style={{ width: '32px', height: '32px', color: colors.info, opacity: 0.6 }} />
+              </div>
+              <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
+                Total earned before fees
+              </p>
+            </div>
+
+            <div style={{ padding: '20px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Net Commission
+                  </p>
+                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    ${totalNCI.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <TrendingUp style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6 }} />
+              </div>
+              <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
+                Your take-home pay
+              </p>
+            </div>
+
+            <div style={{ padding: '20px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Avg Per Deal
+                  </p>
+                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    ${avgCommission.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <DollarSign style={{ width: '32px', height: '32px', color: colors.referral, opacity: 0.6 }} />
+              </div>
+              <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
+                Average commission earned
+              </p>
+            </div>
+
+            <div style={{ padding: '20px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Referral Fees Paid
+                  </p>
+                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    ${referralFeesPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <TrendingUp style={{ width: '32px', height: '32px', color: colors.warning, opacity: 0.6 }} />
+              </div>
+              <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
+                Paid to referral partners
+              </p>
+            </div>
+
+            <div style={{ padding: '20px', ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                    Referral Fees Received
+                  </p>
+                  <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    ${referralFeesReceived.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <TrendingDown style={{ width: '32px', height: '32px', color: colors.success, opacity: 0.6 }} />
+              </div>
+              <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
+                Received from referral partners
+              </p>
+            </div>
+          </div>
+
           {/* Download Template */}
           <div style={{ ...card, marginBottom: '32px' }}>
             <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
@@ -674,6 +875,55 @@ export default function CommissionsPage() {
                 </div>
               </div>
             </>
+          )}
+
+          {/* Smart Insights */}
+          {insights.length > 0 && (
+            <div style={{ marginBottom: '32px' }}>
+              <div style={{ ...card, overflow: 'hidden' }}>
+                <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
+                  <h2 
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      ...text.primary,
+                      margin: '0'
+                    }}
+                  >
+                    Smart Insights
+                  </h2>
+                  <p style={{ fontSize: '14px', ...text.secondary, margin: '8px 0 0 0' }}>
+                    Key performance highlights from your data
+                  </p>
+                </div>
+                <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                  {insights.map((insight, index) => (
+                    <div 
+                      key={index}
+                      style={{ 
+                        padding: '16px', 
+                        borderRadius: '12px',
+                        border: `1px solid ${colors.border}`,
+                        backgroundColor: colors.cardHover
+                      }}
+                    >
+                      <div style={{ fontSize: '24px', marginBottom: '8px' }}>
+                        {insight.icon}
+                      </div>
+                      <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        {insight.label}
+                      </p>
+                      <p style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0 0 4px 0' }}>
+                        {insight.value}
+                      </p>
+                      <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                        {insight.subtext}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Transactions List */}
