@@ -163,12 +163,30 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
     }
   } else if (brokerage === 'BDH' || brokerage === 'Bennion Deville Homes' || brokerage?.includes('Bennion Deville')) {
     // BDH Commission Calculation (Exact Formula Chain)
-    // Step 4: Pre-Split Deduction = AdjustedGCI - (AdjustedGCI * 0.06) - 10
-    // This is CALCULATED (6% deduction plus $10 flat fee)
-    // If manual override provided, use it; otherwise calculate
-    const preSplitDeductionValue = preSplitDeduction !== '' && preSplitDeduction !== null && preSplitDeduction !== undefined 
-      ? parseFloat(String(preSplitDeduction)) // Manual override
-      : adjustedGci - (adjustedGci * 0.06) - 10 // Calculated: AdjustedGCI * 0.94 - 10
+    // Step 4: Pre-Split Deduction (amount remaining after 6% + $10 deduction)
+    // Formula: PreSplitDeduction = AdjustedGCI - (AdjustedGCI * 0.06) - 10
+    // IMPORTANT: CSV "presplitdeduction" column may contain:
+    //   - The amount DEDUCTED (6% + $10), OR
+    //   - The amount REMAINING after deduction
+    // We need to detect which one it is by comparing to expected deduction
+    const expectedDeduction = (adjustedGci * 0.06) + 10 // 6% + $10
+    let preSplitDeductionValue: number
+    
+    if (preSplitDeduction !== '' && preSplitDeduction !== null && preSplitDeduction !== undefined) {
+      const csvValue = parseFloat(String(preSplitDeduction))
+      // If CSV value is close to expected deduction amount (within $50), it's the amount DEDUCTED
+      // Otherwise, treat it as the amount REMAINING
+      if (Math.abs(csvValue - expectedDeduction) < 50) {
+        // CSV has the amount DEDUCTED, calculate remaining
+        preSplitDeductionValue = adjustedGci - csvValue
+      } else {
+        // CSV has the amount REMAINING, use it directly
+        preSplitDeductionValue = csvValue
+      }
+    } else {
+      // Calculate: AdjustedGCI * 0.94 - 10
+      preSplitDeductionValue = adjustedGci - (adjustedGci * 0.06) - 10
+    }
     
     // Step 5: BDH Split = PreSplitDeduction * 0.10 (10% of Pre-Split Deduction)
     // This is CALCULATED (always 10%)
