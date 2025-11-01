@@ -15,7 +15,9 @@ import {
   Trash2,
   X,
   Save,
-  Target
+  Target,
+  RefreshCw,
+  Upload
 } from 'lucide-react'
 import { TransactionForm } from '@/components/TransactionForm'
 import { calculateCommission } from '@/lib/commissionCalculations'
@@ -71,6 +73,7 @@ export default function CommissionsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
 
   const fetchTransactions = async () => {
     try {
@@ -105,6 +108,26 @@ export default function CommissionsPage() {
     } catch (error) {
       console.error('Error deleting transaction:', error)
       alert('Failed to delete transaction')
+    }
+  }
+
+  const handleImportFromGoogle = async () => {
+    setIsImporting(true)
+    try {
+      const response = await fetch('/api/transactions/import-google', { method: 'POST' })
+      const result = await response.json()
+      
+      if (response.ok) {
+        alert(`Successfully imported ${result.imported} transactions!\nUpdated: ${result.updated}\nSkipped: ${result.skipped}`)
+        await fetchTransactions()
+      } else {
+        alert(`Import failed: ${result.message || result.error}`)
+      }
+    } catch (error) {
+      console.error('Error importing transactions:', error)
+      alert('Failed to import transactions')
+    } finally {
+      setIsImporting(false)
     }
   }
 
@@ -324,35 +347,77 @@ export default function CommissionsPage() {
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setEditingId(null)
-                    setShowForm(true)
-                  }}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: colors.primary,
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primaryHover
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primary
-                  }}
-                >
-                  <Plus style={{ width: '16px', height: '16px' }} />
-                  New Transaction
-                </button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={handleImportFromGoogle}
+                    disabled={isImporting}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: isImporting ? colors.text.tertiary : colors.success,
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: isImporting ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isImporting) {
+                        e.currentTarget.style.backgroundColor = colors.successHover
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isImporting) {
+                        e.currentTarget.style.backgroundColor = colors.success
+                      }
+                    }}
+                  >
+                    {isImporting ? (
+                      <>
+                        <RefreshCw style={{ width: '16px', height: '16px' }} />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload style={{ width: '16px', height: '16px' }} />
+                        Import from Google Sheets
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingId(null)
+                      setShowForm(true)
+                    }}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: colors.primary,
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.primaryHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.primary
+                    }}
+                  >
+                    <Plus style={{ width: '16px', height: '16px' }} />
+                    New Transaction
+                  </button>
+                </div>
               </div>
               <div style={headerDivider} />
             </div>
