@@ -99,8 +99,13 @@ export async function POST(request: NextRequest) {
     // Process each row
     for (const row of rows) {
       try {
-        // Skip empty rows
-        if (!row['address'] && !row['city'] && !row['propertyType']) {
+        // Skip empty rows - use case-insensitive check
+        const rowKeys = Object.keys(row)
+        const hasAddress = rowKeys.some(key => key.toLowerCase() === 'address') && row[rowKeys.find(key => key.toLowerCase() === 'address') || '']
+        const hasCity = rowKeys.some(key => key.toLowerCase() === 'city') && row[rowKeys.find(key => key.toLowerCase() === 'city') || '']
+        const hasPropertyType = rowKeys.some(key => key.toLowerCase() === 'propertytype') && row[rowKeys.find(key => key.toLowerCase() === 'propertytype') || '']
+        
+        if (!hasAddress && !hasCity && !hasPropertyType) {
           skipped++
           continue
         }
@@ -286,6 +291,7 @@ export async function POST(request: NextRequest) {
 
       } catch (error: any) {
         console.error('Error processing transaction row:', error)
+        console.error('Row data:', JSON.stringify(row, null, 2))
         errors++
       }
     }
