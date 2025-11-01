@@ -78,6 +78,7 @@ export default function CommissionsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [showFeeTooltip, setShowFeeTooltip] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -324,9 +325,8 @@ export default function CommissionsPage() {
       })() || 0.94
       const afterPreSplit = adjustedGci - preSplit
       const agentSplit = afterPreSplit * splitPct
-      const brokeragePortion = (t as any).brokerageSplit && parseFloat(String((t as any).brokerageSplit)) > 0
-        ? parseFloat(String((t as any).brokerageSplit))
-        : (adjustedGci - agentSplit)
+      // Always calculate brokerage portion (matches standalone app logic)
+      const brokeragePortion = adjustedGci - agentSplit
       const asf = parseFloat(String(t.asf || 0))
       const foundation = parseFloat(String(t.foundation10 || 0))
       const admin = parseFloat(String(t.adminFee || 0))
@@ -1982,7 +1982,8 @@ export default function CommissionsPage() {
                             position: 'relative',
                             cursor: 'help'
                           }}
-                          title={getFeeBreakdown(viewingTransaction).replace(/\\n/g, '\n')}
+                          onMouseEnter={() => setShowFeeTooltip(true)}
+                          onMouseLeave={() => setShowFeeTooltip(false)}
                         >
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 8px 0', textTransform: 'uppercase' }}>Total Fees</p>
                           <p style={{ fontSize: '18px', fontWeight: '700', color: colors.warning, margin: '0' }}>
@@ -2005,10 +2006,46 @@ export default function CommissionsPage() {
                               fontWeight: 'bold',
                               opacity: 0.7
                             }}
-                            title="Hover to see fee breakdown"
                           >
                             i
                           </div>
+                          
+                          {/* Tooltip */}
+                          {showFeeTooltip && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                bottom: '100%',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                marginBottom: '8px',
+                                padding: '12px 16px',
+                                backgroundColor: colors.card,
+                                border: `1px solid ${colors.border}`,
+                                borderRadius: '8px',
+                                boxShadow: isDark ? '0 4px 12px rgba(0, 0, 0, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.15)',
+                                zIndex: 1000,
+                                minWidth: '250px',
+                                maxWidth: '400px',
+                                whiteSpace: 'pre-line',
+                                fontSize: '12px',
+                                ...text.secondary,
+                                pointerEvents: 'none'
+                              }}
+                            >
+                              <div style={{ fontWeight: '600', ...text.primary, marginBottom: '8px', fontSize: '13px' }}>
+                                Fee Breakdown ({viewingTransaction.brokerage === 'KW' || viewingTransaction.brokerage === 'Keller Williams' ? 'KW' : 'BDH'})
+                              </div>
+                              <div style={{ lineHeight: '1.6' }}>
+                                {getFeeBreakdown(viewingTransaction).split('\\n').map((line, idx) => (
+                                  <div key={idx} style={{ marginBottom: idx === 0 ? '0' : '4px' }}>{line}</div>
+                                ))}
+                              </div>
+                              <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${colors.border}`, fontWeight: '600', ...text.primary }}>
+                                Total: ${totalFees.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: colors.successLight, border: `1px solid ${colors.success}` }}>
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 8px 0', textTransform: 'uppercase' }}>Net Commission Income</p>
