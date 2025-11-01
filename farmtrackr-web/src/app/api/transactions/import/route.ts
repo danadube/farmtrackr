@@ -288,21 +288,39 @@ export async function POST(request: NextRequest) {
         // Without these, we can't reliably identify duplicates
         let existing = null
         if (address && clientType) {
-          // If we have a closing date, require it to match
+          // Try multiple matching strategies, from most specific to least specific
+          
+          // Strategy 1: Match by address + clientType + closingDate (most specific)
           if (validatedClosingDate) {
-            whereClause.closingDate = validatedClosingDate
             existing = await prisma.transaction.findFirst({
-              where: whereClause
+              where: {
+                address: address,
+                clientType: clientType,
+                closingDate: validatedClosingDate
+              }
             })
-          } else if (validatedListDate) {
-            // If no closing date but we have a list date, use that
-            whereClause.listDate = validatedListDate
+            if (existing) {
+              console.log(`Duplicate found (strategy 1): ${address}, ${clientType}, closingDate: ${validatedClosingDate.toISOString()}`)
+            }
+          }
+          
+          // Strategy 2: If not found, try address + clientType + listDate
+          if (!existing && validatedListDate) {
             existing = await prisma.transaction.findFirst({
-              where: whereClause
+              where: {
+                address: address,
+                clientType: clientType,
+                listDate: validatedListDate
+              }
             })
-          } else {
-            // If neither date, check if there's an exact match without dates
-            // This catches duplicates where dates weren't provided in CSV
+            if (existing) {
+              console.log(`Duplicate found (strategy 2): ${address}, ${clientType}, listDate: ${validatedListDate.toISOString()}`)
+            }
+          }
+          
+          // Strategy 3: If still not found and we have transaction type and brokerage, try exact match
+          // This catches duplicates where dates weren't provided in CSV
+          if (!existing && transactionType && brokerage) {
             existing = await prisma.transaction.findFirst({
               where: {
                 address: address,
@@ -311,6 +329,35 @@ export async function POST(request: NextRequest) {
                 brokerage: brokerage
               }
             })
+            if (existing) {
+              console.log(`Duplicate found (strategy 3): ${address}, ${clientType}, ${transactionType}, ${brokerage}`)
+            }
+          }
+          
+          // Strategy 4: Last resort - match by address + clientType only (less strict)
+          // This might catch some edge cases but could also create false matches
+          // Only use if we're confident the address and clientType combination is unique
+          if (!existing) {
+            // Count how many transactions exist with this address + clientType
+            const matchingCount = await prisma.transaction.count({
+              where: {
+                address: address,
+                clientType: clientType
+              }
+            })
+            
+            // If there's exactly one match, use it (likely the same transaction being updated)
+            if (matchingCount === 1) {
+              existing = await prisma.transaction.findFirst({
+                where: {
+                  address: address,
+                  clientType: clientType
+                }
+              })
+              if (existing) {
+                console.log(`Duplicate found (strategy 4): ${address}, ${clientType} (single match)`)
+              }
+            }
           }
         }
 
