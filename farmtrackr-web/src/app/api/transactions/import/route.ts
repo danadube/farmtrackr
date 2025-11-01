@@ -312,7 +312,7 @@ export async function POST(request: NextRequest) {
               }
             })
             if (existing) {
-              console.log(`Duplicate found (strategy 1): ${address}, ${clientType}, closingDate: ${validatedClosingDate.toISOString()}`)
+              console.log(`Duplicate found (strategy 1): ${address}, ${clientType}, closingDate: ${validatedClosingDate.toISOString()}, existing ID: ${existing.id}`)
             }
           }
           
@@ -326,13 +326,14 @@ export async function POST(request: NextRequest) {
               }
             })
             if (existing) {
-              console.log(`Duplicate found (strategy 2): ${address}, ${clientType}, listDate: ${validatedListDate.toISOString()}`)
+              console.log(`Duplicate found (strategy 2): ${address}, ${clientType}, listDate: ${validatedListDate.toISOString()}, existing ID: ${existing.id}`)
             }
           }
           
           // Strategy 3: If still not found and we have transaction type and brokerage, try exact match
           // This catches duplicates where dates weren't provided in CSV
-          if (!existing && transactionType && brokerage) {
+          // BUT - only use this if we don't have dates, to avoid false matches
+          if (!existing && transactionType && brokerage && !validatedClosingDate && !validatedListDate) {
             existing = await prisma.transaction.findFirst({
               where: {
                 address: address,
@@ -342,35 +343,12 @@ export async function POST(request: NextRequest) {
               }
             })
             if (existing) {
-              console.log(`Duplicate found (strategy 3): ${address}, ${clientType}, ${transactionType}, ${brokerage}`)
+              console.log(`Duplicate found (strategy 3 - no dates): ${address}, ${clientType}, ${transactionType}, ${brokerage}, existing ID: ${existing.id}`)
             }
           }
           
-          // Strategy 4: Last resort - match by address + clientType only (less strict)
-          // This might catch some edge cases but could also create false matches
-          // Only use if we're confident the address and clientType combination is unique
-          if (!existing) {
-            // Count how many transactions exist with this address + clientType
-            const matchingCount = await prisma.transaction.count({
-              where: {
-                address: address,
-                clientType: clientType
-              }
-            })
-            
-            // If there's exactly one match, use it (likely the same transaction being updated)
-            if (matchingCount === 1) {
-              existing = await prisma.transaction.findFirst({
-                where: {
-                  address: address,
-                  clientType: clientType
-                }
-              })
-              if (existing) {
-                console.log(`Duplicate found (strategy 4): ${address}, ${clientType} (single match)`)
-              }
-            }
-          }
+          // Strategy 4: Removed - too risky, can create false matches
+          // If no exact match found with dates or transaction type, treat as new transaction
         }
 
         const transactionData: any = {
@@ -433,33 +411,39 @@ export async function POST(request: NextRequest) {
           continue
         }
         
-        // Log if transaction would be skipped due to duplicate
+        // Log if transaction would be updated vs imported
         if (existing) {
-          console.log(`Duplicate found (will update): ${address || 'no address'}, ${clientType}, closingDate: ${validatedClosingDate ? validatedClosingDate.toISOString() : 'none'}, existing ID: ${existing.id}`)
+          console.log(`Duplicate found (will UPDATE): ${address || 'no address'}, ${clientType}, closingDate: ${validatedClosingDate ? validatedClosingDate.toISOString() : 'none'}, existing ID: ${existing.id}`)
+          console.log(`  Existing: ${existing.address}, ${existing.clientType}, ${existing.closingDate ? new Date(existing.closingDate).toISOString() : 'no date'}`)
+          console.log(`  New: ${address}, ${clientType}, ${validatedClosingDate ? validatedClosingDate.toISOString() : 'no date'}`)
+        } else {
+          console.log(`New transaction (will IMPORT): ${address || 'no address'}, ${clientType}, ${transactionType}, closingDate: ${validatedClosingDate ? validatedClosingDate.toISOString() : 'none'}`)
         }
 
         if (existing) {
           try {
-            await prisma.transaction.update({
+            const updateResult = await prisma.transaction.update({
               where: { id: existing.id },
               data: transactionData
             })
             updated++
-            console.log(`Updated transaction: ${address || 'no address'}, ${clientType}, ${transactionType}`)
+            console.log(`✓ Updated transaction: ${address || 'no address'}, ${clientType}, ${transactionType}, ID: ${existing.id}`)
           } catch (updateError: any) {
-            console.error('Error updating transaction:', updateError)
+            console.error('✗ Error updating transaction:', updateError)
+            console.error('Error details:', updateError?.message, updateError?.code)
             console.error('Transaction data:', JSON.stringify(transactionData, null, 2))
             errors++
           }
         } else {
           try {
-            await prisma.transaction.create({
+            const createResult = await prisma.transaction.create({
               data: transactionData
             })
             imported++
-            console.log(`Imported transaction: ${address || 'no address'}, ${clientType}, ${transactionType}`)
+            console.log(`✓ Imported transaction: ${address || 'no address'}, ${clientType}, ${transactionType}, ID: ${createResult.id}`)
           } catch (createError: any) {
-            console.error('Error creating transaction:', createError)
+            console.error('✗ Error creating transaction:', createError)
+            console.error('Error details:', createError?.message, createError?.code)
             console.error('Transaction data:', JSON.stringify(transactionData, null, 2))
             errors++
           }
