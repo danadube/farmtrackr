@@ -1036,12 +1036,28 @@ export default function CommissionsPage() {
                           )}
                           {transaction.closedPrice && (
                             <span style={{ fontSize: '15px', fontWeight: '600', ...text.primary }}>
-                              ${transaction.closedPrice.toLocaleString()}
+                              ${transaction.closedPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                             </span>
+                          )}
+                          {transaction.closedDate && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Calendar style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />
+                              <span style={{ fontSize: '13px', ...text.tertiary }}>
+                                {new Date(transaction.closedDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                              </span>
+                            </div>
                           )}
                           <span style={{ fontSize: '13px', ...text.tertiary }}>
                             {transaction.brokerage}
                           </span>
+                          {(() => {
+                            const calc = getCommissionForTransaction(transaction)
+                            return (
+                              <span style={{ fontSize: '15px', fontWeight: '700', color: colors.success }}>
+                                NCI: ${(parseFloat(calc.nci) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              </span>
+                            )
+                          })()}
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
