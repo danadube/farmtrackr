@@ -253,14 +253,20 @@ export default function CommissionsPage() {
   const getCommissionForTransaction = (t: Transaction) => {
     // For referral transactions, extract CSV NCI from notes if available
     let csvNci: number | undefined = undefined
-    if (t.transactionType === 'Referral $ Received' && t.notes) {
-      try {
-        const notesData = JSON.parse(t.notes)
-        if (notesData && typeof notesData.csvNci === 'number') {
-          csvNci = notesData.csvNci
+    if (t.transactionType === 'Referral $ Received') {
+      if (t.notes) {
+        try {
+          const notesData = JSON.parse(t.notes)
+          if (notesData && typeof notesData.csvNci === 'number') {
+            csvNci = notesData.csvNci
+            console.log(`[Referral] Using CSV NCI from notes: ${csvNci} for transaction ${t.id}`)
+          }
+        } catch (e) {
+          // Notes might not be JSON, ignore
+          console.warn(`[Referral] Failed to parse notes as JSON for transaction ${t.id}:`, e)
         }
-      } catch (e) {
-        // Notes might not be JSON, ignore
+      } else {
+        console.warn(`[Referral] No notes field for referral transaction ${t.id} - will calculate (should not happen)`)
       }
     }
     
