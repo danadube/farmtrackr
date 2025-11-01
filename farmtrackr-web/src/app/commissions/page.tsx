@@ -276,10 +276,10 @@ export default function CommissionsPage() {
     
     // Average days to close
     const daysToClose = transactions
-      .filter(t => t.listDate && t.closingDate)
+      .filter(t => t.listDate && t.closedDate)
       .map(t => {
         const start = new Date(t.listDate)
-        const end = new Date(t.closingDate)
+        const end = new Date(t.closedDate)
         return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
       })
       .filter(days => days > 0)
