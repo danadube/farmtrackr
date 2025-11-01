@@ -44,6 +44,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No data found in file' }, { status: 400 })
     }
 
+    // Debug: Log first row to see column structure
+    if (rows.length > 0) {
+      console.log('First row columns:', Object.keys(rows[0]))
+      console.log('First row sample:', JSON.stringify(rows[0], null, 2))
+    }
+
     let imported = 0
     let updated = 0
     let skipped = 0
