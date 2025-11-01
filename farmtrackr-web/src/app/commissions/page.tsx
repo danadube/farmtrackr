@@ -102,7 +102,13 @@ export default function CommissionsPage() {
       const response = await fetch('/api/transactions')
       if (response.ok) {
         const data = await response.json()
-        setTransactions(data)
+        // Map closingDate to closedDate for frontend compatibility
+        const mappedData = data.map((t: any) => ({
+          ...t,
+          closedDate: t.closingDate || t.closedDate || null,
+          listDate: t.listDate || null
+        }))
+        setTransactions(mappedData)
       }
     } catch (error) {
       console.error('Error fetching transactions:', error)
@@ -1595,12 +1601,26 @@ export default function CommissionsPage() {
                             </span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', ...text.secondary, flexWrap: 'wrap' }}>
-                            {transaction.closedDate && (
-                              <span style={{ fontWeight: '600', color: colors.text.primary }}>
-                                📅 {new Date(transaction.closedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                              </span>
-                            )}
-                            {transaction.closedDate && transaction.city && <span>•</span>}
+                            {(() => {
+                              // Check both closedDate (frontend) and closingDate (database) for compatibility
+                              const closedDate = transaction.closedDate || (transaction as any).closingDate
+                              if (!closedDate) return null
+                              try {
+                                const date = new Date(closedDate)
+                                if (isNaN(date.getTime())) return null
+                                return (
+                                  <span style={{ fontWeight: '600', color: colors.text.primary }}>
+                                    📅 {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                  </span>
+                                )
+                              } catch {
+                                return null
+                              }
+                            })()}
+                            {(() => {
+                              const closedDate = transaction.closedDate || (transaction as any).closingDate
+                              return closedDate && transaction.city ? <span>•</span> : null
+                            })()}
                             {transaction.city && (
                               <span>{transaction.city}</span>
                             )}
@@ -1883,10 +1903,14 @@ export default function CommissionsPage() {
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>List Date</p>
                           <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
                             {(() => {
-                              const listDate = viewingTransaction.listDate
-                              if (!listDate || listDate.trim() === '') return 'N/A'
+                              // Check both closedDate (frontend) and closingDate (database) for compatibility
+                              const listDate = viewingTransaction.listDate || (viewingTransaction as any).listDate
+                              if (!listDate) return 'N/A'
+                              // Handle both string and Date object
+                              const dateStr = typeof listDate === 'string' ? listDate : listDate.toString()
+                              if (!dateStr || dateStr.trim() === '' || dateStr === 'null' || dateStr === 'undefined') return 'N/A'
                               try {
-                                const date = new Date(listDate)
+                                const date = new Date(dateStr)
                                 if (isNaN(date.getTime())) return 'N/A'
                                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                               } catch {
@@ -1899,10 +1923,14 @@ export default function CommissionsPage() {
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Closing Date</p>
                           <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
                             {(() => {
-                              const closedDate = viewingTransaction.closedDate
-                              if (!closedDate || closedDate.trim() === '') return 'N/A'
+                              // Check both closedDate (frontend) and closingDate (database) for compatibility
+                              const closedDate = viewingTransaction.closedDate || (viewingTransaction as any).closingDate
+                              if (!closedDate) return 'N/A'
+                              // Handle both string and Date object
+                              const dateStr = typeof closedDate === 'string' ? closedDate : closedDate.toString()
+                              if (!dateStr || dateStr.trim() === '' || dateStr === 'null' || dateStr === 'undefined') return 'N/A'
                               try {
-                                const date = new Date(closedDate)
+                                const date = new Date(dateStr)
                                 if (isNaN(date.getTime())) return 'N/A'
                                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                               } catch {

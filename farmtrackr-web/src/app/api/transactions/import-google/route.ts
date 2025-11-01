@@ -113,8 +113,27 @@ export async function POST(request: NextRequest) {
         })
 
         // Parse dates
-        const parseDate = (dateStr: string): Date | null => {
+        const parseDate = (dateStr: any): Date | null => {
           if (!dateStr) return null
+          // Handle string dates (from Google Sheets)
+          if (typeof dateStr === 'string') {
+            const trimmed = dateStr.trim()
+            if (!trimmed || trimmed === '' || trimmed.toLowerCase() === 'n/a' || trimmed.toLowerCase() === 'na') return null
+            // Try parsing M/D/YYYY format (common in spreadsheets)
+            const mdyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+            if (mdyMatch) {
+              const [, month, day, year] = mdyMatch
+              return new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+            }
+            // Try parsing standard ISO format
+            const date = new Date(trimmed)
+            if (!isNaN(date.getTime())) return date
+          }
+          // Handle Date objects (from Google Sheets API)
+          if (dateStr instanceof Date) {
+            return isNaN(dateStr.getTime()) ? null : dateStr
+          }
+          // Try converting to date
           try {
             const date = new Date(dateStr)
             return isNaN(date.getTime()) ? null : date
@@ -122,6 +141,7 @@ export async function POST(request: NextRequest) {
             return null
           }
         }
+
 
         // Parse numeric values (remove $ and commas)
         const parseMoney = (value: string): number | null => {
