@@ -79,7 +79,8 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
     asf = 0,
     foundation10 = 0,
     adminFee = 0,
-    brokerageSplit = 0, // Pre-calculated brokerage portion from CSV
+    brokerageSplit = 0, // Brokerage split (flat value OR calculated from percentage)
+    brokerageSplitPct = undefined, // Percentage to calculate brokerageSplit if not provided as flat value
     
     // Universal
     otherDeductions = 0,
