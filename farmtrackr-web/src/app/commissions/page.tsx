@@ -259,14 +259,16 @@ export default function CommissionsPage() {
           const notesData = JSON.parse(t.notes)
           if (notesData && typeof notesData.csvNci === 'number') {
             csvNci = notesData.csvNci
-            console.log(`[Referral] Using CSV NCI from notes: ${csvNci} for transaction ${t.id}`)
+            console.log(`[Referral] Using CSV NCI from notes: ${csvNci} for transaction ${t.id} at ${t.address}`)
+          } else {
+            console.warn(`[Referral] Notes found but no csvNci property for transaction ${t.id}:`, notesData)
           }
         } catch (e) {
           // Notes might not be JSON, ignore
-          console.warn(`[Referral] Failed to parse notes as JSON for transaction ${t.id}:`, e)
+          console.warn(`[Referral] Failed to parse notes as JSON for transaction ${t.id}:`, e, 'notes:', t.notes)
         }
       } else {
-        console.warn(`[Referral] No notes field for referral transaction ${t.id} - will calculate (should not happen)`)
+        console.warn(`[Referral] No notes field for referral transaction ${t.id} at ${t.address} - CSV NCI not stored`)
       }
     }
     
