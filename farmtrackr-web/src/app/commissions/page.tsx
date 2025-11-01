@@ -525,7 +525,7 @@ export default function CommissionsPage() {
       // For oldest first: smaller dates first (dateA - dateB)
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB
     })
-  }, [filteredTransactions])
+  }, [transactions, filterYear, filterClientType, filterBrokerage, filterPropertyType, filterReferralType, filterDateRange, searchQuery, sortOrder])
 
   // Calculate analytics based on FILTERED transactions
   const analytics = useMemo(() => {
@@ -597,8 +597,15 @@ export default function CommissionsPage() {
     }, {} as Record<string, { month: string; gci: number; nci: number; transactions: number }>)
     
     const chartData = Object.values(monthlyData).sort((a, b) => {
-      // Sort by month string (e.g. "Jan 2024" < "Feb 2024")
-      return a.month.localeCompare(b.month)
+      // Sort by actual date for proper chronological order
+      // Parse "Jan 2024" format to Date objects for comparison
+      const dateA = new Date(a.month)
+      const dateB = new Date(b.month)
+      // Handle invalid dates
+      if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+        return a.month.localeCompare(b.month) // Fallback to string comparison
+      }
+      return dateA.getTime() - dateB.getTime()
     })
     
     const pieData = [
