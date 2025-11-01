@@ -422,7 +422,7 @@ export default function CommissionsPage() {
                         <YAxis tick={{ fontSize: 12, fill: colors.text.secondary }} stroke={colors.text.secondary} />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: isDark ? colors.card.backgroundColor : '#ffffff',
+                            backgroundColor: isDark ? card.backgroundColor : '#ffffff',
                             border: `1px solid ${colors.border}`,
                             borderRadius: '8px'
                           }}
@@ -452,7 +452,7 @@ export default function CommissionsPage() {
                         <YAxis tick={{ fontSize: 12, fill: colors.text.secondary }} stroke={colors.text.secondary} />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: isDark ? colors.card.backgroundColor : '#ffffff',
+                            backgroundColor: isDark ? card.backgroundColor : '#ffffff',
                             border: `1px solid ${colors.border}`,
                             borderRadius: '8px'
                           }}
@@ -491,7 +491,7 @@ export default function CommissionsPage() {
                         </Pie>
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: isDark ? colors.card.backgroundColor : '#ffffff',
+                            backgroundColor: isDark ? card.backgroundColor : '#ffffff',
                             border: `1px solid ${colors.border}`,
                             borderRadius: '8px'
                           }}
