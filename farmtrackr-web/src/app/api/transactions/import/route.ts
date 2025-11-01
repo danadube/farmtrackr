@@ -429,6 +429,9 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate required fields before attempting to save
+        // For referral transactions, some fields may be optional
+        const isReferral = transactionType === 'Referral $ Received'
+        
         if (!propertyType || !clientType || !transactionType || !brokerage || !status) {
           console.error('Missing required fields (skipping):', {
             propertyType,
@@ -437,10 +440,16 @@ export async function POST(request: NextRequest) {
             brokerage,
             status,
             address: address || 'no address',
+            isReferral,
             row: JSON.stringify(row, null, 2)
           })
           errors++
           continue
+        }
+        
+        // For referral transactions, log when they're being imported
+        if (isReferral) {
+          console.log(`[Referral Import] Processing referral transaction: ${address || 'no address'}, referralFeeReceived: ${referralFeeReceived}, csvNci: ${csvNci}`)
         }
         
         // Log if transaction would be updated vs imported
@@ -459,9 +468,14 @@ export async function POST(request: NextRequest) {
               data: transactionData
             })
             updated++
-            console.log(`✓ Updated transaction: ${address || 'no address'}, ${clientType}, ${transactionType}, ID: ${existing.id}`)
+            const logMsg = `✓ Updated transaction: ${address || 'no address'}, ${clientType}, ${transactionType}, ID: ${existing.id}`
+            if (isReferral) {
+              console.log(`[Referral] ${logMsg}`)
+            } else {
+              console.log(logMsg)
+            }
           } catch (updateError: any) {
-            console.error('✗ Error updating transaction:', updateError)
+            console.error(`✗ Error updating transaction${isReferral ? ' (Referral)' : ''}:`, updateError)
             console.error('Error details:', updateError?.message, updateError?.code)
             console.error('Transaction data:', JSON.stringify(transactionData, null, 2))
             errors++
@@ -472,9 +486,14 @@ export async function POST(request: NextRequest) {
               data: transactionData
             })
             imported++
-            console.log(`✓ Imported transaction: ${address || 'no address'}, ${clientType}, ${transactionType}, ID: ${createResult.id}`)
+            const logMsg = `✓ Imported transaction: ${address || 'no address'}, ${clientType}, ${transactionType}, ID: ${createResult.id}`
+            if (isReferral) {
+              console.log(`[Referral] ${logMsg}`)
+            } else {
+              console.log(logMsg)
+            }
           } catch (createError: any) {
-            console.error('✗ Error creating transaction:', createError)
+            console.error(`✗ Error creating transaction${isReferral ? ' (Referral)' : ''}:`, createError)
             console.error('Error details:', createError?.message, createError?.code)
             console.error('Transaction data:', JSON.stringify(transactionData, null, 2))
             errors++
