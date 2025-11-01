@@ -111,7 +111,7 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
   // Load existing transaction if editing
   useEffect(() => {
     if (transactionId) {
-      async function loadTransaction() {
+      const loadTransaction = async () => {
         try {
           const response = await fetch(`/api/transactions/${transactionId}`)
           if (response.ok) {
