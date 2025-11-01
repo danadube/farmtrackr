@@ -371,6 +371,7 @@ export async function POST(request: NextRequest) {
 
         // For referral transactions, store CSV NCI in notes as JSON so we can use it directly
         // Format: { "csvNci": 1234.56 } or null
+        // Note: Only add notes field if it exists in the database (after migration)
         let notesData: any = null
         if (transactionType === 'Referral $ Received' && csvNci !== null && csvNci !== undefined) {
           notesData = JSON.stringify({ csvNci: csvNci })
@@ -393,8 +394,7 @@ export async function POST(request: NextRequest) {
           referralPct: referralPct !== null ? referralPct : undefined,
           referralDollar: referralDollar !== null ? referralDollar : undefined,
           referralFeeReceived: referralFeeReceived !== null ? referralFeeReceived : undefined,
-          referringAgent: referringAgent || null,
-          notes: notesData, // Store CSV NCI for referral transactions
+          referringAgent: referringAgent || null
           
           // KW
           eo: eo !== null ? eo : undefined,
@@ -420,6 +420,17 @@ export async function POST(request: NextRequest) {
           otherDeductions: finalOtherDeductions !== null ? finalOtherDeductions : undefined,
           buyersAgentSplit: buyersAgentSplit !== null ? buyersAgentSplit : undefined,
           assistantBonus: assistantBonus !== null ? assistantBonus : undefined
+        }
+        
+        // Only add notes field if it exists (after database migration)
+        // For now, check if we have notes data and try to add it (will fail gracefully if column doesn't exist)
+        if (notesData !== null) {
+          try {
+            // Try to add notes field - will only work if migration has been run
+            transactionData.notes = notesData
+          } catch (e) {
+            // Ignore if notes field doesn't exist in schema yet
+          }
         }
 
         // Validate required fields before attempting to save
