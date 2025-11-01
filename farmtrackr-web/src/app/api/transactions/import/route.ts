@@ -143,16 +143,16 @@ export async function POST(request: NextRequest) {
         let transactionType = mapField(['Transaction Type', 'transactionType', 'transaction_type', 'type']) || 'Sale'
         
         // Auto-detect transaction type based on data patterns
-        // Check referralFeeReceived first (before parsing commissionPct)
-        const referralFeeReceivedCheck = mapField(['Referral Fee Received', 'referralFeeReceived', 'referral_fee_received', 'feeReceived'])
+        // Parse referralFeeReceived first to check if it's a referral transaction
+        const referralFeeReceivedRaw = mapField(['Referral Fee Received', 'referralFeeReceived', 'referral_fee_received', 'feeReceived'])
+        const referralFeeReceivedParsed = referralFeeReceivedRaw ? parseMoney(referralFeeReceivedRaw) : null
         const commissionPctCheck = mapField(['commissionPct', 'Commission %', 'commission_pct', 'commission', 'Commission', 'commPct'])
+        const commissionPctNum = commissionPctCheck ? parseFloat(String(commissionPctCheck).replace(/[%,]/g, '')) : 0
         
-        // If referral fee received exists and commission % is 0 or missing, it's a referral received transaction
-        if (referralFeeReceivedCheck && (parseFloat(String(referralFeeReceivedCheck)) || 0) > 0) {
-          const commPctNum = commissionPctCheck ? parseFloat(String(commissionPctCheck)) : 0
-          if (commPctNum === 0 || !commissionPctCheck) {
-            transactionType = 'Referral $ Received'
-          }
+        // If referral fee received exists (> 0) and commission % is 0 or missing, it's a referral received transaction
+        // This overrides the CSV transaction type if the data indicates it's a referral
+        if (referralFeeReceivedParsed && referralFeeReceivedParsed > 0 && (commissionPctNum === 0 || !commissionPctCheck)) {
+          transactionType = 'Referral $ Received'
         }
 
         // Pricing fields - NetVolume maps to closedPrice in CSV
@@ -215,15 +215,19 @@ export async function POST(request: NextRequest) {
         const referralPct = normalizePercentage(referralPctRaw)
         
         // Debug logging for commission percentage issues
-        if (commissionPctRaw && (!commissionPct || commissionPct === 0)) {
+        // Only warn if commissionPct is 0 but it's NOT a referral transaction
+        // Referral transactions legitimately have commissionPct = 0
+        if (commissionPctRaw && (!commissionPct || commissionPct === 0) && transactionType !== 'Referral $ Received') {
           console.warn('Commission % may be incorrectly parsed:', {
             raw: commissionPctRaw,
             normalized: commissionPct,
+            transactionType: transactionType,
             row: JSON.stringify(row, null, 2)
           })
         }
         const referralDollar = parseMoney(mapField(['referralDollar', 'Referral $', 'referral_dollar', 'referralAmount', 'referral_amount']))
-        const referralFeeReceived = parseMoney(mapField(['Referral Fee Received', 'referralFeeReceived', 'referral_fee_received', 'feeReceived']))
+        // Use the already-parsed referralFeeReceived from above if available, otherwise parse again
+        const referralFeeReceived = referralFeeReceivedParsed || parseMoney(mapField(['Referral Fee Received', 'referralFeeReceived', 'referral_fee_received', 'feeReceived']))
         const referringAgent = mapField(['Referring Agent', 'referringAgent', 'referring_agent', 'agent'])
         
         // Status
