@@ -102,8 +102,7 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
   // REGULAR SALE or REFERRAL $ PAID: Calculate from property price
   else {
     // Calculate GCI (Gross Commission Income)
-    // Note: commissionPct is already a decimal (0.025 = 2.5%), not a percentage
-    gci = price * commPct
+    gci = price * (commPct / 100)
     
     // Calculate Referral Dollar if referral percentage is provided
     referralDollar = refPct > 0 ? gci * (refPct / 100) : 0
@@ -115,7 +114,7 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
   let totalBrokerageFees = 0
   let nci = 0
 
-  if (brokerage === 'Keller Williams' || brokerage === 'KW') {
+  if (brokerage === 'KW' || brokerage === 'Keller Williams') {
     // KW Commission Calculation
     // Use manual values if provided, otherwise calculate
     const royaltyValue = royalty !== '' && royalty !== null && royalty !== undefined 
@@ -151,7 +150,7 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
       nci: nci.toFixed(2),
       netVolume: price.toFixed(2)
     }
-  } else if (brokerage === 'BDH' || brokerage === 'Bennion Deville Homes') {
+  } else if (brokerage === 'BDH') {
     // BDH Commission Calculation
     const splitPct = parseFloat(String(bdhSplitPct)) || 94 // Default 94%
     // Use manual value if provided, otherwise calculate

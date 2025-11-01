@@ -821,7 +821,7 @@ export default function CommissionsPage() {
                     Avg Per Deal
                   </p>
                   <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                    ${avgCommission.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    ${avgCommission.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                   <p style={{ fontSize: '12px', ...text.tertiary, margin: '8px 0 0 0' }}>
                     Average commission earned
