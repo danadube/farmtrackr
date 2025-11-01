@@ -294,10 +294,12 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                  <label htmlFor="brokerage" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     Brokerage *
                   </label>
                   <select
+                    id="brokerage"
+                    name="brokerage"
                     value={formData.brokerage}
                     onChange={(e) => handleInputChange('brokerage', e.target.value)}
                     required
@@ -318,10 +320,12 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                  <label htmlFor="propertyType" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     Property Type *
                   </label>
                   <select
+                    id="propertyType"
+                    name="propertyType"
                     value={formData.propertyType}
                     onChange={(e) => handleInputChange('propertyType', e.target.value)}
                     required
@@ -343,10 +347,12 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                  <label htmlFor="clientType" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     Client Type *
                   </label>
                   <select
+                    id="clientType"
+                    name="clientType"
                     value={formData.clientType}
                     onChange={(e) => handleInputChange('clientType', e.target.value)}
                     required
@@ -367,10 +373,12 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                  <label htmlFor="transactionType" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     Transaction Type *
                   </label>
                   <select
+                    id="transactionType"
+                    name="transactionType"
                     value={formData.transactionType}
                     onChange={(e) => handleInputChange('transactionType', e.target.value)}
                     required
@@ -392,10 +400,12 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                  <label htmlFor="address" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     Address *
                   </label>
                   <input
+                    id="address"
+                    name="address"
                     type="text"
                     value={formData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
@@ -414,10 +424,12 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                  <label htmlFor="city" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     City *
                   </label>
                   <input
+                    id="city"
+                    name="city"
                     type="text"
                     value={formData.city}
                     onChange={(e) => handleInputChange('city', e.target.value)}
@@ -436,10 +448,12 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                  <label htmlFor="closedPrice" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     Closed Price *
                   </label>
                   <input
+                    id="closedPrice"
+                    name="closedPrice"
                     type="text"
                     value={formatCurrencyForInput(formData.closedPrice)}
                     onChange={(e) => handleInputChange('closedPrice', parseCurrencyFromInput(e.target.value))}
@@ -458,10 +472,12 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                  <label htmlFor="closingDate" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     Closing Date *
                   </label>
                   <input
+                    id="closingDate"
+                    name="closingDate"
                     type="date"
                     value={formData.closingDate}
                     onChange={(e) => handleInputChange('closingDate', e.target.value)}
@@ -479,10 +495,12 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                  <label htmlFor="status" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     Status *
                   </label>
                   <select
+                    id="status"
+                    name="status"
                     value={formData.status}
                     onChange={(e) => handleInputChange('status', e.target.value)}
                     required
@@ -513,10 +531,12 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                 <div>
-                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                  <label htmlFor="commissionPct" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     Commission % *
                   </label>
                   <input
+                    id="commissionPct"
+                    name="commissionPct"
                     type="text"
                     value={formatPercentageForInput(formData.commissionPct)}
                     onChange={(e) => handleInputChange('commissionPct', parsePercentageFromInput(e.target.value))}
@@ -535,10 +555,12 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
+                  <label htmlFor="referralPct" style={{ fontSize: '14px', fontWeight: '500', ...text.secondary, display: 'block', marginBottom: '8px' }}>
                     Referral %
                   </label>
                   <input
+                    id="referralPct"
+                    name="referralPct"
                     type="text"
                     value={formatPercentageForInput(formData.referralPct)}
                     onChange={(e) => handleInputChange('referralPct', parsePercentageFromInput(e.target.value))}
