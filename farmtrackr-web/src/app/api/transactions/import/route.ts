@@ -503,8 +503,26 @@ export async function POST(request: NextRequest) {
           } catch (createError: any) {
             console.error(`✗ Error creating transaction${isReferral ? ' (Referral)' : ''}:`, createError)
             console.error('Error details:', createError?.message, createError?.code)
+            console.error('Error stack:', createError?.stack)
             console.error('Transaction data:', JSON.stringify(transactionData, null, 2))
-            errors++
+            
+            // If error is about notes field not existing, try without it
+            if (createError?.message && createError.message.includes('notes')) {
+              console.log('[Referral] Retrying without notes field...')
+              try {
+                const { notes, ...transactionDataWithoutNotes } = transactionData
+                const createResult = await prisma.transaction.create({
+                  data: transactionDataWithoutNotes
+                })
+                imported++
+                console.log(`[Referral] ✓ Imported transaction (without notes): ${address || 'no address'}, ${clientType}, ${transactionType}, ID: ${createResult.id}`)
+              } catch (retryError: any) {
+                console.error('✗ Retry also failed:', retryError?.message)
+                errors++
+              }
+            } else {
+              errors++
+            }
           }
         }
 
