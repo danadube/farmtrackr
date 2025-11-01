@@ -71,6 +71,7 @@ interface Transaction {
   buyersAgentSplit?: number | null
   assistantBonus?: number | null
   notes?: string | null // May contain CSV NCI for referral transactions
+  netVolume?: number | null // For referrals, temporarily stores CSV NCI
 }
 
 export default function CommissionsPage() {
@@ -269,13 +270,13 @@ export default function CommissionsPage() {
       
       // Fallback: check netVolume (temporary storage until notes migration)
       // For referrals, netVolume is repurposed to store CSV NCI
-      if (csvNci === undefined && (t as any).netVolume) {
-        const netVolume = parseFloat(String((t as any).netVolume))
-        // For referrals, if netVolume exists and is close to referralFeeReceived or is a reasonable NCI value, use it
-        // ReferralFeeReceived is GCI, so NCI should be less
-        if (netVolume > 0 && netVolume < (parseFloat(String(t.referralFeeReceived || 0)) || Infinity)) {
+      if (csvNci === undefined && t.netVolume) {
+        const netVolume = parseFloat(String(t.netVolume))
+        // For referrals, netVolume stores CSV NCI directly
+        // It should be > 0 and <= referralFeeReceived (since NCI is always <= GCI for referrals)
+        if (netVolume > 0) {
           csvNci = netVolume
-          console.log(`[Referral] Using CSV NCI from netVolume (temporary): ${csvNci} for transaction ${t.id} at ${t.address}`)
+          console.log(`[Referral] Using CSV NCI from netVolume (temporary): ${csvNci} for transaction ${t.id} at ${t.address}, referralFeeReceived: ${t.referralFeeReceived}`)
         }
       }
       
