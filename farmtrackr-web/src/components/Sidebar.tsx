@@ -14,7 +14,8 @@ import {
   LayoutDashboard,
   Menu,
   X,
-  Contact
+  Contact,
+  DollarSign
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -71,6 +72,7 @@ export function Sidebar({ children }: SidebarProps) {
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/contacts', label: 'Farm Contacts', icon: Users },
     { href: '/google-contacts', label: 'Google Contacts', icon: Contact },
+    { href: '/commissions', label: 'Commissions', icon: DollarSign },
     { href: '/documents', label: 'Documents', icon: FileText },
     { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet },
     { href: '/import-export', label: 'Import & Export', icon: Upload },

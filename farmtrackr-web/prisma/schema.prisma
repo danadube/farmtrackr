@@ -153,3 +153,69 @@ model Letterhead {
 
   @@map("letterheads")
 }
+
+model Transaction {
+  id                  String   @id @default(cuid())
+  
+  // Basic Info
+  propertyType        String   // 'Residential', 'Commercial', 'Land', etc.
+  clientType          String   // 'Buyer', 'Seller'
+  transactionType     String   // 'Sale', 'Referral Out', 'Referral In'
+  source              String?  // Lead source
+  address             String?
+  city                String?
+  listPrice           Decimal? @db.Decimal(12, 2)
+  closedPrice         Decimal? @db.Decimal(12, 2)
+  listDate            DateTime?
+  closingDate         DateTime?
+  status              String   // 'Closed', 'Pending', 'Cancelled'
+  
+  // Referral Fields
+  referringAgent      String?  // Name of agent referred to/from
+  referralFeeReceived Decimal? @db.Decimal(10, 2)
+  
+  // Commission Fields
+  brokerage           String   // 'Keller Williams', 'BDH', etc.
+  commissionPct       Decimal? @db.Decimal(5, 4)  // As decimal (0.0300 = 3%)
+  referralPct         Decimal? @db.Decimal(5, 4)
+  referralDollar      Decimal? @db.Decimal(10, 2)
+  netVolume           Decimal? @db.Decimal(12, 2)
+  
+  // KW Specific
+  eo                  Decimal? @db.Decimal(10, 2)
+  royalty             Decimal? @db.Decimal(10, 2)
+  companyDollar       Decimal? @db.Decimal(10, 2)
+  hoaTransfer         Decimal? @db.Decimal(10, 2)
+  homeWarranty        Decimal? @db.Decimal(10, 2)
+  kwCares             Decimal? @db.Decimal(10, 2)
+  kwNextGen           Decimal? @db.Decimal(10, 2)
+  boldScholarship     Decimal? @db.Decimal(10, 2)
+  tcConcierge         Decimal? @db.Decimal(10, 2)
+  jelmbergTeam        Decimal? @db.Decimal(10, 2)
+  
+  // BDH Specific
+  bdhSplitPct         Decimal? @db.Decimal(5, 4)
+  asf                 Decimal? @db.Decimal(10, 2)
+  foundation10        Decimal? @db.Decimal(10, 2)
+  adminFee            Decimal? @db.Decimal(10, 2)
+  preSplitDeduction   Decimal? @db.Decimal(10, 2)
+  
+  // Universal
+  otherDeductions     Decimal? @db.Decimal(10, 2)
+  buyersAgentSplit    Decimal? @db.Decimal(10, 2)
+  assistantBonus      Decimal? @db.Decimal(10, 2)  // FYI only
+  
+  // Google Sheets Sync
+  googleSheetsId      String?  // Row ID for Google Sheets sync
+  
+  // Timestamps
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@map("transactions")
+  @@index([brokerage])
+  @@index([clientType])
+  @@index([transactionType])
+  @@index([closingDate])
+  @@index([status])
+}
