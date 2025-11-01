@@ -412,26 +412,52 @@ export default function CommissionsPage() {
     const closedTransactions = transactions.filter(t => t.status === 'Closed').length
     
     // Calculate NCI for all transactions
+    // Only include transactions with valid commission data (has closedPrice and commissionPct)
     const totalNCI = transactions.reduce((sum, t) => {
+      // Skip transactions missing critical commission data
+      if (!t.closedPrice || t.closedPrice === 0 || !t.commissionPct || t.commissionPct === 0) {
+        // Only include referral fees received if it's a referral transaction
+        if (t.transactionType === 'Referral $ Received' && t.referralFeeReceived) {
+          return sum + (parseFloat(String(t.referralFeeReceived || 0)))
+        }
+        return sum
+      }
       const calc = getCommissionForTransaction(t)
       return sum + (parseFloat(calc.nci) || 0)
     }, 0)
     
     // Calculate GCI for all transactions
     const totalGCI = transactions.reduce((sum, t) => {
+      // Skip transactions missing critical commission data
+      if (!t.closedPrice || t.closedPrice === 0 || !t.commissionPct || t.commissionPct === 0) {
+        // Only include referral fees received if it's a referral transaction
+        if (t.transactionType === 'Referral $ Received' && t.referralFeeReceived) {
+          return sum + (parseFloat(String(t.referralFeeReceived || 0)))
+        }
+        return sum
+      }
       const calc = getCommissionForTransaction(t)
       return sum + (parseFloat(calc.gci) || 0)
     }, 0)
     
-    // Calculate avg commission from Closed transactions only
-    const closedTransactionsCount = transactions.filter(t => t.status === 'Closed').length
-    const avgCommission = closedTransactionsCount > 0 ? totalNCI / closedTransactionsCount : 0
+    // Calculate avg commission from Closed transactions with valid commission data only
+    const closedTransactionsWithData = transactions.filter(t => 
+      t.status === 'Closed' && 
+      ((t.closedPrice && t.closedPrice > 0 && t.commissionPct && t.commissionPct > 0) ||
+       (t.transactionType === 'Referral $ Received' && t.referralFeeReceived))
+    ).length
+    const avgCommission = closedTransactionsWithData > 0 ? totalNCI / closedTransactionsWithData : 0
     const referralFeesPaid = transactions.reduce((sum, t) => sum + (parseFloat(String(t.referralDollar || 0))), 0)
     const referralFeesReceived = transactions.reduce((sum, t) => sum + (parseFloat(String(t.referralFeeReceived || 0))), 0)
     
-    // Monthly data for charts
+    // Monthly data for charts - only include transactions with valid commission data
     const monthlyData = transactions.reduce((acc, t) => {
       if (t.closedDate) {
+        // Skip transactions missing critical commission data unless it's a referral received
+        const hasValidData = (t.closedPrice && t.closedPrice > 0 && t.commissionPct && t.commissionPct > 0) ||
+                            (t.transactionType === 'Referral $ Received' && t.referralFeeReceived)
+        if (!hasValidData) return acc
+        
         const month = new Date(t.closedDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
         if (!acc[month]) {
           acc[month] = { month, gci: 0, nci: 0, transactions: 0 }
