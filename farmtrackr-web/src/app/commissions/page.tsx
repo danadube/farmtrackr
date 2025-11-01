@@ -1481,61 +1481,40 @@ export default function CommissionsPage() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
                         <div style={{ flex: '1', minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                            <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '16px', margin: '0' }}>
-                              {transaction.propertyType} - {transaction.clientType}
+                            <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '18px', margin: '0' }}>
+                              {transaction.address || 'No Address'}
                             </h3>
-                            <span
-                              style={{
-                                padding: '4px 12px',
-                                fontSize: '12px',
-                                fontWeight: '600',
-                                backgroundColor: transaction.status === 'Closed' 
-                                  ? (isDark ? '#065f46' : '#dcfce7')
-                                  : transaction.status === 'Pending'
-                                  ? (isDark ? '#78350f' : '#fef3c7')
-                                  : (isDark ? '#991b1b' : '#fee2e2'),
-                                color: transaction.status === 'Closed'
-                                  ? colors.success
-                                  : transaction.status === 'Pending'
-                                  ? colors.warning
-                                  : colors.error,
-                                borderRadius: '9999px',
-                                border: `1px solid ${transaction.status === 'Closed' ? colors.success : transaction.status === 'Pending' ? colors.warning : colors.error}`,
-                                flexShrink: 0
-                              }}
-                            >
-                              {transaction.status}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-                            {transaction.address && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Home style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />
-                                <span style={{ fontSize: '14px', ...text.secondary }}>
-                                  {transaction.address}{transaction.city ? `, ${transaction.city}` : ''}
-                                </span>
-                              </div>
-                            )}
-                            {transaction.closedPrice && (
-                              <span style={{ fontSize: '16px', fontWeight: '600', ...text.primary }}>
-                                ${transaction.closedPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            {(transaction.transactionType === 'Referral $ Received' || transaction.transactionType === 'Referral $ Paid') && (
+                              <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '600', backgroundColor: colors.referralLight, color: colors.referral, borderRadius: '999px', flexShrink: 0 }}>
+                                {transaction.transactionType === 'Referral $ Received' ? '💰 Referral $ Received' : '💸 Referral $ Paid'}
                               </span>
                             )}
-                            {transaction.closedDate && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <Calendar style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />
-                                <span style={{ fontSize: '14px', ...text.tertiary }}>
-                                  {new Date(transaction.closedDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
-                                </span>
-                              </div>
-                            )}
-                            <span style={{ fontSize: '14px', ...text.tertiary }}>
-                              {transaction.brokerage}
+                            <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '600', backgroundColor: transaction.clientType === 'Buyer' ? (isDark ? '#1e3a5f' : '#dbeafe') : (isDark ? '#78350f' : '#fef3c7'), color: transaction.clientType === 'Buyer' ? colors.info : colors.warning, borderRadius: '999px', flexShrink: 0 }}>
+                              {transaction.clientType === 'Buyer' ? '🔵 ' : '⭐ '}{transaction.clientType}
                             </span>
-                            <span style={{ fontSize: '16px', fontWeight: '700', color: colors.success }}>
-                              NCI: ${nci.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: transaction.clientType === 'Buyer' ? (isDark ? '#1a2542' : '#eff6ff') : (isDark ? '#451a03' : '#fefce8'), color: transaction.clientType === 'Buyer' ? colors.info : colors.warning, borderRadius: '999px', flexShrink: 0 }}>
+                              {transaction.brokerage === 'KW' || transaction.brokerage === 'Keller Williams' ? 'Keller Williams' : transaction.brokerage === 'BDH' || transaction.brokerage === 'Bennion Deville Homes' ? 'Bennion Deville Homes' : transaction.brokerage}
                             </span>
                           </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', ...text.secondary }}>
+                            {transaction.city && (
+                              <span>{transaction.city}</span>
+                            )}
+                            {transaction.city && transaction.closedPrice && <span>•</span>}
+                            {transaction.closedPrice && (
+                              <span>${transaction.closedPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            )}
+                            {transaction.closedDate && <span>•</span>}
+                            {transaction.closedDate && (
+                              <span>{new Date(transaction.closedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div style={{ minWidth: '120px', textAlign: 'right', padding: '12px', borderRadius: '8px', backgroundColor: colors.successLight, border: `2px solid ${colors.success}` }}>
+                          <p style={{ fontSize: '12px', fontWeight: '600', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>NCI</p>
+                          <p style={{ fontSize: '20px', fontWeight: '700', color: colors.success, margin: '0' }}>
+                            ${nci.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                           <button
