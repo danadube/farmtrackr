@@ -154,13 +154,14 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
     }
   } else if (brokerage === 'BDH' || brokerage === 'Bennion Deville Homes' || brokerage?.includes('Bennion Deville')) {
     // BDH Commission Calculation
-    const splitPct = parseFloat(String(bdhSplitPct)) || 94 // Default 94%
+    // bdhSplitPct stored as decimal (0.94 = 94%)
+    const splitPct = parseFloat(String(bdhSplitPct)) || 0.94 // Default 94% (0.94)
     // Use manual value if provided, otherwise calculate
     const preSplitDeductionValue = preSplitDeduction !== '' && preSplitDeduction !== null && preSplitDeduction !== undefined 
       ? parseFloat(String(preSplitDeduction)) 
       : adjustedGci * 0.06 // 6% pre-split deduction
     const afterPreSplit = adjustedGci - preSplitDeductionValue
-    const agentSplit = afterPreSplit * (splitPct / 100)
+    const agentSplit = afterPreSplit * splitPct
     
     totalBrokerageFees = 
       preSplitDeductionValue +

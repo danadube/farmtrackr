@@ -158,8 +158,17 @@ export async function POST(request: NextRequest) {
         // Parse numeric fields
         const listPrice = parseMoney(rowData.listPrice)
         const closedPrice = parseMoney(rowData.netVolume) || parseMoney(rowData.closePrice)  // NetVolume or closePrice
-        const commissionPct = parseFloat(rowData.commissionPct) || null  // Already decimal (0.025 = 2.5%)
-        const referralPct = parseFloat(rowData.referralPct) || null  // Already decimal (0.25 = 25%)
+        
+        // Convert percentages: standalone uses 3.0=3%, we need 0.03
+        const convertPercentage = (value: any): number | null => {
+          if (!value) return null
+          const num = parseFloat(String(value))
+          if (isNaN(num)) return null
+          return num > 1 ? num / 100 : num  // If > 1, assume percentage and convert to decimal
+        }
+        
+        const commissionPct = convertPercentage(rowData.commissionPct)
+        const referralPct = convertPercentage(rowData.referralPct)
         const referralDollar = parseMoney(rowData.referralDollar)
         const referralFeeReceived = parseMoney(rowData.referralFeeReceived)
 

@@ -152,6 +152,38 @@ export default function CommissionsPage() {
     }
   }
 
+  const handleImportFromFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setIsImporting(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/transactions/import', {
+        method: 'POST',
+        body: formData
+      })
+      
+      const result = await response.json()
+      
+      if (response.ok) {
+        alert(`Successfully imported ${result.imported} transactions!\nUpdated: ${result.updated}\nSkipped: ${result.skipped}\nErrors: ${result.errors}`)
+        await fetchTransactions()
+      } else {
+        alert(`Import failed: ${result.message || result.error}`)
+      }
+    } catch (error) {
+      console.error('Error importing transactions:', error)
+      alert('Failed to import transactions')
+    } finally {
+      setIsImporting(false)
+      // Reset file input
+      event.target.value = ''
+    }
+  }
+
   const handleDownloadTemplate = () => {
     const link = document.createElement('a')
     link.href = '/templates/transactions-template.csv'
@@ -659,12 +691,60 @@ export default function CommissionsPage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
+                  <label style={{ position: 'relative' }}>
+                    <input
+                      type="file"
+                      accept=".csv,.xlsx,.xls"
+                      onChange={handleImportFromFile}
+                      disabled={isImporting}
+                      style={{ display: 'none' }}
+                    />
+                    <button
+                      disabled={isImporting}
+                      style={{
+                        padding: '12px 24px',
+                        backgroundColor: isImporting ? colors.text.tertiary : colors.success,
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: isImporting ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'background-color 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isImporting) {
+                          e.currentTarget.style.backgroundColor = colors.successHover
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isImporting) {
+                          e.currentTarget.style.backgroundColor = colors.success
+                        }
+                      }}
+                    >
+                      {isImporting ? (
+                        <>
+                          <RefreshCw style={{ width: '16px', height: '16px' }} />
+                          Importing...
+                        </>
+                      ) : (
+                        <>
+                          <Upload style={{ width: '16px', height: '16px' }} />
+                          Import CSV/Excel
+                        </>
+                      )}
+                    </button>
+                  </label>
                   <button
                     onClick={handleImportFromGoogle}
                     disabled={isImporting}
                     style={{
                       padding: '12px 24px',
-                      backgroundColor: isImporting ? colors.text.tertiary : colors.success,
+                      backgroundColor: isImporting ? colors.text.tertiary : colors.info,
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '12px',
@@ -678,12 +758,12 @@ export default function CommissionsPage() {
                     }}
                     onMouseEnter={(e) => {
                       if (!isImporting) {
-                        e.currentTarget.style.backgroundColor = colors.successHover
+                        e.currentTarget.style.backgroundColor = colors.infoHover || colors.info
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isImporting) {
-                        e.currentTarget.style.backgroundColor = colors.success
+                        e.currentTarget.style.backgroundColor = colors.info
                       }
                     }}
                   >
