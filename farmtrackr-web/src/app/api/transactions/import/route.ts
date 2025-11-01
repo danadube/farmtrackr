@@ -133,9 +133,17 @@ export async function POST(request: NextRequest) {
           return null
         }
 
-        // Basic fields
+        // Basic fields - use defaults if missing to avoid validation errors
         const propertyType = mapField(['propertyType', 'Property Type', 'property_type', 'type']) || 'Residential'
         const clientType = mapField(['clientType', 'Client Type', 'client_type', 'client']) || 'Seller'
+        
+        // Log if defaults are being used
+        if (!mapField(['propertyType', 'Property Type', 'property_type', 'type'])) {
+          console.warn(`Row ${rows.indexOf(row) + 1}: Using default propertyType 'Residential'`)
+        }
+        if (!mapField(['clientType', 'Client Type', 'client_type', 'client'])) {
+          console.warn(`Row ${rows.indexOf(row) + 1}: Using default clientType 'Seller'`)
+        }
         const source = mapField(['source', 'Source', 'leadSource', 'lead_source'])
         const address = mapField(['address', 'Address', 'propertyAddress', 'property_address'])
         const city = mapField(['city', 'City', 'propertyCity', 'property_city'])
@@ -191,7 +199,7 @@ export async function POST(request: NextRequest) {
           'CloseDate'
         ]))
         
-        // Brokerage
+        // Brokerage - use default if missing
         let brokerage = mapField(['brokerage', 'Brokerage', 'Broker']) || ''
         // Normalize brokerage
         if (brokerage) {
@@ -207,6 +215,7 @@ export async function POST(request: NextRequest) {
           }
         } else {
           brokerage = 'BDH' // Default
+          console.warn(`Row ${rows.indexOf(row) + 1}: Using default brokerage 'BDH'`)
         }
 
         // Commission fields - handle percentage conversion
@@ -231,8 +240,11 @@ export async function POST(request: NextRequest) {
         const referralFeeReceived = referralFeeReceivedParsed || parseMoney(mapField(['Referral Fee Received', 'referralFeeReceived', 'referral_fee_received', 'feeReceived']))
         const referringAgent = mapField(['Referring Agent', 'referringAgent', 'referring_agent', 'agent'])
         
-        // Status
+        // Status - use default if missing
         const status = mapField(['status', 'Status']) || 'Closed'
+        if (!mapField(['status', 'Status'])) {
+          console.warn(`Row ${rows.indexOf(row) + 1}: Using default status 'Closed'`)
+        }
 
         // KW specific fields
         const eo = parseMoney(mapField(['eo', 'EO', 'E&O']))
