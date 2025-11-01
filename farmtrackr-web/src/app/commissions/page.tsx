@@ -1568,14 +1568,14 @@ export default function CommissionsPage() {
                               {transaction.address || 'No Address'}
                             </h3>
                             {(transaction.transactionType === 'Referral $ Received' || transaction.transactionType === 'Referral $ Paid') && (
-                              <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '600', backgroundColor: colors.referralLight, color: colors.referral, borderRadius: '999px', flexShrink: 0 }}>
+                              <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '600', backgroundColor: isDark ? colors.referralLight : '#FAF0FF', color: isDark ? colors.referral : '#9d4edd', borderRadius: '999px', flexShrink: 0 }}>
                                 {transaction.transactionType === 'Referral $ Received' ? '💰 Referral $ Received' : '💸 Referral $ Paid'}
                               </span>
                             )}
-                            <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '600', backgroundColor: transaction.clientType === 'Buyer' ? (isDark ? '#1e3a5f' : '#dbeafe') : (isDark ? '#78350f' : '#fef3c7'), color: transaction.clientType === 'Buyer' ? colors.info : colors.warning, borderRadius: '999px', flexShrink: 0 }}>
+                            <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '600', backgroundColor: transaction.clientType === 'Buyer' ? (isDark ? '#1e3a5f' : '#3b82f6') : (isDark ? '#78350f' : '#f59e0b'), color: transaction.clientType === 'Buyer' ? (isDark ? colors.info : '#ffffff') : (isDark ? colors.warning : '#ffffff'), borderRadius: '999px', flexShrink: 0 }}>
                               {transaction.clientType === 'Buyer' ? '🔵 ' : '⭐ '}{transaction.clientType}
                             </span>
-                            <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: transaction.clientType === 'Buyer' ? (isDark ? '#1a2542' : '#eff6ff') : (isDark ? '#451a03' : '#fefce8'), color: transaction.clientType === 'Buyer' ? colors.info : colors.warning, borderRadius: '999px', flexShrink: 0 }}>
+                            <span style={{ padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: isDark ? (transaction.clientType === 'Buyer' ? '#1a2542' : '#451a03') : '#9273FF', color: isDark ? (transaction.clientType === 'Buyer' ? colors.info : colors.warning) : '#ffffff', borderRadius: '999px', flexShrink: 0 }}>
                               {(() => {
                                 const br = transaction.brokerage || ''
                                 if (br === 'KW' || br === 'Keller Williams') return 'Keller Williams'
