@@ -376,7 +376,9 @@ export default function CommissionsPage() {
       return sum + (parseFloat(calc.gci) || 0)
     }, 0)
     
-    const avgCommission = totalTransactions > 0 ? totalNCI / totalTransactions : 0
+    // Calculate avg commission from Closed transactions only
+    const closedTransactionsCount = transactions.filter(t => t.status === 'Closed').length
+    const avgCommission = closedTransactionsCount > 0 ? totalNCI / closedTransactionsCount : 0
     const referralFeesPaid = transactions.reduce((sum, t) => sum + (parseFloat(String(t.referralDollar || 0))), 0)
     const referralFeesReceived = transactions.reduce((sum, t) => sum + (parseFloat(String(t.referralFeeReceived || 0))), 0)
     
@@ -396,9 +398,8 @@ export default function CommissionsPage() {
     }, {} as Record<string, { month: string; gci: number; nci: number; transactions: number }>)
     
     const chartData = Object.values(monthlyData).sort((a, b) => {
-      const dateA = new Date(a.month)
-      const dateB = new Date(b.month)
-      return dateA.getTime() - dateB.getTime()
+      // Sort by month string (e.g. "Jan 2024" < "Feb 2024")
+      return a.month.localeCompare(b.month)
     })
     
     const pieData = [
@@ -1518,7 +1519,7 @@ export default function CommissionsPage() {
                         </div>
                         <div style={{ minWidth: '120px', textAlign: 'right', padding: '12px', borderRadius: '8px', backgroundColor: colors.successLight, border: `2px solid ${colors.success}` }}>
                           <p style={{ fontSize: '12px', fontWeight: '600', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>NCI</p>
-                          <p style={{ fontSize: '20px', fontWeight: '700', color: colors.success, margin: '0' }}>
+                          <p style={{ fontSize: '16px', fontWeight: '700', color: colors.success, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                             ${nci.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                         </div>

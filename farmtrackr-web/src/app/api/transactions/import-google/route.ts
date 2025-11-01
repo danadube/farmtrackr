@@ -141,7 +141,10 @@ export async function POST(request: NextRequest) {
         const transactionType = rowData.transactionType || 'Sale'
         // Normalize brokerage to 'KW' or 'BDH' format
         let brokerage = (rowData.brokerage || '').trim()
-        if (brokerage === 'KW' || brokerage === 'Keller Williams') {
+        // If it's a number, skip it and set default
+        if (brokerage && !isNaN(parseFloat(brokerage))) {
+          brokerage = 'BDH' // Default if numeric
+        } else if (brokerage === 'KW' || brokerage === 'Keller Williams') {
           brokerage = 'KW'
         } else if (brokerage === 'BDH' || brokerage === 'Bennion Deville Homes' || brokerage.includes('Bennion Deville')) {
           brokerage = 'BDH'

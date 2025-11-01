@@ -58,6 +58,7 @@ export default function AdminToolsPage() {
               <button disabled={busy} style={buttonStyle} onClick={() => run('Purge Contacts', '/api/admin/purge/contacts')}>Purge All Contacts</button>
               <button disabled={busy} style={buttonStyle} onClick={() => run('Purge Documents', '/api/admin/purge/documents')}>Purge All Documents</button>
               <button disabled={busy} style={buttonStyle} onClick={() => run('Purge Letterheads', '/api/admin/purge/letterheads')}>Purge All Letterheads</button>
+              <button disabled={busy} style={buttonStyle} onClick={() => run('Purge Transactions', '/api/admin/purge/transactions')}>Purge All Transactions</button>
             </div>
           </div>
 
