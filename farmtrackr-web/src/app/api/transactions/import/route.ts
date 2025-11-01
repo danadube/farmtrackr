@@ -105,10 +105,17 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        // Map column names (flexible field mapping)
+        // Map column names (flexible field mapping with case-insensitive matching)
         const mapField = (names: string[]): any => {
+          // First try exact match
           for (const name of names) {
             if (row[name]) return row[name]
+          }
+          // Then try case-insensitive match
+          const rowKeys = Object.keys(row)
+          for (const name of names) {
+            const found = rowKeys.find(key => key.toLowerCase().trim() === name.toLowerCase().trim())
+            if (found && row[found]) return row[found]
           }
           return null
         }
@@ -125,9 +132,34 @@ export async function POST(request: NextRequest) {
         const listPrice = parseMoney(mapField(['listPrice', 'List Price', 'list_price', 'listingPrice', 'listing_price']))
         const closedPrice = parseMoney(mapField(['closedPrice', 'Closed Price', 'closed_price', 'salePrice', 'sale_price', 'netVolume', 'NetVolume', 'net_volume']))
         
-        // Date fields
-        const listDate = parseDate(mapField(['listDate', 'List Date', 'list_date', 'listingDate', 'listing_date']))
-        const closingDate = parseDate(mapField(['closingDate', 'Closing Date', 'closing_date', 'closeDate', 'close_date', 'date']))
+        // Date fields - try multiple possible column name variations
+        const listDate = parseDate(mapField([
+          'listDate', 
+          'List Date', 
+          'list_date', 
+          'listingDate', 
+          'listing_date',
+          'listDate',
+          'listdate',
+          'LIST_DATE',
+          'LISTING_DATE',
+          'Listing Date',
+          'ListingDate'
+        ]))
+        const closingDate = parseDate(mapField([
+          'closingDate', 
+          'Closing Date', 
+          'closing_date', 
+          'closeDate', 
+          'close_date', 
+          'date',
+          'closedDate',
+          'closed_date',
+          'CLOSING_DATE',
+          'CLOSED_DATE',
+          'Close Date',
+          'CloseDate'
+        ]))
         
         // Brokerage
         let brokerage = mapField(['brokerage', 'Brokerage', 'Broker']) || ''
