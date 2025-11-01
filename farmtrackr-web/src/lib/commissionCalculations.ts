@@ -47,6 +47,7 @@ export interface CommissionResult {
   totalBrokerageFees: string
   nci: string
   netVolume: string
+  bdhSplit?: string // BDH Split value for tooltip
 }
 
 /**
@@ -161,53 +162,48 @@ export function calculateCommission(data: TransactionInput): CommissionResult {
       netVolume: price.toFixed(2)
     }
   } else if (brokerage === 'BDH' || brokerage === 'Bennion Deville Homes' || brokerage?.includes('Bennion Deville')) {
-    // BDH Commission Calculation (Simplified per spreadsheet)
-    // According to spreadsheet: NCI = adjustedGci - presplitdeduction - brokeragesplit - adminfees
-    
-    // Pre-Split Deduction: INPUT FIELD (not calculated)
+    // BDH Commission Calculation (Exact Formula Chain)
+    // Step 4: Pre-Split Deduction = AdjustedGCI - (AdjustedGCI * 0.06) - 10
+    // This is CALCULATED (6% deduction plus $10 flat fee)
+    // If manual override provided, use it; otherwise calculate
     const preSplitDeductionValue = preSplitDeduction !== '' && preSplitDeduction !== null && preSplitDeduction !== undefined 
-      ? parseFloat(String(preSplitDeduction)) 
-      : 0
+      ? parseFloat(String(preSplitDeduction)) // Manual override
+      : adjustedGci - (adjustedGci * 0.06) - 10 // Calculated: AdjustedGCI * 0.94 - 10
     
-    // Brokerage Split: Can be flat value OR calculated from percentage
-    let brokerageSplitValue = 0
-    if (brokerageSplit !== '' && brokerageSplit !== null && brokerageSplit !== undefined) {
-      // Use flat value if provided
-      brokerageSplitValue = parseFloat(String(brokerageSplit))
-    } else if (brokerageSplitPct !== '' && brokerageSplitPct !== null && brokerageSplitPct !== undefined) {
-      // Calculate from percentage if provided
-      let splitPctNum = parseFloat(String(brokerageSplitPct))
-      // If > 1, it's a whole number percentage (11.64), convert to decimal (0.1164)
-      // If <= 1, it's already decimal (0.1164)
-      const splitPct = splitPctNum > 1 ? splitPctNum / 100 : splitPctNum
-      brokerageSplitValue = adjustedGci * splitPct
-    }
+    // Step 5: BDH Split = PreSplitDeduction * 0.10 (10% of Pre-Split Deduction)
+    // This is CALCULATED (always 10%)
+    // If manual override provided, use it; otherwise calculate
+    const bdhSplitValue = brokerageSplit !== '' && brokerageSplit !== null && brokerageSplit !== undefined && parseFloat(String(brokerageSplit)) > 0
+      ? parseFloat(String(brokerageSplit)) // Manual override
+      : preSplitDeductionValue * 0.10 // Calculated: 10% of Pre-Split Deduction
     
-    // Admin Fees / Other Deductions: Combined as per spreadsheet formula
+    // Admin Fees / Other Deductions: Combined
     const adminFeesCombined = 
       (parseFloat(String(adminFee)) || 0) +
       (parseFloat(String(otherDeductions)) || 0)
     
-    // NCI Formula from spreadsheet: adjustedGci - presplitdeduction - brokeragesplit - adminfees
-    nci = adjustedGci - preSplitDeductionValue - brokerageSplitValue - adminFeesCombined
+    // Step 6: NCI = PreSplitDeduction - BDHSplit - adminOtherFees
+    nci = preSplitDeductionValue - bdhSplitValue - adminFeesCombined
     
     // Total Brokerage Fees includes all deductions (for display purposes)
     totalBrokerageFees = 
-      preSplitDeductionValue +
-      brokerageSplitValue +
+      (adjustedGci - preSplitDeductionValue) + // The 6% + $10 that was deducted
+      bdhSplitValue + // The 10% BDH split
       adminFeesCombined +
       (parseFloat(String(asf)) || 0) +
       (parseFloat(String(foundation10)) || 0) +
       (parseFloat(String(buyersAgentSplit)) || 0)
 
-    return {
+      return {
       gci: gci.toFixed(2),
       referralDollar: referralDollar.toFixed(2),
       adjustedGci: adjustedGci.toFixed(2),
       preSplitDeduction: preSplitDeductionValue.toFixed(2),
       totalBrokerageFees: totalBrokerageFees.toFixed(2),
       nci: nci.toFixed(2),
-      netVolume: price.toFixed(2)
+      netVolume: price.toFixed(2),
+      // BDH specific values for tooltip
+      bdhSplit: bdhSplitValue.toFixed(2)
     }
   }
 

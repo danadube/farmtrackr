@@ -318,9 +318,10 @@ export default function CommissionsPage() {
       if (other > 0) parts.push(`Other Deductions: $${other.toFixed(2)}`)
       if (buyers > 0) parts.push(`Buyer's Agent Split: $${buyers.toFixed(2)}`)
     } else if (t.brokerage === 'BDH' || t.brokerage === 'Bennion Deville Homes') {
-      // BDH Breakdown (per spreadsheet formula)
-      const preSplit = parseFloat(String(t.preSplitDeduction || 0))
-      const brokerageSplit = parseFloat(String((t as any).brokerageSplit || 0))
+      // BDH Breakdown (Exact Formula Chain)
+      const calc = getCommissionForTransaction(t)
+      const preSplit = parseFloat(calc.preSplitDeduction || '0')
+      const bdhSplit = parseFloat((calc as any).bdhSplit || '0')
       const admin = parseFloat(String(t.adminFee || 0))
       const other = parseFloat(String(t.otherDeductions || 0))
       const adminFeesCombined = admin + other
@@ -328,8 +329,18 @@ export default function CommissionsPage() {
       const foundation = parseFloat(String(t.foundation10 || 0))
       const buyers = parseFloat(String(t.buyersAgentSplit || 0))
       
-      if (preSplit > 0) parts.push(`Pre-Split Deduction: $${preSplit.toFixed(2)}`)
-      if (brokerageSplit > 0) parts.push(`Brokerage Split: $${brokerageSplit.toFixed(2)}`)
+      // Show calculated Pre-Split Deduction (6% + $10 deducted from Adjusted GCI)
+      const deductedAmount = adjustedGci - preSplit
+      if (deductedAmount > 0) {
+        parts.push(`Pre-Split Deduction (6% + $10): $${deductedAmount.toFixed(2)}`)
+      }
+      parts.push(`After Pre-Split: $${preSplit.toFixed(2)}`)
+      
+      // Show calculated BDH Split (10% of Pre-Split)
+      if (bdhSplit > 0) {
+        parts.push(`BDH Split (10%): $${bdhSplit.toFixed(2)}`)
+      }
+      
       if (adminFeesCombined > 0) parts.push(`Admin Fees / Other: $${adminFeesCombined.toFixed(2)}`)
       if (asf > 0) parts.push(`ASF: $${asf.toFixed(2)}`)
       if (foundation > 0) parts.push(`Foundation10: $${foundation.toFixed(2)}`)
