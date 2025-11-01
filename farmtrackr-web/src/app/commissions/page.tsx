@@ -82,6 +82,7 @@ export default function CommissionsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showFeeTooltip, setShowFeeTooltip] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [pressedButtons, setPressedButtons] = useState<Set<string>>(new Set())
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
@@ -524,17 +525,18 @@ export default function CommissionsPage() {
       // For oldest first: smaller dates first (dateA - dateB)
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB
     })
-  }, [transactions, filterYear, filterClientType, filterBrokerage, filterPropertyType, filterReferralType, filterDateRange, searchQuery, sortOrder])
+  }, [filteredTransactions])
 
-  // Calculate analytics
+  // Calculate analytics based on FILTERED transactions
   const analytics = useMemo(() => {
-    const totalTransactions = transactions.length
-    const totalVolume = transactions.reduce((sum, t) => sum + (parseFloat(String(t.closedPrice || 0))), 0)
-    const closedTransactions = transactions.filter(t => t.status === 'Closed').length
+    const filtered = filteredTransactions
+    const totalTransactions = filtered.length
+    const totalVolume = filtered.reduce((sum, t) => sum + (parseFloat(String(t.closedPrice || 0))), 0)
+    const closedTransactions = filtered.filter(t => t.status === 'Closed').length
     
-    // Calculate NCI for all transactions
+    // Calculate NCI for filtered transactions
     // Only include transactions with valid commission data (has closedPrice and commissionPct)
-    const totalNCI = transactions.reduce((sum, t) => {
+    const totalNCI = filtered.reduce((sum, t) => {
       // Handle Referral $ Received transactions separately - use referralFeeReceived directly
       if (t.transactionType === 'Referral $ Received' && t.referralFeeReceived) {
         // For referral received, NCI = referral fee received (no deductions)
@@ -549,8 +551,8 @@ export default function CommissionsPage() {
       return sum + (parseFloat(calc.nci) || 0)
     }, 0)
     
-    // Calculate GCI for all transactions
-    const totalGCI = transactions.reduce((sum, t) => {
+    // Calculate GCI for filtered transactions
+    const totalGCI = filtered.reduce((sum, t) => {
       // Handle Referral $ Received transactions separately - GCI = referral fee received
       if (t.transactionType === 'Referral $ Received' && t.referralFeeReceived) {
         return sum + (parseFloat(String(t.referralFeeReceived || 0)))
@@ -564,18 +566,18 @@ export default function CommissionsPage() {
       return sum + (parseFloat(calc.gci) || 0)
     }, 0)
     
-    // Calculate avg commission from Closed transactions with valid commission data only
-    const closedTransactionsWithData = transactions.filter(t => 
+    // Calculate avg commission from Closed filtered transactions with valid commission data only
+    const closedTransactionsWithData = filtered.filter(t => 
       t.status === 'Closed' && 
       ((t.closedPrice && t.closedPrice > 0 && t.commissionPct && t.commissionPct > 0) ||
        (t.transactionType === 'Referral $ Received' && t.referralFeeReceived))
     ).length
     const avgCommission = closedTransactionsWithData > 0 ? totalNCI / closedTransactionsWithData : 0
-    const referralFeesPaid = transactions.reduce((sum, t) => sum + (parseFloat(String(t.referralDollar || 0))), 0)
-    const referralFeesReceived = transactions.reduce((sum, t) => sum + (parseFloat(String(t.referralFeeReceived || 0))), 0)
+    const referralFeesPaid = filtered.reduce((sum, t) => sum + (parseFloat(String(t.referralDollar || 0))), 0)
+    const referralFeesReceived = filtered.reduce((sum, t) => sum + (parseFloat(String(t.referralFeeReceived || 0))), 0)
     
-    // Monthly data for charts - only include transactions with valid commission data
-    const monthlyData = transactions.reduce((acc, t) => {
+    // Monthly data for charts - only include filtered transactions with valid commission data
+    const monthlyData = filtered.reduce((acc, t) => {
       if (t.closedDate) {
         // Skip transactions missing critical commission data unless it's a referral received
         const hasValidData = (t.closedPrice && t.closedPrice > 0 && t.commissionPct && t.commissionPct > 0) ||
@@ -600,25 +602,25 @@ export default function CommissionsPage() {
     })
     
     const pieData = [
-      { name: 'Buyer', value: transactions.filter(t => t.clientType === 'Buyer').length },
-      { name: 'Seller', value: transactions.filter(t => t.clientType === 'Seller').length }
+      { name: 'Buyer', value: filtered.filter(t => t.clientType === 'Buyer').length },
+      { name: 'Seller', value: filtered.filter(t => t.clientType === 'Seller').length }
     ]
     
     const brokerageData = [
       { 
         name: 'KW', 
-        value: transactions.filter(t => 
+        value: filtered.filter(t => 
           t.brokerage === 'KW' || t.brokerage === 'Keller Williams'
-        )        .reduce((sum, t) => {
+        ).reduce((sum, t) => {
           const calc = getCommissionForTransaction(t)
           return sum + (parseFloat(calc.nci) || 0)
         }, 0)
       },
       { 
         name: 'BDH', 
-        value: transactions.filter(t => 
+        value: filtered.filter(t => 
           t.brokerage === 'BDH' || t.brokerage === 'Bennion Deville Homes'
-        )        .reduce((sum, t) => {
+        ).reduce((sum, t) => {
           const calc = getCommissionForTransaction(t)
           return sum + (parseFloat(calc.nci) || 0)
         }, 0)
@@ -886,9 +888,9 @@ export default function CommissionsPage() {
                       }
                     }}
                     disabled={isImporting}
-                    style={{
+                    {...getButtonPressHandlers('importCSV')}
+                    style={getButtonPressStyle('importCSV', {
                       padding: '12px 24px',
-                      backgroundColor: isImporting ? colors.text.tertiary : colors.success,
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '12px',
@@ -897,16 +899,15 @@ export default function CommissionsPage() {
                       cursor: isImporting ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
-                      transition: 'background-color 0.2s ease'
-                    }}
+                      gap: '8px'
+                    }, isImporting ? colors.text.tertiary : colors.success, colors.successHover)}
                     onMouseEnter={(e) => {
-                      if (!isImporting) {
+                      if (!isImporting && !pressedButtons.has('importCSV')) {
                         e.currentTarget.style.backgroundColor = colors.successHover
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (!isImporting) {
+                      if (!isImporting && !pressedButtons.has('importCSV')) {
                         e.currentTarget.style.backgroundColor = colors.success
                       }
                     }}
@@ -926,9 +927,9 @@ export default function CommissionsPage() {
                   <button
                     onClick={handleImportFromGoogle}
                     disabled={isImporting}
-                    style={{
+                    {...getButtonPressHandlers('importGoogle')}
+                    style={getButtonPressStyle('importGoogle', {
                       padding: '12px 24px',
-                      backgroundColor: isImporting ? colors.text.tertiary : colors.info,
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '12px',
@@ -937,16 +938,15 @@ export default function CommissionsPage() {
                       cursor: isImporting ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
-                      transition: 'background-color 0.2s ease'
-                    }}
+                      gap: '8px'
+                    }, isImporting ? colors.text.tertiary : colors.info, colors.infoHover || colors.info)}
                     onMouseEnter={(e) => {
-                      if (!isImporting) {
+                      if (!isImporting && !pressedButtons.has('importGoogle')) {
                         e.currentTarget.style.backgroundColor = colors.infoHover || colors.info
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (!isImporting) {
+                      if (!isImporting && !pressedButtons.has('importGoogle')) {
                         e.currentTarget.style.backgroundColor = colors.info
                       }
                     }}
@@ -968,9 +968,9 @@ export default function CommissionsPage() {
                       setEditingId(null)
                       setShowForm(true)
                     }}
-                    style={{
+                    {...getButtonPressHandlers('newTransaction')}
+                    style={getButtonPressStyle('newTransaction', {
                       padding: '12px 24px',
-                      backgroundColor: colors.primary,
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '12px',
@@ -979,14 +979,17 @@ export default function CommissionsPage() {
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
-                      transition: 'background-color 0.2s ease'
-                    }}
+                      gap: '8px'
+                    }, colors.primary, colors.primaryHover)}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.primaryHover
+                      if (!pressedButtons.has('newTransaction')) {
+                        e.currentTarget.style.backgroundColor = colors.primaryHover
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.primary
+                      if (!pressedButtons.has('newTransaction')) {
+                        e.currentTarget.style.backgroundColor = colors.primary
+                      }
                     }}
                   >
                     <Plus style={{ width: '16px', height: '16px' }} />
@@ -1176,7 +1179,41 @@ export default function CommissionsPage() {
 
               {/* Active Filter Chips */}
               {(filterYear !== 'all' || filterClientType !== 'all' || filterBrokerage !== 'all' || filterPropertyType !== 'all' || filterReferralType !== 'all' || filterDateRange !== 'all' || searchQuery.trim()) && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: `1px solid ${colors.border}` }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: `1px solid ${colors.border}`, alignItems: 'center' }}>
+                  {/* Clear All Filters Button */}
+                  <button
+                    onClick={handleClearFilters}
+                    onMouseDown={() => setPressedButtons(prev => new Set(prev).add('clearFilters'))}
+                    onMouseUp={() => setPressedButtons(prev => {
+                      const next = new Set(prev)
+                      next.delete('clearFilters')
+                      return next
+                    })}
+                    onMouseLeave={() => setPressedButtons(prev => {
+                      const next = new Set(prev)
+                      next.delete('clearFilters')
+                      return next
+                    })}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      backgroundColor: pressedButtons.has('clearFilters') ? colors.primary : colors.primaryLight,
+                      color: pressedButtons.has('clearFilters') ? '#ffffff' : colors.primary,
+                      borderRadius: '999px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.1s ease',
+                      transform: pressedButtons.has('clearFilters') ? 'scale(0.95)' : 'scale(1)',
+                      boxShadow: pressedButtons.has('clearFilters') ? 'inset 0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                  >
+                    <X style={{ width: '14px', height: '14px' }} />
+                    Clear Filters
+                  </button>
                   {filterDateRange !== 'all' && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: colors.primaryLight, color: colors.primary, borderRadius: '999px' }}>
                       {filterDateRange === '3months' ? '3 Months' : filterDateRange === '6months' ? '6 Months' : filterDateRange === '12months' ? '12 Months' : filterDateRange === 'ytd' ? 'YTD' : 'Last Year'}
@@ -1340,9 +1377,9 @@ export default function CommissionsPage() {
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <button
                   onClick={handleDownloadTemplate}
-                  style={{
+                  {...getButtonPressHandlers('downloadTemplate')}
+                  style={getButtonPressStyle('downloadTemplate', {
                     padding: '10px 20px',
-                    backgroundColor: colors.info,
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '8px',
@@ -1351,14 +1388,17 @@ export default function CommissionsPage() {
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s ease'
-                  }}
+                    gap: '8px'
+                  }, colors.info, colors.infoHover)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.infoHover
+                    if (!pressedButtons.has('downloadTemplate')) {
+                      e.currentTarget.style.backgroundColor = colors.infoHover
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.info
+                    if (!pressedButtons.has('downloadTemplate')) {
+                      e.currentTarget.style.backgroundColor = colors.info
+                    }
                   }}
                 >
                   <Download style={{ width: '16px', height: '16px' }} />
@@ -1367,9 +1407,9 @@ export default function CommissionsPage() {
                 {transactions.length > 0 && (
                   <button
                     onClick={handleExportToCSV}
-                    style={{
+                    {...getButtonPressHandlers('exportCSV')}
+                    style={getButtonPressStyle('exportCSV', {
                       padding: '10px 20px',
-                      backgroundColor: colors.success,
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
@@ -1378,14 +1418,17 @@ export default function CommissionsPage() {
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '8px',
-                      transition: 'background-color 0.2s ease'
-                    }}
+                      gap: '8px'
+                    }, colors.success, colors.successHover)}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.successHover
+                      if (!pressedButtons.has('exportCSV')) {
+                        e.currentTarget.style.backgroundColor = colors.successHover
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.success
+                      if (!pressedButtons.has('exportCSV')) {
+                        e.currentTarget.style.backgroundColor = colors.success
+                      }
                     }}
                   >
                     <Upload style={{ width: '16px', height: '16px' }} />
