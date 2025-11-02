@@ -656,11 +656,22 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Overflow handling when many farms are active
   - Responsive chip display
 
-#### Sidebar Enhancements
-- [ ] **Sidebar Action Improvements**
+#### Dashboard Quick Actions Redesign
+- [ ] **Quick Actions Card Layout** (Welcome Dashboard)
+  - Change from vertical centered layout to horizontal layout
   - Icon on left, text left-justified to icon
   - Streamlined action card design
-  - Consistent icon and text alignment
+  - Consistent icon and text alignment across all quick action cards
+  - More compact and efficient use of space
+- [ ] **Additional Quick Actions** (Suggestions)
+  - Add New Transaction (commissions)
+  - View Commissions
+  - Google Contacts sync
+  - Data Quality page
+  - Settings/Preferences
+  - Recent activity/notifications
+  
+#### Sidebar Enhancements
 - [ ] **Future Features Section**
   - Add "Coming Soon" or "Future Features" tab in sidebar
   - Display planned features and roadmap items
@@ -1237,7 +1248,8 @@ This roadmap should be reviewed and updated:
 - ✅ Button click animations (partially done - commissions page has it)
 - Dashboard redesign (combine cards, expand active farms)
 - Active farms card elegant overflow handling
-- Sidebar action improvements (icon left, text left-justified)
+- Dashboard Quick Actions: icon on left, text left-justified (horizontal layout)
+- Add suggested quick actions (Add Transaction, View Commissions, Data Quality, Google Contacts, etc.)
 - Future features section in sidebar
 - Print labels in Farm Contacts tab and Google Contacts chips
 
