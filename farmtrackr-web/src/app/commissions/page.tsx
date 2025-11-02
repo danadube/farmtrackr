@@ -22,10 +22,12 @@ import {
   Download,
   Filter,
   Search,
-  ArrowUpDown
+  ArrowUpDown,
+  FileSpreadsheet
 } from 'lucide-react'
 import { TransactionForm } from '@/components/TransactionForm'
 import { calculateCommission } from '@/lib/commissionCalculations'
+import Link from 'next/link'
 
 interface Transaction {
   id: string
@@ -1323,167 +1325,272 @@ export default function CommissionsPage() {
             </div>
           </div>
 
-          {/* Download Template & Export */}
+          {/* Transaction Import & Export Section */}
           <div style={{ ...card, marginBottom: '32px' }}>
             <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0 0 16px 0' }}>
-                📊 Import & Export
-              </h3>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv,.xlsx,.xls"
-                  onChange={handleImportFromFile}
-                  disabled={isImporting}
-                  style={{ display: 'none' }}
-                />
-                <button
-                  onClick={() => {
-                    if (!isImporting && fileInputRef.current) {
-                      fileInputRef.current.click()
-                    }
-                  }}
-                  disabled={isImporting}
-                  {...getButtonPressHandlers('importCSV')}
-                  style={getButtonPressStyle('importCSV', {
-                    padding: '10px 20px',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: isImporting ? 'not-allowed' : 'pointer',
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                    📊 Transaction Import & Export
+                  </h3>
+                  <span 
+                    style={{ 
+                      fontSize: '11px', 
+                      padding: '4px 8px', 
+                      backgroundColor: colors.cardHover, 
+                      borderRadius: '6px',
+                      ...text.tertiary,
+                      fontWeight: '500'
+                    }}
+                    title="Import transaction data from files or Google Sheets, export filtered results"
+                  >
+                    Quick Actions
+                  </span>
+                </div>
+                <Link 
+                  href="/import-export"
+                  style={{ 
+                    fontSize: '13px', 
+                    color: colors.primary, 
+                    textDecoration: 'none',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '8px'
-                  }, isImporting ? colors.text.tertiary : colors.success, colors.successHover)}
+                    gap: '4px'
+                  }}
                   onMouseEnter={(e) => {
-                    if (!isImporting && !pressedButtons.has('importCSV')) {
-                      e.currentTarget.style.backgroundColor = colors.successHover
-                    }
+                    e.currentTarget.style.textDecoration = 'underline'
                   }}
                   onMouseLeave={(e) => {
-                    if (!isImporting && !pressedButtons.has('importCSV')) {
-                      e.currentTarget.style.backgroundColor = colors.success
-                    }
+                    e.currentTarget.style.textDecoration = 'none'
                   }}
                 >
-                  {isImporting ? (
-                    <>
-                      <RefreshCw style={{ width: '16px', height: '16px' }} />
-                      Importing...
-                    </>
-                  ) : (
-                    <>
-                      <Upload style={{ width: '16px', height: '16px' }} />
-                      Import CSV/Excel
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleImportFromGoogle}
-                  disabled={isImporting}
-                  {...getButtonPressHandlers('importGoogle')}
-                  style={getButtonPressStyle('importGoogle', {
-                    padding: '10px 20px',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: isImporting ? 'not-allowed' : 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }, isImporting ? colors.text.tertiary : colors.info, colors.infoHover || colors.info)}
-                  onMouseEnter={(e) => {
-                    if (!isImporting && !pressedButtons.has('importGoogle')) {
-                      e.currentTarget.style.backgroundColor = colors.infoHover || colors.info
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isImporting && !pressedButtons.has('importGoogle')) {
-                      e.currentTarget.style.backgroundColor = colors.info
-                    }
-                  }}
-                >
-                  {isImporting ? (
-                    <>
-                      <RefreshCw style={{ width: '16px', height: '16px' }} />
-                      Importing...
-                    </>
-                  ) : (
-                    <>
-                      <Upload style={{ width: '16px', height: '16px' }} />
-                      Import from Google Sheets
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleDownloadTemplate}
-                  {...getButtonPressHandlers('downloadTemplate')}
-                  style={getButtonPressStyle('downloadTemplate', {
-                    padding: '10px 20px',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }, colors.info, colors.infoHover)}
-                  onMouseEnter={(e) => {
-                    if (!pressedButtons.has('downloadTemplate')) {
-                      e.currentTarget.style.backgroundColor = colors.infoHover
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!pressedButtons.has('downloadTemplate')) {
-                      e.currentTarget.style.backgroundColor = colors.info
-                    }
-                  }}
-                >
-                  <Download style={{ width: '16px', height: '16px' }} />
-                  Download Template
-                </button>
-                {transactions.length > 0 && (
+                  View Import/Export Hub
+                  <Upload style={{ width: '14px', height: '14px' }} />
+                </Link>
+              </div>
+              <p style={{ fontSize: '13px', ...text.secondary, margin: '0 0 16px 0', lineHeight: '1.5' }}>
+                Import transaction data from CSV/Excel files or Google Sheets. Export includes all currently filtered transactions.
+              </p>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                {/* Import from File */}
+                <div style={{ padding: '16px', backgroundColor: colors.cardHover, borderRadius: '10px', border: `1px solid ${colors.border}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <Upload style={{ width: '16px', height: '16px', color: colors.success }} />
+                    <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Import from File
+                    </h4>
+                  </div>
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                    Upload CSV or Excel files with transaction data
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    onChange={handleImportFromFile}
+                    disabled={isImporting}
+                    style={{ display: 'none' }}
+                  />
                   <button
-                    onClick={handleExportToCSV}
-                    {...getButtonPressHandlers('exportCSV')}
-                    style={getButtonPressStyle('exportCSV', {
-                      padding: '10px 20px',
+                    onClick={() => {
+                      if (!isImporting && fileInputRef.current) {
+                        fileInputRef.current.click()
+                      }
+                    }}
+                    disabled={isImporting}
+                    {...getButtonPressHandlers('importCSV')}
+                    style={getButtonPressStyle('importCSV', {
+                      width: '100%',
+                      padding: '10px 16px',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
-                      fontSize: '14px',
+                      fontSize: '13px',
                       fontWeight: '500',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
+                      cursor: isImporting ? 'not-allowed' : 'pointer',
+                      display: 'flex',
                       alignItems: 'center',
+                      justifyContent: 'center',
                       gap: '8px'
-                    }, colors.success, colors.successHover)}
+                    }, isImporting ? colors.text.tertiary : colors.success, colors.successHover)}
                     onMouseEnter={(e) => {
-                      if (!pressedButtons.has('exportCSV')) {
+                      if (!isImporting && !pressedButtons.has('importCSV')) {
                         e.currentTarget.style.backgroundColor = colors.successHover
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (!pressedButtons.has('exportCSV')) {
+                      if (!isImporting && !pressedButtons.has('importCSV')) {
                         e.currentTarget.style.backgroundColor = colors.success
                       }
                     }}
                   >
-                    <Upload style={{ width: '16px', height: '16px' }} />
-                    Export to CSV ({filteredTransactions.length} transactions)
+                    {isImporting ? (
+                      <>
+                        <RefreshCw style={{ width: '14px', height: '14px' }} />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload style={{ width: '14px', height: '14px' }} />
+                        Choose File
+                      </>
+                    )}
                   </button>
+                </div>
+
+                {/* Import from Google Sheets */}
+                <div style={{ padding: '16px', backgroundColor: colors.cardHover, borderRadius: '10px', border: `1px solid ${colors.border}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <FileSpreadsheet style={{ width: '16px', height: '16px', color: colors.info }} />
+                    <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Import from Google Sheets
+                    </h4>
+                  </div>
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                    Sync transaction data from a Google Sheet
+                  </p>
+                  <button
+                    onClick={handleImportFromGoogle}
+                    disabled={isImporting}
+                    {...getButtonPressHandlers('importGoogle')}
+                    style={getButtonPressStyle('importGoogle', {
+                      width: '100%',
+                      padding: '10px 16px',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: isImporting ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }, isImporting ? colors.text.tertiary : colors.info, colors.infoHover || colors.info)}
+                    onMouseEnter={(e) => {
+                      if (!isImporting && !pressedButtons.has('importGoogle')) {
+                        e.currentTarget.style.backgroundColor = colors.infoHover || colors.info
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isImporting && !pressedButtons.has('importGoogle')) {
+                        e.currentTarget.style.backgroundColor = colors.info
+                      }
+                    }}
+                  >
+                    {isImporting ? (
+                      <>
+                        <RefreshCw style={{ width: '14px', height: '14px' }} />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <FileSpreadsheet style={{ width: '14px', height: '14px' }} />
+                        Import from Google
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Download Template */}
+                <div style={{ padding: '16px', backgroundColor: colors.cardHover, borderRadius: '10px', border: `1px solid ${colors.border}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <Download style={{ width: '16px', height: '16px', color: colors.info }} />
+                    <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Download Template
+                    </h4>
+                  </div>
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                    Get a CSV template for proper formatting
+                  </p>
+                  <button
+                    onClick={handleDownloadTemplate}
+                    {...getButtonPressHandlers('downloadTemplate')}
+                    style={getButtonPressStyle('downloadTemplate', {
+                      width: '100%',
+                      padding: '10px 16px',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }, colors.info, colors.infoHover)}
+                    onMouseEnter={(e) => {
+                      if (!pressedButtons.has('downloadTemplate')) {
+                        e.currentTarget.style.backgroundColor = colors.infoHover
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!pressedButtons.has('downloadTemplate')) {
+                        e.currentTarget.style.backgroundColor = colors.info
+                      }
+                    }}
+                  >
+                    <Download style={{ width: '14px', height: '14px' }} />
+                    Download CSV Template
+                  </button>
+                </div>
+
+                {/* Export to CSV */}
+                {transactions.length > 0 && (
+                  <div style={{ padding: '16px', backgroundColor: colors.cardHover, borderRadius: '10px', border: `1px solid ${colors.border}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <Download style={{ width: '16px', height: '16px', color: colors.success }} />
+                      <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                        Export to CSV
+                      </h4>
+                    </div>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                      Export {filteredTransactions.length} filtered transaction{filteredTransactions.length !== 1 ? 's' : ''}
+                    </p>
+                    <button
+                      onClick={handleExportToCSV}
+                      {...getButtonPressHandlers('exportCSV')}
+                      style={getButtonPressStyle('exportCSV', {
+                        width: '100%',
+                        padding: '10px 16px',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }, colors.success, colors.successHover)}
+                      onMouseEnter={(e) => {
+                        if (!pressedButtons.has('exportCSV')) {
+                          e.currentTarget.style.backgroundColor = colors.successHover
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!pressedButtons.has('exportCSV')) {
+                          e.currentTarget.style.backgroundColor = colors.success
+                        }
+                      }}
+                    >
+                      <Download style={{ width: '14px', height: '14px' }} />
+                      Export CSV
+                    </button>
+                  </div>
                 )}
               </div>
-              <p style={{ fontSize: '13px', ...text.tertiary, margin: '12px 0 0 0' }}>
-                {transactions.length > 0 ? 'Export includes all filtered transactions' : 'Get a CSV template to prepare your own transaction data for import'}
-              </p>
+
+              <div style={{ marginTop: '12px', padding: '12px', backgroundColor: colors.cardHover, borderRadius: '8px', fontSize: '12px', ...text.tertiary }}>
+                <strong style={{ ...text.secondary }}>💡 Tip:</strong> For importing contacts or other data types, visit the{' '}
+                <Link href="/import-export" style={{ color: colors.primary, textDecoration: 'underline' }}>
+                  Import & Export Hub
+                </Link>
+                . You can also use the AI Commission Sheet Scanner when adding new transactions.
+              </div>
             </div>
           </div>
 

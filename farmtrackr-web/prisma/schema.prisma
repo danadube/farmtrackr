@@ -208,6 +208,9 @@ model Transaction {
 
   // Google Sheets Sync
   googleSheetsId String? // Row ID for Google Sheets sync
+  
+  // Notes (can store CSV NCI for referral transactions as JSON: {"csvNci": value})
+  notes String?
 
   // Timestamps
   createdAt DateTime @default(now())
