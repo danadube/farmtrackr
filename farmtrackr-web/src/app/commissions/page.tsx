@@ -918,96 +918,6 @@ export default function CommissionsPage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv,.xlsx,.xls"
-                    onChange={handleImportFromFile}
-                    disabled={isImporting}
-                    style={{ display: 'none' }}
-                  />
-                  <button
-                    onClick={() => {
-                      if (!isImporting && fileInputRef.current) {
-                        fileInputRef.current.click()
-                      }
-                    }}
-                    disabled={isImporting}
-                    {...getButtonPressHandlers('importCSV')}
-                    style={getButtonPressStyle('importCSV', {
-                      padding: '12px 24px',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: isImporting ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }, isImporting ? colors.text.tertiary : colors.success, colors.successHover)}
-                    onMouseEnter={(e) => {
-                      if (!isImporting && !pressedButtons.has('importCSV')) {
-                        e.currentTarget.style.backgroundColor = colors.successHover
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isImporting && !pressedButtons.has('importCSV')) {
-                        e.currentTarget.style.backgroundColor = colors.success
-                      }
-                    }}
-                  >
-                    {isImporting ? (
-                      <>
-                        <RefreshCw style={{ width: '16px', height: '16px' }} />
-                        Importing...
-                      </>
-                    ) : (
-                      <>
-                        <Upload style={{ width: '16px', height: '16px' }} />
-                        Import CSV/Excel
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={handleImportFromGoogle}
-                    disabled={isImporting}
-                    {...getButtonPressHandlers('importGoogle')}
-                    style={getButtonPressStyle('importGoogle', {
-                      padding: '12px 24px',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: isImporting ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }, isImporting ? colors.text.tertiary : colors.info, colors.infoHover || colors.info)}
-                    onMouseEnter={(e) => {
-                      if (!isImporting && !pressedButtons.has('importGoogle')) {
-                        e.currentTarget.style.backgroundColor = colors.infoHover || colors.info
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isImporting && !pressedButtons.has('importGoogle')) {
-                        e.currentTarget.style.backgroundColor = colors.info
-                      }
-                    }}
-                  >
-                    {isImporting ? (
-                      <>
-                        <RefreshCw style={{ width: '16px', height: '16px' }} />
-                        Importing...
-                      </>
-                    ) : (
-                      <>
-                        <Upload style={{ width: '16px', height: '16px' }} />
-                        Import from Google Sheets
-                      </>
-                    )}
-                  </button>
                   <button
                     onClick={() => {
                       setEditingId(null)
@@ -1420,6 +1330,96 @@ export default function CommissionsPage() {
                 📊 Import & Export
               </h3>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={handleImportFromFile}
+                  disabled={isImporting}
+                  style={{ display: 'none' }}
+                />
+                <button
+                  onClick={() => {
+                    if (!isImporting && fileInputRef.current) {
+                      fileInputRef.current.click()
+                    }
+                  }}
+                  disabled={isImporting}
+                  {...getButtonPressHandlers('importCSV')}
+                  style={getButtonPressStyle('importCSV', {
+                    padding: '10px 20px',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: isImporting ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }, isImporting ? colors.text.tertiary : colors.success, colors.successHover)}
+                  onMouseEnter={(e) => {
+                    if (!isImporting && !pressedButtons.has('importCSV')) {
+                      e.currentTarget.style.backgroundColor = colors.successHover
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isImporting && !pressedButtons.has('importCSV')) {
+                      e.currentTarget.style.backgroundColor = colors.success
+                    }
+                  }}
+                >
+                  {isImporting ? (
+                    <>
+                      <RefreshCw style={{ width: '16px', height: '16px' }} />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload style={{ width: '16px', height: '16px' }} />
+                      Import CSV/Excel
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleImportFromGoogle}
+                  disabled={isImporting}
+                  {...getButtonPressHandlers('importGoogle')}
+                  style={getButtonPressStyle('importGoogle', {
+                    padding: '10px 20px',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: isImporting ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }, isImporting ? colors.text.tertiary : colors.info, colors.infoHover || colors.info)}
+                  onMouseEnter={(e) => {
+                    if (!isImporting && !pressedButtons.has('importGoogle')) {
+                      e.currentTarget.style.backgroundColor = colors.infoHover || colors.info
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isImporting && !pressedButtons.has('importGoogle')) {
+                      e.currentTarget.style.backgroundColor = colors.info
+                    }
+                  }}
+                >
+                  {isImporting ? (
+                    <>
+                      <RefreshCw style={{ width: '16px', height: '16px' }} />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload style={{ width: '16px', height: '16px' }} />
+                      Import from Google Sheets
+                    </>
+                  )}
+                </button>
                 <button
                   onClick={handleDownloadTemplate}
                   {...getButtonPressHandlers('downloadTemplate')}
