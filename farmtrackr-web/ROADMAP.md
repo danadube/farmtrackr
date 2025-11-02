@@ -96,20 +96,108 @@ This roadmap outlines the development plan to bring the web application to featu
   - API fully functional
   - UI may need refinement based on user testing
 
-### ❌ Not Started
-- [ ] **Label Printing** 🔴 **CRITICAL PRIORITY**
+### ❌ Not Started / Planned
+- [ ] **Export Column Selection for Transactions**
+  - Add column selection UI for transaction exports (similar to contacts export)
+  - Allow users to choose which transaction fields to export
+  - Save column preferences for future exports
+  
+- [ ] **Email Integration** 📧
+  - Outlook email integration
+  - Google Gmail integration
+  - Built-in email client within the app
+  - Send emails to contacts directly from FarmTrackr
+  - Email templates and history tracking
+  
+- [ ] **Transaction Pipeline** 🔄
+  - Visual pipeline for transaction stages
+  - Track transactions through workflow stages
+  - Pipeline management and customization
+  - Link transactions to contacts and pipeline stages
+  
+- [ ] **Document Form Integration** 📝
+  - ZipForms/DocuSign integration for document signing
+  - CAR (California Association of Realtors) forms integration
+  - Form generation and tracking
+  - Electronic signature workflows
+  
+- [ ] **Task & Reminders System** ✅
+  - Task management with reminders
+  - Apple Reminders sync
+  - Link tasks to contacts and transactions
+  - Task pipeline integration
+  
+- [ ] **Outlook Integration** 📅
+  - Outlook Calendar sync
+  - Outlook People/Contacts sync
+  - Outlook Email integration
+  - Bidirectional sync capabilities
+  
+- [ ] **Button Interaction Animations** ✨
+  - Click/press animations for all buttons throughout app
+  - Visual feedback on button interactions
+  - Consistent animation system
+  
+- [ ] **Active Farms Card Enhancement** 🏷️
+  - Elegant handling for many farm chips
+  - Scrollable chip container or better layout
+  - Overflow handling for active farms card
+  
+- [ ] **Dashboard Redesign** 🎨
+  - Rethink and reorganize welcome page dashboard
+  - Better information architecture
+  - Combine total contacts and validation issues into one card
+  - Double the active farms card size for more space
+  
+- [ ] **Authentication & Security** 🔐
+  - Sign in to app for security
+  - User authentication system
+  - Multi-user support with roles
+  - Session management
+  
+- [ ] **Personalization** 🎨
+  - Personal logo import
+  - Custom branding options
+  - App personalization features
+  - Theme customization beyond light/dark
+  
+- [ ] **Transaction Type: Lease** 🏠
+  - Add "Lease" option to transaction types
+  - Lease-specific fields and calculations
+  - Lease commission tracking
+  
+- [ ] **Google Contact Tag Colors** 🎨
+  - Different colored chips for Google contact tags
+  - Custom tag color assignment
+  - Visual tag organization
+  
+- [ ] **Print Labels Enhancements** 🏷️
+  - Add print labels option in Farm Contacts tab
+  - Print labels from Google Contacts chips
+  - Quick access to label printing from multiple locations
+  
+- [ ] **Sidebar Enhancements** 📱
+  - Future features section/coming soon tab in sidebar
+  - Show planned features and roadmap items
+  - Sidebar actions: icon on left, text left-justified to icon
+  - Streamlined action card design
+  
+- [ ] **Label Printing** 🔴 **CRITICAL PRIORITY** ✅ COMPLETE
   - Dashboard link exists but route doesn't exist
   - No implementation found
   - Avery template support needed
   - This is the highest priority feature (had issues in Swift app)
+  - ✅ COMPLETE - Fully implemented with preview
   
-- [ ] **Document Management**
+- [ ] **Document Management** ✅ COMPLETE
   - Page exists at `/documents` but uses mock data
   - No real document storage/management functionality
+  - ✅ COMPLETE - Full CRUD with file upload
   
-- [ ] **Batch Operations**
+- [ ] **Batch Operations** ✅ COMPLETE
   - Multi-select for contacts
   - Bulk edit/delete/export
+  - ✅ COMPLETE - Full batch operations implemented
   
 - [ ] **Import Templates**
   - Save and reuse import configurations
@@ -119,9 +207,10 @@ This roadmap outlines the development plan to bring the web application to featu
   - Advanced filter builder
   - Saved search queries
   
-- [ ] **PDF Export Enhancement**
+- [ ] **PDF Export Enhancement** ✅ COMPLETE
   - Current PDF export is basic/placeholder
   - Needs proper PDF generation library
+  - ✅ COMPLETE - Professional PDF with pdfkit
 
 ---
 
@@ -543,16 +632,226 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
 
 ---
 
+### **v0.7.0 - UI/UX Enhancements & Polish** (Target: Q1 2026)
+**Focus:** User experience improvements and visual refinements
+
+#### Button Interactions
+- [ ] **Button Animation System**
+  - Click/press animations for all buttons throughout app
+  - Visual feedback on button interactions (scale, shadow, etc.)
+  - Consistent animation system across all components
+  - Enhanced button press states
+
+#### Dashboard Redesign
+- [ ] **Welcome Page Dashboard Improvements**
+  - Combine total contacts and validation issues into one card
+  - Double the active farms card size for more space for farm names
+  - Better visual hierarchy and information architecture
+  - Improved layout and spacing
+
+#### Active Farms Card
+- [ ] **Elegant Chip Overflow Handling**
+  - Scrollable chip container for many farms
+  - Better layout for active farms card
+  - Overflow handling when many farms are active
+  - Responsive chip display
+
+#### Sidebar Enhancements
+- [ ] **Sidebar Action Improvements**
+  - Icon on left, text left-justified to icon
+  - Streamlined action card design
+  - Consistent icon and text alignment
+- [ ] **Future Features Section**
+  - Add "Coming Soon" or "Future Features" tab in sidebar
+  - Display planned features and roadmap items
+  - Feature preview and timeline
+
+#### Print Labels Enhancements
+- [ ] **Additional Print Locations**
+  - Add print labels option in Farm Contacts tab
+  - Print labels from Google Contacts chips
+  - Quick access to label printing from multiple locations
+  - Consistent print experience across pages
+
+**Estimated Development Time:** 1-2 weeks
+
+---
+
+### **v0.8.0 - Email & Communication Integration** (Target: Q1 2026)
+**Focus:** Email integration and communication management
+
+#### Email Integration
+- [ ] **Outlook Email Integration**
+  - Outlook email API integration
+  - Connect Outlook accounts
+  - Send emails from FarmTrackr
+  - Email history tracking
+- [ ] **Google Gmail Integration**
+  - Gmail API integration
+  - Connect Gmail accounts
+  - Send emails from FarmTrackr
+  - Email sync and history
+- [ ] **Built-in Email Client**
+  - Email composer within FarmTrackr
+  - Email templates for common communications
+  - Email threading and conversation view
+  - Link emails to contacts and transactions
+- [ ] **Email Templates**
+  - Template library
+  - Custom email templates
+  - Template variables and personalization
+  - Quick send from contact records
+
+#### Outlook Full Integration
+- [ ] **Outlook Calendar Sync**
+  - Two-way calendar synchronization
+  - Event creation from FarmTrackr
+  - Calendar events linked to contacts/transactions
+- [ ] **Outlook People/Contacts Sync**
+  - Import/export Outlook contacts
+  - Bidirectional contact sync
+  - Conflict resolution
+- [ ] **Unified Outlook Experience**
+  - Single sign-on for Outlook services
+  - Centralized Outlook integration management
+
+**Estimated Development Time:** 3-4 weeks
+
+---
+
+### **v0.9.0 - Transaction Pipeline & Advanced Features** (Target: Q1-Q2 2026)
+**Focus:** Transaction workflow and advanced transaction features
+
+#### Transaction Pipeline
+- [ ] **Pipeline Management**
+  - Visual pipeline interface for transaction stages
+  - Customizable pipeline stages
+  - Drag-and-drop transaction movement
+  - Pipeline views and filtering
+- [ ] **Pipeline Integration**
+  - Link transactions to contacts
+  - Track transactions through workflow stages
+  - Pipeline analytics and reporting
+  - Stage-based notifications
+
+#### Transaction Type: Lease
+- [ ] **Lease Transaction Support**
+  - Add "Lease" option to transaction types
+  - Lease-specific fields (lease terms, monthly rent, etc.)
+  - Lease commission calculations
+  - Lease duration and renewal tracking
+
+#### Document Form Integration
+- [ ] **ZipForms/DocuSign Integration**
+  - Connect to ZipForms API
+  - Connect to DocuSign API
+  - Generate forms from templates
+  - Electronic signature workflows
+  - Form tracking and completion status
+- [ ] **CAR Forms Integration**
+  - California Association of Realtors forms
+  - Form library access
+  - Form generation and filling
+  - Integration with transaction pipeline
+
+**Estimated Development Time:** 4-5 weeks
+
+---
+
+### **v0.10.0 - Task Management & Reminders** (Target: Q2 2026)
+**Focus:** Task system with calendar integration
+
+#### Task & Reminders System
+- [ ] **Task Management**
+  - Create, edit, delete tasks
+  - Task priorities and due dates
+  - Task categories and tags
+  - Task search and filtering
+- [ ] **Apple Reminders Sync**
+  - Connect to Apple Reminders
+  - Two-way sync with Reminders app
+  - Task creation from contacts/transactions
+  - Reminder notifications
+- [ ] **Task Linking**
+  - Link tasks to contacts
+  - Link tasks to transactions
+  - Link tasks to pipeline stages
+  - Context-aware task creation
+- [ ] **Task Pipeline Integration**
+  - Tasks associated with transaction stages
+  - Automated task creation from pipeline
+  - Task completion tracking
+
+**Estimated Development Time:** 2-3 weeks
+
+---
+
+### **v0.11.0 - Personalization & Security** (Target: Q2 2026)
+**Focus:** User customization and authentication
+
+#### Authentication & Security
+- [ ] **User Authentication System**
+  - Sign in to app for security
+  - User accounts and profiles
+  - Password management
+  - Session management
+- [ ] **Multi-User Support**
+  - Multiple user accounts
+  - User roles and permissions
+  - Shared workspace management
+  - User activity logging
+
+#### Personalization
+- [ ] **Personal Logo Import**
+  - Upload custom logo
+  - Logo customization options
+  - Logo placement and sizing
+- [ ] **App Branding**
+  - Custom color schemes
+  - Brand color customization
+  - Theme personalization beyond light/dark
+  - Customizable app appearance
+- [ ] **Personalization Options**
+  - Dashboard layout customization
+  - Feature visibility toggles
+  - Custom navigation preferences
+  - Saved preferences per user
+
+**Estimated Development Time:** 3-4 weeks
+
+---
+
+### **v0.12.0 - Enhanced Export & Google Contacts** (Target: Q2 2026)
+**Focus:** Export improvements and Google Contacts enhancements
+
+#### Export Enhancements
+- [ ] **Transaction Export Column Selection**
+  - Column selection UI for transaction exports
+  - Similar to contacts export column selection
+  - Choose which transaction fields to export
+  - Save column preferences for future exports
+
+#### Google Contacts Enhancements
+- [ ] **Google Contact Tag Colors**
+  - Different colored chips for Google contact tags
+  - Custom tag color assignment
+  - Visual tag organization
+  - Color-coded tag filtering
+
+**Estimated Development Time:** 1 week
+
+---
+
 ### **Future: Advanced Features**
 **Focus:** Additional CRM capabilities
 
-#### Batch Operations
-- [ ] **Bulk Actions**
-  - Multi-select contacts
-  - Bulk edit (farm, notes, etc.)
-  - Bulk delete with confirmation
-  - Bulk export
-  - Bulk import updates
+#### Batch Operations ✅ COMPLETE
+- [x] **Bulk Actions** ✅
+  - Multi-select contacts ✅
+  - Bulk edit (farm, notes, etc.) ✅
+  - Bulk delete with confirmation ✅
+  - Bulk export ✅
+  - Bulk import updates ✅
 
 ### **v0.4.1 - Farm Dropdown & Settings Enhancement** ✅ COMPLETE (October 30, 2025)
 **Focus:** Improved farm selection and settings personalization
@@ -901,6 +1200,12 @@ This roadmap should be reviewed and updated:
 | v0.4.2 | ✅ Complete | Document Management UI |
 | v0.5.0 | ✅ Complete | Google OAuth, Contacts Integration |
 | v0.6.0 | ✅ Complete | Commission Tracking Module |
+| v0.7.0 | 📋 Planned | UI/UX Enhancements & Polish |
+| v0.8.0 | 📋 Planned | Email & Communication Integration |
+| v0.9.0 | 📋 Planned | Transaction Pipeline & Advanced Features |
+| v0.10.0 | 📋 Planned | Task Management & Reminders |
+| v0.11.0 | 📋 Planned | Personalization & Security |
+| v0.12.0 | 📋 Planned | Enhanced Export & Google Contacts |
 | v1.0.0 | 📋 Planned | Production Release |
 
 ---
@@ -925,32 +1230,89 @@ This roadmap should be reviewed and updated:
 
 ---
 
-### **2. 🔄 Enhance Google Integration**
-**Status:** OAuth and Contacts complete
+### **2. 🎨 UI/UX Enhancements (v0.7.0)** 🚧 NEXT PRIORITY
+**Status:** Ready to implement
 
-**Google Contacts Enhancements:**
-- Export to Google Contacts
-- Edit sync back to Google
-- Bidirectional sync
+**Immediate Tasks:**
+- ✅ Button click animations (partially done - commissions page has it)
+- Dashboard redesign (combine cards, expand active farms)
+- Active farms card elegant overflow handling
+- Sidebar action improvements (icon left, text left-justified)
+- Future features section in sidebar
+- Print labels in Farm Contacts tab and Google Contacts chips
 
-**Google Calendar Integration:**
-- Calendar API setup
-- Event management
-- Schedule meetings
-- Activity integration
+**Estimated Time:** 1-2 weeks
 
-**Google Drive Integration:**
-- Drive API setup
-- File management
-- Document storage integration
-- Backup & sync
+---
+
+### **3. 🔄 Export & Google Contacts Enhancements (v0.12.0)**
+**Status:** Quick wins
+
+**Tasks:**
+- Transaction export column selection
+- Google contact tag colors
+- Print labels from Google Contacts
+
+**Estimated Time:** 1 week
+
+---
+
+### **4. 📧 Email Integration (v0.8.0)**
+**Status:** High value feature
+
+**Tasks:**
+- Outlook email integration
+- Google Gmail integration
+- Built-in email client
+- Outlook full integration (calendar, people, email)
+
+**Estimated Time:** 3-4 weeks
+
+---
+
+### **5. 🔄 Transaction Pipeline (v0.9.0)**
+**Status:** Important workflow feature
+
+**Tasks:**
+- Visual pipeline interface
+- Pipeline stages and customization
+- Link to contacts and transactions
+- Lease transaction type
+- ZipForms/DocuSign integration
+- CAR forms integration
+
+**Estimated Time:** 4-5 weeks
+
+---
+
+### **6. ✅ Task Management (v0.10.0)**
+**Status:** Productivity enhancement
+
+**Tasks:**
+- Task management system
+- Apple Reminders sync
+- Link tasks to contacts and transactions
+- Pipeline integration
 
 **Estimated Time:** 2-3 weeks
 
 ---
 
-### **3. 🔧 Polish & Testing**
-**Status:** Core features complete, time for refinement
+### **7. 🔐 Security & Personalization (v0.11.0)**
+**Status:** Important for multi-user and branding
+
+**Tasks:**
+- User authentication system
+- Personal logo import
+- App personalization
+- Custom branding
+
+**Estimated Time:** 3-4 weeks
+
+---
+
+### **8. 🔧 Polish & Testing**
+**Status:** Ongoing refinement
 
 **Tasks:**
 - End-to-end testing of all features
@@ -959,25 +1321,11 @@ This roadmap should be reviewed and updated:
 - Mobile responsiveness improvements
 - Accessibility enhancements
 
-**Estimated Time:** 1-2 weeks
+**Estimated Time:** Ongoing
 
 ---
 
-### **4. 📦 Batch Operations**
-**Status:** Not started
-
-**Tasks:**
-- Multi-select contacts
-- Bulk edit (farm, notes, etc.)
-- Bulk delete with confirmation
-- Bulk export
-- Bulk import updates
-
-**Estimated Time:** 1 week
-
----
-
-### **5. 🌟 Advanced Features**
+### **9. 🌟 Advanced Features**
 **Lower Priority but Valuable:**
 - Advanced Search/Filter (filter builder, saved searches)
 - Import Templates (save/reuse field mappings)
