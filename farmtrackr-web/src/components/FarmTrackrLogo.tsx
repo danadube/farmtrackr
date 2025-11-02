@@ -56,21 +56,33 @@ export function FarmTrackrLogo({
   const logoSrc = isDark ? "/images/title-logo-transparent.png" : "/images/title-logo-light.png"
   
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: showTitle ? '12px' : '0', width: '100%' }} className={className}>
-      <Image
-        src={logoSrc}
-        alt="FarmTrackr"
-        width={sizeConfig.width}
-        height={sizeConfig.height}
-        style={{ 
-          width: '100%',
-          height: 'auto', 
-          objectFit: 'contain',
-          maxWidth: '100%'
-        }}
-        quality={100}
-        priority
-      />
+    <div style={{ display: 'flex', alignItems: 'center', gap: showTitle ? '12px' : '0', width: '100%', lineHeight: 0 }} className={className}>
+      <div style={{ 
+        width: '100%',
+        display: 'flex',
+        alignItems: 'flex-start',
+        lineHeight: 0,
+        overflow: 'hidden',
+        marginTop: '-12px' // Crop top whitespace if logo image has padding - adjust as needed
+      }}>
+        <Image
+          src={logoSrc}
+          alt="FarmTrackr"
+          width={sizeConfig.width}
+          height={sizeConfig.height}
+          style={{ 
+            width: '100%',
+            height: 'auto', 
+            objectFit: 'contain',
+            objectPosition: 'top',
+            maxWidth: '100%',
+            display: 'block',
+            lineHeight: 0
+          }}
+          quality={100}
+          priority
+        />
+      </div>
       {showTitle && (
         <span style={{ 
           fontSize: size === 'lg' ? '24px' : size === 'xl' ? '28px' : '20px',

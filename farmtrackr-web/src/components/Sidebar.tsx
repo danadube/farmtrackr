@@ -170,9 +170,9 @@ export function Sidebar({ children }: SidebarProps) {
         }}
         id="sidebar"
       >
-        {/* Logo */}
-        <div style={{ marginBottom: '16px', marginTop: '8px', width: '100%', padding: '0 8px' }}>
-          <Link href="/" style={{ textDecoration: 'none', color: colors.text.primary, display: 'block', width: '100%' }}>
+        {/* Logo - Aligned to top of sidebar */}
+        <div style={{ marginBottom: '16px', marginTop: '-16px', width: '100%', padding: '0 8px', overflow: 'hidden' }}>
+          <Link href="/" style={{ textDecoration: 'none', color: colors.text.primary, display: 'block', width: '100%', lineHeight: 0, paddingTop: '16px' }}>
             <FarmTrackrLogo size="lg" variant="logo" showTitle={false} />
           </Link>
         </div>
