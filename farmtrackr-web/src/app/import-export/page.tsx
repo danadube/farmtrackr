@@ -642,10 +642,14 @@ export default function ImportExportPage() {
                   <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, margin: '0' }}>
                     Import Contacts
                   </h2>
-                  <HelpCircle 
-                    style={{ width: '18px', height: '18px', color: colors.text.tertiary, cursor: 'help' }}
+                  <span 
                     title="Import contact data from CSV or Excel files. Files should have proper column headers."
-                  />
+                    style={{ display: 'inline-flex', cursor: 'help' }}
+                  >
+                    <HelpCircle 
+                      style={{ width: '18px', height: '18px', color: colors.text.tertiary }}
+                    />
+                  </span>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
@@ -924,10 +928,14 @@ export default function ImportExportPage() {
                   <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, margin: '0' }}>
                     Export Contacts
                   </h2>
-                  <HelpCircle 
-                    style={{ width: '18px', height: '18px', color: colors.text.tertiary, cursor: 'help' }}
+                  <span 
                     title="Export your contacts with customizable filters and column selection. Available formats: CSV, Excel, JSON, PDF."
-                  />
+                    style={{ display: 'inline-flex', cursor: 'help' }}
+                  >
+                    <HelpCircle 
+                      style={{ width: '18px', height: '18px', color: colors.text.tertiary }}
+                    />
+                  </span>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
@@ -1319,10 +1327,14 @@ export default function ImportExportPage() {
                   <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, margin: '0' }}>
                     Import Transactions
                   </h2>
-                  <HelpCircle 
-                    style={{ width: '18px', height: '18px', color: colors.text.tertiary, cursor: 'help' }}
+                  <span 
                     title="Import transaction data from CSV or Excel files. Files should match the commission template format."
-                  />
+                    style={{ display: 'inline-flex', cursor: 'help' }}
+                  >
+                    <HelpCircle 
+                      style={{ width: '18px', height: '18px', color: colors.text.tertiary }}
+                    />
+                  </span>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
@@ -1582,10 +1594,14 @@ export default function ImportExportPage() {
                   <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, margin: '0' }}>
                     Export Transactions
                   </h2>
-                  <HelpCircle 
-                    style={{ width: '18px', height: '18px', color: colors.text.tertiary, cursor: 'help' }}
+                  <span 
                     title="Export your transaction data to CSV. Exports include all currently visible/filtered transactions from the Commissions page."
-                  />
+                    style={{ display: 'inline-flex', cursor: 'help' }}
+                  >
+                    <HelpCircle 
+                      style={{ width: '18px', height: '18px', color: colors.text.tertiary }}
+                    />
+                  </span>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
