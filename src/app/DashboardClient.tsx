@@ -435,7 +435,10 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             <div 
               style={{
                 padding: spacing(3),
-                ...headerCard
+                ...headerCard,
+                // Force green background - brand guidelines
+                backgroundColor: colors.primary,
+                color: '#ffffff'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(3) }}>
