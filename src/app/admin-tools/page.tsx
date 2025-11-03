@@ -6,7 +6,7 @@ import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
 
 export default function AdminToolsPage() {
-  const { colors, pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useThemeStyles()
+  const { colors } = useThemeStyles()
   const { getButtonPressHandlers: getPressHandlers, getButtonPressStyle: getPressStyle } = useButtonPress()
   const [log, setLog] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
