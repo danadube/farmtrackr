@@ -540,8 +540,9 @@ export default function ImportExportPage() {
               {/* Tab Navigation */}
               <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                 <button
+                  {...getButtonPressHandlers('tab-contacts')}
                   onClick={() => setActiveTab('contacts')}
-                  style={{
+                  style={getButtonPressStyle('tab-contacts', {
                     padding: '10px 20px',
                     backgroundColor: activeTab === 'contacts' ? colors.primary : 'transparent',
                     color: activeTab === 'contacts' ? '#ffffff' : text.secondary.color,
@@ -552,16 +553,15 @@ export default function ImportExportPage() {
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.2s ease'
-                  }}
+                    gap: '8px'
+                  }, activeTab === 'contacts' ? colors.primary : 'transparent', colors.cardHover)}
                   onMouseEnter={(e) => {
-                    if (activeTab !== 'contacts') {
+                    if (activeTab !== 'contacts' && !pressedButtons.has('tab-contacts')) {
                       e.currentTarget.style.backgroundColor = colors.cardHover
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (activeTab !== 'contacts') {
+                    if (activeTab !== 'contacts' && !pressedButtons.has('tab-contacts')) {
                       e.currentTarget.style.backgroundColor = 'transparent'
                     }
                   }}

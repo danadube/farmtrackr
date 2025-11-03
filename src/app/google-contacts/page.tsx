@@ -480,8 +480,9 @@ export default function GoogleContactsPage() {
                   <option value="state">State</option>
                 </select>
                 <button
+                  {...getButtonPressHandlers('sortOrder')}
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  style={{
+                  style={getButtonPressStyle('sortOrder', {
                     padding: '8px 12px',
                     backgroundColor: colors.cardHover,
                     ...text.secondary,
@@ -493,14 +494,17 @@ export default function GoogleContactsPage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    transition: 'background-color 0.2s ease',
                     whiteSpace: 'nowrap'
-                  }}
+                  }, colors.cardHover, colors.borderHover)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.borderHover
+                    if (!pressedButtons.has('sortOrder')) {
+                      e.currentTarget.style.backgroundColor = colors.borderHover
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.cardHover
+                    if (!pressedButtons.has('sortOrder')) {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }
                   }}
                 >
                   {sortOrder === 'asc' ? (
@@ -574,9 +578,10 @@ export default function GoogleContactsPage() {
                 )}
                 
                 <button
+                  {...getButtonPressHandlers('import')}
                   onClick={handleImport}
                   disabled={isImporting || googleConnectionStatus !== 'connected'}
-                  style={{
+                  style={getButtonPressStyle('import', {
                     padding: '12px 16px',
                     backgroundColor: (isImporting || googleConnectionStatus !== 'connected') ? colors.text.tertiary : colors.primary,
                     color: '#ffffff',
@@ -588,16 +593,15 @@ export default function GoogleContactsPage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    transition: 'background-color 0.2s ease',
                     maxWidth: '200px'
-                  }}
+                  }, (isImporting || googleConnectionStatus !== 'connected') ? colors.text.tertiary : colors.primary, '#558b2f')}
                   onMouseEnter={(e) => {
-                    if (!isImporting && googleConnectionStatus === 'connected') {
-                      e.currentTarget.style.backgroundColor = colors.primaryHover
+                    if (!isImporting && googleConnectionStatus === 'connected' && !pressedButtons.has('import')) {
+                      e.currentTarget.style.backgroundColor = '#558b2f'
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!isImporting && googleConnectionStatus === 'connected') {
+                    if (!isImporting && googleConnectionStatus === 'connected' && !pressedButtons.has('import')) {
                       e.currentTarget.style.backgroundColor = colors.primary
                     }
                   }}
@@ -649,8 +653,9 @@ export default function GoogleContactsPage() {
               </p>
               {googleConnectionStatus === 'connected' && contacts.length === 0 && (
                 <button
+                  {...getButtonPressHandlers('import-empty')}
                   onClick={handleImport}
-                  style={{
+                  style={getButtonPressStyle('import-empty', {
                     padding: '12px 24px',
                     backgroundColor: colors.primary,
                     color: '#ffffff',
@@ -661,14 +666,17 @@ export default function GoogleContactsPage() {
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s ease'
-                  }}
+                    gap: '8px'
+                  }, colors.primary, '#558b2f')}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primaryHover
+                    if (!pressedButtons.has('import-empty')) {
+                      e.currentTarget.style.backgroundColor = '#558b2f'
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primary
+                    if (!pressedButtons.has('import-empty')) {
+                      e.currentTarget.style.backgroundColor = colors.primary
+                    }
                   }}
                 >
                   <RefreshCw style={{ width: '16px', height: '16px' }} />
