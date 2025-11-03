@@ -143,6 +143,8 @@ export default function SettingsPage() {
       const interval = setInterval(checkGoogleStatus, 2000)
       return () => clearInterval(interval)
     }
+    // Return cleanup function for all cases
+    return () => {}
   }, [activeTab])
 
   const handleConnectGoogle = () => {
