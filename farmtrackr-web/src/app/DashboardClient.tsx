@@ -471,23 +471,36 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
               </div>
               <div style={headerDivider} />
-              <div style={{ marginTop: spacing(2), display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
-                <p style={{ fontSize: '14px', ...text.tertiary, margin: '0' }}>
-                  {currentDateTime.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </p>
-                <span style={{ ...text.tertiary }}>•</span>
-                <p style={{ fontSize: '14px', ...text.tertiary, margin: '0' }}>
-                  {currentDateTime.toLocaleTimeString('en-US', { 
-                    hour: 'numeric', 
-                    minute: '2-digit',
-                    hour12: true 
-                  })}
-                </p>
+              <div style={{ marginTop: spacing(2), display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ 
+                    fontSize: '15px', 
+                    fontWeight: '500',
+                    ...text.primary, 
+                    margin: '0 0 4px 0',
+                    letterSpacing: '-0.01em'
+                  }}>
+                    {currentDateTime.toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                  <p style={{ 
+                    fontSize: '16px', 
+                    fontWeight: '600',
+                    ...text.secondary, 
+                    margin: '0',
+                    letterSpacing: '-0.02em'
+                  }}>
+                    {currentDateTime.toLocaleTimeString('en-US', { 
+                      hour: 'numeric', 
+                      minute: '2-digit',
+                      hour12: true 
+                    })}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
