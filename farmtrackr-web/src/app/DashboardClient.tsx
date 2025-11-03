@@ -12,13 +12,17 @@ import {
   Calendar,
   TrendingUp,
   Home,
-  ArrowRight
+  DollarSign,
+  Briefcase,
+  Settings,
+  Contact,
+  CheckCircle2,
+  FileSpreadsheet
 } from 'lucide-react'
 import Link from 'next/link'
 import { FarmTrackrLogo } from '@/components/FarmTrackrLogo'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
-import { ContactBadge } from '@/components/ContactBadge'
 import { normalizeFarmName } from '@/lib/farmNames'
 import { getFarmColor } from '@/lib/farmColors'
 import { validateAllContacts } from '@/lib/dataQuality'
@@ -31,6 +35,7 @@ interface DashboardClientProps {
 export default function DashboardClient({ contacts, stats }: DashboardClientProps) {
   const [mounted, setMounted] = useState(false)
   const { colors, isDark, card, headerCard, headerDivider, background, text, spacing } = useThemeStyles()
+  const [pressedButtons, setPressedButtons] = useState<Set<string>>(new Set())
 
   // Validation issue counts (subtract dismissed) – must be declared before any early returns
   const [issuesCount, setIssuesCount] = useState(0)
@@ -75,9 +80,28 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
     return null
   }
 
-  const recentContactsList = contacts
-    .sort((a, b) => b.dateCreated.getTime() - a.dateCreated.getTime())
-    .slice(0, 4)
+  // Button press handlers for visual feedback
+  const getButtonPressHandlers = (buttonId: string) => ({
+    onMouseDown: () => setPressedButtons(prev => new Set(prev).add(buttonId)),
+    onMouseUp: () => setPressedButtons(prev => {
+      const next = new Set(prev)
+      next.delete(buttonId)
+      return next
+    }),
+    onMouseLeave: () => setPressedButtons(prev => {
+      const next = new Set(prev)
+      next.delete(buttonId)
+      return next
+    })
+  })
+
+  const getButtonPressStyle = (buttonId: string, baseStyle: React.CSSProperties, baseBg: string, hoverBg?: string) => ({
+    ...baseStyle,
+    backgroundColor: pressedButtons.has(buttonId) ? (hoverBg || baseBg) : baseBg,
+    transform: pressedButtons.has(buttonId) ? 'scale(0.97)' : 'scale(1)',
+    boxShadow: pressedButtons.has(buttonId) ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : baseStyle.boxShadow || 'none',
+    transition: 'all 0.1s ease'
+  })
 
   const activeFarms = Array.from(
     new Set(
@@ -166,190 +190,84 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             >
               Quick Actions
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: spacing(2) }}>
-              {/* Add Contact */}
-              <Link 
-                href="/contacts/new" 
-                style={{
-                  display: 'block',
-                  padding: spacing(2),
-                  ...card,
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = isDark 
-                    ? '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
-                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                  e.currentTarget.style.borderColor = colors.primary
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = card.boxShadow
-                  e.currentTarget.style.borderColor = colors.border
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: spacing(1.5) }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: spacing(2) }}>
+              {/* Quick Action Component Helper */}
+              {([
+                { id: 'addContact', href: '/contacts/new', icon: Plus, title: 'Add Contact', desc: 'Create a new farm contact', bgColor: colors.iconBg, iconColor: colors.primary },
+                { id: 'newTransaction', href: '/commissions/new', icon: DollarSign, title: 'New Transaction', desc: 'Add a commission transaction', bgColor: isDark ? '#064e3b' : '#f0fdf4', iconColor: colors.success },
+                { id: 'viewCommissions', href: '/commissions', icon: Briefcase, title: 'View Commissions', desc: 'Manage transactions', bgColor: isDark ? '#1e3a8a' : '#eff6ff', iconColor: colors.info || colors.primary },
+                { id: 'importExport', href: '/import-export', icon: Upload, title: 'Import & Export', desc: 'Manage data files', bgColor: isDark ? '#064e3b' : '#f0fdf4', iconColor: colors.success },
+                { id: 'printLabels', href: '/print-labels', icon: Printer, title: 'Print Labels', desc: 'Print address labels', bgColor: isDark ? '#4c1d95' : '#f3e8ff', iconColor: colors.accent },
+                { id: 'documents', href: '/documents', icon: FileText, title: 'Documents', desc: 'Manage documents', bgColor: isDark ? '#7c2d12' : '#fff7ed', iconColor: colors.warning },
+                { id: 'dataQuality', href: '/data-quality', icon: CheckCircle2, title: 'Data Quality', desc: 'Validation issues', bgColor: isDark ? '#7f1d1d' : '#fef2f2', iconColor: issuesCount > 0 ? colors.error : colors.success },
+                { id: 'googleContacts', href: '/google-contacts', icon: Contact, title: 'Google Contacts', desc: 'Sync contacts', bgColor: isDark ? '#1e3a8a' : '#eff6ff', iconColor: colors.info || colors.primary },
+                { id: 'googleSheets', href: '/google-sheets', icon: FileSpreadsheet, title: 'Google Sheets', desc: 'Sync spreadsheets', bgColor: isDark ? '#064e3b' : '#f0fdf4', iconColor: colors.success },
+                { id: 'settings', href: '/settings', icon: Settings, title: 'Settings', desc: 'Preferences', bgColor: colors.iconBg, iconColor: colors.text.secondary }
+              ] as const).map(({ id, href, icon: Icon, title, desc, bgColor, iconColor }) => (
+                <Link
+                  key={id}
+                  href={href}
+                  {...getButtonPressHandlers(id)}
+                  style={getButtonPressStyle(id, {
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(2),
+                    padding: spacing(2.5),
+                    ...card,
+                    textDecoration: 'none',
+                    transition: 'all 0.2s ease'
+                  }, card.backgroundColor || 'transparent', colors.cardHover)}
+                  onMouseEnter={(e) => {
+                    if (!pressedButtons.has(id)) {
+                      e.currentTarget.style.boxShadow = isDark 
+                        ? '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
+                        : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                      e.currentTarget.style.borderColor = colors.primary
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!pressedButtons.has(id)) {
+                      e.currentTarget.style.boxShadow = card.boxShadow
+                      e.currentTarget.style.borderColor = colors.border
+                    }
+                  }}
+                >
                   <div 
                     style={{
                       width: spacing(6),
                       height: spacing(6),
-                      backgroundColor: colors.iconBg,
+                      minWidth: spacing(6),
+                      backgroundColor: bgColor,
                       borderRadius: '12px',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      flexShrink: 0
                     }}
                   >
-                    <Plus style={{ width: spacing(3), height: spacing(3), color: colors.primary }} />
+                    <Icon style={{ width: spacing(3), height: spacing(3), color: iconColor }} />
                   </div>
-                  <div>
-                    <h3 style={{ fontWeight: '600', marginBottom: '4px', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
-                      Add Contact
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 style={{ 
+                      fontWeight: '600', 
+                      ...text.primary, 
+                      fontSize: '14px', 
+                      margin: '0 0 4px 0',
+                      textAlign: 'left'
+                    }}>
+                      {title}
                     </h3>
-                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
-                      Create a new farm contact
+                    <p style={{ 
+                      fontSize: '12px', 
+                      ...text.secondary, 
+                      margin: '0',
+                      textAlign: 'left'
+                    }}>
+                      {desc}
                     </p>
                   </div>
-                </div>
-              </Link>
-
-              {/* Import & Export */}
-              <Link 
-                href="/import-export" 
-                style={{
-                  display: 'block',
-                  padding: '16px',
-                  ...card,
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = isDark 
-                    ? '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
-                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                  e.currentTarget.style.borderColor = colors.primary
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = card.boxShadow
-                  e.currentTarget.style.borderColor = colors.border
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
-                  <div 
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <Upload style={{ width: '24px', height: '24px', color: colors.success }} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontWeight: '600', marginBottom: '4px', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
-                      Import & Export
-                    </h3>
-                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
-                      Manage data files
-                    </p>
-                  </div>
-                </div>
-              </Link>
-
-              {/* Print Labels */}
-              <Link 
-                href="/print-labels" 
-                style={{
-                  display: 'block',
-                  padding: '16px',
-                  ...card,
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = isDark 
-                    ? '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
-                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                  e.currentTarget.style.borderColor = colors.primary
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = card.boxShadow
-                  e.currentTarget.style.borderColor = colors.border
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
-                  <div 
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      backgroundColor: isDark ? '#4c1d95' : '#f3e8ff',
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <Printer style={{ width: '24px', height: '24px', color: colors.accent }} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontWeight: '600', marginBottom: '4px', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
-                      Print Labels
-                    </h3>
-                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
-                      Print address labels
-                    </p>
-                  </div>
-                </div>
-              </Link>
-
-              {/* Documents */}
-              <Link 
-                href="/documents" 
-                style={{
-                  display: 'block',
-                  padding: '16px',
-                  ...card,
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = isDark 
-                    ? '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
-                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                  e.currentTarget.style.borderColor = colors.primary
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = card.boxShadow
-                  e.currentTarget.style.borderColor = colors.border
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
-                  <div 
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      backgroundColor: isDark ? '#7c2d12' : '#fff7ed',
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <FileText style={{ width: '24px', height: '24px', color: colors.warning }} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontWeight: '600', marginBottom: '4px', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
-                      Documents
-                    </h3>
-                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
-                      Manage documents
-                    </p>
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              ))}
             </div>
           </div>
 
@@ -540,94 +458,6 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             </div>
           </div>
 
-          {/* Recent Contacts */}
-          <div style={{ marginBottom: '32px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-              <h2 
-                style={{
-                  fontSize: '24px',
-                  fontWeight: '600',
-                  ...text.primary,
-                  lineHeight: '32px',
-                  margin: '0'
-                }}
-              >
-                Recent Contacts
-              </h2>
-              <Link 
-                href="/contacts" 
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: isDark ? colors.cardHover : colors.cardHover,
-                  ...text.secondary,
-                  borderRadius: '12px',
-                  textDecoration: 'none',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  transition: 'background-color 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.borderHover
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.cardHover
-                }}
-              >
-                View All
-              </Link>
-            </div>
-            
-            <div 
-              style={{
-                padding: '24px',
-                ...card
-              }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {recentContactsList.map((contact) => (
-                  <Link 
-                    key={contact.id} 
-                    href={`/contacts/${contact.id}`} 
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '16px',
-                      padding: '16px',
-                      borderRadius: '12px',
-                      textDecoration: 'none',
-                      transition: 'background-color 0.2s ease'
-                    }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.cardHover
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                }}
-                  >
-                    <ContactBadge contact={contact} size="md" shape="circle" />
-                    <div style={{ flex: '1' }}>
-                      <h3 style={{ fontWeight: '500', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
-                        {contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim()}
-                      </h3>
-                      <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
-                        {contact.farm ? normalizeFarmName(contact.farm) : ''}
-                      </p>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
-                        {contact.dateCreated.toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric', 
-                          year: 'numeric' 
-                        })}
-                      </p>
-                    </div>
-                    <ArrowRight style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </Sidebar>

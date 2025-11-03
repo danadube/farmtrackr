@@ -7,7 +7,7 @@ This roadmap outlines the development plan to bring the web application to featu
 **Last Updated:** November 2, 2025  
 **Current Version:** v0.6.0 (Commission Tracking Module) - ✅ COMPLETE  
 **Previous Version:** v0.5.0 (Google Contacts Integration) - ✅ COMPLETE  
-**Next Target:** v0.7.0 (Enhancements & Polish)
+**Next Priority:** v0.7.0 (UI/UX Enhancements & Polish)
 
 ---
 
@@ -216,7 +216,7 @@ This roadmap outlines the development plan to bring the web application to featu
 
 ## 🚀 Version Roadmap
 
-### **v0.2.0 - Data Persistence & Import** (Target: Q1 2025)
+### **v0.2.0 - Data Persistence & Import**
 **Focus:** Foundation for data management and import capabilities
 
 #### Database Integration
@@ -260,11 +260,10 @@ This roadmap outlines the development plan to bring the web application to featu
 - xlsx parsing library
 - File upload handling
 
-**Estimated Development Time:** 3-4 weeks
 
 ---
 
-### **v0.3.0 - Export & Data Quality** (Target: Q1 2025) - ✅ MOSTLY COMPLETE
+### **v0.3.0 - Export & Data Quality** - ✅ MOSTLY COMPLETE
 **Focus:** Data export capabilities and quality management
 
 #### Export System
@@ -324,7 +323,7 @@ This roadmap outlines the development plan to bring the web application to featu
 
 ---
 
-### **v0.4.0 - Label Printing & PDF Export** ✅ COMPLETE (October 29, 2025)
+### **v0.4.0 - Label Printing & PDF Export** ✅ COMPLETE
 **Focus:** CRITICAL - Address label printing functionality (had issues in Swift app)
 
 #### Label Printing Core
@@ -430,7 +429,6 @@ Based on Swift app challenges:
 - Canvas API for precise rendering (if needed)
 - Print CSS for browser print dialog
 
-**Estimated Development Time:** 4-5 weeks (extra time allocated for testing and refinement)
 
 **Dependencies:**
 - PDF generation library
@@ -439,7 +437,7 @@ Based on Swift app challenges:
 
 ---
 
-### **v0.5.0 - Google Integration (Sheets, Contacts & Drive)** (Target: Q4 2025)
+### **v0.5.0 - Google Integration (Sheets, Contacts & Drive)**
 **Focus:** Complete Google ecosystem integration for data and document management
 
 #### Google Sheets Sync
@@ -543,10 +541,6 @@ Based on Swift app challenges:
   - Restore from Drive backups
   - Version history
 
-**Estimated Development Time:** 6-7 weeks total
-- Google Sheets: 2-3 weeks
-- Google Contacts: 2 weeks (basic), +1 week for full sync
-- Google Calendar: 1-2 weeks
 - Google Drive: 1 week
 
 **Dependencies:**
@@ -560,7 +554,7 @@ Based on Swift app challenges:
 
 ---
 
-### **v0.5.0 - Google Integration** ✅ COMPLETE (November 1, 2025)
+### **v0.5.0 - Google Integration** ✅ COMPLETE
 **Focus:** Complete Google ecosystem integration
 
 #### Google OAuth & Authentication
@@ -632,7 +626,7 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
 
 ---
 
-### **v0.7.0 - UI/UX Enhancements & Polish** (Target: Q1 2026)
+### **v0.7.0 - UI/UX Enhancements & Polish**
 **Focus:** User experience improvements and visual refinements
 
 #### Button Interactions
@@ -684,11 +678,10 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Quick access to label printing from multiple locations
   - Consistent print experience across pages
 
-**Estimated Development Time:** 1-2 weeks
 
 ---
 
-### **v0.8.0 - Email & Communication Integration** (Target: Q1 2026)
+### **v0.8.0 - Email & Communication Integration**
 **Focus:** Full email client integration (Gmail priority)
 
 #### Gmail Integration (Priority)
@@ -743,11 +736,10 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Single sign-on for Outlook services
   - Centralized Outlook integration management
 
-**Estimated Development Time:** 4-5 weeks (Gmail full client), +2 weeks for Outlook
 
 ---
 
-### **v0.9.0 - Transaction Pipeline & Advanced Features** (Target: Q2-Q3 2026)
+### **v0.9.0 - Transaction Pipeline & Advanced Features**
 **Focus:** Transaction workflow with task management (Asana-like) and forms integration
 **Priority:** Lower priority - can come after email integration
 
@@ -810,11 +802,10 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Integration with transaction pipeline
   - Stage-specific form requirements
 
-**Estimated Development Time:** 5-6 weeks (full pipeline with tasks and forms)
 
 ---
 
-### **v0.10.0 - Task Management & Reminders** (Target: Q2 2026)
+### **v0.10.0 - Task Management & Reminders**
 **Focus:** Task system with calendar integration
 
 #### Task & Reminders System
@@ -838,11 +829,10 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Automated task creation from pipeline
   - Task completion tracking
 
-**Estimated Development Time:** 2-3 weeks
 
 ---
 
-### **v0.11.0 - Personalization & Security** (Target: Q3-Q4 2026)
+### **v0.11.0 - Personalization & Security**
 **Focus:** Single-user authentication and personalization (toward end of roadmap)
 **Priority:** Can wait - implement toward the end before v1.0.0
 
@@ -886,11 +876,11 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Shared workspace management
   - Team collaboration features
 
-**Estimated Development Time:** 2-3 weeks (single user auth + personalization)
+ (single user auth + personalization)
 
 ---
 
-### **v0.12.0 - Enhanced Export & Google Contacts** (Target: Q2 2026)
+### **v0.12.0 - Enhanced Export & Google Contacts**
 **Focus:** Export improvements and Google Contacts enhancements
 
 #### Export Enhancements
@@ -907,7 +897,6 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Visual tag organization
   - Color-coded tag filtering
 
-**Estimated Development Time:** 1 week
 
 ---
 
@@ -922,7 +911,7 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Bulk export ✅
   - Bulk import updates ✅
 
-### **v0.4.1 - Farm Dropdown & Settings Enhancement** ✅ COMPLETE (October 30, 2025)
+### **v0.4.1 - Farm Dropdown & Settings Enhancement** ✅ COMPLETE
 **Focus:** Improved farm selection and settings personalization
 
 #### Farm Management
@@ -950,7 +939,7 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
 
 ---
 
-### **v0.4.2 - Document Management** ✅ COMPLETE (November 1, 2025)
+### **v0.4.2 - Document Management** ✅ COMPLETE
 **Focus:** Complete document CRUD and file management
 
 #### Document Management Core
@@ -1007,13 +996,10 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
 - Backend endpoints to validate/normalize addresses
 - DB fields for lat/lng and normalized address
 
-#### Estimated Development Time
-- 1.5–3 weeks (basic normalization + dashboard)
-- +1 week for advanced duplicate/mismatch heuristics
 
 ---
 
-### **v1.0.0 - Production Ready** (Target: Q4 2025)
+### **v1.0.0 - Production Ready**
 **Focus:** Polish, performance, and production deployment
 
 #### Performance Optimization
@@ -1057,7 +1043,6 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Error tracking
   - Backup automation
 
-**Estimated Development Time:** 6-8 weeks
 
 ---
 
@@ -1145,14 +1130,22 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
 
 | Version | Target Date | Key Deliverables |
 |---------|-------------|------------------|
-| v0.2.0 | Q1 2025 ✅ | Database + Import System |
-| v0.3.0 | Q1 2025 ✅ | Export + Data Quality |
-| v0.4.0 | Oct 29, 2025 ✅ | **Label Printing & PDF Export** |
-| v0.4.1 | Oct 30, 2025 ✅ | **Farm Dropdown & Settings Enhancement** |
-| v0.4.2 | Q4 2025 🚧 | Document Management (In Progress) |
-| v0.5.0 | Q4 2025 | Google Integration (Sheets, Contacts, Calendar & Drive) |
-| v0.6.0 | Q3 2025 | Advanced Features |
-| v1.0.0 | Q4 2025 | Production Release |
+| Version | Status | Key Deliverables |
+|---------|--------|------------------|
+| v0.2.0 | ✅ Complete | Database + Import System |
+| v0.3.0 | ✅ Complete | Export + Data Quality |
+| v0.4.0 | ✅ Complete | **Label Printing & PDF Export** |
+| v0.4.1 | ✅ Complete | **Farm Dropdown & Settings Enhancement** |
+| v0.4.2 | ✅ Complete | Document Management |
+| v0.5.0 | ✅ Complete | Google Integration (Sheets, Contacts) |
+| v0.6.0 | ✅ Complete | Commission Tracking Module |
+| v0.7.0 | 📋 Planned | UI/UX Enhancements & Polish |
+| v0.8.0 | 📋 Planned | Email & Communication Integration |
+| v0.9.0 | 📋 Planned | Transaction Pipeline & Advanced Features |
+| v0.10.0 | 📋 Planned | Task Management & Reminders |
+| v0.11.0 | 📋 Planned | Personalization & Security |
+| v0.12.0 | 📋 Planned | Enhanced Export & Google Contacts |
+| v1.0.0 | 📋 Planned | Production Release |
 
 ---
 
@@ -1174,7 +1167,6 @@ This roadmap should be reviewed and updated:
 - When technical challenges are discovered
 - Quarterly for strategic planning
 
-**Last Reviewed:** October 30, 2025
 
 ---
 
@@ -1199,7 +1191,6 @@ This roadmap should be reviewed and updated:
    - Document preview for PDFs/images
    - Download functionality
 
-**Estimated Time:** 2-3 days
 
 ### Priority 2: Google Integration (v0.5.0)
 **Status:** API Structure Exists for Sheets 🟡, Contacts Not Started ❌
@@ -1247,14 +1238,12 @@ This roadmap should be reviewed and updated:
 3. Improve error messaging
 4. Add progress indicators if needed
 
-**Estimated Time:** 1-2 days
 
 ### Priority 4: Theme Flash Fix (Technical Debt)
 **Status:** Known Issue ⚠️
 
 **Issue:** Theme switches dark→light on page refresh when set to System
 **Priority:** Low (doesn't affect functionality)
-**Estimated Time:** 1-2 hours
 
 ---
 
@@ -1323,7 +1312,6 @@ This roadmap should be reviewed and updated:
 - Google contact tag colors
 - Print labels from Google Contacts
 
-**Estimated Time:** 1 week
 
 ---
 
@@ -1337,7 +1325,6 @@ This roadmap should be reviewed and updated:
 - Link emails to contacts/transactions
 - Outlook integration (after Gmail)
 
-**Estimated Time:** 4-5 weeks (Gmail full client), +2 weeks for Outlook
 
 ---
 
@@ -1352,7 +1339,6 @@ This roadmap should be reviewed and updated:
 - ZipForms/DocuSign/CAR forms integration
 - Lease transaction type
 
-**Estimated Time:** 5-6 weeks (full pipeline with tasks and forms)
 
 ---
 
@@ -1365,7 +1351,6 @@ This roadmap should be reviewed and updated:
 - Link tasks to contacts and transactions
 - Pipeline integration
 
-**Estimated Time:** 2-3 weeks
 
 ---
 
@@ -1379,7 +1364,7 @@ This roadmap should be reviewed and updated:
 - Custom branding
 - Save preferences to user account
 
-**Estimated Time:** 2-3 weeks (single user auth + personalization)
+ (single user auth + personalization)
 
 ---
 
@@ -1393,7 +1378,6 @@ This roadmap should be reviewed and updated:
 - Mobile responsiveness improvements
 - Accessibility enhancements
 
-**Estimated Time:** Ongoing
 
 ---
 
@@ -1405,7 +1389,6 @@ This roadmap should be reviewed and updated:
 - Year-over-year comparisons
 - Commission forecasting
 
-**Estimated Time:** Varies (4-5 weeks total for all)
 
 ---
 
