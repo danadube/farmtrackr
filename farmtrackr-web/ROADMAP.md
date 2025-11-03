@@ -689,31 +689,48 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
 ---
 
 ### **v0.8.0 - Email & Communication Integration** (Target: Q1 2026)
-**Focus:** Email integration and communication management
+**Focus:** Full email client integration (Gmail priority)
 
-#### Email Integration
-- [ ] **Outlook Email Integration**
-  - Outlook email API integration
-  - Connect Outlook accounts
-  - Send emails from FarmTrackr
-  - Email history tracking
-- [ ] **Google Gmail Integration**
-  - Gmail API integration
-  - Connect Gmail accounts
-  - Send emails from FarmTrackr
-  - Email sync and history
-- [ ] **Built-in Email Client**
-  - Email composer within FarmTrackr
-  - Email templates for common communications
-  - Email threading and conversation view
-  - Link emails to contacts and transactions
+#### Gmail Integration (Priority)
+- [ ] **Gmail API Setup**
+  - Gmail API authentication
+  - OAuth 2.0 with Gmail scope
+  - Token management and refresh
+- [ ] **Full Email Client - Gmail**
+  - **Send Emails**
+    - Email composer within FarmTrackr
+    - Rich text email editor
+    - Attachments support
+    - Email templates
+    - Quick send from contact records
+  - **Receive Emails**
+    - Fetch and display emails from Gmail
+    - Inbox view with threading
+    - Conversation view
+    - Email search and filtering
+    - Unread count badges
+  - **Email Management**
+    - Mark as read/unread
+    - Archive, delete, label emails
+    - Email threading and conversation view
+    - Link emails to contacts and transactions
 - [ ] **Email Templates**
   - Template library
   - Custom email templates
-  - Template variables and personalization
+  - Template variables and personalization (contact name, farm, etc.)
   - Quick send from contact records
+- [ ] **Email History & Tracking**
+  - Email history linked to contacts
+  - Email history linked to transactions
+  - Sent email tracking
+  - Email thread view by contact
 
-#### Outlook Full Integration
+#### Outlook Integration (Future - v0.8.1)
+- [ ] **Outlook Email Integration**
+  - Outlook email API integration
+  - Connect Outlook accounts
+  - Full email client (send/receive)
+  - Similar features to Gmail integration
 - [ ] **Outlook Calendar Sync**
   - Two-way calendar synchronization
   - Event creation from FarmTrackr
@@ -726,24 +743,50 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Single sign-on for Outlook services
   - Centralized Outlook integration management
 
-**Estimated Development Time:** 3-4 weeks
+**Estimated Development Time:** 4-5 weeks (Gmail full client), +2 weeks for Outlook
 
 ---
 
-### **v0.9.0 - Transaction Pipeline & Advanced Features** (Target: Q1-Q2 2026)
-**Focus:** Transaction workflow and advanced transaction features
+### **v0.9.0 - Transaction Pipeline & Advanced Features** (Target: Q2-Q3 2026)
+**Focus:** Transaction workflow with task management (Asana-like) and forms integration
+**Priority:** Lower priority - can come after email integration
 
 #### Transaction Pipeline
-- [ ] **Pipeline Management**
-  - Visual pipeline interface for transaction stages
-  - Customizable pipeline stages
-  - Drag-and-drop transaction movement
-  - Pipeline views and filtering
+- [ ] **Standard Pipeline Stages** (Initial Implementation)
+  - Default stages: Lead → Active → Under Contract → Closed → Cancelled
+  - Visual pipeline interface (Kanban-style or list view)
+  - Drag-and-drop transaction movement between stages
+  - Stage-based filtering and views
+  - Pipeline analytics and reporting
+- [ ] **Customizable Pipeline** (Future Enhancement)
+  - User ability to customize stage names
+  - Add/remove stages
+  - Define stage order
+  - Stage color coding
 - [ ] **Pipeline Integration**
   - Link transactions to contacts
   - Track transactions through workflow stages
-  - Pipeline analytics and reporting
-  - Stage-based notifications
+  - Stage-based notifications and reminders
+  - Pipeline dashboard view
+
+#### Task Management for Pipeline (Asana-like)
+- [ ] **Stage-Specific Tasks**
+  - Define typical tasks for each pipeline stage
+  - Define substage tasks (tasks within a stage)
+  - Task templates per stage
+  - Automatic task creation when transaction moves to stage
+- [ ] **Task Assignment & Tracking**
+  - Assign tasks to transactions
+  - Task due dates and priorities
+  - Task completion tracking
+  - Task checklist items
+  - Task comments and notes
+- [ ] **Forms Needed Per Stage**
+  - Define forms/document types needed for each stage
+  - Form checklist per transaction
+  - Mark forms as complete/incomplete
+  - Link forms to transaction pipeline stage
+  - Integration with ZipForms/DocuSign/CAR forms
 
 #### Transaction Type: Lease
 - [ ] **Lease Transaction Support**
@@ -759,13 +802,15 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Generate forms from templates
   - Electronic signature workflows
   - Form tracking and completion status
+  - Forms linked to pipeline stages
 - [ ] **CAR Forms Integration**
   - California Association of Realtors forms
   - Form library access
   - Form generation and filling
   - Integration with transaction pipeline
+  - Stage-specific form requirements
 
-**Estimated Development Time:** 4-5 weeks
+**Estimated Development Time:** 5-6 weeks (full pipeline with tasks and forms)
 
 ---
 
@@ -797,38 +842,51 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
 
 ---
 
-### **v0.11.0 - Personalization & Security** (Target: Q2 2026)
-**Focus:** User customization and authentication
+### **v0.11.0 - Personalization & Security** (Target: Q3-Q4 2026)
+**Focus:** Single-user authentication and personalization (toward end of roadmap)
+**Priority:** Can wait - implement toward the end before v1.0.0
 
-#### Authentication & Security
+#### Authentication & Security (Single User)
 - [ ] **User Authentication System**
+  - Single-user password protection
   - Sign in to app for security
-  - User accounts and profiles
-  - Password management
-  - Session management
-- [ ] **Multi-User Support**
-  - Multiple user accounts
-  - User roles and permissions
-  - Shared workspace management
-  - User activity logging
+  - User account and profile
+  - Password management (change, reset)
+  - Session management (auto-logout, remember me)
+  - Secure session storage
+- [ ] **Basic Security Features**
+  - Password encryption
+  - Session tokens
+  - Basic access control (lock app when signed out)
+  - User activity logging (optional)
 
-#### Personalization
+#### Personalization (Requires User Account)
 - [ ] **Personal Logo Import**
-  - Upload custom logo
+  - Upload custom logo (requires authentication)
   - Logo customization options
   - Logo placement and sizing
+  - Replace default FarmTrackr logo
 - [ ] **App Branding**
   - Custom color schemes
   - Brand color customization
   - Theme personalization beyond light/dark
   - Customizable app appearance
+  - Save preferences to user account
 - [ ] **Personalization Options**
   - Dashboard layout customization
   - Feature visibility toggles
   - Custom navigation preferences
-  - Saved preferences per user
+  - Saved preferences per user account
+  - Export/import personalization settings
 
-**Estimated Development Time:** 3-4 weeks
+#### Future: Multi-User Support (v1.1.0+)
+- [ ] **Multi-User Support** (Post v1.0.0)
+  - Multiple user accounts
+  - User roles and permissions
+  - Shared workspace management
+  - Team collaboration features
+
+**Estimated Development Time:** 2-3 weeks (single user auth + personalization)
 
 ---
 
@@ -1269,31 +1327,32 @@ This roadmap should be reviewed and updated:
 
 ---
 
-### **4. 📧 Email Integration (v0.8.0)**
-**Status:** High value feature
+### **4. 📧 Email Integration (v0.8.0)** - PRIORITY
+**Status:** High value feature - Gmail first, full client
 
 **Tasks:**
-- Outlook email integration
-- Google Gmail integration
-- Built-in email client
-- Outlook full integration (calendar, people, email)
+- Gmail API integration (priority)
+- Full email client: send AND receive emails
+- Email templates and history
+- Link emails to contacts/transactions
+- Outlook integration (after Gmail)
 
-**Estimated Time:** 3-4 weeks
+**Estimated Time:** 4-5 weeks (Gmail full client), +2 weeks for Outlook
 
 ---
 
-### **5. 🔄 Transaction Pipeline (v0.9.0)**
-**Status:** Important workflow feature
+### **5. 🔄 Transaction Pipeline (v0.9.0)** - LOWER PRIORITY
+**Status:** Important workflow feature - can come later
 
 **Tasks:**
-- Visual pipeline interface
-- Pipeline stages and customization
-- Link to contacts and transactions
+- Standard pipeline stages (customizable later)
+- Asana-like task management per stage
+- Forms needed per stage tracking
+- Visual pipeline interface (Kanban/list view)
+- ZipForms/DocuSign/CAR forms integration
 - Lease transaction type
-- ZipForms/DocuSign integration
-- CAR forms integration
 
-**Estimated Time:** 4-5 weeks
+**Estimated Time:** 5-6 weeks (full pipeline with tasks and forms)
 
 ---
 
@@ -1310,16 +1369,17 @@ This roadmap should be reviewed and updated:
 
 ---
 
-### **7. 🔐 Security & Personalization (v0.11.0)**
-**Status:** Important for multi-user and branding
+### **7. 🔐 Security & Personalization (v0.11.0)** - TOWARD END
+**Status:** Can wait - implement toward end, before v1.0.0
 
 **Tasks:**
-- User authentication system
-- Personal logo import
-- App personalization
+- Single-user authentication (password protection)
+- Personal logo import (requires user account)
+- App personalization (requires user account)
 - Custom branding
+- Save preferences to user account
 
-**Estimated Time:** 3-4 weeks
+**Estimated Time:** 2-3 weeks (single user auth + personalization)
 
 ---
 
