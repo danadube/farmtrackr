@@ -435,10 +435,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             <div 
               style={{
                 padding: spacing(3),
-                ...headerCard,
-                // Force green background - brand guidelines - EXPLICIT
-                backgroundColor: '#689f38', // Meadow Green - direct hex value
-                border: `1px solid #689f38`,
+                // BRAND GREEN HEADER - FORCE EXPLICIT STYLING
+                backgroundColor: '#689f38', // Meadow Green #689f38
+                border: '1px solid #689f38',
                 color: '#ffffff',
                 borderRadius: '16px',
                 position: 'relative' as const,
