@@ -639,13 +639,13 @@ export default function DocumentsPage() {
                       style={{
                         fontSize: '28px',
                         fontWeight: '700',
-                        ...text.primary,
+                        color: '#ffffff', // White text on colored background
                         margin: '0 0 4px 0'
                       }}
                     >
                       {activeTab === 'documents' ? 'Documents' : 'Letterheads'}
                     </h1>
-                    <p style={{ ...text.secondary, fontSize: '16px', margin: '0' }}>
+                    <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '16px', margin: '0' }}>
                       {activeTab === 'documents' 
                         ? 'Manage your farm documents and templates'
                         : 'Manage letterheads for mail merge letters'
