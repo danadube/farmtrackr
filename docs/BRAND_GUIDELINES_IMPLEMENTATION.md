@@ -19,7 +19,7 @@ This document tracks the implementation of the official FarmTrackr brand guideli
 | **Deep Forest** | `#2d5016` | 45, 80, 22 | 96°, 73%, 31% | Wordmark, dark backgrounds |
 | **Light Sage** | `#7da65d` | 125, 166, 93 | 94°, 44%, 65% | Gradients, light accents |
 
-**Current Implementation:** Needs update from purple-blue primary to green-based palette.
+**Current Implementation:** ✅ Updated to green-based palette (Meadow Green #689f38 primary, Forest Green #558b2f hover) in `src/lib/theme.ts`.
 
 ### Accent Colors (Functional)
 
@@ -31,7 +31,12 @@ This document tracks the implementation of the official FarmTrackr brand guideli
 | **Sky Blue** | `#42a5f5` | Calendar items, showings |
 | **Peach** | `#ffb74d` | Tasks, highlights |
 
-**Current Implementation:** Partially implemented, needs alignment with brand guidelines.
+**Current Implementation:** ✅ Updated in `src/lib/theme.ts`. Colors are defined and available for use:
+- Tangerine → `warning` (financial/commissions)
+- Plum → `analytics` / `referral` (analytics/reports)
+- Cherry → `error` (alerts/errors)
+- Sky Blue → `info` (calendar/showings)
+- Peach → `peach` (tasks/highlights)
 
 ### Neutral Colors
 
@@ -42,7 +47,10 @@ This document tracks the implementation of the official FarmTrackr brand guideli
 | **Medium Gray** | `#86868b` | Secondary text |
 | **Near Black** | `#1d1d1f` | Primary text |
 
-**Current Implementation:** Needs update to match exact values.
+**Current Implementation:** ✅ Updated to match exact values in `src/lib/theme.ts`:
+- Light Gray #f5f5f7 → `background` (light mode)
+- Medium Gray #86868b → `text.secondary` (light mode)
+- Near Black #1d1d1f → `text.primary` (light mode)
 
 ## Typography ✅ Implemented
 
