@@ -464,7 +464,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         color: '#ffffff',
                         lineHeight: '40px',
                         marginBottom: '8px',
-                        margin: '0 0 8px 0'
+                        margin: '0 0 8px 0',
+                        // Force white text - brand guidelines
+                        backgroundColor: 'transparent'
                       }}
                     >
                       Welcome back
