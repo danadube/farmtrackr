@@ -1099,7 +1099,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               {/* Quick Action Component Helper */}
               {([
                 { id: 'addContact', href: '/contacts/new', icon: Plus, title: 'Add Contact', desc: 'Create a new farm contact', bgColor: colors.iconBg, iconColor: colors.primary },
-                { id: 'newTransaction', href: '/commissions/new', icon: DollarSign, title: 'New Transaction', desc: 'Add a commission transaction', bgColor: isDark ? '#064e3b' : '#f0fdf4', iconColor: colors.success },
+                { id: 'newTransaction', href: '/commissions', icon: DollarSign, title: 'New Transaction', desc: 'Add a commission transaction', bgColor: isDark ? '#064e3b' : '#f0fdf4', iconColor: colors.success },
                 { id: 'viewCommissions', href: '/commissions', icon: Briefcase, title: 'View Commissions', desc: 'Manage transactions', bgColor: isDark ? '#1e3a8a' : '#eff6ff', iconColor: colors.info || colors.primary },
                 { id: 'importExport', href: '/import-export', icon: Upload, title: 'Import & Export', desc: 'Manage data files', bgColor: isDark ? '#064e3b' : '#f0fdf4', iconColor: colors.success },
                 { id: 'printLabels', href: '/print-labels', icon: Printer, title: 'Print Labels', desc: 'Print address labels', bgColor: isDark ? '#4c1d95' : '#f3e8ff', iconColor: colors.accent },
