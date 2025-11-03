@@ -199,6 +199,7 @@ export function Sidebar({ children }: SidebarProps) {
                   fontWeight: active ? '600' : '500',
                   fontSize: '14px',
                   transition: 'all 0.2s ease',
+                  // Force green left border for active items - brand guidelines
                   borderLeft: active ? `3px solid ${colors.primary}` : '3px solid transparent',
                 }}
                 onMouseEnter={(e) => {
