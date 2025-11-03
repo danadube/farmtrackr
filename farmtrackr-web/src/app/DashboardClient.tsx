@@ -64,6 +64,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
   })
   const [mostActiveFarm, setMostActiveFarm] = useState<{ name: string; count: number } | null>(null)
   const [recentActivity, setRecentActivity] = useState<Array<{ type: 'contact' | 'transaction'; id: string; title: string; date: Date; link: string }>>([])
+  const [currentDateTime, setCurrentDateTime] = useState<Date>(new Date())
 
   // Validation issue counts (subtract dismissed) – must be declared before any early returns
   const [issuesCount, setIssuesCount] = useState(0)
@@ -72,6 +73,11 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
 
   useEffect(() => {
     setMounted(true)
+    
+    // Update date/time every minute
+    const updateDateTime = () => setCurrentDateTime(new Date())
+    updateDateTime()
+    const dateTimeInterval = setInterval(updateDateTime, 60000) // Update every minute
     
     // Fetch recent transaction and commission stats
     const fetchTransactionData = async () => {
@@ -332,6 +338,10 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
       fetchActivityFeed()
       calculateMostActiveFarm()
     }
+    
+    return () => {
+      if (dateTimeInterval) clearInterval(dateTimeInterval)
+    }
   }, [mounted, contacts])
 
   const computeCounts = () => {
@@ -461,6 +471,24 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
               </div>
               <div style={headerDivider} />
+              <div style={{ marginTop: spacing(2), display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
+                <p style={{ fontSize: '14px', ...text.tertiary, margin: '0' }}>
+                  {currentDateTime.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
+                <span style={{ ...text.tertiary }}>•</span>
+                <p style={{ fontSize: '14px', ...text.tertiary, margin: '0' }}>
+                  {currentDateTime.toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                  })}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -1021,60 +1049,6 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </Link>
               )}
             </div>
-
-            {/* Recent Activity Feed */}
-            {recentActivity.length > 0 && (
-              <div style={{ marginTop: spacing(4) }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(2) }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                    Recent Activity
-                  </h3>
-                </div>
-                <div style={{ padding: spacing(3), ...card }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
-                    {recentActivity.map((activity, idx) => (
-                      <Link
-                        key={`${activity.type}-${activity.id}-${idx}`}
-                        href={activity.link}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: spacing(2),
-                          padding: spacing(2),
-                          borderRadius: '8px',
-                          textDecoration: 'none',
-                          transition: 'background-color 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = colors.cardHover
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent'
-                        }}
-                      >
-                        <div 
-                          style={{
-                            width: spacing(2),
-                            height: spacing(2),
-                            borderRadius: '50%',
-                            backgroundColor: activity.type === 'contact' ? colors.success : colors.primary,
-                            flexShrink: 0
-                          }}
-                        />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: '14px', fontWeight: '500', ...text.primary, margin: '0 0 2px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {activity.title}
-                          </p>
-                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
-                            {activity.type === 'contact' ? 'Contact added' : 'Transaction added'} • {activity.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Quick Actions */}
