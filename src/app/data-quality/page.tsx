@@ -262,7 +262,7 @@ export default function DataQualityPage() {
                     >
                       Data Quality
                     </h1>
-                    <p style={{ ...text.secondary, fontSize: '16px', margin: '0' }}>
+                    <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '16px', margin: '0' }}>
                       Detect duplicates and validate contact data
                     </p>
                   </div>
