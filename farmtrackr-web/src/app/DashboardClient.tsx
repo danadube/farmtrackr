@@ -180,8 +180,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
           
           setUpcomingClosings(upcoming.length)
           
-          // Quick Stats
-          const now = new Date()
+          // Quick Stats (reuse 'now' from above)
           const startOfYear = new Date(now.getFullYear(), 0, 1)
           
           // YTD transactions (closed this year)
