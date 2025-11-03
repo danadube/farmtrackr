@@ -390,9 +390,10 @@ export default function GoogleSheetsPage() {
                     </div>
                   </div>
                   <button
+                    {...getButtonPressHandlers('import')}
                     onClick={handleImport}
                     disabled={isImporting}
-                    style={{
+                    style={getButtonPressStyle('import', {
                       width: '100%',
                       padding: '12px 16px',
                       backgroundColor: isImporting ? colors.text.tertiary : colors.primary,
@@ -405,16 +406,15 @@ export default function GoogleSheetsPage() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px',
-                      transition: 'background-color 0.2s ease'
-                    }}
+                      gap: '8px'
+                    }, isImporting ? colors.text.tertiary : colors.primary, isDark ? '#5F1FFF' : '#6B3AE8')}
                     onMouseEnter={(e) => {
-                      if (!isImporting) {
-                        e.currentTarget.style.backgroundColor = colors.primaryHover
+                      if (!isImporting && !pressedButtons.has('import')) {
+                        e.currentTarget.style.backgroundColor = isDark ? '#5F1FFF' : '#6B3AE8'
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (!isImporting) {
+                      if (!isImporting && !pressedButtons.has('import')) {
                         e.currentTarget.style.backgroundColor = colors.primary
                       }
                     }}
@@ -558,9 +558,10 @@ export default function GoogleSheetsPage() {
           </p>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', gap: '8px' }}>
             <button
+              {...getButtonPressHandlers('closeImport')}
               onClick={() => setShowImportModal(false)}
               disabled={isImporting}
-              style={{
+              style={getButtonPressStyle('closeImport', {
                 padding: '10px 16px',
                 backgroundColor: colors.cardHover,
                 border: `1px solid ${colors.border}`,
@@ -568,7 +569,7 @@ export default function GoogleSheetsPage() {
                 fontSize: '14px',
                 ...text.secondary,
                 cursor: isImporting ? 'not-allowed' : 'pointer'
-              }}
+              }, colors.cardHover, colors.borderHover)}
             >
               Close
             </button>
@@ -596,9 +597,10 @@ export default function GoogleSheetsPage() {
           </p>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', gap: '8px' }}>
             <button
+              {...getButtonPressHandlers('closeExport')}
               onClick={() => setShowExportModal(false)}
               disabled={isExporting}
-              style={{
+              style={getButtonPressStyle('closeExport', {
                 padding: '10px 16px',
                 backgroundColor: colors.cardHover,
                 border: `1px solid ${colors.border}`,
@@ -606,7 +608,7 @@ export default function GoogleSheetsPage() {
                 fontSize: '14px',
                 ...text.secondary,
                 cursor: isExporting ? 'not-allowed' : 'pointer'
-              }}
+              }, colors.cardHover, colors.borderHover)}
             >
               Close
             </button>
