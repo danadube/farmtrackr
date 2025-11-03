@@ -136,17 +136,18 @@ export default function SettingsPage() {
         setGoogleStatus(prev => ({ ...prev, loading: false }))
       }
     }
+    
     checkGoogleStatus()
     
-    // Refresh status when Google tab is active
-    let interval: NodeJS.Timeout | null = null
+    let intervalId: NodeJS.Timeout | undefined = undefined
     if (activeTab === 'google') {
-      interval = setInterval(checkGoogleStatus, 2000)
+      intervalId = setInterval(checkGoogleStatus, 2000)
     }
     
-    // Cleanup function
     return () => {
-      if (interval) clearInterval(interval)
+      if (intervalId !== undefined) {
+        clearInterval(intervalId)
+      }
     }
   }, [activeTab])
 
