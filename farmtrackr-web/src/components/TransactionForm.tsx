@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
+import { useButtonPress } from '@/hooks/useButtonPress'
 import { calculateCommission, formatCurrencyForInput, parseCurrencyFromInput, formatPercentageForInput, parsePercentageFromInput } from '@/lib/commissionCalculations'
 import { X, Save, Home, DollarSign, Camera, Loader2 } from 'lucide-react'
 
@@ -60,6 +61,7 @@ interface TransactionFormProps {
 
 export function TransactionForm({ transactionId, onClose, onSuccess }: TransactionFormProps) {
   const { colors, isDark, text } = useThemeStyles()
+  const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [manuallyEditedFields, setManuallyEditedFields] = useState<Set<string>>(new Set())
   const [formData, setFormData] = useState<TransactionFormData>({
     propertyType: 'Residential',
@@ -1511,10 +1513,11 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
           {/* Footer */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px', paddingTop: '24px', borderTop: `1px solid ${colors.border}` }}>
             <button
+              {...getButtonPressHandlers('cancel')}
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              style={{
+              style={getButtonPressStyle('cancel', {
                 padding: '12px 24px',
                 backgroundColor: colors.cardHover,
                 ...text.secondary,
@@ -1522,9 +1525,8 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 borderRadius: '12px',
                 fontSize: '14px',
                 fontWeight: '500',
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                transition: 'background-color 0.2s ease'
-              }}
+                cursor: isSubmitting ? 'not-allowed' : 'pointer'
+              }, colors.cardHover, colors.borderHover)}
               onMouseEnter={(e) => {
                 if (!isSubmitting) {
                   e.currentTarget.style.backgroundColor = colors.borderHover
@@ -1539,9 +1541,10 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
               Cancel
             </button>
             <button
+              {...getButtonPressHandlers('submit')}
               type="submit"
               disabled={isSubmitting}
-              style={{
+              style={getButtonPressStyle('submit', {
                 padding: '12px 24px',
                 backgroundColor: isSubmitting ? colors.text.tertiary : colors.primary,
                 color: '#ffffff',
@@ -1552,16 +1555,15 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                transition: 'background-color 0.2s ease'
-              }}
+                gap: '8px'
+              }, isSubmitting ? colors.text.tertiary : colors.primary, colors.primaryHover || (isDark ? '#5F1FFF' : '#6B3AE8'))}
               onMouseEnter={(e) => {
-                if (!isSubmitting) {
-                  e.currentTarget.style.backgroundColor = colors.primaryHover
+                if (!isSubmitting && !pressedButtons.has('submit')) {
+                  e.currentTarget.style.backgroundColor = colors.primaryHover || (isDark ? '#5F1FFF' : '#6B3AE8')
                 }
               }}
               onMouseLeave={(e) => {
-                if (!isSubmitting) {
+                if (!isSubmitting && !pressedButtons.has('submit')) {
                   e.currentTarget.style.backgroundColor = colors.primary
                 }
               }}

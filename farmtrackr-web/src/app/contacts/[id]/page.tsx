@@ -19,9 +19,11 @@ import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { formatPhoneNumber, formatCityStateZip } from '@/lib/formatters'
 import { getFarmColor } from '@/lib/farmColors'
 import { normalizeFarmName, getContactBadgeLetter } from '@/lib/farmNames'
+import { useButtonPress } from '@/hooks/useButtonPress'
 
 export default function ContactDetailPage() {
   const { colors, isDark, card, headerCard, headerDivider, background, text } = useThemeStyles()
+  const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const router = useRouter()
   const params = useParams()
   const contactId = params?.id as string
@@ -204,8 +206,9 @@ export default function ContactDetailPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <button
+                    {...getButtonPressHandlers('back')}
                     onClick={() => router.back()}
-                    style={{
+                    style={getButtonPressStyle('back', {
                       padding: '8px',
                       backgroundColor: 'transparent',
                       border: 'none',
@@ -213,14 +216,17 @@ export default function ContactDetailPage() {
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'background-color 0.2s ease'
-                    }}
+                      justifyContent: 'center'
+                    }, 'transparent', colors.cardHover)}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.cardHover
+                      if (!pressedButtons.has('back')) {
+                        e.currentTarget.style.backgroundColor = colors.cardHover
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent'
+                      if (!pressedButtons.has('back')) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      }
                     }}
                   >
                     <ArrowLeft style={{ width: '20px', height: '20px', color: colors.text.secondary }} />
@@ -325,7 +331,8 @@ export default function ContactDetailPage() {
                   )}
                   <Link
                     href={`/contacts/${contact.id}/edit`}
-                    style={{
+                    {...getButtonPressHandlers('edit')}
+                    style={getButtonPressStyle('edit', {
                       padding: '12px 16px',
                       backgroundColor: colors.success,
                       color: '#ffffff',
@@ -335,14 +342,17 @@ export default function ContactDetailPage() {
                       fontWeight: '500',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
-                      transition: 'background-color 0.2s ease'
-                    }}
+                      gap: '8px'
+                    }, colors.success, isDark ? '#059669' : '#15803d')}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
+                      if (!pressedButtons.has('edit')) {
+                        e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.success
+                      if (!pressedButtons.has('edit')) {
+                        e.currentTarget.style.backgroundColor = colors.success
+                      }
                     }}
                   >
                     <Edit style={{ width: '16px', height: '16px' }} />
@@ -350,8 +360,9 @@ export default function ContactDetailPage() {
                   </Link>
                   
                   <button
+                    {...getButtonPressHandlers('delete')}
                     onClick={() => setShowDeleteConfirm(true)}
-                    style={{
+                    style={getButtonPressStyle('delete', {
                       padding: '12px 16px',
                       backgroundColor: colors.error,
                       color: '#ffffff',
@@ -362,14 +373,17 @@ export default function ContactDetailPage() {
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
-                      transition: 'background-color 0.2s ease'
-                    }}
+                      gap: '8px'
+                    }, colors.error, isDark ? '#dc2626' : '#dc2626')}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = isDark ? '#dc2626' : '#dc2626'
+                      if (!pressedButtons.has('delete')) {
+                        e.currentTarget.style.backgroundColor = isDark ? '#dc2626' : '#dc2626'
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.error
+                      if (!pressedButtons.has('delete')) {
+                        e.currentTarget.style.backgroundColor = colors.error
+                      }
                     }}
                   >
                     <Trash2 style={{ width: '16px', height: '16px' }} />
@@ -700,9 +714,10 @@ export default function ContactDetailPage() {
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button
+                {...getButtonPressHandlers('cancelDelete')}
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                style={{
+                style={getButtonPressStyle('cancelDelete', {
                   padding: '12px 24px',
                   backgroundColor: colors.cardHover,
                   ...text.secondary,
@@ -710,16 +725,15 @@ export default function ContactDetailPage() {
                   borderRadius: '12px',
                   fontSize: '14px',
                   fontWeight: '500',
-                  cursor: isDeleting ? 'not-allowed' : 'pointer',
-                  transition: 'background-color 0.2s ease'
-                }}
+                  cursor: isDeleting ? 'not-allowed' : 'pointer'
+                }, colors.cardHover, colors.borderHover)}
                 onMouseEnter={(e) => {
-                  if (!isDeleting) {
+                  if (!isDeleting && !pressedButtons.has('cancelDelete')) {
                     e.currentTarget.style.backgroundColor = colors.borderHover
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isDeleting) {
+                  if (!isDeleting && !pressedButtons.has('cancelDelete')) {
                     e.currentTarget.style.backgroundColor = colors.cardHover
                   }
                 }}
@@ -727,9 +741,10 @@ export default function ContactDetailPage() {
                 Cancel
               </button>
               <button
+                {...getButtonPressHandlers('confirmDelete')}
                 onClick={handleDelete}
                 disabled={isDeleting}
-                style={{
+                style={getButtonPressStyle('confirmDelete', {
                   padding: '12px 24px',
                   backgroundColor: isDeleting ? colors.text.tertiary : colors.error,
                   color: '#ffffff',
@@ -738,18 +753,17 @@ export default function ContactDetailPage() {
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: isDeleting ? 'not-allowed' : 'pointer',
-                  transition: 'background-color 0.2s ease',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px'
-                }}
+                }, isDeleting ? colors.text.tertiary : colors.error, isDark ? '#dc2626' : '#dc2626')}
                 onMouseEnter={(e) => {
-                  if (!isDeleting) {
+                  if (!isDeleting && !pressedButtons.has('confirmDelete')) {
                     e.currentTarget.style.backgroundColor = isDark ? '#dc2626' : '#dc2626'
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isDeleting) {
+                  if (!isDeleting && !pressedButtons.has('confirmDelete')) {
                     e.currentTarget.style.backgroundColor = colors.error
                   }
                 }}

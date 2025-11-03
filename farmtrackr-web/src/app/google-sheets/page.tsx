@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { FARM_SPREADSHEETS, FarmName } from '@/lib/farmSpreadsheets'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
+import { useButtonPress } from '@/hooks/useButtonPress'
 import { 
   Upload, 
   Download, 
@@ -17,6 +18,7 @@ import { normalizeFarmName } from '@/lib/farmNames'
 
 export default function GoogleSheetsPage() {
   const { colors, isDark, card, headerCard, headerDivider, headerTint, background, text } = useThemeStyles()
+  const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [selectedFarm, setSelectedFarm] = useState<FarmName | null>(null)
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -457,9 +459,10 @@ export default function GoogleSheetsPage() {
                     </div>
                   </div>
                   <button
+                    {...getButtonPressHandlers('export')}
                     onClick={handleExport}
                     disabled={isExporting}
-                    style={{
+                    style={getButtonPressStyle('export', {
                       width: '100%',
                       padding: '12px 16px',
                       backgroundColor: isExporting ? colors.text.tertiary : colors.success,
@@ -472,16 +475,15 @@ export default function GoogleSheetsPage() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px',
-                      transition: 'background-color 0.2s ease'
-                    }}
+                      gap: '8px'
+                    }, isExporting ? colors.text.tertiary : colors.success, isDark ? '#059669' : '#15803d')}
                     onMouseEnter={(e) => {
-                      if (!isExporting) {
-                        e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#059669'
+                      if (!isExporting && !pressedButtons.has('export')) {
+                        e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (!isExporting) {
+                      if (!isExporting && !pressedButtons.has('export')) {
                         e.currentTarget.style.backgroundColor = colors.success
                       }
                     }}

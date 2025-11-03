@@ -306,6 +306,7 @@ export default function DataQualityPage() {
                   {isAnalyzing ? 'Analyzing...' : 'Analyze Data'}
                 </button>
                 <button
+                  {...getButtonPressHandlers('mergeAll')}
                   onClick={async () => {
                     setMergeStatus(null)
                     setIsAnalyzing(true)
@@ -328,7 +329,7 @@ export default function DataQualityPage() {
                       setIsAnalyzing(false)
                     }
                   }}
-                  style={{
+                  style={getButtonPressStyle('mergeAll', {
                     padding: '12px 16px',
                     backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
                     color: colors.success,
@@ -339,14 +340,17 @@ export default function DataQualityPage() {
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s ease'
-                  }}
+                    gap: '8px'
+                  }, isDark ? '#064e3b' : '#f0fdf4', isDark ? '#065f46' : '#dcfce7')}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = isDark ? '#065f46' : '#dcfce7'
+                    if (!pressedButtons.has('mergeAll')) {
+                      e.currentTarget.style.backgroundColor = isDark ? '#065f46' : '#dcfce7'
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = isDark ? '#064e3b' : '#f0fdf4'
+                    if (!pressedButtons.has('mergeAll')) {
+                      e.currentTarget.style.backgroundColor = isDark ? '#064e3b' : '#f0fdf4'
+                    }
                   }}
                 >
                   <Merge style={{ width: '16px', height: '16px' }} />
