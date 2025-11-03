@@ -522,7 +522,15 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </p>
                 </div>
               </div>
-              <div style={headerDivider} />
+              {/* Header divider - white on green background */}
+              <div style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: '1px',
+                background: 'rgba(255, 255, 255, 0.2)'
+              }} />
             </div>
           </div>
 
