@@ -154,3 +154,9 @@ yarn-error.log*
 
 # Vercel
 .vercel
+
+# Next.js
+.next/
+out/
+build/
+dist/
