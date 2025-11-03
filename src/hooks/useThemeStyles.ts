@@ -22,24 +22,30 @@ export function useThemeStyles() {
     spacing,
     // Common style objects
     card: {
+      // Apple aesthetic: clean white cards with subtle styling
       backgroundColor: colors.card,
       border: `1px solid ${colors.border}`,
-      // Apple aesthetic: subtle, layered shadows
+      // Apple aesthetic: subtle, layered shadows (never harsh)
       boxShadow: isDark
         ? '0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)' 
         : '0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04)',
       borderRadius: '12px',
     },
     headerCard: {
+      // Apple aesthetic: glassmorphism effect
       background: isDark
-        ? 'linear-gradient(180deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))'
-        : 'linear-gradient(180deg, rgba(59,130,246,0.06), rgba(59,130,246,0.03)), linear-gradient(180deg, #ffffff, #fafafa)',
-      border: `1px solid ${colors.border}`,
+        ? `linear-gradient(180deg, ${hexToRgba(colors.primary, 0.15)}, ${hexToRgba(colors.primary, 0.08)}), rgba(31, 41, 55, 0.8)`
+        : `linear-gradient(180deg, ${hexToRgba(colors.primary, 0.08)}, ${hexToRgba(colors.primary, 0.04)}), rgba(255, 255, 255, 0.8)`,
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      border: isDark 
+        ? `1px solid rgba(255, 255, 255, 0.1)`
+        : `1px solid rgba(255, 255, 255, 0.3)`,
       borderTop: `3px solid ${colors.primary}`,
       // Apple aesthetic: layered shadows for depth
       boxShadow: isDark
-        ? '0 4px 12px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.25)'
-        : '0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04)',
+        ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3)'
+        : '0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.02)',
       borderRadius: '16px',
       position: 'relative' as const,
     },
@@ -52,10 +58,19 @@ export function useThemeStyles() {
       background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
     },
     headerTint: (hexColor: string) => ({
+      // Apple aesthetic: glassmorphism with color tint
       background: isDark
-        ? `linear-gradient(180deg, ${hexToRgba(hexColor, 0.12)}, ${hexToRgba(hexColor, 0.06)}), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))`
-        : `linear-gradient(180deg, ${hexToRgba(hexColor, 0.06)}, ${hexToRgba(hexColor, 0.03)}), linear-gradient(180deg, #ffffff, #fafafa)`,
+        ? `linear-gradient(180deg, ${hexToRgba(hexColor, 0.15)}, ${hexToRgba(hexColor, 0.08)}), rgba(31, 41, 55, 0.8)`
+        : `linear-gradient(180deg, ${hexToRgba(hexColor, 0.08)}, ${hexToRgba(hexColor, 0.04)}), rgba(255, 255, 255, 0.8)`,
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      border: isDark 
+        ? `1px solid rgba(255, 255, 255, 0.1)`
+        : `1px solid rgba(255, 255, 255, 0.3)`,
       borderTop: `3px solid ${hexColor}`,
+      boxShadow: isDark
+        ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3)'
+        : '0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.02)',
     } as const),
     background: {
       backgroundColor: colors.background,
