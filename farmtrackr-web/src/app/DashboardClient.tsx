@@ -29,6 +29,7 @@ import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { normalizeFarmName } from '@/lib/farmNames'
 import { getFarmColor } from '@/lib/farmColors'
 import { validateAllContacts } from '@/lib/dataQuality'
+import { calculateCommission } from '@/lib/commissionCalculations'
 
 interface DashboardClientProps {
   contacts: FarmContact[];
@@ -54,6 +55,14 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
   const [recentTransaction, setRecentTransaction] = useState<Transaction | null>(null)
   const [upcomingClosings, setUpcomingClosings] = useState<number>(0)
   const [thisMonthCommissions, setThisMonthCommissions] = useState<{ count: number; total: number }>({ count: 0, total: 0 })
+  const [quickStats, setQuickStats] = useState<{ ytdTotal: number; avgDealSize: number; biggestDeal: number; pendingCount: number }>({
+    ytdTotal: 0,
+    avgDealSize: 0,
+    biggestDeal: 0,
+    pendingCount: 0
+  })
+  const [mostActiveFarm, setMostActiveFarm] = useState<{ name: string; count: number } | null>(null)
+  const [recentActivity, setRecentActivity] = useState<Array<{ type: 'contact' | 'transaction'; id: string; title: string; date: Date; link: string }>>([])
 
   // Validation issue counts (subtract dismissed) – must be declared before any early returns
   const [issuesCount, setIssuesCount] = useState(0)
@@ -125,16 +134,161 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
           })
           
           setUpcomingClosings(upcoming.length)
+          
+          // Quick Stats
+          const now = new Date()
+          const startOfYear = new Date(now.getFullYear(), 0, 1)
+          
+          // YTD transactions (closed this year)
+          const ytdTransactions = allData.filter((t: any) => {
+            const closeDate = t.closingDate || t.closedDate
+            if (!closeDate || t.status !== 'Closed') return false
+            const date = new Date(closeDate)
+            return date >= startOfYear
+          })
+          
+          // Calculate YTD total using commission calculation for accuracy
+          const ytdTotal = ytdTransactions.reduce((sum: number, t: any) => {
+            try {
+              const calc = calculateCommission({
+                brokerage: t.brokerage,
+                transactionType: t.transactionType,
+                closedPrice: parseFloat(String(t.closedPrice || 0)),
+                commissionPct: parseFloat(String(t.commissionPct || 0)),
+                referralPct: parseFloat(String(t.referralPct || 0)),
+                referralFeeReceived: parseFloat(String(t.referralFeeReceived || 0)),
+                eo: parseFloat(String(t.eo || 0)),
+                royalty: t.royalty || '',
+                companyDollar: t.companyDollar || '',
+                hoaTransfer: parseFloat(String(t.hoaTransfer || 0)),
+                homeWarranty: parseFloat(String(t.homeWarranty || 0)),
+                kwCares: parseFloat(String(t.kwCares || 0)),
+                kwNextGen: parseFloat(String(t.kwNextGen || 0)),
+                boldScholarship: parseFloat(String(t.boldScholarship || 0)),
+                tcConcierge: parseFloat(String(t.tcConcierge || 0)),
+                jelmbergTeam: parseFloat(String(t.jelmbergTeam || 0)),
+                bdhSplitPct: parseFloat(String(t.bdhSplitPct || 0)),
+                preSplitDeduction: t.preSplitDeduction || '',
+                asf: parseFloat(String(t.asf || 0)),
+                foundation10: parseFloat(String(t.foundation10 || 0)),
+                adminFee: parseFloat(String(t.adminFee || 0)),
+                brokerageSplit: parseFloat(String((t as any).brokerageSplit || 0)),
+                otherDeductions: parseFloat(String(t.otherDeductions || 0)),
+                buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0)),
+                nci: t.notes ? (() => {
+                  try {
+                    const notesData = JSON.parse(t.notes)
+                    return notesData?.csvNci
+                  } catch {
+                    return t.netVolume
+                  }
+                })() : t.netVolume
+              })
+              return sum + parseFloat(calc.nci || '0')
+            } catch (error) {
+              // Fallback to simple calculation if commission calc fails
+              const price = parseFloat(String(t.closedPrice || 0))
+              const pct = parseFloat(String(t.commissionPct || 0))
+              return sum + (price * pct)
+            }
+          }, 0)
+          
+          // Average deal size (all closed transactions)
+          const closedTransactions = allData.filter((t: any) => t.status === 'Closed' && t.closedPrice)
+          const totalValue = closedTransactions.reduce((sum: number, t: any) => sum + parseFloat(String(t.closedPrice || 0)), 0)
+          const avgDealSize = closedTransactions.length > 0 ? totalValue / closedTransactions.length : 0
+          
+          // Biggest deal (all time)
+          const biggestDeal = closedTransactions.length > 0 
+            ? Math.max(...closedTransactions.map((t: any) => parseFloat(String(t.closedPrice || 0))))
+            : 0
+          
+          // Pending transactions (not closed)
+          const pendingCount = allData.filter((t: any) => t.status !== 'Closed').length
+          
+          setQuickStats({
+            ytdTotal,
+            avgDealSize,
+            biggestDeal,
+            pendingCount
+          })
         }
       } catch (error) {
         console.error('Error fetching transaction data:', error)
       }
     }
     
+    // Fetch activity feed
+    const fetchActivityFeed = async () => {
+      try {
+        const activities: Array<{ type: 'contact' | 'transaction'; id: string; title: string; date: Date; link: string }> = []
+        
+        // Recent contacts (last 10)
+        const recentContacts = contacts
+          .sort((a, b) => b.dateCreated.getTime() - a.dateCreated.getTime())
+          .slice(0, 5)
+          .map(c => ({
+            type: 'contact' as const,
+            id: c.id,
+            title: c.organizationName || `${c.firstName || ''} ${c.lastName || ''}`.trim() || 'Unnamed Contact',
+            date: c.dateCreated,
+            link: `/contacts/${c.id}`
+          }))
+        
+        activities.push(...recentContacts)
+        
+        // Recent transactions (if we have them)
+        const transactionResponse = await fetch('/api/transactions')
+        if (transactionResponse.ok) {
+          const transactions = await transactionResponse.json()
+          const recentTxs = transactions
+            .sort((a: any, b: any) => new Date(b.createdAt || b.closingDate || 0).getTime() - new Date(a.createdAt || a.closingDate || 0).getTime())
+            .slice(0, 5)
+            .map((t: any) => ({
+              type: 'transaction' as const,
+              id: t.id,
+              title: t.address || 'Transaction',
+              date: new Date(t.createdAt || t.closingDate || Date.now()),
+              link: `/commissions`
+            }))
+          
+          activities.push(...recentTxs)
+        }
+        
+        // Sort by date (most recent first) and take top 8
+        activities.sort((a, b) => b.date.getTime() - a.date.getTime())
+        setRecentActivity(activities.slice(0, 8))
+      } catch (error) {
+        console.error('Error fetching activity feed:', error)
+      }
+    }
+    
+    // Calculate most active farm
+    const calculateMostActiveFarm = () => {
+      const farmCounts = new Map<string, number>()
+      contacts.forEach(c => {
+        if (c.farm) {
+          const farm = normalizeFarmName(c.farm)
+          farmCounts.set(farm, (farmCounts.get(farm) || 0) + 1)
+        }
+      })
+      
+      if (farmCounts.size > 0) {
+        const entries = Array.from(farmCounts.entries())
+        entries.sort((a, b) => b[1] - a[1])
+        setMostActiveFarm({
+          name: entries[0][0],
+          count: entries[0][1]
+        })
+      }
+    }
+    
     if (mounted) {
       fetchTransactionData()
+      fetchActivityFeed()
+      calculateMostActiveFarm()
     }
-  }, [mounted])
+  }, [mounted, contacts])
 
   const computeCounts = () => {
     const allIssues = validateAllContacts(contacts)
@@ -693,7 +847,183 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </div>
                 </div>
               </div>
+
+              {/* Quick Stats Card */}
+              {quickStats.ytdTotal > 0 || quickStats.pendingCount > 0 ? (
+                <Link 
+                  href="/commissions"
+                  style={{
+                    display: 'block',
+                    textDecoration: 'none',
+                    padding: spacing(3),
+                    ...card,
+                    transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+                    height: '100%'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = isDark 
+                      ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                      : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                    ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
+                    ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                    <div 
+                      style={{
+                        width: spacing(6),
+                        height: spacing(6),
+                        backgroundColor: isDark ? '#1e3a8a' : '#eff6ff',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <TrendingUp style={{ width: spacing(3), height: spacing(3), color: colors.info || colors.primary }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                        Quick Stats
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        {quickStats.ytdTotal > 0 && (
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                            YTD: ${(quickStats.ytdTotal / 1000).toFixed(1)}k
+                          </p>
+                        )}
+                        {quickStats.avgDealSize > 0 && (
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                            Avg: ${(quickStats.avgDealSize / 1000).toFixed(1)}k
+                          </p>
+                        )}
+                        {quickStats.biggestDeal > 0 && (
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                            Biggest: ${(quickStats.biggestDeal / 1000).toFixed(1)}k
+                          </p>
+                        )}
+                        {quickStats.pendingCount > 0 && (
+                          <p style={{ fontSize: '12px', color: colors.warning, margin: '4px 0 0 0', fontWeight: '600' }}>
+                            {quickStats.pendingCount} pending
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ) : null}
+
+              {/* Most Active Farm */}
+              {mostActiveFarm && (
+                <Link 
+                  href="/contacts"
+                  style={{
+                    display: 'block',
+                    textDecoration: 'none',
+                    padding: spacing(3),
+                    ...card,
+                    transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+                    height: '100%'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = isDark 
+                      ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                      : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                    ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
+                    ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                    <div 
+                      style={{
+                        width: spacing(6),
+                        height: spacing(6),
+                        backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <Building2 style={{ width: spacing(3), height: spacing(3), color: colors.success }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                        Most Active Farm
+                      </p>
+                      <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0 0 4px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {mostActiveFarm.name}
+                      </p>
+                      <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                        {mostActiveFarm.count} contact{mostActiveFarm.count !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              )}
             </div>
+
+            {/* Recent Activity Feed */}
+            {recentActivity.length > 0 && (
+              <div style={{ marginTop: spacing(4) }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(2) }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                    Recent Activity
+                  </h3>
+                </div>
+                <div style={{ padding: spacing(3), ...card }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
+                    {recentActivity.map((activity, idx) => (
+                      <Link
+                        key={`${activity.type}-${activity.id}-${idx}`}
+                        href={activity.link}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: spacing(2),
+                          padding: spacing(2),
+                          borderRadius: '8px',
+                          textDecoration: 'none',
+                          transition: 'background-color 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = colors.cardHover
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
+                      >
+                        <div 
+                          style={{
+                            width: spacing(2),
+                            height: spacing(2),
+                            borderRadius: '50%',
+                            backgroundColor: activity.type === 'contact' ? colors.success : colors.primary,
+                            flexShrink: 0
+                          }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '14px', fontWeight: '500', ...text.primary, margin: '0 0 2px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {activity.title}
+                          </p>
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                            {activity.type === 'contact' ? 'Contact added' : 'Transaction added'} • {activity.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Quick Actions */}
