@@ -46,6 +46,7 @@ interface Transaction {
   transactionType: string
   clientType: string
   createdAt: string
+  nci?: number | null
 }
 
 export default function DashboardClient({ contacts, stats }: DashboardClientProps) {
@@ -83,6 +84,49 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
           // Most recent transaction (first in array since API sorts by closingDate desc)
           if (allData.length > 0) {
             const t = allData[0]
+            
+            // Calculate NCI for the recent transaction
+            let nci = null
+            try {
+              const calc = calculateCommission({
+                brokerage: t.brokerage,
+                transactionType: t.transactionType,
+                closedPrice: parseFloat(String(t.closedPrice || 0)),
+                commissionPct: parseFloat(String(t.commissionPct || 0)),
+                referralPct: parseFloat(String(t.referralPct || 0)),
+                referralFeeReceived: parseFloat(String(t.referralFeeReceived || 0)),
+                eo: parseFloat(String(t.eo || 0)),
+                royalty: t.royalty || '',
+                companyDollar: t.companyDollar || '',
+                hoaTransfer: parseFloat(String(t.hoaTransfer || 0)),
+                homeWarranty: parseFloat(String(t.homeWarranty || 0)),
+                kwCares: parseFloat(String(t.kwCares || 0)),
+                kwNextGen: parseFloat(String(t.kwNextGen || 0)),
+                boldScholarship: parseFloat(String(t.boldScholarship || 0)),
+                tcConcierge: parseFloat(String(t.tcConcierge || 0)),
+                jelmbergTeam: parseFloat(String(t.jelmbergTeam || 0)),
+                bdhSplitPct: parseFloat(String(t.bdhSplitPct || 0)),
+                preSplitDeduction: t.preSplitDeduction || '',
+                asf: parseFloat(String(t.asf || 0)),
+                foundation10: parseFloat(String(t.foundation10 || 0)),
+                adminFee: parseFloat(String(t.adminFee || 0)),
+                brokerageSplit: parseFloat(String((t as any).brokerageSplit || 0)),
+                otherDeductions: parseFloat(String(t.otherDeductions || 0)),
+                buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0)),
+                nci: t.notes ? (() => {
+                  try {
+                    const notesData = JSON.parse(t.notes)
+                    return notesData?.csvNci
+                  } catch {
+                    return t.netVolume
+                  }
+                })() : t.netVolume
+              })
+              nci = parseFloat(calc.nci || '0')
+            } catch (error) {
+              console.error('Error calculating NCI for recent transaction:', error)
+            }
+            
             setRecentTransaction({
               id: t.id,
               address: t.address,
@@ -92,7 +136,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               brokerage: t.brokerage,
               transactionType: t.transactionType,
               clientType: t.clientType,
-              createdAt: t.createdAt
+              createdAt: t.createdAt,
+              nci: nci
             })
           }
           
@@ -655,12 +700,19 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0 0 4px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {recentTransaction.address || 'No address'}
                       </p>
-                      <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
-                        {recentTransaction.closedDate 
-                          ? new Date(recentTransaction.closedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                          : 'No date'}
-                        {recentTransaction.city && ` • ${recentTransaction.city}`}
-                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        {recentTransaction.nci !== null && recentTransaction.nci !== undefined && recentTransaction.nci > 0 && (
+                          <p style={{ fontSize: '14px', fontWeight: '600', color: colors.success, margin: '0' }}>
+                            NCI: ${recentTransaction.nci.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        )}
+                        <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                          {recentTransaction.closedDate 
+                            ? new Date(recentTransaction.closedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            : 'No date'}
+                          {recentTransaction.city && ` • ${recentTransaction.city}`}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </Link>
