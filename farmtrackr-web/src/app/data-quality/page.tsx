@@ -18,6 +18,7 @@ import {
 import Link from 'next/link'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
+import { useButtonPress } from '@/hooks/useButtonPress'
 import { FarmContact } from '@/types'
 import { formatPhoneNumber } from '@/lib/formatters'
 
@@ -40,6 +41,7 @@ interface ValidationIssue {
 
 export default function DataQualityPage() {
   const { colors, isDark, card, headerCard, headerDivider, headerTint, background, text } = useThemeStyles()
+  const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [activeTab, setActiveTab] = useState<'duplicates' | 'validation' | 'cleanup'>('duplicates')
   const [cleanupAction, setCleanupAction] = useState<string>('')
@@ -267,9 +269,10 @@ export default function DataQualityPage() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <button
+                  {...getButtonPressHandlers('analyze')}
                   onClick={handleAnalyze}
                   disabled={isAnalyzing}
-                  style={{
+                  style={getButtonPressStyle('analyze', {
                     padding: '12px 16px',
                     backgroundColor: isAnalyzing ? colors.text.tertiary : colors.success,
                     color: '#ffffff',
@@ -280,16 +283,15 @@ export default function DataQualityPage() {
                     cursor: isAnalyzing ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s ease'
-                  }}
+                    gap: '8px'
+                  }, isAnalyzing ? colors.text.tertiary : colors.success, isDark ? '#059669' : '#15803d')}
                   onMouseEnter={(e) => {
-                    if (!isAnalyzing) {
+                    if (!isAnalyzing && !pressedButtons.has('analyze')) {
                       e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!isAnalyzing) {
+                    if (!isAnalyzing && !pressedButtons.has('analyze')) {
                       e.currentTarget.style.backgroundColor = colors.success
                     }
                   }}

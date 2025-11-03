@@ -18,9 +18,11 @@ import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { ContactBadge } from '@/components/ContactBadge'
 import { normalizeFarmName } from '@/lib/farmNames'
+import { useButtonPress } from '@/hooks/useButtonPress'
 
 export default function ContactsPage() {
   const { colors, isDark, card, headerCard, headerDivider, background, text } = useThemeStyles()
+  const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [contacts, setContacts] = useState<FarmContact[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -377,11 +379,12 @@ export default function ContactsPage() {
                   )}
                   {(selectedFarm !== 'all' || selectedState !== 'all') && (
                     <button
+                      {...getButtonPressHandlers('clearFilters')}
                       onClick={() => {
                         setSelectedFarm('all')
                         setSelectedState('all')
                       }}
-                      style={{
+                      style={getButtonPressStyle('clearFilters', {
                         padding: '12px 16px',
                         backgroundColor: colors.cardHover,
                         ...text.secondary,
@@ -390,14 +393,17 @@ export default function ContactsPage() {
                         fontSize: '14px',
                         fontWeight: '500',
                         cursor: 'pointer',
-                        transition: 'background-color 0.2s ease',
                         whiteSpace: 'nowrap'
-                      }}
+                      }, colors.cardHover, colors.borderHover)}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = colors.borderHover
+                        if (!pressedButtons.has('clearFilters')) {
+                          e.currentTarget.style.backgroundColor = colors.borderHover
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = colors.cardHover
+                        if (!pressedButtons.has('clearFilters')) {
+                          e.currentTarget.style.backgroundColor = colors.cardHover
+                        }
                       }}
                     >
                       Clear Filters
@@ -437,8 +443,9 @@ export default function ContactsPage() {
                   <option value="dateCreated">Date Created</option>
                 </select>
                 <button
+                  {...getButtonPressHandlers('sortOrder')}
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  style={{
+                  style={getButtonPressStyle('sortOrder', {
                     padding: '8px 12px',
                     backgroundColor: colors.cardHover,
                     ...text.secondary,
@@ -450,14 +457,17 @@ export default function ContactsPage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    transition: 'background-color 0.2s ease',
                     whiteSpace: 'nowrap'
-                  }}
+                  }, colors.cardHover, colors.borderHover)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.borderHover
+                    if (!pressedButtons.has('sortOrder')) {
+                      e.currentTarget.style.backgroundColor = colors.borderHover
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.cardHover
+                    if (!pressedButtons.has('sortOrder')) {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }
                   }}
                 >
                   {sortOrder === 'asc' ? (
