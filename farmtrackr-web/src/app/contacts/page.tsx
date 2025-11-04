@@ -21,7 +21,7 @@ import { normalizeFarmName } from '@/lib/farmNames'
 import { useButtonPress } from '@/hooks/useButtonPress'
 
 export default function ContactsPage() {
-  const { colors, isDark, card, headerCard, headerDivider, background, text } = useThemeStyles()
+  const { colors, isDark, card, headerCard, headerDivider, headerTint, background, text } = useThemeStyles()
   const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [contacts, setContacts] = useState<FarmContact[]>([])
   const [loading, setLoading] = useState(true)
