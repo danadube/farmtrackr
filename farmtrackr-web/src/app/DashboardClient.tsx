@@ -469,7 +469,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
           }}
         >
           {/* Hero Section */}
-          <div style={{ marginBottom: spacing(6) }}>
+          <div style={{ marginBottom: spacing(1) }}>
             <div 
               style={{
                 padding: spacing(3),
@@ -574,7 +574,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
           </div>
 
           {/* Overview Section */}
-          <div style={{ marginTop: spacing(1), marginBottom: spacing(4) }}>
+          <div style={{ marginBottom: spacing(4) }}>
             <h2 
               style={{
                 fontSize: '24px',
