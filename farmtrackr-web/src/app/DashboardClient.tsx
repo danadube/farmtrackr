@@ -587,7 +587,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             >
               Overview
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridAutoRows: '1fr', gap: spacing(3), alignItems: 'stretch' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: spacing(3), alignItems: 'start' }}>
               {/* Left Column - Row 1 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridColumn: '1', gridRow: '1', height: '100%' }}>
               {/* Combined Stats Card - Google Contacts, Farm Contacts, Active Farms */}
@@ -1180,7 +1180,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
               </div>
 
-              {/* Today Card - Spans rows 2 and 3, Column 3 (matches Farms + Tasks height) */}
+              {/* Today Card - Spans rows 2-3 to match Farms + Tasks combined height */}
               <div 
                 style={{
                   padding: spacing(2),
