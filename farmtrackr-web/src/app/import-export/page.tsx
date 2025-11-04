@@ -602,16 +602,16 @@ export default function ImportExportPage() {
               </div>
 
               {/* Quick Links */}
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', fontSize: '13px', ...text.secondary }}>
-                <span style={{ fontWeight: '500' }}>Quick Links:</span>
-                <Link href="/google-sheets" style={{ color: colors.primary, textDecoration: 'none' }}>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', fontSize: '13px', color: 'rgba(255, 255, 255, 0.9)' }}>
+                <span style={{ fontWeight: '500', color: '#ffffff' }}>Quick Links:</span>
+                <Link href="/google-sheets" style={{ color: 'rgba(255, 255, 255, 0.95)', textDecoration: 'none' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                     <FileSpreadsheet style={{ width: '14px', height: '14px' }} />
                     Sync Google Sheets
                   </span>
                 </Link>
-                <span style={{ color: colors.border }}>•</span>
-                <Link href="/google-contacts" style={{ color: colors.primary, textDecoration: 'none' }}>
+                <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>•</span>
+                <Link href="/google-contacts" style={{ color: 'rgba(255, 255, 255, 0.95)', textDecoration: 'none' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                     <Users style={{ width: '14px', height: '14px' }} />
                     Sync Google Contacts
@@ -619,8 +619,8 @@ export default function ImportExportPage() {
                 </Link>
                 {activeTab === 'transactions' && (
                   <>
-                    <span style={{ color: colors.border }}>•</span>
-                    <Link href="/commissions" style={{ color: colors.primary, textDecoration: 'none' }}>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>•</span>
+                    <Link href="/commissions" style={{ color: 'rgba(255, 255, 255, 0.95)', textDecoration: 'none' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         <ExternalLink style={{ width: '14px', height: '14px' }} />
                         View Commissions Page
