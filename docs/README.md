@@ -9,6 +9,15 @@ docs/
 ├── README.md                          # This file
 ├── DOCUMENTATION_INDEX.md             # Complete documentation index
 │
+├── brand/                             # Brand guidelines & design resources
+│   ├── README.md                      # Brand documentation overview
+│   ├── FARMTRAKR-BRAND-GUIDELINES-REAL-ESTATE.md
+│   ├── FARMTRAKR-BRAND-SHEET-REAL-ESTATE.md
+│   ├── BRAND_GUIDELINES_IMPLEMENTATION.md
+│   ├── farmtrakr-brand-guidelines-real-estate.html
+│   ├── farmtrakr-3-themes.html
+│   └── farmtrakr-apple-aesthetic.html
+│
 ├── status/                            # Project status & assessments
 │   └── APP_ASSESSMENT.md             # Current application assessment
 │
@@ -60,6 +69,7 @@ docs/
 
 - **Main Roadmap**: `../ROADMAP.md` (project root)
 - **Documentation Index**: `DOCUMENTATION_INDEX.md`
+- **Brand Guidelines**: `brand/README.md`
 - **Current Status**: `status/APP_ASSESSMENT.md`
 - **Setup Guides**: `setup/`
 - **Google Integration**: `google/`
