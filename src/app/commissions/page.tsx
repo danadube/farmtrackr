@@ -889,8 +889,13 @@ export default function CommissionsPage() {
             <div 
               style={{
                 padding: '24px',
-                // Use headerTint directly for green headers (includes gradient)
-                ...headerTint(colors.primary)
+                // BRAND GREEN HEADER - Explicit gradient to override any parent styles
+                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
+                backgroundColor: 'transparent',
+                border: `1px solid ${colors.primary}`,
+                borderRadius: '16px',
+                position: 'relative' as const,
+                color: '#ffffff',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
