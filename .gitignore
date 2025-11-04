@@ -161,4 +161,4 @@ out/
 build/
 dist/
 .env.production
-farmtrackr-web/
+farmtrackr-web/.git/
