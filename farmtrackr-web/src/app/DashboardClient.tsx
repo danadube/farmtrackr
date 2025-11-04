@@ -20,7 +20,9 @@ import {
   FileSpreadsheet,
   Clock,
   CheckSquare,
-  Bell
+  Bell,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import Link from 'next/link'
 import { FarmTrackrLogo } from '@/components/FarmTrackrLogo'
@@ -65,6 +67,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
   const [mostActiveFarm, setMostActiveFarm] = useState<{ name: string; count: number } | null>(null)
   const [recentActivity, setRecentActivity] = useState<Array<{ type: 'contact' | 'transaction'; id: string; title: string; date: Date; link: string }>>([])
   const [currentDateTime, setCurrentDateTime] = useState<Date>(new Date())
+  const [calendarDate, setCalendarDate] = useState<Date>(new Date())
+  const [calendarAppointments, setCalendarAppointments] = useState<Array<{ id: string; title: string; date: Date; time?: string; color?: string }>>([])
 
   // Validation issue counts (subtract dismissed) – must be declared before any early returns
   const [issuesCount, setIssuesCount] = useState(0)
@@ -78,6 +82,40 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
     const updateDateTime = () => setCurrentDateTime(new Date())
     updateDateTime()
     const dateTimeInterval = setInterval(updateDateTime, 60000) // Update every minute
+
+    // Sample appointments data (in production, this would come from Google Calendar API)
+    const today = new Date()
+    const sampleAppointments = [
+      {
+        id: '1',
+        title: 'Storquest - 245.00',
+        date: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+        time: '9:00 AM',
+        color: '#f4516c' // Pink/Cherry
+      },
+      {
+        id: '2',
+        title: 'Liz-Work',
+        date: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+        time: '5:00 PM',
+        color: '#673ab7' // Purple/Plum
+      },
+      {
+        id: '3',
+        title: 'Client Meeting',
+        date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2),
+        time: '2:00 PM',
+        color: '#42a5f5' // Sky Blue
+      },
+      {
+        id: '4',
+        title: 'Property Showing',
+        date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 5),
+        time: '10:00 AM',
+        color: '#689f38' // Meadow Green
+      }
+    ]
+    setCalendarAppointments(sampleAppointments)
     
     // Fetch recent transaction and commission stats
     const fetchTransactionData = async () => {
@@ -549,7 +587,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             >
               Overview
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: spacing(3), alignItems: 'stretch' }}>
+            <div style={{ display: 'flex', gap: spacing(3), alignItems: 'flex-start' }}>
+              {/* Left side - Auto-fit grid for regular cards */}
+              <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: spacing(3), alignItems: 'stretch' }}>
               {/* Total Contacts */}
               <Link 
                 href="/contacts"
@@ -893,55 +933,279 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </div>
                 </Link>
               )}
+              </div>
 
-              {/* Calendar Card - Placeholder */}
+              {/* Right side - Calendar and Tasks */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), width: '380px', flexShrink: 0 }}>
+              {/* Calendar Card - Full Calendar View */}
               <div 
                 style={{
                   padding: spacing(3),
                   ...card,
-                  opacity: 0.6,
-                  height: '100%'
+                  display: 'flex',
+                  flexDirection: 'column',
+                  minHeight: '600px'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
-                  <div 
-                    style={{
-                      width: spacing(6),
-                      height: spacing(6),
-                      backgroundColor: colors.iconBg,
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}
-                  >
-                    <Calendar style={{ width: spacing(3), height: spacing(3), color: colors.text.secondary }} />
+                {/* Calendar Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(3) }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                    <Calendar style={{ width: '20px', height: '20px', color: colors.primary }} />
+                    <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: 0 }}>
+                      {calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </h3>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                      Today's Meetings
-                    </p>
-                    <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Coming Soon
-                    </p>
-                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
-                      Google Calendar integration
-                    </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <button
+                      onClick={() => {
+                        const newDate = new Date(calendarDate)
+                        newDate.setMonth(newDate.getMonth() - 1)
+                        setCalendarDate(newDate)
+                      }}
+                      style={{
+                        padding: '4px',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: colors.text.secondary,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '6px',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                      }}
+                    >
+                      <ChevronLeft style={{ width: '18px', height: '18px' }} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const newDate = new Date(calendarDate)
+                        newDate.setMonth(newDate.getMonth() + 1)
+                        setCalendarDate(newDate)
+                      }}
+                      style={{
+                        padding: '4px',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: colors.text.secondary,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '6px',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                      }}
+                    >
+                      <ChevronRight style={{ width: '18px', height: '18px' }} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Calendar Grid */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  {/* Day Headers */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: spacing(1) }}>
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          textAlign: 'center',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          ...text.secondary,
+                          padding: '8px 4px'
+                        }}
+                      >
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Calendar Days */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', flex: 1 }}>
+                    {(() => {
+                      const year = calendarDate.getFullYear()
+                      const month = calendarDate.getMonth()
+                      const firstDay = new Date(year, month, 1)
+                      const lastDay = new Date(year, month + 1, 0)
+                      const startDate = new Date(firstDay)
+                      startDate.setDate(startDate.getDate() - startDate.getDay())
+                      
+                      const days: Array<{ date: Date; isCurrentMonth: boolean; isToday: boolean }> = []
+                      const currentDate = new Date(startDate)
+                      
+                      for (let i = 0; i < 42; i++) {
+                        const isCurrentMonth = currentDate.getMonth() === month
+                        const today = new Date()
+                        const isToday = currentDate.toDateString() === today.toDateString()
+                        
+                        days.push({
+                          date: new Date(currentDate),
+                          isCurrentMonth,
+                          isToday
+                        })
+                        
+                        currentDate.setDate(currentDate.getDate() + 1)
+                      }
+                      
+                      return days.map((day, idx) => {
+                        const dayAppointments = calendarAppointments.filter(apt => {
+                          const aptDate = new Date(apt.date)
+                          return aptDate.toDateString() === day.date.toDateString()
+                        })
+                        
+                        return (
+                          <div
+                            key={idx}
+                            style={{
+                              aspectRatio: '1',
+                              minHeight: '40px',
+                              padding: '4px',
+                              borderRadius: '6px',
+                              backgroundColor: day.isToday 
+                                ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
+                                : 'transparent',
+                              border: day.isToday ? `2px solid ${colors.primary}` : '2px solid transparent',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'flex-start',
+                              cursor: 'pointer',
+                              transition: 'background-color 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!day.isToday) {
+                                (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!day.isToday) {
+                                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                              }
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '12px',
+                                fontWeight: day.isToday ? '700' : '500',
+                                color: day.isCurrentMonth 
+                                  ? (day.isToday ? colors.primary : text.primary.color)
+                                  : text.tertiary.color,
+                                marginBottom: '2px'
+                              }}
+                            >
+                              {day.date.getDate()}
+                            </span>
+                            {dayAppointments.length > 0 && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', width: '100%', alignItems: 'center' }}>
+                                {dayAppointments.slice(0, 2).map((apt, aptIdx) => (
+                                  <div
+                                    key={aptIdx}
+                                    style={{
+                                      width: '100%',
+                                      height: '3px',
+                                      borderRadius: '2px',
+                                      backgroundColor: apt.color || colors.primary,
+                                      fontSize: '8px'
+                                    }}
+                                    title={apt.title}
+                                  />
+                                ))}
+                                {dayAppointments.length > 2 && (
+                                  <span style={{ fontSize: '8px', ...text.tertiary }}>
+                                    +{dayAppointments.length - 2}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })
+                    })()}
+                  </div>
+                </div>
+
+                {/* Today's Appointments */}
+                <div style={{ marginTop: spacing(3), paddingTop: spacing(3), borderTop: `1px solid ${colors.border}` }}>
+                  <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: spacing(2), margin: `0 0 ${spacing(2)} 0` }}>
+                    TODAY
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(2), maxHeight: '200px', overflowY: 'auto' }}>
+                    {(() => {
+                      const today = new Date()
+                      const todayAppointments = calendarAppointments.filter(apt => {
+                        const aptDate = new Date(apt.date)
+                        return aptDate.toDateString() === today.toDateString()
+                      })
+                      
+                      if (todayAppointments.length === 0) {
+                        return (
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: 0, fontStyle: 'italic' }}>
+                            No appointments today
+                          </p>
+                        )
+                      }
+                      
+                      return todayAppointments.map((apt) => (
+                        <div
+                          key={apt.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: spacing(2),
+                            padding: spacing(1.5),
+                            borderRadius: '8px',
+                            backgroundColor: colors.cardHover
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '4px',
+                              height: '100%',
+                              minHeight: '32px',
+                              borderRadius: '2px',
+                              backgroundColor: apt.color || colors.primary,
+                              flexShrink: 0
+                            }}
+                          />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '14px', fontWeight: '500', ...text.primary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {apt.title}
+                            </p>
+                            {apt.time && (
+                              <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
+                                {apt.time}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    })()}
                   </div>
                 </div>
               </div>
 
-              {/* Tasks Card - Placeholder */}
+              {/* Tasks Card - Below Calendar */}
               <div 
                 style={{
                   padding: spacing(3),
                   ...card,
-                  opacity: 0.6,
                   height: '100%'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
                   <div 
                     style={{
                       width: spacing(6),
@@ -954,7 +1218,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       flexShrink: 0
                     }}
                   >
-                    <CheckSquare style={{ width: spacing(3), height: spacing(3), color: colors.text.secondary }} />
+                    <CheckSquare style={{ width: spacing(3), height: spacing(3), color: colors.primary }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
@@ -969,7 +1233,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </div>
                 </div>
               </div>
-
+              </div>
+              
               {/* Quick Stats Card */}
               {quickStats.ytdTotal > 0 || quickStats.pendingCount > 0 ? (
                 <Link 
@@ -1091,8 +1356,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </div>
                 </Link>
               )}
+              </div>
             </div>
-          </div>
 
           {/* Quick Actions */}
           <div style={{ marginBottom: spacing(4) }}>
