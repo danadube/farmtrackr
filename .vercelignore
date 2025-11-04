@@ -1,7 +1,8 @@
 # Vercel Root Directory is set to "farmtrackr-web" in project settings
-# IMPORTANT: Include farmtrackr-web directory BEFORE excluding other files
-# The negation patterns must come first to ensure farmtrackr-web is included
-!farmtrackr-web
-!farmtrackr-web/**
-*
-# Ignore everything else at repository root (but farmtrackr-web is already included above)
+# Only exclude files at the repository root level, not inside farmtrackr-web
+# This allows farmtrackr-web to be included when Root Directory is set
+archive/
+PROJECT-HANDOFF.md
+.cursor/
+.git/
+.DS_Store
