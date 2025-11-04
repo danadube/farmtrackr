@@ -574,7 +574,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
           </div>
 
           {/* Overview Section */}
-          <div style={{ marginBottom: spacing(4) }}>
+          <div style={{ marginTop: spacing(1), marginBottom: spacing(4) }}>
             <h2 
               style={{
                 fontSize: '24px',
