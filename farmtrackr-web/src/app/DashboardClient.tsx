@@ -587,38 +587,78 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             >
               Overview
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: spacing(3), alignItems: 'start' }}>
-              {/* Left side - Auto-fit grid for regular cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: spacing(3), alignItems: 'stretch' }}>
-              {/* Combined Stats Card - Total Contacts, Active Farms, Validation Issues */}
-              <div 
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: spacing(3), alignItems: 'start' }}>
+              {/* Left Column */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3) }}>
+              {/* Google Contacts */}
+              <Link 
+                href="/google-contacts"
                 style={{
+                  display: 'block',
+                  textDecoration: 'none',
                   padding: spacing(3),
                   ...card,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: spacing(3)
+                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
+                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
+                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
                 }}
               >
-                {/* Total Contacts */}
-                <Link 
-                  href="/contacts"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing(2),
-                    textDecoration: 'none',
-                    padding: spacing(2),
-                    borderRadius: '8px',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                  }}
-                >
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                  <div 
+                    style={{
+                      width: spacing(6),
+                      height: spacing(6),
+                      backgroundColor: isDark ? '#1e3a8a' : '#eff6ff',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}
+                  >
+                    <Contact style={{ width: spacing(3), height: spacing(3), color: colors.info || colors.primary }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                      Google Contacts
+                    </p>
+                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                      0
+                    </p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Farm Contacts */}
+              <Link 
+                href="/contacts"
+                style={{
+                  display: 'block',
+                  textDecoration: 'none',
+                  padding: spacing(3),
+                  ...card,
+                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
+                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
+                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
                   <div 
                     style={{
                       width: spacing(6),
@@ -635,36 +675,37 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                      Total Contacts
+                      Farm Contacts
                     </p>
-                    <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
                       {stats.totalContacts}
                     </p>
                   </div>
-                </Link>
+                </div>
+              </Link>
 
-                {/* Divider */}
-                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-3)}` }} />
-
-                {/* Active Farms */}
-                <Link 
-                  href="/google-sheets"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing(2),
-                    textDecoration: 'none',
-                    padding: spacing(2),
-                    borderRadius: '8px',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                  }}
-                >
+              {/* Active Farms */}
+              <Link 
+                href="/google-sheets"
+                style={{
+                  display: 'block',
+                  textDecoration: 'none',
+                  padding: spacing(3),
+                  ...card,
+                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
+                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
+                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
                   <div 
                     style={{
                       width: spacing(6),
@@ -683,39 +724,62 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                       Active Farms
                     </p>
-                    <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
                       {activeFarms.length}
                     </p>
                   </div>
-                </Link>
+                </div>
+              </Link>
 
-                {/* Divider */}
-                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-3)}` }} />
-
-                {/* Validation Issues */}
-                <Link 
-                  href="/data-quality"
+              {/* Farm Chips */}
+              {activeFarms.length > 0 && (
+                <div 
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing(2),
-                    textDecoration: 'none',
-                    padding: spacing(2),
-                    borderRadius: '8px',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                    padding: spacing(3),
+                    ...card
                   }}
                 >
+                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(2), margin: `0 0 ${spacing(2)} 0` }}>
+                    Farms
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {activeFarms.map((farm) => {
+                      const c = getFarmColor(farm)
+                      return (
+                        <span
+                          key={farm}
+                          style={{
+                            padding: '4px 12px',
+                            borderRadius: '9999px',
+                            backgroundColor: c.bg,
+                            border: `1px solid ${c.border}`,
+                            fontSize: '12px',
+                            color: c.text,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {farm}
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Tasks and Reminders */}
+              <div 
+                style={{
+                  padding: spacing(3),
+                  ...card,
+                  flex: 1
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
                   <div 
                     style={{
                       width: spacing(6),
                       height: spacing(6),
-                      backgroundColor: isDark ? '#7f1d1d' : '#fef2f2',
+                      backgroundColor: colors.iconBg,
                       borderRadius: '12px',
                       display: 'flex',
                       alignItems: 'center',
@@ -723,27 +787,25 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       flexShrink: 0
                     }}
                   >
-                    <TrendingUp style={{ width: spacing(3), height: spacing(3), color: issuesCount > 0 ? colors.error : colors.success }} />
+                    <CheckSquare style={{ width: spacing(3), height: spacing(3), color: colors.primary }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                      Validation Issues
+                      Tasks & Reminders
                     </p>
-                    <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0' }}>
-                      {issuesCount}
-                      {issuesCount === 0 && (
-                        <span style={{ fontSize: '12px', marginLeft: '8px', color: colors.success, fontWeight: 600 }}>
-                          Fixed
-                        </span>
-                      )}
+                    <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Coming Soon
                     </p>
                     <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
-                      Errors {errorsCount} • Warnings {warningsCount}
+                      Task management (v0.10.0)
                     </p>
                   </div>
-                </Link>
+                </div>
+              </div>
               </div>
 
+              {/* Middle Column */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3) }}>
               {/* Most Recent Transaction */}
               {recentTransaction && (
                 <Link 
@@ -807,8 +869,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </Link>
               )}
 
-              {/* This Month Commissions */}
-              {thisMonthCommissions.count > 0 && (
+              {/* Quick Stats Card */}
+              {quickStats.ytdTotal > 0 || quickStats.pendingCount > 0 ? (
                 <Link 
                   href="/commissions"
                   style={{
@@ -817,7 +879,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     padding: spacing(3),
                     ...cardWithLeftBorder(colors.warning), // Tangerine for financial cards
                     transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                    height: '100%'
+                    flex: 1
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.boxShadow = isDark 
@@ -835,7 +897,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       style={{
                         width: spacing(6),
                         height: spacing(6),
-                        backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
+                        backgroundColor: isDark ? '#1e3a8a' : '#eff6ff',
                         borderRadius: '12px',
                         display: 'flex',
                         alignItems: 'center',
@@ -843,79 +905,42 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         flexShrink: 0
                       }}
                     >
-                      <DollarSign style={{ width: spacing(3), height: spacing(3), color: colors.success }} />
+                      <TrendingUp style={{ width: spacing(3), height: spacing(3), color: colors.info || colors.primary }} />
                     </div>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                        This Month
+                        Quick Stats
                       </p>
-                      <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
-                        {thisMonthCommissions.count}
-                      </p>
-                      <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
-                        Closed transactions
-                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        {quickStats.ytdTotal > 0 && (
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                            YTD: ${(quickStats.ytdTotal / 1000).toFixed(1)}k
+                          </p>
+                        )}
+                        {quickStats.avgDealSize > 0 && (
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                            Avg: ${(quickStats.avgDealSize / 1000).toFixed(1)}k
+                          </p>
+                        )}
+                        {quickStats.biggestDeal > 0 && (
+                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                            Biggest: ${(quickStats.biggestDeal / 1000).toFixed(1)}k
+                          </p>
+                        )}
+                        {quickStats.pendingCount > 0 && (
+                          <p style={{ fontSize: '12px', color: colors.warning, margin: '4px 0 0 0', fontWeight: '600' }}>
+                            {quickStats.pendingCount} pending
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Link>
-              )}
-
-              {/* Upcoming Closings */}
-              {upcomingClosings > 0 && (
-                <Link 
-                  href="/commissions"
-                  style={{
-                    display: 'block',
-                    textDecoration: 'none',
-                    padding: spacing(3),
-                    ...card,
-                    transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                    height: '100%'
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.boxShadow = isDark 
-                      ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
-                      : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                    ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                    ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
-                    <div 
-                      style={{
-                        width: spacing(6),
-                        height: spacing(6),
-                        backgroundColor: isDark ? '#7c2d12' : '#fff7ed',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}
-                    >
-                      <Clock style={{ width: spacing(3), height: spacing(3), color: colors.warning }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                        Upcoming Closings
-                      </p>
-                      <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
-                        {upcomingClosings}
-                      </p>
-                      <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
-                        Next 14 days
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              )}
+              ) : null}
               </div>
 
-              {/* Right side - Calendar and Tasks (same size as contact card, all the way right) */}
-              <div style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: spacing(3) }}>
+              {/* Right Column */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3) }}>
               {/* Calendar Card - Full Calendar View */}
               <div 
                 style={{
@@ -1175,46 +1200,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </div>
                 </div>
               </div>
-
-              {/* Tasks Card - Below Calendar */}
-              <div 
-                style={{
-                  padding: spacing(3),
-                  ...card,
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
-                  <div 
-                    style={{
-                      width: spacing(6),
-                      height: spacing(6),
-                      backgroundColor: colors.iconBg,
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}
-                  >
-                    <CheckSquare style={{ width: spacing(3), height: spacing(3), color: colors.primary }} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                      Tasks & Reminders
-                    </p>
-                    <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Coming Soon
-                    </p>
-                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
-                      Task management (v0.10.0)
-                    </p>
-                  </div>
-                </div>
               </div>
-              </div>
+            </div>
               
               {/* Quick Stats Card */}
               {quickStats.ytdTotal > 0 || quickStats.pendingCount > 0 ? (
