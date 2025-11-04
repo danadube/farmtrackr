@@ -588,8 +588,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               Overview
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: spacing(3), alignItems: 'start' }}>
-              {/* Left Column */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3) }}>
+              {/* Left Column - Row 1 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridColumn: '1', gridRow: '1' }}>
               {/* Combined Stats Card - Google Contacts, Farm Contacts, Active Farms */}
               <div 
                 style={{
@@ -737,8 +737,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               </div>
               </div>
 
-              {/* Middle Column */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3) }}>
+              {/* Middle Column - Row 1 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridColumn: '2', gridRow: '1' }}>
               {/* Most Recent Transaction */}
               {recentTransaction && (
                 <Link 
@@ -872,13 +872,14 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               ) : null}
               </div>
 
-              {/* Farms Card - Spans columns 1 and 2, same size as Tasks */}
+              {/* Farms Card - Spans columns 1 and 2, same size as Tasks - Row 2 */}
               {activeFarms.length > 0 && (
                 <div 
                   style={{
                     padding: spacing(3),
                     ...card,
-                    gridColumn: '1 / span 2'
+                    gridColumn: '1 / span 2',
+                    gridRow: '2'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
@@ -926,12 +927,13 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
               )}
 
-              {/* Tasks and Reminders - Spans columns 1 and 2 */}
+              {/* Tasks and Reminders - Spans columns 1 and 2 - Row 3 */}
               <div 
                 style={{
                   padding: spacing(3),
                   ...card,
-                  gridColumn: '1 / span 2'
+                  gridColumn: '1 / span 2',
+                  gridRow: '3'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
@@ -963,15 +965,15 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
               </div>
 
-              {/* Right Column - Starts at row 1, spans 2 rows to align with calendar and today */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridColumn: '3', gridRow: '1 / span 2' }}>
-              {/* Calendar Card - Full Calendar View */}
+              {/* Calendar Card - Row 1, Column 3 */}
               <div 
                 style={{
                   padding: spacing(3),
                   ...card,
                   display: 'flex',
                   flexDirection: 'column',
+                  gridColumn: '3',
+                  gridRow: '1',
                   flex: 1
                 }}
               >
