@@ -590,14 +590,14 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: spacing(3), alignItems: 'start' }}>
               {/* Left Column */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3) }}>
-              {/* Combined Stats Card - Google Contacts, Farm Contacts, Active Farms, Farm Chips */}
+              {/* Combined Stats Card - Google Contacts, Farm Contacts, Active Farms */}
               <div 
                 style={{
-                  padding: spacing(3),
+                  padding: spacing(2.5),
                   ...card,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: spacing(3)
+                  gap: spacing(2)
                 }}
               >
                 {/* Google Contacts */}
@@ -644,7 +644,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </Link>
 
                 {/* Divider */}
-                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-3)}` }} />
+                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-2.5)}` }} />
 
                 {/* Farm Contacts */}
                 <Link 
@@ -690,7 +690,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </Link>
 
                 {/* Divider */}
-                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-3)}` }} />
+                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-2.5)}` }} />
 
                 {/* Active Farms */}
                 <Link 
@@ -734,41 +734,6 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     </p>
                   </div>
                 </Link>
-
-                {/* Divider */}
-                {activeFarms.length > 0 && (
-                  <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-3)}` }} />
-                )}
-
-                {/* Farm Chips */}
-                {activeFarms.length > 0 && (
-                  <div>
-                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(2), margin: `0 0 ${spacing(2)} 0` }}>
-                      Farms
-                    </p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {activeFarms.map((farm) => {
-                        const c = getFarmColor(farm)
-                        return (
-                          <span
-                            key={farm}
-                            style={{
-                              padding: '4px 12px',
-                              borderRadius: '9999px',
-                              backgroundColor: c.bg,
-                              border: `1px solid ${c.border}`,
-                              fontSize: '12px',
-                              color: c.text,
-                              fontWeight: 600,
-                            }}
-                          >
-                            {farm}
-                          </span>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
               </div>
 
@@ -907,6 +872,60 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               ) : null}
               </div>
 
+              {/* Farms Card - Spans columns 1 and 2, same size as Tasks */}
+              {activeFarms.length > 0 && (
+                <div 
+                  style={{
+                    padding: spacing(3),
+                    ...card,
+                    gridColumn: '1 / span 2'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
+                    <div 
+                      style={{
+                        width: spacing(6),
+                        height: spacing(6),
+                        backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <Building2 style={{ width: spacing(3), height: spacing(3), color: colors.success }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(2), margin: `0 0 ${spacing(2)} 0` }}>
+                        Farms
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {activeFarms.map((farm) => {
+                          const c = getFarmColor(farm)
+                          return (
+                            <span
+                              key={farm}
+                              style={{
+                                padding: '4px 12px',
+                                borderRadius: '9999px',
+                                backgroundColor: c.bg,
+                                border: `1px solid ${c.border}`,
+                                fontSize: '12px',
+                                color: c.text,
+                                fontWeight: 600,
+                              }}
+                            >
+                              {farm}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Tasks and Reminders - Spans columns 1 and 2 */}
               <div 
                 style={{
@@ -945,7 +964,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               </div>
 
               {/* Right Column */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3) }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridRow: '1 / span 2' }}>
               {/* Calendar Card - Full Calendar View */}
               <div 
                 style={{
