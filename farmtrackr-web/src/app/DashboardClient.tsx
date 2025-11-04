@@ -587,9 +587,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             >
               Overview
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: spacing(3), alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: spacing(3), alignItems: 'stretch' }}>
               {/* Left Column - Row 1 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridColumn: '1', gridRow: '1' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridColumn: '1', gridRow: '1', height: '100%' }}>
               {/* Combined Stats Card - Google Contacts, Farm Contacts, Active Farms */}
               <div 
                 style={{
@@ -597,7 +597,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   ...card,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: spacing(2)
+                  gap: spacing(2),
+                  flex: 1,
+                  justifyContent: 'space-between'
                 }}
               >
                 {/* Google Contacts */}
@@ -738,7 +740,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               </div>
 
               {/* Middle Column - Row 1 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridColumn: '2', gridRow: '1' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridColumn: '2', gridRow: '1', height: '100%' }}>
               {/* Most Recent Transaction */}
               {recentTransaction && (
                 <Link 
@@ -749,7 +751,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     padding: spacing(3),
                     ...cardWithLeftBorder(colors.info), // Sky Blue for transaction cards
                     transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                    height: '100%'
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column'
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.boxShadow = isDark 
@@ -812,7 +816,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     padding: spacing(3),
                     ...cardWithLeftBorder(colors.warning), // Tangerine for financial cards
                     transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                    flex: 1
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column'
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.boxShadow = isDark 
@@ -974,7 +980,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   flexDirection: 'column',
                   gridColumn: '3',
                   gridRow: '1',
-                  flex: 1
+                  height: '100%'
                 }}
               >
                 {/* Calendar Header */}
