@@ -1021,7 +1021,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '350px' }}>
                   {/* Day Headers */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginBottom: spacing(1) }}>
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
+                    {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day, idx) => (
                       <div
                         key={idx}
                         style={{
@@ -1140,64 +1140,71 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     })()}
                   </div>
                 </div>
+              </div>
 
-                {/* Today's Appointments */}
-                <div style={{ marginTop: 'auto', paddingTop: spacing(2), borderTop: `1px solid ${colors.border}` }}>
-                  <h4 style={{ fontSize: '13px', fontWeight: '600', ...text.primary, marginBottom: spacing(1.5), margin: `0 0 ${spacing(1.5)} 0` }}>
-                    TODAY
-                  </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), maxHeight: '120px', overflowY: 'auto' }}>
-                    {(() => {
-                      const today = new Date()
-                      const todayAppointments = calendarAppointments.filter(apt => {
-                        const aptDate = new Date(apt.date)
-                        return aptDate.toDateString() === today.toDateString()
-                      })
-                      
-                      if (todayAppointments.length === 0) {
-                        return (
-                          <p style={{ fontSize: '12px', ...text.tertiary, margin: 0, fontStyle: 'italic' }}>
-                            No appointments today
-                          </p>
-                        )
-                      }
-                      
-                      return todayAppointments.map((apt) => (
+              {/* Today Card - Separate card below calendar */}
+              <div 
+                style={{
+                  padding: spacing(3),
+                  ...card,
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
+                <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: spacing(2), margin: `0 0 ${spacing(2)} 0` }}>
+                  Today
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(2), maxHeight: '200px', overflowY: 'auto' }}>
+                  {(() => {
+                    const today = new Date()
+                    const todayAppointments = calendarAppointments.filter(apt => {
+                      const aptDate = new Date(apt.date)
+                      return aptDate.toDateString() === today.toDateString()
+                    })
+                    
+                    if (todayAppointments.length === 0) {
+                      return (
+                        <p style={{ fontSize: '12px', ...text.tertiary, margin: 0, fontStyle: 'italic' }}>
+                          No appointments today
+                        </p>
+                      )
+                    }
+                    
+                    return todayAppointments.map((apt) => (
+                      <div
+                        key={apt.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: spacing(2),
+                          padding: spacing(1.5),
+                          borderRadius: '6px',
+                          backgroundColor: colors.cardHover
+                        }}
+                      >
                         <div
-                          key={apt.id}
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: spacing(1.5),
-                            padding: spacing(1.5),
-                            borderRadius: '6px',
-                            backgroundColor: colors.cardHover
+                            width: '3px',
+                            height: '100%',
+                            minHeight: '32px',
+                            borderRadius: '2px',
+                            backgroundColor: apt.color || colors.primary,
+                            flexShrink: 0
                           }}
-                        >
-                          <div
-                            style={{
-                              width: '3px',
-                              height: '100%',
-                              minHeight: '28px',
-                              borderRadius: '2px',
-                              backgroundColor: apt.color || colors.primary,
-                              flexShrink: 0
-                            }}
-                          />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: '13px', fontWeight: '500', ...text.primary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {apt.title}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '14px', fontWeight: '500', ...text.primary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {apt.title}
+                          </p>
+                          {apt.time && (
+                            <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
+                              {apt.time}
                             </p>
-                            {apt.time && (
-                              <p style={{ fontSize: '11px', ...text.tertiary, margin: '3px 0 0 0' }}>
-                                {apt.time}
-                              </p>
-                            )}
-                          </div>
+                          )}
                         </div>
-                      ))
-                    })()}
-                  </div>
+                      </div>
+                    ))
+                  })()}
                 </div>
               </div>
               </div>
