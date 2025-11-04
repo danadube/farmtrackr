@@ -1179,7 +1179,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               {/* Today Card - Row 2, Column 3 */}
               <div 
                 style={{
-                  padding: spacing(3),
+                  padding: spacing(2),
                   ...card,
                   display: 'flex',
                   flexDirection: 'column',
@@ -1187,10 +1187,10 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   gridRow: '2'
                 }}
               >
-                <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: spacing(2), margin: `0 0 ${spacing(2)} 0` }}>
+                <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: spacing(1.5), margin: `0 0 ${spacing(1.5)} 0` }}>
                   Today
                 </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(2), maxHeight: '200px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), maxHeight: '200px', overflowY: 'auto' }}>
                   {(() => {
                     const today = new Date()
                     const todayAppointments = calendarAppointments.filter(apt => {
