@@ -1,6 +1,0 @@
-.vercel
-
-/generated/prisma
-.env*.local
-.env.production
-.next/
