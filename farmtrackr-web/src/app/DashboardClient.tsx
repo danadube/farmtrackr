@@ -594,7 +594,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               <div 
                 style={{
                   padding: spacing(2),
-                  ...card,
+                  ...cardWithLeftBorder(colors.primary), // Green sidebar
                   display: 'flex',
                   flexDirection: 'column',
                   gap: spacing(1.5),
@@ -759,11 +759,23 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     (e.currentTarget as HTMLElement).style.boxShadow = isDark 
                       ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
                       : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                    ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
+                    // Preserve left border color, only change other borders
+                    const computed = window.getComputedStyle(e.currentTarget)
+                    const leftBorderColor = computed.borderLeftColor
+                    ;(e.currentTarget as HTMLElement).style.borderTopColor = colors.primary
+                    ;(e.currentTarget as HTMLElement).style.borderRightColor = colors.primary
+                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = colors.primary
+                    ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                    ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
+                    // Preserve left border color, restore other borders
+                    const computed = window.getComputedStyle(e.currentTarget)
+                    const leftBorderColor = computed.borderLeftColor
+                    ;(e.currentTarget as HTMLElement).style.borderTopColor = colors.border
+                    ;(e.currentTarget as HTMLElement).style.borderRightColor = colors.border
+                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = colors.border
+                    ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
@@ -824,11 +836,23 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     (e.currentTarget as HTMLElement).style.boxShadow = isDark 
                       ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
                       : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                    ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
+                    // Preserve left border color, only change other borders
+                    const computed = window.getComputedStyle(e.currentTarget)
+                    const leftBorderColor = computed.borderLeftColor
+                    ;(e.currentTarget as HTMLElement).style.borderTopColor = colors.primary
+                    ;(e.currentTarget as HTMLElement).style.borderRightColor = colors.primary
+                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = colors.primary
+                    ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                    ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
+                    // Preserve left border color, restore other borders
+                    const computed = window.getComputedStyle(e.currentTarget)
+                    const leftBorderColor = computed.borderLeftColor
+                    ;(e.currentTarget as HTMLElement).style.borderTopColor = colors.border
+                    ;(e.currentTarget as HTMLElement).style.borderRightColor = colors.border
+                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = colors.border
+                    ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
@@ -883,7 +907,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 <div 
                   style={{
                     padding: spacing(2),
-                    ...card,
+                    ...cardWithLeftBorder(colors.success), // Green sidebar
                     gridColumn: '1 / span 2',
                     gridRow: '2',
                     display: 'flex',
@@ -939,7 +963,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               <div 
                 style={{
                   padding: spacing(2),
-                  ...card,
+                  ...cardWithLeftBorder(colors.primary), // Green sidebar
                   gridColumn: '1 / span 2',
                   gridRow: '3',
                   display: 'flex',
@@ -979,7 +1003,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               <div 
                 style={{
                   padding: spacing(2),
-                  ...card,
+                  ...cardWithLeftBorder(colors.info || colors.primary), // Sky Blue sidebar
                   display: 'flex',
                   flexDirection: 'column',
                   gridColumn: '3',
@@ -1186,7 +1210,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               <div 
                 style={{
                   padding: spacing(2),
-                  ...card,
+                  ...cardWithLeftBorder(colors.info || colors.primary), // Sky Blue sidebar
                   display: 'flex',
                   flexDirection: 'column',
                   gridColumn: '3',
