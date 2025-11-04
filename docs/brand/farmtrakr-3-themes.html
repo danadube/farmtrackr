@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmTrakr - 3 Brand Theme Options</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Comfortaa:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700;800&family=Raleway:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Josefin+Sans:wght@300;400;500;600;700&family=Karla:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: #f5f5f5;
+            padding: 32px 16px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Master Header */
+        .master-header {
+            text-align: center;
+            margin-bottom: 64px;
+            background: white;
+            padding: 48px 32px;
+            border-radius: 24px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+
+        .master-title {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 56px;
+            font-weight: 700;
+            color: #2d5016;
+            margin-bottom: 16px;
+        }
+
+        .master-subtitle {
+            font-size: 20px;
+            color: #666;
+            max-width: 800px;
+            margin: 0 auto 24px;
+            line-height: 1.6;
+        }
+
+        .theme-comparison {
+            display: grid;
+            gap: 48px;
+        }
+
+        /* Theme Card Container */
+        .theme-card {
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        }
+
+        .theme-header {
+            padding: 40px;
+            color: white;
+            position: relative;
+        }
+
+        .theme-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .theme-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .theme-description {
+            font-size: 18px;
+            opacity: 0.95;
+            line-height: 1.6;
+        }
+
+        /* Theme Content Area */
+        .theme-content {
+            padding: 40px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #333;
+        }
+
+        /* Font Showcase */
+        .font-showcase {
+            background: #f8f9fa;
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+        }
+
+        .font-pair {
+            margin-bottom: 32px;
+        }
+
+        .font-pair:last-child {
+            margin-bottom: 0;
+        }
+
+        .font-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .font-example {
+            padding: 16px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .font-example:last-child {
+            border-bottom: none;
+        }
+
+        /* Color Palette */
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .color-swatch {
+            border-radius: 16px;
+            padding: 24px 16px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .color-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .color-value {
+            font-size: 11px;
+            opacity: 0.85;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Dashboard Examples */
+        .dashboard-preview {
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 32px;
+        }
+
+        .preview-header {
+            padding: 40px 48px;
+            position: relative;
+        }
+
+        .preview-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-size: 32px;
+        }
+
+        .preview-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .preview-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .preview-datetime {
+            position: absolute;
+            top: 40px;
+            right: 48px;
+            text-align: right;
+        }
+
+        .preview-day {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+
+        .preview-date {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .preview-time {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .preview-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            padding: 32px;
+            background: #f8f9fa;
+        }
+
+        .preview-card {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            border-left: 4px solid;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .preview-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-size: 24px;
+        }
+
+        .preview-card-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .preview-card-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .preview-card-meta {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* ========================================
+           THEME 1: NATURAL HARVEST
+           Warm, earthy, organic with soft curves
+        ======================================== */
+
+        .theme-natural .theme-header {
+            background: linear-gradient(135deg, #4a7c2f 0%, #6b9b4a 100%);
+        }
+
+        .theme-natural .font-showcase {
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        .theme-natural .heading-example {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 42px;
+            font-weight: 700;
+            color: #4a7c2f;
+        }
+
+        .theme-natural .body-example {
+            font-family: 'Nunito', sans-serif;
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .theme-natural .preview-header {
+            background: linear-gradient(135deg, #4a7c2f 0%, #6b9b4a 100%);
+            color: white;
+        }
+
+        .theme-natural .preview-icon {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .theme-natural .preview-title {
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        .theme-natural .preview-day {
+            color: #f4c542;
+        }
+
+        .theme-natural .card-harvest {
+            border-left-color: #f4c542;
+        }
+
+        .theme-natural .card-harvest .preview-card-icon {
+            background: rgba(244, 197, 66, 0.15);
+            color: #f4c542;
+        }
+
+        .theme-natural .card-sprout {
+            border-left-color: #7ec850;
+        }
+
+        .theme-natural .card-sprout .preview-card-icon {
+            background: rgba(126, 200, 80, 0.15);
+            color: #7ec850;
+        }
+
+        .theme-natural .card-sky {
+            border-left-color: #5ba3d0;
+        }
+
+        .theme-natural .card-sky .preview-card-icon {
+            background: rgba(91, 163, 208, 0.15);
+            color: #5ba3d0;
+        }
+
+        /* ========================================
+           THEME 2: FRESH MEADOW
+           Bright, modern, energetic with rounded fonts
+        ======================================== */
+
+        .theme-fresh .theme-header {
+            background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+        }
+
+        .theme-fresh .font-showcase {
+            font-family: 'Comfortaa', sans-serif;
+        }
+
+        .theme-fresh .heading-example {
+            font-family: 'Comfortaa', sans-serif;
+            font-size: 42px;
+            font-weight: 700;
+            color: #4caf50;
+        }
+
+        .theme-fresh .body-example {
+            font-family: 'Raleway', sans-serif;
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .theme-fresh .preview-header {
+            background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+            color: white;
+        }
+
+        .theme-fresh .preview-icon {
+            background: rgba(255, 255, 255, 0.25);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .theme-fresh .preview-title {
+            font-family: 'Comfortaa', sans-serif;
+        }
+
+        .theme-fresh .preview-day {
+            color: #ffd54f;
+        }
+
+        .theme-fresh .card-primary {
+            border-left-color: #4caf50;
+        }
+
+        .theme-fresh .card-primary .preview-card-icon {
+            background: rgba(76, 175, 80, 0.15);
+            color: #4caf50;
+        }
+
+        .theme-fresh .card-accent {
+            border-left-color: #ffd54f;
+        }
+
+        .theme-fresh .card-accent .preview-card-icon {
+            background: rgba(255, 213, 79, 0.25);
+            color: #f9a825;
+        }
+
+        .theme-fresh .card-info {
+            border-left-color: #42a5f5;
+        }
+
+        .theme-fresh .card-info .preview-card-icon {
+            background: rgba(66, 165, 245, 0.15);
+            color: #42a5f5;
+        }
+
+        /* ========================================
+           THEME 3: GOLDEN FIELDS
+           Warm, elegant, premium with curved serifs
+        ======================================== */
+
+        .theme-golden .theme-header {
+            background: linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%);
+        }
+
+        .theme-golden .font-showcase {
+            font-family: 'Josefin Sans', sans-serif;
+        }
+
+        .theme-golden .heading-example {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 42px;
+            font-weight: 600;
+            color: #6d4c41;
+        }
+
+        .theme-golden .body-example {
+            font-family: 'Karla', sans-serif;
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .theme-golden .preview-header {
+            background: linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%);
+            color: white;
+        }
+
+        .theme-golden .preview-icon {
+            background: rgba(244, 197, 66, 0.25);
+            border: 2px solid rgba(244, 197, 66, 0.5);
+        }
+
+        .theme-golden .preview-title {
+            font-family: 'Josefin Sans', sans-serif;
+        }
+
+        .theme-golden .preview-day {
+            color: #ffb74d;
+        }
+
+        .theme-golden .card-gold {
+            border-left-color: #ffa726;
+        }
+
+        .theme-golden .card-gold .preview-card-icon {
+            background: rgba(255, 167, 38, 0.15);
+            color: #ffa726;
+        }
+
+        .theme-golden .card-earth {
+            border-left-color: #8d6e63;
+        }
+
+        .theme-golden .card-earth .preview-card-icon {
+            background: rgba(141, 110, 99, 0.15);
+            color: #8d6e63;
+        }
+
+        .theme-golden .card-sage {
+            border-left-color: #81c784;
+        }
+
+        .theme-golden .card-sage .preview-card-icon {
+            background: rgba(129, 199, 132, 0.15);
+            color: #81c784;
+        }
+
+        /* Additional Elements */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 24px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .feature-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- Master Header -->
+        <div class="master-header">
+            <h1 class="master-title">FarmTrakr Brand Themes</h1>
+            <p class="master-subtitle">
+                Three warm, inviting design directions that make agents excited to use the app every day. 
+                Each features soft, curved typography and welcoming color palettes.
+            </p>
+        </div>
+
+        <div class="theme-comparison">
+            
+            <!-- ========================================
+                 THEME 1: NATURAL HARVEST
+            ======================================== -->
+            <div class="theme-card theme-natural">
+                <div class="theme-header">
+                    <span class="theme-badge">Option 1</span>
+                    <h2 class="theme-title" style="font-family: 'Quicksand', sans-serif;">Natural Harvest</h2>
+                    <p class="theme-description">
+                        Earthy, organic, and grounded. Warm forest greens with golden harvest accents. 
+                        Features rounded sans-serifs for friendly approachability.
+                    </p>
+                </div>
+
+                <div class="theme-content">
+                    <!-- Typography -->
+                    <h3 class="section-title">Typography</h3>
+                    <div class="font-showcase">
+                        <div class="font-pair">
+                            <div class="font-label">Heading Font: Quicksand</div>
+                            <div class="font-example heading-example">
+                                Welcome back to FarmTrakr
+                            </div>
+                            <div class="font-example" style="font-family: 'Quicksand', sans-serif; font-size: 24px; font-weight: 600; color: #666;">
+                                Soft curves and friendly letterforms
+                            </div>
+                            <div class="font-example" style="font-family: 'Quicksand', sans-serif; font-size: 18px; color: #999;">
+                                Perfect for dashboard headers and section titles
+                            </div>
+                        </div>
+
+                        <div class="font-pair">
+                            <div class="font-label">Body Font: Nunito</div>
+                            <div class="font-example body-example">
+                                Nunito provides excellent readability with rounded terminals that complement 
+                                Quicksand perfectly. It feels warm and welcoming without sacrificing clarity.
+                            </div>
+                            <div class="font-example" style="font-family: 'Nunito', sans-serif; font-size: 14px; color: #666;">
+                                Great for labels, descriptions, and all body text throughout the app.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color Palette -->
+                    <h3 class="section-title">Color Palette</h3>
+                    <div class="color-palette">
+                        <div class="color-swatch" style="background: #4a7c2f;">
+                            <div class="color-name">Forest</div>
+                            <div class="color-value">#4a7c2f</div>
+                        </div>
+                        <div class="color-swatch" style="background: #6b9b4a;">
+                            <div class="color-name">Meadow</div>
+                            <div class="color-value">#6b9b4a</div>
+                        </div>
+                        <div class="color-swatch" style="background: #f4c542; color: #333;">
+                            <div class="color-name">Harvest</div>
+                            <div class="color-value">#f4c542</div>
+                        </div>
+                        <div class="color-swatch" style="background: #7ec850;">
+                            <div class="color-name">Sprout</div>
+                            <div class="color-value">#7ec850</div>
+                        </div>
+                        <div class="color-swatch" style="background: #5ba3d0;">
+                            <div class="color-name">Sky</div>
+                            <div class="color-value">#5ba3d0</div>
+                        </div>
+                        <div class="color-swatch" style="background: #d4957a; color: #333;">
+                            <div class="color-name">Clay</div>
+                            <div class="color-value">#d4957a</div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Preview -->
+                    <h3 class="section-title">Dashboard Example</h3>
+                    <div class="dashboard-preview">
+                        <div class="preview-header">
+                            <div class="preview-icon">🏡</div>
+                            <div class="preview-title">Welcome back</div>
+                            <div class="preview-subtitle">Manage your farm contacts and operations efficiently</div>
+                            
+                            <div class="preview-datetime">
+                                <div class="preview-day">SUNDAY</div>
+                                <div class="preview-date">November 2, 2025</div>
+                                <div class="preview-time">5:34 PM</div>
+                            </div>
+                        </div>
+
+                        <div class="preview-cards">
+                            <div class="preview-card card-harvest">
+                                <div class="preview-card-icon">💰</div>
+                                <div class="preview-card-label">Total Contacts</div>
+                                <div class="preview-card-value">115</div>
+                                <div class="preview-card-meta">+12 this month</div>
+                            </div>
+
+                            <div class="preview-card card-sprout">
+                                <div class="preview-card-icon">🌱</div>
+                                <div class="preview-card-label">Active Farms</div>
+                                <div class="preview-card-value">5</div>
+                                <div class="preview-card-meta">All verified</div>
+                            </div>
+
+                            <div class="preview-card card-sky">
+                                <div class="preview-card-icon">📊</div>
+                                <div class="preview-card-label">Recent Transaction</div>
+                                <div class="preview-card-value">$11,949</div>
+                                <div class="preview-card-meta">Sunrise Mountain View</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personality -->
+                    <h3 class="section-title">Brand Personality</h3>
+                    <div class="feature-grid">
+                        <div class="feature-item">
+                            <div class="feature-icon">🌿</div>
+                            <div class="feature-label">Organic</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🤝</div>
+                            <div class="feature-label">Trustworthy</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🌾</div>
+                            <div class="feature-label">Rooted</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">☀️</div>
+                            <div class="feature-label">Warm</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================
+                 THEME 2: FRESH MEADOW
+            ======================================== -->
+            <div class="theme-card theme-fresh">
+                <div class="theme-header">
+                    <span class="theme-badge">Option 2</span>
+                    <h2 class="theme-title" style="font-family: 'Comfortaa', sans-serif;">Fresh Meadow</h2>
+                    <p class="theme-description">
+                        Bright, modern, and energetic. Vibrant greens with sunny yellow highlights. 
+                        Features highly rounded fonts for maximum friendliness.
+                    </p>
+                </div>
+
+                <div class="theme-content">
+                    <!-- Typography -->
+                    <h3 class="section-title">Typography</h3>
+                    <div class="font-showcase">
+                        <div class="font-pair">
+                            <div class="font-label">Heading Font: Comfortaa</div>
+                            <div class="font-example heading-example">
+                                Welcome back to FarmTrakr
+                            </div>
+                            <div class="font-example" style="font-family: 'Comfortaa', sans-serif; font-size: 24px; font-weight: 600; color: #666;">
+                                Extremely rounded and friendly
+                            </div>
+                            <div class="font-example" style="font-family: 'Comfortaa', sans-serif; font-size: 18px; color: #999;">
+                                Makes every interaction feel warm and approachable
+                            </div>
+                        </div>
+
+                        <div class="font-pair">
+                            <div class="font-label">Body Font: Raleway</div>
+                            <div class="font-example body-example">
+                                Raleway balances Comfortaa's roundness with elegant proportions. Clean, 
+                                professional, yet maintains a friendly demeanor for everyday use.
+                            </div>
+                            <div class="font-example" style="font-family: 'Raleway', sans-serif; font-size: 14px; color: #666;">
+                                Excellent for longer text passages and data-heavy interfaces.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color Palette -->
+                    <h3 class="section-title">Color Palette</h3>
+                    <div class="color-palette">
+                        <div class="color-swatch" style="background: #4caf50;">
+                            <div class="color-name">Fresh Green</div>
+                            <div class="color-value">#4caf50</div>
+                        </div>
+                        <div class="color-swatch" style="background: #66bb6a;">
+                            <div class="color-name">Light Green</div>
+                            <div class="color-value">#66bb6a</div>
+                        </div>
+                        <div class="color-swatch" style="background: #ffd54f; color: #333;">
+                            <div class="color-name">Sunny</div>
+                            <div class="color-value">#ffd54f</div>
+                        </div>
+                        <div class="color-swatch" style="background: #42a5f5;">
+                            <div class="color-name">Sky</div>
+                            <div class="color-value">#42a5f5</div>
+                        </div>
+                        <div class="color-swatch" style="background: #26c6da;">
+                            <div class="color-name">Aqua</div>
+                            <div class="color-value">#26c6da</div>
+                        </div>
+                        <div class="color-swatch" style="background: #c8e6c9; color: #333;">
+                            <div class="color-name">Mint</div>
+                            <div class="color-value">#c8e6c9</div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Preview -->
+                    <h3 class="section-title">Dashboard Example</h3>
+                    <div class="dashboard-preview">
+                        <div class="preview-header">
+                            <div class="preview-icon">🏡</div>
+                            <div class="preview-title">Welcome back</div>
+                            <div class="preview-subtitle">Manage your farm contacts and operations efficiently</div>
+                            
+                            <div class="preview-datetime">
+                                <div class="preview-day">SUNDAY</div>
+                                <div class="preview-date">November 2, 2025</div>
+                                <div class="preview-time">5:34 PM</div>
+                            </div>
+                        </div>
+
+                        <div class="preview-cards">
+                            <div class="preview-card card-primary">
+                                <div class="preview-card-icon">👥</div>
+                                <div class="preview-card-label">Total Contacts</div>
+                                <div class="preview-card-value">115</div>
+                                <div class="preview-card-meta">+12 this month</div>
+                            </div>
+
+                            <div class="preview-card card-accent">
+                                <div class="preview-card-icon">⭐</div>
+                                <div class="preview-card-label">Active Farms</div>
+                                <div class="preview-card-value">5</div>
+                                <div class="preview-card-meta">All verified</div>
+                            </div>
+
+                            <div class="preview-card card-info">
+                                <div class="preview-card-icon">💵</div>
+                                <div class="preview-card-label">Recent Transaction</div>
+                                <div class="preview-card-value">$11,949</div>
+                                <div class="preview-card-meta">Sunrise Mountain View</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personality -->
+                    <h3 class="section-title">Brand Personality</h3>
+                    <div class="feature-grid">
+                        <div class="feature-item">
+                            <div class="feature-icon">✨</div>
+                            <div class="feature-label">Energetic</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">😊</div>
+                            <div class="feature-label">Friendly</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🚀</div>
+                            <div class="feature-label">Modern</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">💚</div>
+                            <div class="feature-label">Optimistic</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================
+                 THEME 3: GOLDEN FIELDS
+            ======================================== -->
+            <div class="theme-card theme-golden">
+                <div class="theme-header">
+                    <span class="theme-badge">Option 3</span>
+                    <h2 class="theme-title" style="font-family: 'Josefin Sans', sans-serif;">Golden Fields</h2>
+                    <p class="theme-description">
+                        Warm, elegant, and premium. Rich earth tones with golden harvest highlights. 
+                        Features elegant rounded serifs for sophistication with warmth.
+                    </p>
+                </div>
+
+                <div class="theme-content">
+                    <!-- Typography -->
+                    <h3 class="section-title">Typography</h3>
+                    <div class="font-showcase">
+                        <div class="font-pair">
+                            <div class="font-label">Heading Font: Josefin Sans</div>
+                            <div class="font-example heading-example">
+                                Welcome back to FarmTrakr
+                            </div>
+                            <div class="font-example" style="font-family: 'Josefin Sans', sans-serif; font-size: 24px; font-weight: 600; color: #666;">
+                                Elegant with subtle curves and personality
+                            </div>
+                            <div class="font-example" style="font-family: 'Josefin Sans', sans-serif; font-size: 18px; color: #999;">
+                                Sophisticated yet approachable for premium feel
+                            </div>
+                        </div>
+
+                        <div class="font-pair">
+                            <div class="font-label">Body Font: Karla</div>
+                            <div class="font-example body-example">
+                                Karla brings warmth and clarity with its humanist design. Slightly rounded 
+                                terminals create a friendly tone while maintaining excellent readability.
+                            </div>
+                            <div class="font-example" style="font-family: 'Karla', sans-serif; font-size: 14px; color: #666;">
+                                Perfect balance of professionalism and approachability.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color Palette -->
+                    <h3 class="section-title">Color Palette</h3>
+                    <div class="color-palette">
+                        <div class="color-swatch" style="background: #6d4c41;">
+                            <div class="color-name">Earth</div>
+                            <div class="color-value">#6d4c41</div>
+                        </div>
+                        <div class="color-swatch" style="background: #8d6e63;">
+                            <div class="color-name">Clay</div>
+                            <div class="color-value">#8d6e63</div>
+                        </div>
+                        <div class="color-swatch" style="background: #ffa726; color: #333;">
+                            <div class="color-name">Golden</div>
+                            <div class="color-value">#ffa726</div>
+                        </div>
+                        <div class="color-swatch" style="background: #81c784;">
+                            <div class="color-name">Sage</div>
+                            <div class="color-value">#81c784</div>
+                        </div>
+                        <div class="color-swatch" style="background: #ffb74d; color: #333;">
+                            <div class="color-name">Wheat</div>
+                            <div class="color-value">#ffb74d</div>
+                        </div>
+                        <div class="color-swatch" style="background: #a1887f;">
+                            <div class="color-name">Sand</div>
+                            <div class="color-value">#a1887f</div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Preview -->
+                    <h3 class="section-title">Dashboard Example</h3>
+                    <div class="dashboard-preview">
+                        <div class="preview-header">
+                            <div class="preview-icon">🏡</div>
+                            <div class="preview-title">Welcome back</div>
+                            <div class="preview-subtitle">Manage your farm contacts and operations efficiently</div>
+                            
+                            <div class="preview-datetime">
+                                <div class="preview-day">SUNDAY</div>
+                                <div class="preview-date">November 2, 2025</div>
+                                <div class="preview-time">5:34 PM</div>
+                            </div>
+                        </div>
+
+                        <div class="preview-cards">
+                            <div class="preview-card card-gold">
+                                <div class="preview-card-icon">💎</div>
+                                <div class="preview-card-label">Total Contacts</div>
+                                <div class="preview-card-value">115</div>
+                                <div class="preview-card-meta">+12 this month</div>
+                            </div>
+
+                            <div class="preview-card card-earth">
+                                <div class="preview-card-icon">🏠</div>
+                                <div class="preview-card-label">Active Farms</div>
+                                <div class="preview-card-value">5</div>
+                                <div class="preview-card-meta">All verified</div>
+                            </div>
+
+                            <div class="preview-card card-sage">
+                                <div class="preview-card-icon">📈</div>
+                                <div class="preview-card-label">Recent Transaction</div>
+                                <div class="preview-card-value">$11,949</div>
+                                <div class="preview-card-meta">Sunrise Mountain View</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personality -->
+                    <h3 class="section-title">Brand Personality</h3>
+                    <div class="feature-grid">
+                        <div class="feature-item">
+                            <div class="feature-icon">✨</div>
+                            <div class="feature-label">Premium</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🌅</div>
+                            <div class="feature-label">Warm</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🏆</div>
+                            <div class="feature-label">Elegant</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🤗</div>
+                            <div class="feature-label">Inviting</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
