@@ -1,5 +1,24 @@
 // Brand colors for FarmTrackr
 // Based on FarmTrackr Brand Guidelines v1.0 (November 2025)
+// 
+// Primary Colors:
+// - Meadow Green (#689f38) - Primary brand color, buttons, headers
+// - Forest Green (#558b2f) - Text, accents, gradients
+// - Deep Forest (#2d5016) - Dark text, emphasis
+// - Light Sage (#7da65d) - Light accents, backgrounds
+//
+// Accent Colors (Functional):
+// - Tangerine (#ff9800) - Financial, commissions, transactions
+// - Plum (#673ab7) - Analytics, reports, data visualization
+// - Cherry (#f4516c) - Alerts, urgent items, high-priority tasks
+// - Sky Blue (#42a5f5) - Calendar, showings, appointments
+// - Peach (#ffb74d) - Tasks, reminders, highlights
+//
+// Neutrals:
+// - White (#ffffff) - Backgrounds, cards, primary surfaces
+// - Light Gray (#f5f5f7) - Secondary backgrounds, sections
+// - Medium Gray (#86868b) - Secondary text, captions
+// - Near Black (#1d1d1f) - Primary text, headings
 
 export function getThemeColors(isDark: boolean) {
   if (isDark) {
@@ -20,6 +39,9 @@ export function getThemeColors(isDark: boolean) {
       primary: '#689f38', // Meadow Green - Primary brand color
       primaryHover: '#558b2f', // Forest Green - Hover state
       primaryLight: 'rgba(104, 159, 56, 0.15)', // Meadow Green with opacity
+      // Additional brand green shades
+      deepForest: '#2d5016', // Deep Forest - Dark text, emphasis
+      lightSage: '#7da65d', // Light Sage - Light accents, backgrounds
       
       // Success (Money) - Using Meadow Green for success states
       success: '#689f38', // Meadow Green - Success, positive actions
@@ -86,6 +108,9 @@ export function getThemeColors(isDark: boolean) {
       primary: '#689f38', // Meadow Green - Primary brand color
       primaryHover: '#558b2f', // Forest Green - Hover state
       primaryLight: '#f0fdf4', // Very light green tint
+      // Additional brand green shades
+      deepForest: '#2d5016', // Deep Forest - Dark text, emphasis
+      lightSage: '#7da65d', // Light Sage - Light accents, backgrounds
       
       // Success (Money) - Using Meadow Green for success states
       success: '#689f38', // Meadow Green - Success, positive actions
