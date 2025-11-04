@@ -43,7 +43,9 @@ export function useThemeStyles() {
     } as const),
     headerCard: {
       // Brand guidelines: Meadow Green (#689f38) gradient to Forest Green (#558b2f)
+      // IMPORTANT: Use background (not backgroundColor) for gradients, and explicitly remove backgroundColor
       background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
+      backgroundColor: 'transparent', // Remove solid color to allow gradient to show
       border: `1px solid ${colors.primary}`,
       borderRadius: '16px',
       position: 'relative' as const,
@@ -66,7 +68,9 @@ export function useThemeStyles() {
       
       return {
         // Brand guidelines: gradient for green headers, solid gradient for others
+        // IMPORTANT: Use background (not backgroundColor) for gradients, and explicitly remove backgroundColor
         background: `linear-gradient(135deg, ${hexColor} 0%, ${gradientTo} 100%)`,
+        backgroundColor: 'transparent', // Remove solid color to allow gradient to show
         border: `1px solid ${hexColor}`,
         borderRadius: '16px',
         position: 'relative' as const,
