@@ -5,9 +5,9 @@
 This roadmap outlines the development plan to bring the web application to feature parity with the Swift app, with special attention to the label printing functionality that had implementation challenges.
 
 **Last Updated:** November 2, 2025  
-**Current Version:** v0.6.0 (Commission Tracking Module) - ✅ COMPLETE  
-**Previous Version:** v0.5.0 (Google Contacts Integration) - ✅ COMPLETE  
-**Next Priority:** v0.7.0 (UI/UX Enhancements & Polish)
+**Current Version:** v0.7.0 (UI/UX Enhancements & Polish) - ✅ COMPLETE  
+**Previous Version:** v0.6.0 (Commission Tracking Module) - ✅ COMPLETE  
+**Next Priority:** v0.8.0 (Email & Communication Integration)
 
 ---
 
@@ -671,17 +671,18 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - [x] Google Sheets ✅
   
 #### Sidebar Enhancements
-- [ ] **Future Features Section**
-  - Add "Coming Soon" or "Future Features" tab in sidebar
-  - Display planned features and roadmap items
-  - Feature preview and timeline
+- [x] **Future Features Section** ✅ COMPLETE
+  - [x] Add "Coming Soon" tab in sidebar ✅
+  - [x] Create Future Features page with roadmap items ✅
+  - [x] Feature preview with version numbers ✅
+  - [x] Styled feature cards with icons ✅
 
 #### Print Labels Enhancements
-- [ ] **Additional Print Locations**
-  - Add print labels option in Farm Contacts tab
-  - Print labels from Google Contacts chips
-  - Quick access to label printing from multiple locations
-  - Consistent print experience across pages
+- [x] **Additional Print Locations** ✅ COMPLETE
+  - [x] Add print labels option in Farm Contacts tab header ✅
+  - [x] Add print labels button to Google Contacts page header ✅
+  - [x] Quick access to label printing from multiple locations ✅
+  - [x] Consistent styling across both pages ✅
 
 
 ---
@@ -1302,8 +1303,8 @@ This roadmap should be reviewed and updated:
 - ✅ Active farms card elegant overflow handling - COMPLETE
 - ✅ Dashboard Quick Actions: icon on left, text left-justified (horizontal layout) - COMPLETE
 - ✅ Add suggested quick actions (Add Transaction, View Commissions, Data Quality, Google Contacts, etc.) - COMPLETE
-- [ ] Future features section in sidebar
-- [ ] Print labels in Farm Contacts tab and Google Contacts chips
+- ✅ Future features section in sidebar - COMPLETE
+- ✅ Print labels in Farm Contacts tab and Google Contacts chips - COMPLETE
 
 **Estimated Time:** 1-2 weeks
 
