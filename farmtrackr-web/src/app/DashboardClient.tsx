@@ -759,12 +759,13 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     (e.currentTarget as HTMLElement).style.boxShadow = isDark 
                       ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
                       : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                    // Preserve left border color, only change other borders
+                    // Preserve left border color, only change other borders to match sidebar (info/blue)
                     const computed = window.getComputedStyle(e.currentTarget)
                     const leftBorderColor = computed.borderLeftColor
-                    ;(e.currentTarget as HTMLElement).style.borderTopColor = colors.primary
-                    ;(e.currentTarget as HTMLElement).style.borderRightColor = colors.primary
-                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = colors.primary
+                    const hoverColor = colors.info || colors.primary // Match sidebar color
+                    ;(e.currentTarget as HTMLElement).style.borderTopColor = hoverColor
+                    ;(e.currentTarget as HTMLElement).style.borderRightColor = hoverColor
+                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = hoverColor
                     ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
                   }}
                   onMouseLeave={(e) => {
@@ -836,12 +837,13 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     (e.currentTarget as HTMLElement).style.boxShadow = isDark 
                       ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
                       : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                    // Preserve left border color, only change other borders
+                    // Preserve left border color, only change other borders to match sidebar (warning/orange)
                     const computed = window.getComputedStyle(e.currentTarget)
                     const leftBorderColor = computed.borderLeftColor
-                    ;(e.currentTarget as HTMLElement).style.borderTopColor = colors.primary
-                    ;(e.currentTarget as HTMLElement).style.borderRightColor = colors.primary
-                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = colors.primary
+                    const hoverColor = colors.warning // Match sidebar color (orange)
+                    ;(e.currentTarget as HTMLElement).style.borderTopColor = hoverColor
+                    ;(e.currentTarget as HTMLElement).style.borderRightColor = hoverColor
+                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = hoverColor
                     ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
                   }}
                   onMouseLeave={(e) => {
