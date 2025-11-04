@@ -635,7 +635,7 @@ export default function SettingsPage() {
                             {...getButtonPressHandlers(`theme-${themeOption.value}`)}
                             key={themeOption.value}
                             onClick={() => handleChange('theme', themeOption.value)}
-                            style={getButtonPressStyle(`theme-${themeOption.value}`, {
+                            style={{
                               flex: '1',
                               padding: '16px',
                               borderRadius: '10px',
@@ -655,7 +655,15 @@ export default function SettingsPage() {
                               display: 'flex',
                               flexDirection: 'column',
                               alignItems: 'center',
-                              gap: '8px'
+                              gap: '8px',
+                              ...getButtonPressStyle(
+                                `theme-${themeOption.value}`,
+                                {},
+                                settings.theme === themeOption.value 
+                                  ? (isDark ? '#1e3a8a' : '#eff6ff') 
+                                  : colors.card,
+                                colors.cardHover
+                              )
                             }}
                             onMouseEnter={(e) => {
                               if (settings.theme !== themeOption.value && !pressedButtons.has(`theme-${themeOption.value}`)) {
