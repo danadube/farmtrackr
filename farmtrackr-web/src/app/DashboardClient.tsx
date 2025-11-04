@@ -590,29 +590,35 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             <div style={{ display: 'flex', gap: spacing(3), alignItems: 'flex-start' }}>
               {/* Left side - Auto-fit grid for regular cards */}
               <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: spacing(3), alignItems: 'stretch' }}>
-              {/* Total Contacts */}
-              <Link 
-                href="/contacts"
+              {/* Combined Stats Card - Total Contacts, Active Farms, Validation Issues */}
+              <div 
                 style={{
-                  display: 'block',
-                  textDecoration: 'none',
                   padding: spacing(3),
                   ...card,
-                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                  height: '100%'
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
-                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
-                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: spacing(3)
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                {/* Total Contacts */}
+                <Link 
+                  href="/contacts"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(2),
+                    textDecoration: 'none',
+                    padding: spacing(2),
+                    borderRadius: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                  }}
+                >
                   <div 
                     style={{
                       width: spacing(6),
@@ -631,36 +637,34 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                       Total Contacts
                     </p>
-                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0' }}>
                       {stats.totalContacts}
                     </p>
                   </div>
-                </div>
-              </Link>
+                </Link>
 
-              {/* Active Farms */}
-              <Link 
-                href="/google-sheets"
-                style={{
-                  display: 'block',
-                  textDecoration: 'none',
-                  padding: spacing(3),
-                  ...card,
-                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                  height: '100%'
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
-                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
-                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                {/* Divider */}
+                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-3)}` }} />
+
+                {/* Active Farms */}
+                <Link 
+                  href="/google-sheets"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(2),
+                    textDecoration: 'none',
+                    padding: spacing(2),
+                    borderRadius: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                  }}
+                >
                   <div 
                     style={{
                       width: spacing(6),
@@ -679,59 +683,34 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                       Active Farms
                     </p>
-                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0' }}>
                       {activeFarms.length}
                     </p>
-                    {activeFarms.length > 0 && activeFarms.length <= 3 && (
-                      <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {activeFarms.slice(0, 3).map((farm) => {
-                          const c = getFarmColor(farm)
-                          return (
-                          <span
-                            key={farm}
-                            style={{
-                              padding: '2px 8px',
-                              borderRadius: '9999px',
-                              backgroundColor: c.bg,
-                              border: `1px solid ${c.border}`,
-                              fontSize: '11px',
-                              color: c.text,
-                              fontWeight: 600,
-                            }}
-                          >
-                            {farm}
-                          </span>
-                          )
-                        })}
-                      </div>
-                    )}
                   </div>
-                </div>
-              </Link>
+                </Link>
 
-              {/* Validation Issues */}
-              <Link 
-                href="/data-quality"
-                style={{
-                  display: 'block',
-                  textDecoration: 'none',
-                  padding: spacing(3),
-                  ...card,
-                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                  height: '100%'
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
-                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
-                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                  ;(e.currentTarget as HTMLElement).style.borderColor = issuesCount > 0 ? (isDark ? '#dc2626' : '#dc2626') : colors.border
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                {/* Divider */}
+                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-3)}` }} />
+
+                {/* Validation Issues */}
+                <Link 
+                  href="/data-quality"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(2),
+                    textDecoration: 'none',
+                    padding: spacing(2),
+                    borderRadius: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                  }}
+                >
                   <div 
                     style={{
                       width: spacing(6),
@@ -750,7 +729,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                       Validation Issues
                     </p>
-                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0' }}>
                       {issuesCount}
                       {issuesCount === 0 && (
                         <span style={{ fontSize: '12px', marginLeft: '8px', color: colors.success, fontWeight: 600 }}>
@@ -762,8 +741,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       Errors {errorsCount} • Warnings {warningsCount}
                     </p>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </div>
 
               {/* Most Recent Transaction */}
               {recentTransaction && (
@@ -936,7 +915,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               </div>
 
               {/* Right side - Calendar and Tasks */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), width: '380px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), width: '320px', flexShrink: 0 }}>
               {/* Calendar Card - Full Calendar View */}
               <div 
                 style={{
@@ -944,7 +923,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   ...card,
                   display: 'flex',
                   flexDirection: 'column',
-                  minHeight: '600px'
+                  minHeight: '450px'
                 }}
               >
                 {/* Calendar Header */}
@@ -1014,18 +993,18 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
 
                 {/* Calendar Grid */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                   {/* Day Headers */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: spacing(1) }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginBottom: spacing(1) }}>
                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
                       <div
                         key={idx}
                         style={{
                           textAlign: 'center',
-                          fontSize: '12px',
+                          fontSize: '11px',
                           fontWeight: '600',
                           ...text.secondary,
-                          padding: '8px 4px'
+                          padding: '6px 2px'
                         }}
                       >
                         {day}
@@ -1034,7 +1013,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </div>
 
                   {/* Calendar Days */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', flex: 1 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', flex: 1 }}>
                     {(() => {
                       const year = calendarDate.getFullYear()
                       const month = calendarDate.getMonth()
@@ -1071,9 +1050,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                             key={idx}
                             style={{
                               aspectRatio: '1',
-                              minHeight: '40px',
-                              padding: '4px',
-                              borderRadius: '6px',
+                              minHeight: '32px',
+                              padding: '3px',
+                              borderRadius: '4px',
                               backgroundColor: day.isToday 
                                 ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
                                 : 'transparent',
@@ -1098,33 +1077,33 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                           >
                             <span
                               style={{
-                                fontSize: '12px',
+                                fontSize: '11px',
                                 fontWeight: day.isToday ? '700' : '500',
                                 color: day.isCurrentMonth 
                                   ? (day.isToday ? colors.primary : text.primary.color)
                                   : text.tertiary.color,
-                                marginBottom: '2px'
+                                marginBottom: '1px'
                               }}
                             >
                               {day.date.getDate()}
                             </span>
                             {dayAppointments.length > 0 && (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', width: '100%', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', width: '100%', alignItems: 'center' }}>
                                 {dayAppointments.slice(0, 2).map((apt, aptIdx) => (
                                   <div
                                     key={aptIdx}
                                     style={{
                                       width: '100%',
-                                      height: '3px',
-                                      borderRadius: '2px',
+                                      height: '2px',
+                                      borderRadius: '1px',
                                       backgroundColor: apt.color || colors.primary,
-                                      fontSize: '8px'
+                                      fontSize: '7px'
                                     }}
                                     title={apt.title}
                                   />
                                 ))}
                                 {dayAppointments.length > 2 && (
-                                  <span style={{ fontSize: '8px', ...text.tertiary }}>
+                                  <span style={{ fontSize: '7px', ...text.tertiary }}>
                                     +{dayAppointments.length - 2}
                                   </span>
                                 )}
@@ -1164,28 +1143,28 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: spacing(2),
+                            gap: spacing(1.5),
                             padding: spacing(1.5),
-                            borderRadius: '8px',
+                            borderRadius: '6px',
                             backgroundColor: colors.cardHover
                           }}
                         >
                           <div
                             style={{
-                              width: '4px',
+                              width: '3px',
                               height: '100%',
-                              minHeight: '32px',
+                              minHeight: '28px',
                               borderRadius: '2px',
                               backgroundColor: apt.color || colors.primary,
                               flexShrink: 0
                             }}
                           />
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: '14px', fontWeight: '500', ...text.primary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <p style={{ fontSize: '13px', fontWeight: '500', ...text.primary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {apt.title}
                             </p>
                             {apt.time && (
-                              <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
+                              <p style={{ fontSize: '11px', ...text.tertiary, margin: '3px 0 0 0' }}>
                                 {apt.time}
                               </p>
                             )}
