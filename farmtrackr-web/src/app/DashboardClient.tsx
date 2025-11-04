@@ -1188,7 +1188,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   display: 'flex',
                   flexDirection: 'column',
                   gridColumn: '3',
-                  gridRow: '2 / span 2'
+                  gridRow: '2 / span 2',
+                  alignSelf: 'stretch',
+                  height: '100%'
                 }}
               >
                 <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: spacing(1.5), margin: `0 0 ${spacing(1.5)} 0` }}>
