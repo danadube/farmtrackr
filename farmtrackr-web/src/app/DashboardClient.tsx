@@ -590,28 +590,35 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: spacing(3), alignItems: 'start' }}>
               {/* Left Column */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3) }}>
-              {/* Google Contacts */}
-              <Link 
-                href="/google-contacts"
+              {/* Combined Stats Card - Google Contacts, Farm Contacts, Active Farms, Farm Chips */}
+              <div 
                 style={{
-                  display: 'block',
-                  textDecoration: 'none',
                   padding: spacing(3),
                   ...card,
-                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
-                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
-                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: spacing(3)
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                {/* Google Contacts */}
+                <Link 
+                  href="/google-contacts"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(2),
+                    textDecoration: 'none',
+                    padding: spacing(2),
+                    borderRadius: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                  }}
+                >
                   <div 
                     style={{
                       width: spacing(6),
@@ -630,35 +637,34 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                       Google Contacts
                     </p>
-                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0' }}>
                       0
                     </p>
                   </div>
-                </div>
-              </Link>
+                </Link>
 
-              {/* Farm Contacts */}
-              <Link 
-                href="/contacts"
-                style={{
-                  display: 'block',
-                  textDecoration: 'none',
-                  padding: spacing(3),
-                  ...card,
-                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
-                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
-                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                {/* Divider */}
+                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-3)}` }} />
+
+                {/* Farm Contacts */}
+                <Link 
+                  href="/contacts"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(2),
+                    textDecoration: 'none',
+                    padding: spacing(2),
+                    borderRadius: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                  }}
+                >
                   <div 
                     style={{
                       width: spacing(6),
@@ -677,35 +683,34 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                       Farm Contacts
                     </p>
-                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0' }}>
                       {stats.totalContacts}
                     </p>
                   </div>
-                </div>
-              </Link>
+                </Link>
 
-              {/* Active Farms */}
-              <Link 
-                href="/google-sheets"
-                style={{
-                  display: 'block',
-                  textDecoration: 'none',
-                  padding: spacing(3),
-                  ...card,
-                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = isDark 
-                    ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
-                    : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.primary
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                  ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                {/* Divider */}
+                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-3)}` }} />
+
+                {/* Active Farms */}
+                <Link 
+                  href="/google-sheets"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(2),
+                    textDecoration: 'none',
+                    padding: spacing(2),
+                    borderRadius: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                  }}
+                >
                   <div 
                     style={{
                       width: spacing(6),
@@ -724,83 +729,46 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                       Active Farms
                     </p>
-                    <p style={{ fontSize: '30px', fontWeight: '700', ...text.primary, margin: '0' }}>
+                    <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0' }}>
                       {activeFarms.length}
                     </p>
                   </div>
-                </div>
-              </Link>
+                </Link>
 
-              {/* Farm Chips */}
-              {activeFarms.length > 0 && (
-                <div 
-                  style={{
-                    padding: spacing(3),
-                    ...card
-                  }}
-                >
-                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(2), margin: `0 0 ${spacing(2)} 0` }}>
-                    Farms
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {activeFarms.map((farm) => {
-                      const c = getFarmColor(farm)
-                      return (
-                        <span
-                          key={farm}
-                          style={{
-                            padding: '4px 12px',
-                            borderRadius: '9999px',
-                            backgroundColor: c.bg,
-                            border: `1px solid ${c.border}`,
-                            fontSize: '12px',
-                            color: c.text,
-                            fontWeight: 600,
-                          }}
-                        >
-                          {farm}
-                        </span>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+                {/* Divider */}
+                {activeFarms.length > 0 && (
+                  <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-3)}` }} />
+                )}
 
-              {/* Tasks and Reminders */}
-              <div 
-                style={{
-                  padding: spacing(3),
-                  ...card,
-                  flex: 1
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
-                  <div 
-                    style={{
-                      width: spacing(6),
-                      height: spacing(6),
-                      backgroundColor: colors.iconBg,
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}
-                  >
-                    <CheckSquare style={{ width: spacing(3), height: spacing(3), color: colors.primary }} />
+                {/* Farm Chips */}
+                {activeFarms.length > 0 && (
+                  <div>
+                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(2), margin: `0 0 ${spacing(2)} 0` }}>
+                      Farms
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {activeFarms.map((farm) => {
+                        const c = getFarmColor(farm)
+                        return (
+                          <span
+                            key={farm}
+                            style={{
+                              padding: '4px 12px',
+                              borderRadius: '9999px',
+                              backgroundColor: c.bg,
+                              border: `1px solid ${c.border}`,
+                              fontSize: '12px',
+                              color: c.text,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {farm}
+                          </span>
+                        )
+                      })}
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                      Tasks & Reminders
-                    </p>
-                    <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Coming Soon
-                    </p>
-                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
-                      Task management (v0.10.0)
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
               </div>
 
@@ -937,6 +905,43 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </div>
                 </Link>
               ) : null}
+              </div>
+
+              {/* Tasks and Reminders - Spans columns 1 and 2 */}
+              <div 
+                style={{
+                  padding: spacing(3),
+                  ...card,
+                  gridColumn: '1 / span 2'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
+                  <div 
+                    style={{
+                      width: spacing(6),
+                      height: spacing(6),
+                      backgroundColor: colors.iconBg,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}
+                  >
+                    <CheckSquare style={{ width: spacing(3), height: spacing(3), color: colors.primary }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                      Tasks & Reminders
+                    </p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Coming Soon
+                    </p>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
+                      Task management (v0.10.0)
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Right Column */}
