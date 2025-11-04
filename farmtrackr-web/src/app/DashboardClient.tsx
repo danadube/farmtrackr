@@ -963,8 +963,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
               </div>
 
-              {/* Right Column */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridRow: '1 / span 2' }}>
+              {/* Right Column - Starts at row 1, spans 2 rows to align with calendar and today */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridColumn: '3', gridRow: '1 / span 2' }}>
               {/* Calendar Card - Full Calendar View */}
               <div 
                 style={{
