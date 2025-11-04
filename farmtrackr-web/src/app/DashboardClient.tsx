@@ -611,7 +611,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     gap: spacing(1.5),
                     textDecoration: 'none',
                     padding: spacing(1.5),
-                    borderRadius: '8px',
+                    borderRadius: spacing(1),
                     transition: 'background-color 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
@@ -626,7 +626,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       width: spacing(5),
                       height: spacing(5),
                       backgroundColor: isDark ? '#1e3a8a' : '#eff6ff',
-                      borderRadius: '10px',
+                      borderRadius: spacing(1.25),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -657,7 +657,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     gap: spacing(1.5),
                     textDecoration: 'none',
                     padding: spacing(1.5),
-                    borderRadius: '8px',
+                    borderRadius: spacing(1),
                     transition: 'background-color 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
@@ -672,7 +672,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       width: spacing(5),
                       height: spacing(5),
                       backgroundColor: colors.iconBg,
-                      borderRadius: '10px',
+                      borderRadius: spacing(1.25),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -703,7 +703,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     gap: spacing(1.5),
                     textDecoration: 'none',
                     padding: spacing(1.5),
-                    borderRadius: '8px',
+                    borderRadius: spacing(1),
                     transition: 'background-color 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
@@ -718,7 +718,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       width: spacing(5),
                       height: spacing(5),
                       backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
-                      borderRadius: '10px',
+                      borderRadius: spacing(1.25),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -752,7 +752,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     padding: spacing(2),
                     ...cardWithLeftBorder(colors.info), // Sky Blue for transaction cards
                     transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                    flex: 1
+                    flex: 1,
+                    justifyContent: 'center'
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.boxShadow = isDark 
@@ -771,7 +772,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         width: spacing(5),
                         height: spacing(5),
                         backgroundColor: isDark ? '#1e3a8a' : '#eff6ff',
-                        borderRadius: '10px',
+                        borderRadius: spacing(1.25),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -787,7 +788,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0 0 4px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {recentTransaction.address || 'No address'}
                       </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25) }}>
                         {recentTransaction.nci !== null && recentTransaction.nci !== undefined && recentTransaction.nci > 0 && (
                           <p style={{ fontSize: '14px', fontWeight: '600', color: colors.success, margin: '0' }}>
                             NCI: ${recentTransaction.nci.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -816,7 +817,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     padding: spacing(2),
                     ...cardWithLeftBorder(colors.warning), // Tangerine for financial cards
                     transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                    flex: 1
+                    flex: 1,
+                    justifyContent: 'center'
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.boxShadow = isDark 
@@ -835,7 +837,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         width: spacing(5),
                         height: spacing(5),
                         backgroundColor: isDark ? '#1e3a8a' : '#eff6ff',
-                        borderRadius: '10px',
+                        borderRadius: spacing(1.25),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -848,7 +850,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
                         Quick Stats
                       </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25) }}>
                         {quickStats.ytdTotal > 0 && (
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
                             YTD: ${(quickStats.ytdTotal / 1000).toFixed(1)}k
@@ -894,7 +896,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         width: spacing(5),
                         height: spacing(5),
                         backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
-                        borderRadius: '10px',
+                        borderRadius: spacing(1.25),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -907,14 +909,14 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       <p style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(1.5), margin: `0 0 ${spacing(1.5)} 0` }}>
                         Farms
                       </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing(1) }}>
                         {activeFarms.map((farm) => {
                           const c = getFarmColor(farm)
                           return (
                             <span
                               key={farm}
                               style={{
-                                padding: '4px 12px',
+                                padding: `${spacing(0.5)} ${spacing(1.5)}`,
                                 borderRadius: '9999px',
                                 backgroundColor: c.bg,
                                 border: `1px solid ${c.border}`,
@@ -950,7 +952,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       width: spacing(5),
                       height: spacing(5),
                       backgroundColor: colors.iconBg,
-                      borderRadius: '10px',
+                      borderRadius: spacing(1.25),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1003,7 +1005,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         setCalendarDate(newDate)
                       }}
                       style={{
-                        padding: '4px',
+                        padding: spacing(0.5),
                         background: 'transparent',
                         border: 'none',
                         cursor: 'pointer',
@@ -1011,7 +1013,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        borderRadius: '6px',
+                        borderRadius: spacing(0.75),
                         transition: 'background-color 0.2s'
                       }}
                       onMouseEnter={(e) => {
@@ -1030,7 +1032,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         setCalendarDate(newDate)
                       }}
                       style={{
-                        padding: '4px',
+                        padding: spacing(0.5),
                         background: 'transparent',
                         border: 'none',
                         cursor: 'pointer',
@@ -1038,7 +1040,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        borderRadius: '6px',
+                        borderRadius: spacing(0.75),
                         transition: 'background-color 0.2s'
                       }}
                       onMouseEnter={(e) => {
@@ -1056,7 +1058,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 {/* Calendar Grid */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                   {/* Day Headers */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: spacing(1), minWidth: 0 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: spacing(0.25), marginBottom: spacing(1), minWidth: 0 }}>
                     {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day, idx) => (
                       <div
                         key={idx}
@@ -1065,7 +1067,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                           fontSize: '11px',
                           fontWeight: '600',
                           ...text.secondary,
-                          padding: '6px 2px'
+                          padding: `${spacing(0.75)} ${spacing(0.25)}`
                         }}
                       >
                         {day}
@@ -1074,7 +1076,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </div>
 
                   {/* Calendar Days */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: spacing(0.25), flex: 1, minWidth: 0, overflow: 'hidden' }}>
                     {(() => {
                       const year = calendarDate.getFullYear()
                       const month = calendarDate.getMonth()
@@ -1111,9 +1113,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                             key={idx}
                             style={{
                               aspectRatio: '1',
-                              minHeight: '28px',
-                              padding: '2px',
-                              borderRadius: '4px',
+                              minHeight: spacing(3.5),
+                              padding: spacing(0.25),
+                              borderRadius: spacing(0.5),
                               backgroundColor: day.isToday 
                                 ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
                                 : 'transparent',
@@ -1151,7 +1153,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                               {day.date.getDate()}
                             </span>
                             {dayAppointments.length > 0 && (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', width: '100%', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.125), width: '100%', alignItems: 'center' }}>
                                 {dayAppointments.slice(0, 2).map((apt, aptIdx) => (
                                   <div
                                     key={aptIdx}
@@ -1220,7 +1222,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                           alignItems: 'center',
                           gap: spacing(1.5),
                           padding: spacing(1.5),
-                          borderRadius: '6px',
+                          borderRadius: spacing(0.75),
                           backgroundColor: colors.cardHover
                         }}
                       >
@@ -1228,8 +1230,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                           style={{
                             width: '3px',
                             height: '100%',
-                            minHeight: '32px',
-                            borderRadius: '2px',
+                            minHeight: spacing(4),
+                            borderRadius: spacing(0.25),
                             backgroundColor: apt.color || colors.primary,
                             flexShrink: 0
                           }}
