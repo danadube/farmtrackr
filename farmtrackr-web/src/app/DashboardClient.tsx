@@ -867,7 +867,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                           </p>
                         )}
                         {quickStats.pendingCount > 0 && (
-                          <p style={{ fontSize: '12px', color: colors.warning, margin: '4px 0 0 0', fontWeight: '600' }}>
+                          <p style={{ fontSize: '12px', color: colors.warning, margin: `${spacing(0.5)} 0 0 0`, fontWeight: '600' }}>
                             {quickStats.pendingCount} pending
                           </p>
                         )}
@@ -1241,7 +1241,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                             {apt.title}
                           </p>
                           {apt.time && (
-                            <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
+                            <p style={{ fontSize: '12px', ...text.tertiary, margin: `${spacing(0.5)} 0 0 0` }}>
                               {apt.time}
                             </p>
                           )}
