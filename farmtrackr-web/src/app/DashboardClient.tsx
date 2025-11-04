@@ -1235,7 +1235,6 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   })()}
                 </div>
               </div>
-              </div>
             </div>
           </div>
 
