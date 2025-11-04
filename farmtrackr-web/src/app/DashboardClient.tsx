@@ -593,11 +593,11 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               {/* Combined Stats Card - Google Contacts, Farm Contacts, Active Farms */}
               <div 
                 style={{
-                  padding: spacing(2.5),
+                  padding: spacing(2),
                   ...card,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: spacing(2),
+                  gap: spacing(1.5),
                   flex: 1,
                   justifyContent: 'space-between'
                 }}
@@ -608,9 +608,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: spacing(2),
+                    gap: spacing(1.5),
                     textDecoration: 'none',
-                    padding: spacing(2),
+                    padding: spacing(1.5),
                     borderRadius: '8px',
                     transition: 'background-color 0.2s ease'
                   }}
@@ -623,17 +623,17 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 >
                   <div 
                     style={{
-                      width: spacing(6),
-                      height: spacing(6),
+                      width: spacing(5),
+                      height: spacing(5),
                       backgroundColor: isDark ? '#1e3a8a' : '#eff6ff',
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0
                     }}
                   >
-                    <Contact style={{ width: spacing(3), height: spacing(3), color: colors.info || colors.primary }} />
+                    <Contact style={{ width: spacing(2.5), height: spacing(2.5), color: colors.info || colors.primary }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
@@ -646,7 +646,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </Link>
 
                 {/* Divider */}
-                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-2.5)}` }} />
+                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-2)}` }} />
 
                 {/* Farm Contacts */}
                 <Link 
@@ -654,9 +654,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: spacing(2),
+                    gap: spacing(1.5),
                     textDecoration: 'none',
-                    padding: spacing(2),
+                    padding: spacing(1.5),
                     borderRadius: '8px',
                     transition: 'background-color 0.2s ease'
                   }}
@@ -669,17 +669,17 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 >
                   <div 
                     style={{
-                      width: spacing(6),
-                      height: spacing(6),
+                      width: spacing(5),
+                      height: spacing(5),
                       backgroundColor: colors.iconBg,
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0
                     }}
                   >
-                    <Users style={{ width: spacing(3), height: spacing(3), color: colors.primary }} />
+                    <Users style={{ width: spacing(2.5), height: spacing(2.5), color: colors.primary }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
@@ -692,7 +692,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </Link>
 
                 {/* Divider */}
-                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-2.5)}` }} />
+                <div style={{ height: '1px', backgroundColor: colors.border, margin: `0 ${spacing(-2)}` }} />
 
                 {/* Active Farms */}
                 <Link 
@@ -700,9 +700,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: spacing(2),
+                    gap: spacing(1.5),
                     textDecoration: 'none',
-                    padding: spacing(2),
+                    padding: spacing(1.5),
                     borderRadius: '8px',
                     transition: 'background-color 0.2s ease'
                   }}
@@ -715,17 +715,17 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 >
                   <div 
                     style={{
-                      width: spacing(6),
-                      height: spacing(6),
+                      width: spacing(5),
+                      height: spacing(5),
                       backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0
                     }}
                   >
-                    <Building2 style={{ width: spacing(3), height: spacing(3), color: colors.success }} />
+                    <Building2 style={{ width: spacing(2.5), height: spacing(2.5), color: colors.success }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
@@ -740,7 +740,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               </div>
 
               {/* Middle Column - Row 1 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridColumn: '2', gridRow: '1', height: '100%' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(2), gridColumn: '2', gridRow: '1', height: '100%' }}>
               {/* Most Recent Transaction */}
               {recentTransaction && (
                 <Link 
@@ -749,7 +749,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     display: 'flex',
                     flexDirection: 'column',
                     textDecoration: 'none',
-                    padding: spacing(3),
+                    padding: spacing(2),
                     ...cardWithLeftBorder(colors.info), // Sky Blue for transaction cards
                     transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
                     flex: 1
@@ -765,20 +765,20 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
                     <div 
                       style={{
-                        width: spacing(6),
-                        height: spacing(6),
+                        width: spacing(5),
+                        height: spacing(5),
                         backgroundColor: isDark ? '#1e3a8a' : '#eff6ff',
-                        borderRadius: '12px',
+                        borderRadius: '10px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0
                       }}
                     >
-                      <Briefcase style={{ width: spacing(3), height: spacing(3), color: colors.info || colors.primary }} />
+                      <Briefcase style={{ width: spacing(2.5), height: spacing(2.5), color: colors.info || colors.primary }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
@@ -813,7 +813,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     display: 'flex',
                     flexDirection: 'column',
                     textDecoration: 'none',
-                    padding: spacing(3),
+                    padding: spacing(2),
                     ...cardWithLeftBorder(colors.warning), // Tangerine for financial cards
                     transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
                     flex: 1
@@ -829,20 +829,20 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     ;(e.currentTarget as HTMLElement).style.borderColor = colors.border
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
                     <div 
                       style={{
-                        width: spacing(6),
-                        height: spacing(6),
+                        width: spacing(5),
+                        height: spacing(5),
                         backgroundColor: isDark ? '#1e3a8a' : '#eff6ff',
-                        borderRadius: '12px',
+                        borderRadius: '10px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0
                       }}
                     >
-                      <TrendingUp style={{ width: spacing(3), height: spacing(3), color: colors.info || colors.primary }} />
+                      <TrendingUp style={{ width: spacing(2.5), height: spacing(2.5), color: colors.info || colors.primary }} />
                     </div>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
@@ -880,29 +880,29 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               {activeFarms.length > 0 && (
                 <div 
                   style={{
-                    padding: spacing(3),
+                    padding: spacing(2),
                     ...card,
                     gridColumn: '1 / span 2',
                     gridRow: '2'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5), marginBottom: spacing(1.5) }}>
                     <div 
                       style={{
-                        width: spacing(6),
-                        height: spacing(6),
+                        width: spacing(5),
+                        height: spacing(5),
                         backgroundColor: isDark ? '#064e3b' : '#f0fdf4',
-                        borderRadius: '12px',
+                        borderRadius: '10px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0
                       }}
                     >
-                      <Building2 style={{ width: spacing(3), height: spacing(3), color: colors.success }} />
+                      <Building2 style={{ width: spacing(2.5), height: spacing(2.5), color: colors.success }} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(2), margin: `0 0 ${spacing(2)} 0` }}>
+                      <p style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(1.5), margin: `0 0 ${spacing(1.5)} 0` }}>
                         Farms
                       </p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -934,26 +934,26 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               {/* Tasks and Reminders - Spans columns 1 and 2 - Row 3 */}
               <div 
                 style={{
-                  padding: spacing(3),
+                  padding: spacing(2),
                   ...card,
                   gridColumn: '1 / span 2',
                   gridRow: '3'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5), marginBottom: spacing(1.5) }}>
                   <div 
                     style={{
-                      width: spacing(6),
-                      height: spacing(6),
+                      width: spacing(5),
+                      height: spacing(5),
                       backgroundColor: colors.iconBg,
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0
                     }}
                   >
-                    <CheckSquare style={{ width: spacing(3), height: spacing(3), color: colors.primary }} />
+                    <CheckSquare style={{ width: spacing(2.5), height: spacing(2.5), color: colors.primary }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
@@ -972,7 +972,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               {/* Calendar Card - Row 1, Column 3 */}
               <div 
                 style={{
-                  padding: spacing(3),
+                  padding: spacing(2),
                   ...card,
                   display: 'flex',
                   flexDirection: 'column',
@@ -984,7 +984,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 }}
               >
                 {/* Calendar Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(3) }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(2) }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
                     <Calendar style={{ width: '20px', height: '20px', color: colors.primary }} />
                     <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: 0 }}>
@@ -1212,7 +1212,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: spacing(2),
+                          gap: spacing(1.5),
                           padding: spacing(1.5),
                           borderRadius: '6px',
                           backgroundColor: colors.cardHover
