@@ -435,8 +435,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             <div 
               style={{
                 padding: spacing(3),
-                // BRAND GREEN HEADER - FORCE EXPLICIT STYLING
-                backgroundColor: '#689f38', // Meadow Green #689f38
+                // BRAND GREEN HEADER - Gradient from Meadow Green to Forest Green
+                background: 'linear-gradient(135deg, #689f38 0%, #558b2f 100%)', // Meadow Green to Forest Green gradient
                 border: '1px solid #689f38',
                 color: '#ffffff',
                 borderRadius: '16px',

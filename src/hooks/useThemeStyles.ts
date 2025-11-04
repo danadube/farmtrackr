@@ -42,8 +42,8 @@ export function useThemeStyles() {
       borderRadius: '12px',
     } as const),
     headerCard: {
-      // Brand guidelines: solid green background (Meadow Green)
-      backgroundColor: colors.primary,
+      // Brand guidelines: Meadow Green (#689f38) gradient to Forest Green (#558b2f)
+      background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
       border: `1px solid ${colors.primary}`,
       borderRadius: '16px',
       position: 'relative' as const,
@@ -58,14 +58,21 @@ export function useThemeStyles() {
       height: '1px',
       background: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.2)' // White divider on green background
     },
-    headerTint: (hexColor: string) => ({
-      // Brand guidelines: solid color background with white text
-      backgroundColor: hexColor,
-      border: `1px solid ${hexColor}`,
-      borderRadius: '16px',
-      position: 'relative' as const,
-      color: '#ffffff',
-    } as const),
+    headerTint: (hexColor: string) => {
+      // For green headers, use gradient from Meadow Green to Forest Green
+      // For other colors, use solid color with gradient to darker shade
+      const isGreen = hexColor === colors.primary || hexColor === '#689f38'
+      const gradientTo = isGreen ? colors.primaryHover : hexColor
+      
+      return {
+        // Brand guidelines: gradient for green headers, solid gradient for others
+        background: `linear-gradient(135deg, ${hexColor} 0%, ${gradientTo} 100%)`,
+        border: `1px solid ${hexColor}`,
+        borderRadius: '16px',
+        position: 'relative' as const,
+        color: '#ffffff',
+      } as const
+    },
     background: {
       backgroundColor: colors.background,
     },
