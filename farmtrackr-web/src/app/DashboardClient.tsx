@@ -968,7 +968,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
                       Coming Soon
                     </p>
-                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: `${spacing(0.5)} 0 0 0` }}>
                       Task management (v0.10.0)
                     </p>
                   </div>
