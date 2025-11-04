@@ -232,7 +232,13 @@ export default function DataQualityPage() {
             <div 
               style={{
                 padding: '24px',
-                ...headerTint(colors.warning)
+                // BRAND GREEN HEADER - Use primary green for all page headers
+                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
+                backgroundColor: 'transparent',
+                border: `1px solid ${colors.primary}`,
+                borderRadius: '16px',
+                position: 'relative' as const,
+                color: '#ffffff',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
