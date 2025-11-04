@@ -914,8 +914,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               )}
               </div>
 
-              {/* Right side - Calendar (same size as contact card, all the way right) */}
-              <div style={{ width: '280px', flexShrink: 0 }}>
+              {/* Right side - Calendar and Tasks (same size as contact card, all the way right) */}
+              <div style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: spacing(3) }}>
               {/* Calendar Card - Full Calendar View */}
               <div 
                 style={{
@@ -923,7 +923,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   ...card,
                   display: 'flex',
                   flexDirection: 'column',
-                  height: '100%'
+                  flex: 1
                 }}
               >
                 {/* Calendar Header */}
@@ -1172,6 +1172,45 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         </div>
                       ))
                     })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tasks Card - Below Calendar */}
+              <div 
+                style={{
+                  padding: spacing(3),
+                  ...card,
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
+                  <div 
+                    style={{
+                      width: spacing(6),
+                      height: spacing(6),
+                      backgroundColor: colors.iconBg,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}
+                  >
+                    <CheckSquare style={{ width: spacing(3), height: spacing(3), color: colors.primary }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
+                      Tasks & Reminders
+                    </p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                      Coming Soon
+                    </p>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
+                      Task management (v0.10.0)
+                    </p>
                   </div>
                 </div>
               </div>
