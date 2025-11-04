@@ -1168,13 +1168,15 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
               </div>
 
-              {/* Today Card - Separate card below calendar */}
+              {/* Today Card - Row 2, Column 3 */}
               <div 
                 style={{
                   padding: spacing(3),
                   ...card,
                   display: 'flex',
-                  flexDirection: 'column'
+                  flexDirection: 'column',
+                  gridColumn: '3',
+                  gridRow: '2'
                 }}
               >
                 <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: spacing(2), margin: `0 0 ${spacing(2)} 0` }}>
