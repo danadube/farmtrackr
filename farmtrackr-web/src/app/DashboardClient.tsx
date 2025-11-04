@@ -978,7 +978,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   flexDirection: 'column',
                   gridColumn: '3',
                   gridRow: '1',
-                  height: '100%'
+                  height: '100%',
+                  overflow: 'hidden',
+                  minWidth: 0
                 }}
               >
                 {/* Calendar Header */}
@@ -1048,9 +1050,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
 
                 {/* Calendar Grid */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                   {/* Day Headers */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginBottom: spacing(1) }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: spacing(1), minWidth: 0 }}>
                     {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day, idx) => (
                       <div
                         key={idx}
@@ -1068,7 +1070,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   </div>
 
                   {/* Calendar Days */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', flex: 1 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
                     {(() => {
                       const year = calendarDate.getFullYear()
                       const month = calendarDate.getMonth()
@@ -1105,8 +1107,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                             key={idx}
                             style={{
                               aspectRatio: '1',
-                              minHeight: '32px',
-                              padding: '3px',
+                              minHeight: '28px',
+                              padding: '2px',
                               borderRadius: '4px',
                               backgroundColor: day.isToday 
                                 ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
@@ -1117,7 +1119,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                               alignItems: 'center',
                               justifyContent: 'flex-start',
                               cursor: 'pointer',
-                              transition: 'background-color 0.2s'
+                              transition: 'background-color 0.2s',
+                              overflow: 'hidden',
+                              boxSizing: 'border-box'
                             }}
                             onMouseEnter={(e) => {
                               if (!day.isToday) {
