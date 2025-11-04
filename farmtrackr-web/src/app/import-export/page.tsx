@@ -544,25 +544,28 @@ export default function ImportExportPage() {
                   onClick={() => setActiveTab('contacts')}
                   style={getButtonPressStyle('tab-contacts', {
                     padding: '10px 20px',
-                    backgroundColor: activeTab === 'contacts' ? colors.primary : 'transparent',
-                    color: activeTab === 'contacts' ? '#ffffff' : text.secondary.color,
-                    border: `1px solid ${activeTab === 'contacts' ? colors.primary : colors.border}`,
+                    backgroundColor: activeTab === 'contacts' ? '#ffffff' : 'transparent',
+                    color: activeTab === 'contacts' ? colors.primary : 'rgba(255, 255, 255, 0.85)',
+                    border: `1px solid ${activeTab === 'contacts' ? '#ffffff' : 'rgba(255, 255, 255, 0.4)'}`,
                     borderRadius: '8px',
                     fontSize: '14px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
-                  }, activeTab === 'contacts' ? colors.primary : 'transparent', colors.cardHover)}
+                    gap: '8px',
+                    transition: 'all 0.2s ease'
+                  }, activeTab === 'contacts' ? '#ffffff' : 'transparent', 'rgba(255, 255, 255, 0.15)')}
                   onMouseEnter={(e) => {
                     if (activeTab !== 'contacts' && !pressedButtons.has('tab-contacts')) {
-                      e.currentTarget.style.backgroundColor = colors.cardHover
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.6)'
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (activeTab !== 'contacts' && !pressedButtons.has('tab-contacts')) {
                       e.currentTarget.style.backgroundColor = 'transparent'
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)'
                     }
                   }}
                 >
@@ -573,9 +576,9 @@ export default function ImportExportPage() {
                   onClick={() => setActiveTab('transactions')}
                   style={{
                     padding: '10px 20px',
-                    backgroundColor: activeTab === 'transactions' ? colors.primary : 'transparent',
-                    color: activeTab === 'transactions' ? '#ffffff' : text.secondary.color,
-                    border: `1px solid ${activeTab === 'transactions' ? colors.primary : colors.border}`,
+                    backgroundColor: activeTab === 'transactions' ? '#ffffff' : 'transparent',
+                    color: activeTab === 'transactions' ? colors.primary : 'rgba(255, 255, 255, 0.85)',
+                    border: `1px solid ${activeTab === 'transactions' ? '#ffffff' : 'rgba(255, 255, 255, 0.4)'}`,
                     borderRadius: '8px',
                     fontSize: '14px',
                     fontWeight: '600',
@@ -586,13 +589,15 @@ export default function ImportExportPage() {
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
-                    if (activeTab !== 'transactions' && !pressedButtons.has('tab-transactions')) {
-                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    if (activeTab !== 'transactions') {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.6)'
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (activeTab !== 'transactions' && !pressedButtons.has('tab-transactions')) {
+                    if (activeTab !== 'transactions') {
                       e.currentTarget.style.backgroundColor = 'transparent'
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)'
                     }
                   }}
                 >
