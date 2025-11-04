@@ -328,8 +328,13 @@ export default function CommissionsPage() {
         console.log(`[Referral] No netVolume found for transaction ${t.id}`)
       }
       
+      // Note: Missing CSV NCI for referral transactions is expected for some transactions
+      // The calculation will use referralFeeReceived as NCI when CSV NCI is not available
       if (csvNci === undefined) {
-        console.warn(`[Referral] ✗ No CSV NCI found for referral transaction ${t.id} at ${t.address} - will show 0`)
+        // Only log in development mode to reduce console noise
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[Referral] No CSV NCI found for referral transaction ${t.id} at ${t.address} - using referralFeeReceived as NCI`)
+        }
       }
     }
     
