@@ -587,9 +587,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             >
               Overview
             </h2>
-            <div style={{ display: 'flex', gap: spacing(3), alignItems: 'flex-start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: spacing(3), alignItems: 'start' }}>
               {/* Left side - Auto-fit grid for regular cards */}
-              <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: spacing(3), alignItems: 'stretch' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: spacing(3), alignItems: 'stretch' }}>
               {/* Combined Stats Card - Total Contacts, Active Farms, Validation Issues */}
               <div 
                 style={{
@@ -914,8 +914,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               )}
               </div>
 
-              {/* Right side - Calendar and Tasks */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), width: '320px', flexShrink: 0 }}>
+              {/* Right side - Calendar (same size as contact card, all the way right) */}
+              <div style={{ width: '280px', flexShrink: 0 }}>
               {/* Calendar Card - Full Calendar View */}
               <div 
                 style={{
@@ -923,7 +923,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   ...card,
                   display: 'flex',
                   flexDirection: 'column',
-                  minHeight: '450px'
+                  height: '100%'
                 }}
               >
                 {/* Calendar Header */}
@@ -993,7 +993,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
 
                 {/* Calendar Grid */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '350px' }}>
                   {/* Day Headers */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginBottom: spacing(1) }}>
                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
@@ -1117,11 +1117,11 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
 
                 {/* Today's Appointments */}
-                <div style={{ marginTop: spacing(2), paddingTop: spacing(2), borderTop: `1px solid ${colors.border}` }}>
+                <div style={{ marginTop: 'auto', paddingTop: spacing(2), borderTop: `1px solid ${colors.border}` }}>
                   <h4 style={{ fontSize: '13px', fontWeight: '600', ...text.primary, marginBottom: spacing(1.5), margin: `0 0 ${spacing(1.5)} 0` }}>
                     TODAY
                   </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), maxHeight: '150px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), maxHeight: '120px', overflowY: 'auto' }}>
                     {(() => {
                       const today = new Date()
                       const todayAppointments = calendarAppointments.filter(apt => {
@@ -1172,43 +1172,6 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         </div>
                       ))
                     })()}
-                  </div>
-                </div>
-              </div>
-
-              {/* Tasks Card - Below Calendar */}
-              <div 
-                style={{
-                  padding: spacing(3),
-                  ...card,
-                  height: '100%'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
-                  <div 
-                    style={{
-                      width: spacing(6),
-                      height: spacing(6),
-                      backgroundColor: colors.iconBg,
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}
-                  >
-                    <CheckSquare style={{ width: spacing(3), height: spacing(3), color: colors.primary }} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                      Tasks & Reminders
-                    </p>
-                    <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Coming Soon
-                    </p>
-                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '4px 0 0 0' }}>
-                      Task management (v0.10.0)
-                    </p>
                   </div>
                 </div>
               </div>
