@@ -884,7 +884,7 @@ export default function CommissionsPage() {
             <div 
               style={{
                 padding: '24px',
-                ...headerCard,
+                // Use headerTint directly for green headers (includes gradient)
                 ...headerTint(colors.primary)
               }}
             >

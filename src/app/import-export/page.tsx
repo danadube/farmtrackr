@@ -510,7 +510,7 @@ export default function ImportExportPage() {
         >
           {/* Page Header */}
           <div style={{ marginBottom: '32px' }}>
-            <div style={{ padding: '24px', ...headerCard, ...headerTint(colors.success) }}>
+            <div style={{ padding: '24px', ...headerTint(colors.success) }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div 

@@ -232,7 +232,6 @@ export default function DataQualityPage() {
             <div 
               style={{
                 padding: '24px',
-                ...headerCard,
                 ...headerTint(colors.warning)
               }}
             >

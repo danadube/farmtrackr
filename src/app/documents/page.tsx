@@ -615,7 +615,6 @@ export default function DocumentsPage() {
             <div 
               style={{
                 padding: '24px',
-                ...headerCard,
                 ...headerTint(colors.success)
               }}
             >

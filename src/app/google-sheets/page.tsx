@@ -161,7 +161,6 @@ export default function GoogleSheetsPage() {
             <div 
               style={{
                 padding: '24px',
-                ...headerCard,
                 ...headerTint(colors.success)
               }}
             >
