@@ -587,7 +587,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             >
               Overview
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: spacing(3), alignItems: 'stretch' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridAutoRows: '1fr', gap: spacing(3), alignItems: 'stretch' }}>
               {/* Left Column - Row 1 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(3), gridColumn: '1', gridRow: '1', height: '100%' }}>
               {/* Combined Stats Card - Google Contacts, Farm Contacts, Active Farms */}
@@ -883,7 +883,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     padding: spacing(2),
                     ...card,
                     gridColumn: '1 / span 2',
-                    gridRow: '2'
+                    gridRow: '2',
+                    display: 'flex',
+                    flexDirection: 'column'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5), marginBottom: spacing(1.5) }}>
@@ -937,7 +939,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   padding: spacing(2),
                   ...card,
                   gridColumn: '1 / span 2',
-                  gridRow: '3'
+                  gridRow: '3',
+                  display: 'flex',
+                  flexDirection: 'column'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5), marginBottom: spacing(1.5) }}>
@@ -1176,7 +1180,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
               </div>
 
-              {/* Today Card - Row 2, Column 3 */}
+              {/* Today Card - Spans rows 2 and 3, Column 3 (matches Farms + Tasks height) */}
               <div 
                 style={{
                   padding: spacing(2),
@@ -1184,7 +1188,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   display: 'flex',
                   flexDirection: 'column',
                   gridColumn: '3',
-                  gridRow: '2'
+                  gridRow: '2 / span 2'
                 }}
               >
                 <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: spacing(1.5), margin: `0 0 ${spacing(1.5)} 0` }}>
