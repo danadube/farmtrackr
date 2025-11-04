@@ -1,0 +1,6 @@
+First Name,Last Name,Organization Name,Farm,Email 1,Email 2,Phone 1,Phone 2,Phone 3,Phone 4,Phone 5,Phone 6,Mailing Address,City,State,Zip Code,Site Mailing Address,Site City,Site State,Site Zip Code,Notes
+John,Smith,,Farm A,john.smith@email.com,,(555) 123-4567,,,,,,123 Main Street,Los Angeles,CA,90210,,,,,
+Jane,Doe,,Farm B,jane.doe@email.com,,(555) 234-5678,,,,,,456 Oak Avenue,San Diego,CA,92101,,,,,
+ABC Corporation,,ABC Corporation,Farm A,contact@abccorp.com,,(555) 345-6789,,,,,,789 Business Blvd,Santa Monica,CA,90401,,,,,
+Mary,Johnson,,Farm C,mary.j@email.com,mj@gmail.com,(555) 456-7890,(555) 456-7891,,,,,321 Pine Road,Irvine,CA,92602,321 Pine Road,Irvine,CA,92602,
+Robert,Williams,,Farm B,rob.williams@email.com,,(555) 567-8901,,,,,,654 Elm Street,Huntington Beach,CA,92647,,,,,Important client - follow up in 2 weeks
