@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   Contact,
-  DollarSign
+  DollarSign,
+  Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -81,6 +82,10 @@ export function Sidebar({ children }: SidebarProps) {
     ...(process.env.NEXT_PUBLIC_ENABLE_ADMIN === 'true' ? [
       { href: '/admin-tools', label: 'Admin Tools (Dev)', icon: Settings },
     ] : []),
+  ]
+
+  const futureFeaturesItems = [
+    { href: '/future-features', label: 'Coming Soon', icon: Sparkles },
   ]
 
   const isActive = (href: string) => {
@@ -236,6 +241,79 @@ export function Sidebar({ children }: SidebarProps) {
               </Link>
             )
           })}
+
+          {/* Future Features Section */}
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${colors.border}` }}>
+            <div style={{ padding: '0 16px 8px 16px', marginBottom: '4px' }}>
+              <p style={{ 
+                fontSize: '11px', 
+                fontWeight: '600', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.5px',
+                color: colors.text.tertiary,
+                margin: '0'
+              }}>
+                Coming Soon
+              </p>
+            </div>
+            {futureFeaturesItems.map((item) => {
+              const Icon = item.icon
+              const active = isActive(item.href)
+              
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    borderRadius: '10px',
+                    textDecoration: 'none',
+                    backgroundColor: active 
+                      ? (resolvedTheme === 'dark' 
+                          ? 'rgba(104, 159, 56, 0.25)'
+                          : 'rgba(104, 159, 56, 0.12)')
+                      : 'transparent',
+                    color: active ? colors.primary : colors.text.tertiary,
+                    fontWeight: active ? '600' : '500',
+                    fontSize: '14px',
+                    transition: 'all 0.2s ease',
+                    borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
+                    opacity: 0.8
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.backgroundColor = resolvedTheme === 'dark'
+                        ? 'rgba(104, 159, 56, 0.15)'
+                        : 'rgba(104, 159, 56, 0.08)'
+                      e.currentTarget.style.borderLeftColor = 'rgba(104, 159, 56, 0.5)'
+                      e.currentTarget.style.color = colors.primary
+                      e.currentTarget.style.opacity = '1'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                      e.currentTarget.style.borderLeftColor = 'transparent'
+                      e.currentTarget.style.color = colors.text.tertiary
+                      e.currentTarget.style.opacity = '0.8'
+                    }
+                  }}
+                >
+                  <Icon 
+                    style={{ 
+                      width: '20px', 
+                      height: '20px',
+                      color: active ? colors.primary : 'inherit'
+                    }} 
+                  />
+                  {item.label}
+                </Link>
+              )
+            })}
+          </div>
         </nav>
 
         {/* Footer in Sidebar */}

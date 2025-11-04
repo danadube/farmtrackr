@@ -11,7 +11,8 @@ import {
   Building2,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Printer
 } from 'lucide-react'
 import Link from 'next/link'
 import { Sidebar } from '@/components/Sidebar'
@@ -220,31 +221,61 @@ export default function ContactsPage() {
                     </p>
                   </div>
                 </div>
-                <Link 
-                  href="/contacts/new" 
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: colors.primary,
-                    color: '#ffffff',
-                    textDecoration: 'none',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primaryHover
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primary
-                  }}
-                >
-                  <Plus style={{ width: '16px', height: '16px' }} />
-                  Add Contact
-                </Link>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Link 
+                    href="/print-labels"
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      color: '#ffffff',
+                      textDecoration: 'none',
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease',
+                      border: '1px solid rgba(255, 255, 255, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.25)'
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+                    }}
+                  >
+                    <Printer style={{ width: '16px', height: '16px' }} />
+                    Print Labels
+                  </Link>
+                  <Link 
+                    href="/contacts/new" 
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: colors.primary,
+                      color: '#ffffff',
+                      textDecoration: 'none',
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.primaryHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.primary
+                    }}
+                  >
+                    <Plus style={{ width: '16px', height: '16px' }} />
+                    Add Contact
+                  </Link>
+                </div>
               </div>
               <div style={headerDivider} />
             </div>
