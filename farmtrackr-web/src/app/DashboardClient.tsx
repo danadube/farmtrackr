@@ -1050,7 +1050,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
 
                 {/* Calendar Grid */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '350px' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                   {/* Day Headers */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginBottom: spacing(1) }}>
                     {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day, idx) => (
