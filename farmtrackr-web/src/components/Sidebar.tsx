@@ -194,28 +194,44 @@ export function Sidebar({ children }: SidebarProps) {
                   padding: '12px 16px',
                   borderRadius: '10px',
                   textDecoration: 'none',
-                  backgroundColor: active ? colors.primaryLight : 'transparent',
+                  // Active state: more visible background with higher opacity/contrast
+                  backgroundColor: active 
+                    ? (resolvedTheme === 'dark' 
+                        ? 'rgba(104, 159, 56, 0.25)' // 25% opacity for dark mode
+                        : 'rgba(104, 159, 56, 0.12)') // 12% opacity for light mode
+                    : 'transparent',
                   color: active ? colors.primary : colors.text.secondary,
                   fontWeight: active ? '600' : '500',
                   fontSize: '14px',
                   transition: 'all 0.2s ease',
-                  // Force green left border for active items - brand guidelines
-                  borderLeft: active ? `3px solid ${colors.primary}` : '3px solid transparent',
+                  // Force green left border for active items - brand guidelines (thicker for visibility)
+                  borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
                 }}
                 onMouseEnter={(e) => {
                   if (!active) {
-                    e.currentTarget.style.backgroundColor = colors.cardHover
-                    e.currentTarget.style.borderLeftColor = colors.primaryLight
+                    // More visible hover state
+                    e.currentTarget.style.backgroundColor = resolvedTheme === 'dark'
+                      ? 'rgba(104, 159, 56, 0.15)' // Subtle green tint on hover in dark mode
+                      : 'rgba(104, 159, 56, 0.08)' // Subtle green tint on hover in light mode
+                    e.currentTarget.style.borderLeftColor = 'rgba(104, 159, 56, 0.5)' // Visible green border on hover
+                    e.currentTarget.style.color = colors.primary // Change text to green on hover
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!active) {
                     e.currentTarget.style.backgroundColor = 'transparent'
                     e.currentTarget.style.borderLeftColor = 'transparent'
+                    e.currentTarget.style.color = colors.text.secondary // Restore original text color
                   }
                 }}
               >
-                <Icon style={{ width: '20px', height: '20px' }} />
+                <Icon 
+                  style={{ 
+                    width: '20px', 
+                    height: '20px',
+                    color: active ? colors.primary : 'inherit' // Match text color
+                  }} 
+                />
                 {item.label}
               </Link>
             )

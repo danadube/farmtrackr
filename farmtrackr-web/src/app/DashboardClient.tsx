@@ -498,7 +498,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                     margin: '0 0 2px 0',
                     lineHeight: '32px'
                   }}>
-                    {currentDateTime.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                    {currentDateTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </p>
                   <p style={{ 
                     fontSize: '11px', 
