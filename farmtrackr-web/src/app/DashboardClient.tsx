@@ -469,7 +469,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
           }}
         >
           {/* Hero Section */}
-          <div style={{ marginBottom: spacing(1) }}>
+          <div style={{ marginBottom: spacing(2) }}>
             <div 
               style={{
                 padding: spacing(3),
