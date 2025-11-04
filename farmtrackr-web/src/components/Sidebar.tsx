@@ -16,7 +16,11 @@ import {
   X,
   Contact,
   DollarSign,
-  Sparkles
+  Sparkles,
+  Plus,
+  Briefcase,
+  Printer,
+  CheckCircle2
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -71,17 +75,28 @@ export function Sidebar({ children }: SidebarProps) {
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/contacts', label: 'Farm Contacts', icon: Users },
-    { href: '/google-contacts', label: 'Google Contacts', icon: Contact },
-    { href: '/commissions', label: 'Commissions', icon: DollarSign },
-    { href: '/documents', label: 'Documents', icon: FileText },
-    { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet },
-    { href: '/import-export', label: 'Import & Export', icon: Upload },
-    { href: '/data-quality', label: 'Data Quality', icon: TrendingUp },
-    { href: '/settings', label: 'Settings', icon: Settings },
-    ...(process.env.NEXT_PUBLIC_ENABLE_ADMIN === 'true' ? [
-      { href: '/admin-tools', label: 'Admin Tools (Dev)', icon: Settings },
-    ] : []),
+  ]
+
+  // Quick Actions grouped with separators
+  const quickActionsGroups = [
+    [
+      { href: '/contacts/new', label: 'Add Contact', icon: Plus, iconColor: colors.primary },
+      { href: '/commissions', label: 'New Transaction', icon: DollarSign, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c' },
+      { href: '/commissions', label: 'View Commissions', icon: Briefcase, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c' },
+    ],
+    [
+      { href: '/import-export', label: 'Import & Export', icon: Upload, iconColor: colors.primary },
+      { href: '/documents', label: 'Documents', icon: FileText, iconColor: resolvedTheme === 'dark' ? '#60a5fa' : '#2563eb' },
+      { href: '/print-labels', label: 'Print Labels', icon: Printer, iconColor: resolvedTheme === 'dark' ? '#60a5fa' : '#2563eb' },
+    ],
+    [
+      { href: '/google-contacts', label: 'Google Contacts', icon: Contact, iconColor: colors.primary },
+      { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet, iconColor: resolvedTheme === 'dark' ? '#60a5fa' : '#2563eb' },
+    ],
+    [
+      { href: '/data-quality', label: 'Data Quality', icon: CheckCircle2, iconColor: resolvedTheme === 'dark' ? '#a855f7' : '#9333ea' },
+      { href: '/settings', label: 'Settings', icon: Settings, iconColor: resolvedTheme === 'dark' ? '#a855f7' : '#9333ea' },
+    ],
   ]
 
   const futureFeaturesItems = [
@@ -241,6 +256,95 @@ export function Sidebar({ children }: SidebarProps) {
               </Link>
             )
           })}
+
+          {/* Quick Actions Groups */}
+          {quickActionsGroups.map((group, groupIndex) => (
+            <div key={groupIndex}>
+              {groupIndex > 0 && (
+                <div style={{ 
+                  height: '1px', 
+                  backgroundColor: colors.border, 
+                  margin: '8px 0' 
+                }} />
+              )}
+              {group.map((action) => {
+                const Icon = action.icon
+                const active = isActive(action.href)
+                const iconBgColor = resolvedTheme === 'dark'
+                  ? (action.iconColor === colors.primary ? 'rgba(104, 159, 56, 0.15)' :
+                     action.iconColor === '#f97316' || action.iconColor === '#ea580c' ? 'rgba(249, 115, 22, 0.15)' :
+                     action.iconColor === '#60a5fa' || action.iconColor === '#2563eb' ? 'rgba(96, 165, 250, 0.15)' :
+                     'rgba(168, 85, 247, 0.15)')
+                  : (action.iconColor === colors.primary ? 'rgba(104, 159, 56, 0.1)' :
+                     action.iconColor === '#ea580c' ? 'rgba(234, 88, 12, 0.1)' :
+                     action.iconColor === '#2563eb' ? 'rgba(37, 99, 235, 0.1)' :
+                     'rgba(147, 51, 234, 0.1)')
+                
+                return (
+                  <Link
+                    key={action.href}
+                    href={action.href}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      backgroundColor: active 
+                        ? (resolvedTheme === 'dark' 
+                            ? 'rgba(104, 159, 56, 0.25)'
+                            : 'rgba(104, 159, 56, 0.12)')
+                        : 'transparent',
+                      color: active ? colors.primary : colors.text.secondary,
+                      fontWeight: active ? '600' : '500',
+                      fontSize: '14px',
+                      transition: 'all 0.2s ease',
+                      borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.backgroundColor = resolvedTheme === 'dark'
+                          ? 'rgba(104, 159, 56, 0.15)'
+                          : 'rgba(104, 159, 56, 0.08)'
+                        e.currentTarget.style.borderLeftColor = 'rgba(104, 159, 56, 0.5)'
+                        e.currentTarget.style.color = colors.primary
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                        e.currentTarget.style.borderLeftColor = 'transparent'
+                        e.currentTarget.style.color = colors.text.secondary
+                      }
+                    }}
+                  >
+                    <div 
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: iconBgColor,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <Icon 
+                        style={{ 
+                          width: '18px', 
+                          height: '18px',
+                          color: action.iconColor
+                        }} 
+                      />
+                    </div>
+                    {action.label}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
 
           {/* Future Features Section */}
           <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${colors.border}` }}>

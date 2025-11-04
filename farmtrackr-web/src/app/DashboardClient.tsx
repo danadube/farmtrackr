@@ -1222,7 +1222,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 }}
               >
                 <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: spacing(1.5), margin: `0 0 ${spacing(1.5)} 0` }}>
-                  Today
+                  Today's Schedule
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), maxHeight: '200px', overflowY: 'auto' }}>
                   {(() => {
@@ -1280,7 +1280,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Recent Activity */}
           <div style={{ marginBottom: spacing(4) }}>
             <h2 
               style={{
@@ -1292,86 +1292,69 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 margin: `0 0 ${spacing(1.5)} 0`
               }}
             >
-              Quick Actions
+              Recent Activity
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: spacing(2) }}>
-              {/* Quick Action Component Helper */}
-              {([
-                { id: 'addContact', href: '/contacts/new', icon: Plus, title: 'Add Contact', desc: 'Create a new farm contact', bgColor: colors.iconBg, iconColor: colors.primary },
-                { id: 'newTransaction', href: '/commissions', icon: DollarSign, title: 'New Transaction', desc: 'Add a commission transaction', bgColor: isDark ? '#064e3b' : '#f0fdf4', iconColor: colors.success },
-                { id: 'viewCommissions', href: '/commissions', icon: Briefcase, title: 'View Commissions', desc: 'Manage transactions', bgColor: isDark ? '#1e3a8a' : '#eff6ff', iconColor: colors.info || colors.primary },
-                { id: 'importExport', href: '/import-export', icon: Upload, title: 'Import & Export', desc: 'Manage data files', bgColor: isDark ? '#064e3b' : '#f0fdf4', iconColor: colors.success },
-                { id: 'printLabels', href: '/print-labels', icon: Printer, title: 'Print Labels', desc: 'Print address labels', bgColor: isDark ? '#4c1d95' : '#f3e8ff', iconColor: colors.accent },
-                { id: 'documents', href: '/documents', icon: FileText, title: 'Documents', desc: 'Manage documents', bgColor: isDark ? '#7c2d12' : '#fff7ed', iconColor: colors.warning },
-                { id: 'dataQuality', href: '/data-quality', icon: CheckCircle2, title: 'Data Quality', desc: 'Validation issues', bgColor: isDark ? '#7f1d1d' : '#fef2f2', iconColor: issuesCount > 0 ? colors.error : colors.success },
-                { id: 'googleContacts', href: '/google-contacts', icon: Contact, title: 'Google Contacts', desc: 'Sync contacts', bgColor: isDark ? '#1e3a8a' : '#eff6ff', iconColor: colors.info || colors.primary },
-                { id: 'googleSheets', href: '/google-sheets', icon: FileSpreadsheet, title: 'Google Sheets', desc: 'Sync spreadsheets', bgColor: isDark ? '#064e3b' : '#f0fdf4', iconColor: colors.success },
-                { id: 'settings', href: '/settings', icon: Settings, title: 'Settings', desc: 'Preferences', bgColor: colors.iconBg, iconColor: colors.text.secondary }
-              ] as const).map(({ id, href, icon: Icon, title, desc, bgColor, iconColor }) => (
-                <Link
-                  key={id}
-                  href={href}
-                  {...getButtonPressHandlers(id)}
-                  style={getButtonPressStyle(id, {
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing(2),
-                    padding: spacing(2.5),
-                    ...card,
-                    textDecoration: 'none',
-                    transition: 'all 0.2s ease'
-                  }, card.backgroundColor || 'transparent', colors.cardHover)}
-                  onMouseEnter={(e) => {
-                    if (!pressedButtons.has(id)) {
-                      e.currentTarget.style.boxShadow = isDark 
-                        ? '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
-                        : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                      e.currentTarget.style.borderColor = colors.primary
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!pressedButtons.has(id)) {
-                      e.currentTarget.style.boxShadow = card.boxShadow
-                      e.currentTarget.style.borderColor = colors.border
-                    }
-                  }}
-                >
-                  <div 
-                    style={{
-                      width: spacing(6),
-                      height: spacing(6),
-                      minWidth: spacing(6),
-                      backgroundColor: bgColor,
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}
-                  >
-                    <Icon style={{ width: spacing(3), height: spacing(3), color: iconColor }} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ 
-                      fontWeight: '600', 
-                      ...text.primary, 
-                      fontSize: '14px', 
-                      margin: '0 0 4px 0',
-                      textAlign: 'left'
-                    }}>
-                      {title}
-                    </h3>
-                    <p style={{ 
-                      fontSize: '12px', 
-                      ...text.secondary, 
-                      margin: '0',
-                      textAlign: 'left'
-                    }}>
-                      {desc}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+            <div style={{ padding: spacing(2), ...card }}>
+              {recentActivity.length === 0 ? (
+                <p style={{ fontSize: '14px', ...text.tertiary, margin: 0, textAlign: 'center', padding: spacing(4) }}>
+                  No recent activity
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
+                  {recentActivity.map((activity, index) => (
+                    <Link
+                      key={activity.id}
+                      href={activity.link}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: spacing(1.5),
+                        padding: spacing(1.5),
+                        borderRadius: spacing(0.75),
+                        textDecoration: 'none',
+                        backgroundColor: 'transparent',
+                        transition: 'background-color 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.cardHover
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: spacing(2),
+                          height: spacing(2),
+                          borderRadius: '50%',
+                          backgroundColor: activity.type === 'contact' ? colors.primary : colors.warning,
+                          flexShrink: 0
+                        }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ 
+                          fontSize: '14px', 
+                          fontWeight: '500',
+                          ...text.primary, 
+                          margin: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {activity.title}
+                        </p>
+                        <p style={{ 
+                          fontSize: '12px', 
+                          ...text.tertiary, 
+                          margin: `${spacing(0.25)} 0 0 0`
+                        }}>
+                          {activity.date.toLocaleDateString()} {activity.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
