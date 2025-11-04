@@ -746,14 +746,13 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 <Link 
                   href="/commissions"
                   style={{
-                    display: 'block',
+                    display: 'flex',
+                    flexDirection: 'column',
                     textDecoration: 'none',
                     padding: spacing(3),
                     ...cardWithLeftBorder(colors.info), // Sky Blue for transaction cards
                     transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column'
+                    flex: 1
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.boxShadow = isDark 
@@ -811,14 +810,13 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 <Link 
                   href="/commissions"
                   style={{
-                    display: 'block',
+                    display: 'flex',
+                    flexDirection: 'column',
                     textDecoration: 'none',
                     padding: spacing(3),
                     ...cardWithLeftBorder(colors.warning), // Tangerine for financial cards
                     transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column'
+                    flex: 1
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.boxShadow = isDark 
