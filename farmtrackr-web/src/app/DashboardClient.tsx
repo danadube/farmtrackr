@@ -1117,11 +1117,11 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
 
                 {/* Today's Appointments */}
-                <div style={{ marginTop: spacing(3), paddingTop: spacing(3), borderTop: `1px solid ${colors.border}` }}>
-                  <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: spacing(2), margin: `0 0 ${spacing(2)} 0` }}>
+                <div style={{ marginTop: spacing(2), paddingTop: spacing(2), borderTop: `1px solid ${colors.border}` }}>
+                  <h4 style={{ fontSize: '13px', fontWeight: '600', ...text.primary, marginBottom: spacing(1.5), margin: `0 0 ${spacing(1.5)} 0` }}>
                     TODAY
                   </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(2), maxHeight: '200px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), maxHeight: '150px', overflowY: 'auto' }}>
                     {(() => {
                       const today = new Date()
                       const todayAppointments = calendarAppointments.filter(apt => {
