@@ -125,6 +125,21 @@ export default function CommissionsPage() {
 
   useEffect(() => {
     fetchTransactions()
+    
+    // Check if URL has #new hash to auto-open form
+    if (typeof window !== 'undefined') {
+      const checkHash = () => {
+        if (window.location.hash === '#new') {
+          setShowForm(true)
+          // Remove hash from URL after opening form
+          window.history.replaceState(null, '', '/commissions')
+        }
+      }
+      checkHash()
+      // Listen for hash changes
+      window.addEventListener('hashchange', checkHash)
+      return () => window.removeEventListener('hashchange', checkHash)
+    }
   }, [])
 
   const handleDelete = async (id: string) => {

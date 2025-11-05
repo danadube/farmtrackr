@@ -81,8 +81,8 @@ export function Sidebar({ children }: SidebarProps) {
   const quickActionsGroups = [
     [
       { href: '/contacts/new', label: 'Add Contact', icon: Plus, iconColor: colors.primary },
-      { href: '/commissions', label: 'New Transaction', icon: DollarSign, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c' },
-      { href: '/commissions', label: 'View Commissions', icon: Briefcase, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c' },
+      { href: '/commissions#new', label: 'New Transaction', icon: DollarSign, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c' },
+      { href: '/commissions', label: 'View Commissions', icon: Briefcase, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c', exactMatch: true },
     ],
     [
       { href: '/import-export', label: 'Import & Export', icon: Upload, iconColor: colors.primary },
@@ -103,10 +103,37 @@ export function Sidebar({ children }: SidebarProps) {
     { href: '/future-features', label: 'Coming Soon', icon: Sparkles },
   ]
 
-  const isActive = (href: string) => {
+  const isActive = (href: string, exactMatch?: boolean) => {
     if (href === '/') {
       return pathname === '/'
     }
+    
+    // Check for hash in href (e.g., /commissions#new)
+    if (href.includes('#')) {
+      const [path, hash] = href.split('#')
+      if (pathname === path) {
+        if (typeof window !== 'undefined') {
+          const currentHash = window.location.hash
+          return currentHash === `#${hash}`
+        }
+        return false
+      }
+      return false
+    }
+    
+    // For exact match (View Commissions), only match if pathname matches exactly AND hash is not #new
+    if (exactMatch) {
+      if (pathname === href) {
+        if (typeof window !== 'undefined') {
+          const currentHash = window.location.hash
+          // Don't highlight "View Commissions" if we're on the new transaction form
+          return currentHash !== '#new'
+        }
+        return true
+      }
+      return false
+    }
+    
     return pathname?.startsWith(href)
   }
 
@@ -269,7 +296,7 @@ export function Sidebar({ children }: SidebarProps) {
               )}
               {group.map((action) => {
                 const Icon = action.icon
-                const active = isActive(action.href)
+                const active = isActive(action.href, action.exactMatch)
                 const iconBgColor = resolvedTheme === 'dark'
                   ? (action.iconColor === colors.primary ? 'rgba(104, 159, 56, 0.15)' :
                      action.iconColor === '#f97316' || action.iconColor === '#ea580c' ? 'rgba(249, 115, 22, 0.15)' :
