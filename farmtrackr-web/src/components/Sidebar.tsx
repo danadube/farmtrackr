@@ -229,6 +229,11 @@ export function Sidebar({ children }: SidebarProps) {
           {navItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.href)
+            // Dashboard uses primary color (green)
+            const iconColor = colors.primary
+            const iconBgColor = resolvedTheme === 'dark'
+              ? 'rgba(104, 159, 56, 0.15)'
+              : 'rgba(104, 159, 56, 0.1)'
             
             return (
               <Link
@@ -272,13 +277,26 @@ export function Sidebar({ children }: SidebarProps) {
                   }
                 }}
               >
-                <Icon 
-                  style={{ 
-                    width: '20px', 
-                    height: '20px',
-                    color: active ? colors.primary : 'inherit' // Match text color
-                  }} 
-                />
+                <div 
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    backgroundColor: iconBgColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <Icon 
+                    style={{ 
+                      width: '18px', 
+                      height: '18px',
+                      color: iconColor
+                    }} 
+                  />
+                </div>
                 {item.label}
               </Link>
             )
