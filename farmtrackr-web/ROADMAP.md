@@ -688,59 +688,281 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
 ---
 
 ### **v0.8.0 - Email & Communication Integration**
-**Focus:** Full email client integration (Gmail priority)
+**Focus:** Full email client integration (Gmail priority, Outlook support)
 
-#### Gmail Integration (Priority)
+**Status:** 📋 Planned - Implementation strategy defined
+
+---
+
+#### **📋 Implementation Strategy Overview**
+
+**Recommended Approach:** Gmail API first, then add Outlook support via universal abstraction layer
+
+**Why Gmail First:**
+- Already in Google ecosystem (Sheets, Apps Script)
+- Full send/receive capability
+- Native threading and search
+- Free for Google Workspace accounts
+- Simpler setup (no Azure registration needed)
+- Most real estate agents use Gmail/Google Workspace
+
+**Architecture:**
+```
+CRM UI (Provider-agnostic)
+    ↓
+Email Service Layer (Abstraction)
+    ↓
+    ├─→ Gmail API (Primary)
+    └─→ Microsoft Graph API (Outlook - Phase 2)
+```
+
+---
+
+#### **Phase 1: Gmail Integration (Week 1-4)** - PRIORITY
+
+##### **A. Backend Setup (Week 1-2)**
 - [ ] **Gmail API Setup**
-  - Gmail API authentication
-  - OAuth 2.0 with Gmail scope
+  - Gmail API authentication via Google Apps Script
+  - OAuth 2.0 with Gmail scope (built-in)
   - Token management and refresh
-- [ ] **Full Email Client - Gmail**
-  - **Send Emails**
-    - Email composer within FarmTrackr
-    - Rich text email editor
-    - Attachments support
-    - Email templates
-    - Quick send from contact records
-  - **Receive Emails**
-    - Fetch and display emails from Gmail
-    - Inbox view with threading
-    - Conversation view
-    - Email search and filtering
-    - Unread count badges
-  - **Email Management**
-    - Mark as read/unread
-    - Archive, delete, label emails
-    - Email threading and conversation view
-    - Link emails to contacts and transactions
+  - Create `emails.gs` file in Apps Script
+  - Email service layer functions:
+    - `sendEmailFromCRM(transactionId, to, subject, body)`
+    - `getRecentEmails(query, maxResults)`
+    - `logEmailToTransaction(transactionId, emailData)`
+- [ ] **Data Structure Setup**
+  - Create `Email_Log` sheet with columns:
+    - Transaction ID
+    - Direction (sent/received)
+    - Contact Email
+    - Subject
+    - Date/Time
+    - Body Preview (first 200 chars)
+    - Full Body (hidden column)
+    - Attachments JSON
+    - Thread ID
+    - Saved By
+
+##### **B. Frontend UI (Week 2-3)**
+- [ ] **Email Panel in Transaction View**
+  - Add "Emails" tab to transaction detail view
+  - Email list view (filterable, searchable)
+  - Email detail viewer
+  - Email compose modal
+- [ ] **Email Composer**
+  - To/From fields
+  - Subject field
+  - Rich text editor (HTML)
+  - Attach files support
+  - "Save to Transaction" checkbox (auto-checked)
+  - Quick send from contact records
+- [ ] **Email List View**
+  - Inbox view with threading
+  - Conversation view
+  - Email search and filtering
+  - Unread count badges
+  - Filter by: All, From/To Client, Internal
+- [ ] **Email Management**
+  - Mark as read/unread
+  - Archive, delete, label emails
+  - Email threading and conversation view
+  - Link emails to contacts and transactions
+
+##### **C. Core Features (Week 3-4)**
 - [ ] **Email Templates**
-  - Template library
+  - Template library (offer letter, showing confirmation, etc.)
   - Custom email templates
-  - Template variables and personalization (contact name, farm, etc.)
+  - Template variables and personalization:
+    - Contact name
+    - Farm name
+    - Transaction address
+    - Property details
   - Quick send from contact records
 - [ ] **Email History & Tracking**
   - Email history linked to contacts
   - Email history linked to transactions
   - Sent email tracking
   - Email thread view by contact
+  - Auto-detect client emails (link to contact records)
+- [ ] **Smart Features**
+  - Auto-suggest transactions when composing
+  - Scheduled sends (future enhancement)
+  - Attachment handling (save to Google Drive, link to transaction)
+  - Email threading (group conversations)
+  - Quick replies / canned responses
 
-#### Outlook Integration (Future - v0.8.1)
+---
+
+#### **Phase 2: Universal Email Layer (Week 5-6)** - FUTURE
+
+##### **A. Abstraction Layer**
+- [ ] **Email Service Abstraction**
+  - Create unified `EmailService` class
+  - Provider-agnostic interface:
+    - `send(userId, to, subject, body, options)`
+    - `fetch(userId, query, maxResults)`
+    - `getUserConfig(userId)`
+  - Provider routing logic (Gmail vs Outlook)
+- [ ] **Configuration Management**
+  - Create `Email_Config` sheet:
+    - User Email
+    - Provider (gmail/outlook)
+    - Access Token (encrypted)
+    - Refresh Token (encrypted)
+    - Token Expiry
+    - Default From Address
+  - User-by-user provider selection
+  - Token refresh handling
+
+##### **B. Provider-Specific Implementations**
+- [ ] **Gmail Connector** (Already implemented in Phase 1)
+  - `sendViaGmail(to, subject, body, options)`
+  - `fetchFromGmail(query, maxResults)`
+  - Gmail-specific features (labels, threading, etc.)
+- [ ] **Outlook Connector** (New)
+  - `sendViaOutlook(config, to, subject, body, options)`
+  - `fetchFromOutlook(config, query, maxResults)`
+  - Microsoft Graph API integration
+  - OAuth 2.0 flow for Outlook
+  - Token refresh for Outlook
+
+---
+
+#### **Phase 3: Outlook Integration (Week 7-10)** - FUTURE
+
+##### **A. Outlook Setup Requirements**
+- [ ] **Azure AD Application Registration**
+  - Register app in Azure Portal
+  - Configure redirect URI
+  - Set up API permissions:
+    - `Mail.ReadWrite`
+    - `Mail.Send`
+  - Generate client secret
+  - Store credentials in Apps Script properties
+- [ ] **Outlook OAuth Flow**
+  - `authorizeOutlook()` function
+  - OAuth callback handler (`doGet`)
+  - Token exchange (`exchangeOutlookCode`)
+  - Token refresh mechanism
+  - Store tokens in Email_Config sheet
+
+##### **B. Outlook Features**
 - [ ] **Outlook Email Integration**
-  - Outlook email API integration
   - Connect Outlook accounts
   - Full email client (send/receive)
-  - Similar features to Gmail integration
-- [ ] **Outlook Calendar Sync**
+  - Similar features to Gmail integration:
+    - Email composer
+    - Inbox view
+    - Search and filtering
+    - Attachments
+    - Threading (via conversation IDs)
+- [ ] **Outlook-Specific Features**
+  - Read receipts support
+  - Email scheduling (with Graph API)
+  - Corporate email support
+- [ ] **Outlook Calendar Sync** (Future - v0.8.1)
   - Two-way calendar synchronization
   - Event creation from FarmTrackr
   - Calendar events linked to contacts/transactions
-- [ ] **Outlook People/Contacts Sync**
+- [ ] **Outlook People/Contacts Sync** (Future - v0.8.1)
   - Import/export Outlook contacts
   - Bidirectional contact sync
   - Conflict resolution
-- [ ] **Unified Outlook Experience**
-  - Single sign-on for Outlook services
-  - Centralized Outlook integration management
+
+---
+
+#### **📊 Provider Comparison**
+
+| Feature | Gmail API | Outlook (Graph API) | Winner |
+|---------|-----------|---------------------|--------|
+| **Setup Complexity** | ⭐⭐⭐⭐⭐ Simple | ⭐⭐⭐ Moderate | Gmail |
+| **Authentication** | Built-in (Apps Script) | OAuth 2.0 (manual) | Gmail |
+| **Free Tier** | Unlimited (Workspace) | Unlimited (personal) | Tie |
+| **Email Search** | Advanced Gmail queries | OData filters | Gmail |
+| **Threading** | Native support | Conversation IDs | Gmail |
+| **Attachments** | Easy handling | Base64 encoding needed | Gmail |
+| **Read Receipts** | No | Yes | Outlook |
+| **Scheduling** | No (3rd party needed) | Yes (with Graph) | Outlook |
+| **Corporate Adoption** | Startups, tech | Enterprise, corporate | Outlook |
+| **API Stability** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Gmail |
+
+---
+
+#### **💾 Data Structure Examples**
+
+**Email_Log Sheet:**
+```
+| ID | Transaction | Direction | Contact | Subject | Date | Body | Attachments | Thread ID | Provider |
+|----|-------------|-----------|---------|---------|------|------|-------------|-----------|----------|
+| EM-001 | TXN-123 | sent | buyer@x.com | Offer | 11/4 | ... | offer.pdf | THR-A1 | gmail |
+| EM-002 | TXN-123 | received | buyer@x.com | Re: Offer | 11/4 | ... | - | THR-A1 | gmail |
+```
+
+**Email_Config Sheet:**
+```
+| User Email | Provider | Access Token | Refresh Token | Token Expiry | Default From |
+|------------|----------|--------------|---------------|--------------|--------------|
+| janice@glaab.com | gmail | [encrypted] | [encrypted] | 2025-12-01 | janice@glaab.com |
+| dana@glaab.com | outlook | [encrypted] | [encrypted] | 2025-12-01 | dana@glaab.com |
+```
+
+**Transaction Master Sheet (add columns):**
+```
+| ... | Last Email Date | Email Count | Last Email Subject | Provider |
+|-----|-----------------|-------------|--------------------|----------|
+| ... | 11/4/2025 | 12 | Re: Offer | gmail |
+```
+
+---
+
+#### **✅ Implementation Timeline**
+
+**Recommended Path: Gmail First (Option A)**
+
+1. **Week 1-2:** Set up Gmail API backend functions
+2. **Week 2-3:** Build CRM email UI (compose, view, list)
+3. **Week 3-4:** Add transaction linking and email log
+4. **Week 4:** Test with real transactions
+5. **Week 5:** Add templates and quick actions
+6. **Week 6:** Mobile optimization and notifications
+7. **Week 7+:** Add abstraction layer (if needed)
+8. **Week 8+:** Add Outlook support (only if requested)
+
+**Alternative Path: Universal from Day 1 (Option B)**
+
+1. **Week 1:** Build abstraction layer
+2. **Week 2:** Implement Gmail connector
+3. **Week 3:** Implement Outlook connector
+4. **Week 4:** Test both providers
+5. **Week 5+:** Polish and optimize
+
+**Recommendation:** Start with Option A (Gmail First) because:
+- 80% of real estate agents use Gmail
+- Faster time to production
+- Less complexity upfront
+- Easy to add Outlook later (architecture supports it)
+
+---
+
+#### **🎯 Additional Features (Future Enhancements)**
+
+- [ ] **Email Templates Library**
+  - Pre-built templates for common scenarios
+  - Template variables and personalization
+  - Template categories (offers, showings, follow-ups)
+- [ ] **Email Analytics**
+  - Email open tracking (requires third-party service)
+  - Click tracking
+  - Response time metrics
+- [ ] **Bulk Email Features**
+  - Email campaigns
+  - Drip campaigns
+  - Email automation
+- [ ] **Third-Party Email Service Integration** (Optional)
+  - SendGrid/Mailgun for branded sending
+  - Advanced tracking and analytics
+  - Marketing email capabilities
+  - Monthly cost: ~$15-30/month
 
 
 ---
