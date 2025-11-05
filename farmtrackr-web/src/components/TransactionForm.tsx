@@ -1557,16 +1557,6 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                 alignItems: 'center',
                 gap: '8px'
               }, isSubmitting ? colors.text.tertiary : colors.primary, colors.primaryHover || (isDark ? '#5F1FFF' : '#6B3AE8'))}
-              onMouseEnter={(e) => {
-                if (!isSubmitting && !pressedButtons.has('submit')) {
-                  e.currentTarget.style.backgroundColor = colors.primaryHover || (isDark ? '#5F1FFF' : '#6B3AE8')
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isSubmitting && !pressedButtons.has('submit')) {
-                  e.currentTarget.style.backgroundColor = colors.primary
-                }
-              }}
             >
               {isSubmitting ? (
                 <>

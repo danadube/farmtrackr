@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { TransactionForm } from '@/components/TransactionForm'
 import { calculateCommission } from '@/lib/commissionCalculations'
+import { useButtonPress } from '@/hooks/useButtonPress'
 import Link from 'next/link'
 
 interface Transaction {
@@ -84,7 +85,7 @@ export default function CommissionsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showFeeTooltip, setShowFeeTooltip] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [pressedButtons, setPressedButtons] = useState<Set<string>>(new Set())
+  const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
@@ -212,28 +213,7 @@ export default function CommissionsPage() {
     }
   }
 
-  // Helper to add button press feedback
-  const getButtonPressHandlers = (buttonId: string) => ({
-    onMouseDown: () => setPressedButtons(prev => new Set(prev).add(buttonId)),
-    onMouseUp: () => setPressedButtons(prev => {
-      const next = new Set(prev)
-      next.delete(buttonId)
-      return next
-    }),
-    onMouseLeave: () => setPressedButtons(prev => {
-      const next = new Set(prev)
-      next.delete(buttonId)
-      return next
-    })
-  })
-
-  const getButtonPressStyle = (buttonId: string, baseStyle: React.CSSProperties, baseBg: string, hoverBg?: string) => ({
-    ...baseStyle,
-    backgroundColor: pressedButtons.has(buttonId) ? (hoverBg || baseBg) : baseBg,
-    transform: pressedButtons.has(buttonId) ? 'scale(0.97)' : 'scale(1)',
-    boxShadow: pressedButtons.has(buttonId) ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : baseStyle.boxShadow || 'none',
-    transition: 'all 0.1s ease'
-  })
+  // Button press handlers are now provided by useButtonPress hook
 
   // Clear all filters
   const handleClearFilters = () => {
@@ -963,16 +943,6 @@ export default function CommissionsPage() {
                       alignItems: 'center',
                       gap: '8px'
                     }, colors.primary, colors.primaryHover)}
-                    onMouseEnter={(e) => {
-                      if (!pressedButtons.has('newTransaction')) {
-                        e.currentTarget.style.backgroundColor = colors.primaryHover
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!pressedButtons.has('newTransaction')) {
-                        e.currentTarget.style.backgroundColor = colors.primary
-                      }
-                    }}
                   >
                     <Plus style={{ width: '16px', height: '16px' }} />
                     New Transaction
@@ -1163,39 +1133,30 @@ export default function CommissionsPage() {
               {(filterYear !== 'all' || filterClientType !== 'all' || filterBrokerage !== 'all' || filterPropertyType !== 'all' || filterReferralType !== 'all' || filterDateRange !== 'all' || searchQuery.trim()) && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: `1px solid ${colors.border}`, alignItems: 'center' }}>
                   {/* Clear All Filters Button */}
-                  <button
-                    onClick={handleClearFilters}
-                    onMouseDown={() => setPressedButtons(prev => new Set(prev).add('clearFilters'))}
-                    onMouseUp={() => setPressedButtons(prev => {
-                      const next = new Set(prev)
-                      next.delete('clearFilters')
-                      return next
-                    })}
-                    onMouseLeave={() => setPressedButtons(prev => {
-                      const next = new Set(prev)
-                      next.delete('clearFilters')
-                      return next
-                    })}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '6px 12px',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      backgroundColor: pressedButtons.has('clearFilters') ? colors.primary : colors.primaryLight,
-                      color: pressedButtons.has('clearFilters') ? '#ffffff' : colors.primary,
-                      borderRadius: '999px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.1s ease',
-                      transform: pressedButtons.has('clearFilters') ? 'scale(0.95)' : 'scale(1)',
-                      boxShadow: pressedButtons.has('clearFilters') ? 'inset 0 2px 4px rgba(0,0,0,0.1)' : 'none'
-                    }}
-                  >
-                    <X style={{ width: '14px', height: '14px' }} />
-                    Clear Filters
-                  </button>
+                    <button
+                      onClick={handleClearFilters}
+                      {...getButtonPressHandlers('clearFilters')}
+                      style={getButtonPressStyle(
+                        'clearFilters',
+                        {
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          borderRadius: '999px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: pressedButtons.has('clearFilters') ? '#ffffff' : colors.primary
+                        },
+                        colors.primaryLight,
+                        colors.primary
+                      )}
+                    >
+                      <X style={{ width: '14px', height: '14px' }} />
+                      Clear Filters
+                    </button>
                   {filterDateRange !== 'all' && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', fontSize: '12px', fontWeight: '500', backgroundColor: colors.primaryLight, color: colors.primary, borderRadius: '999px' }}>
                       {filterDateRange === '3months' ? '3 Months' : filterDateRange === '6months' ? '6 Months' : filterDateRange === '12months' ? '12 Months' : filterDateRange === 'ytd' ? 'YTD' : 'Last Year'}
@@ -1439,16 +1400,6 @@ export default function CommissionsPage() {
                       justifyContent: 'center',
                       gap: '8px'
                     }, isImporting ? colors.text.tertiary : colors.success, colors.successHover)}
-                    onMouseEnter={(e) => {
-                      if (!isImporting && !pressedButtons.has('importCSV')) {
-                        e.currentTarget.style.backgroundColor = colors.successHover
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isImporting && !pressedButtons.has('importCSV')) {
-                        e.currentTarget.style.backgroundColor = colors.success
-                      }
-                    }}
                   >
                     {isImporting ? (
                       <>
@@ -1493,16 +1444,6 @@ export default function CommissionsPage() {
                       justifyContent: 'center',
                       gap: '8px'
                     }, isImporting ? colors.text.tertiary : colors.info, colors.infoHover || colors.info)}
-                    onMouseEnter={(e) => {
-                      if (!isImporting && !pressedButtons.has('importGoogle')) {
-                        e.currentTarget.style.backgroundColor = colors.infoHover || colors.info
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isImporting && !pressedButtons.has('importGoogle')) {
-                        e.currentTarget.style.backgroundColor = colors.info
-                      }
-                    }}
                   >
                     {isImporting ? (
                       <>
@@ -1546,16 +1487,6 @@ export default function CommissionsPage() {
                       justifyContent: 'center',
                       gap: '8px'
                     }, colors.info, colors.infoHover)}
-                    onMouseEnter={(e) => {
-                      if (!pressedButtons.has('downloadTemplate')) {
-                        e.currentTarget.style.backgroundColor = colors.infoHover
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!pressedButtons.has('downloadTemplate')) {
-                        e.currentTarget.style.backgroundColor = colors.info
-                      }
-                    }}
                   >
                     <Download style={{ width: '14px', height: '14px' }} />
                     Download CSV Template
@@ -1591,16 +1522,6 @@ export default function CommissionsPage() {
                         justifyContent: 'center',
                         gap: '8px'
                       }, colors.success, colors.successHover)}
-                      onMouseEnter={(e) => {
-                        if (!pressedButtons.has('exportCSV')) {
-                          e.currentTarget.style.backgroundColor = colors.successHover
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!pressedButtons.has('exportCSV')) {
-                          e.currentTarget.style.backgroundColor = colors.success
-                        }
-                      }}
                     >
                       <Download style={{ width: '14px', height: '14px' }} />
                       Export CSV

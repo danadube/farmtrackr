@@ -28,6 +28,7 @@ import Link from 'next/link'
 import { FarmTrackrLogo } from '@/components/FarmTrackrLogo'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
+import { useButtonPress } from '@/hooks/useButtonPress'
 import { normalizeFarmName } from '@/lib/farmNames'
 import { getFarmColor } from '@/lib/farmColors'
 import { validateAllContacts } from '@/lib/dataQuality'
@@ -54,7 +55,7 @@ interface Transaction {
 export default function DashboardClient({ contacts, stats }: DashboardClientProps) {
   const [mounted, setMounted] = useState(false)
   const { colors, isDark, card, cardWithLeftBorder, headerCard, headerDivider, background, text, spacing } = useThemeStyles()
-  const [pressedButtons, setPressedButtons] = useState<Set<string>>(new Set())
+  const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [recentTransaction, setRecentTransaction] = useState<Transaction | null>(null)
   const [upcomingClosings, setUpcomingClosings] = useState<number>(0)
   const [thisMonthCommissions, setThisMonthCommissions] = useState<{ count: number; total: number }>({ count: 0, total: 0 })
@@ -488,28 +489,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
     return null
   }
 
-  // Button press handlers for visual feedback
-  const getButtonPressHandlers = (buttonId: string) => ({
-    onMouseDown: () => setPressedButtons(prev => new Set(prev).add(buttonId)),
-    onMouseUp: () => setPressedButtons(prev => {
-      const next = new Set(prev)
-      next.delete(buttonId)
-      return next
-    }),
-    onMouseLeave: () => setPressedButtons(prev => {
-      const next = new Set(prev)
-      next.delete(buttonId)
-      return next
-    })
-  })
-
-  const getButtonPressStyle = (buttonId: string, baseStyle: React.CSSProperties, baseBg: string, hoverBg?: string) => ({
-    ...baseStyle,
-    backgroundColor: pressedButtons.has(buttonId) ? (hoverBg || baseBg) : baseBg,
-    transform: pressedButtons.has(buttonId) ? 'scale(0.97)' : 'scale(1)',
-    boxShadow: pressedButtons.has(buttonId) ? 'inset 0 2px 4px rgba(0,0,0,0.15)' : baseStyle.boxShadow || 'none',
-    transition: 'all 0.1s ease'
-  })
+  // Button press handlers are now provided by useButtonPress hook
 
   const activeFarms = Array.from(
     new Set(
@@ -1102,24 +1082,23 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         newDate.setMonth(newDate.getMonth() - 1)
                         setCalendarDate(newDate)
                       }}
-                      style={{
-                        padding: spacing(0.5),
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: colors.text.secondary,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: spacing(0.75),
-                        transition: 'background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                      }}
+                      {...getButtonPressHandlers('calendar-prev')}
+                      style={getButtonPressStyle(
+                        'calendar-prev',
+                        {
+                          padding: spacing(0.5),
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: colors.text.secondary,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: spacing(0.75)
+                        },
+                        'transparent',
+                        colors.cardHover
+                      )}
                     >
                       <ChevronLeft style={{ width: '18px', height: '18px' }} />
                     </button>
@@ -1129,24 +1108,23 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         newDate.setMonth(newDate.getMonth() + 1)
                         setCalendarDate(newDate)
                       }}
-                      style={{
-                        padding: spacing(0.5),
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: colors.text.secondary,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: spacing(0.75),
-                        transition: 'background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                      }}
+                      {...getButtonPressHandlers('calendar-next')}
+                      style={getButtonPressStyle(
+                        'calendar-next',
+                        {
+                          padding: spacing(0.5),
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: colors.text.secondary,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: spacing(0.75)
+                        },
+                        'transparent',
+                        colors.cardHover
+                      )}
                     >
                       <ChevronRight style={{ width: '18px', height: '18px' }} />
                     </button>

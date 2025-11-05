@@ -26,6 +26,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { FarmTrackrLogo } from './FarmTrackrLogo'
 import { Footer } from './Footer'
+import { useButtonPress } from '@/hooks/useButtonPress'
 
 interface SidebarProps {
   children: React.ReactNode
@@ -34,6 +35,7 @@ interface SidebarProps {
 export function Sidebar({ children }: SidebarProps) {
   const { resolvedTheme } = useTheme()
   const pathname = usePathname()
+  const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
@@ -179,13 +181,19 @@ export function Sidebar({ children }: SidebarProps) {
         </Link>
         <button
           onClick={() => setIsMobileOpen(!isMobileOpen)}
-          style={{
-            padding: '8px',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            color: colors.text.primary
-          }}
+          {...getButtonPressHandlers('mobile-menu-toggle')}
+          style={getButtonPressStyle(
+            'mobile-menu-toggle',
+            {
+              padding: '8px',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: colors.text.primary
+            },
+            'transparent',
+            colors.cardHover
+          )}
         >
           {isMobileOpen ? (
             <X style={{ width: '24px', height: '24px' }} />

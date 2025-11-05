@@ -7,6 +7,7 @@ import { ContactFormData } from '@/types'
 import { X, Save, User, Building2, Mail, Phone, MapPin, FileText } from 'lucide-react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
+import { useButtonPress } from '@/hooks/useButtonPress'
 import { normalizeFarmName } from '@/lib/farmNames'
 
 interface ContactFormProps {
@@ -17,6 +18,7 @@ interface ContactFormProps {
 
 export default function ContactForm({ initialData, contactId, isEditing = false }: ContactFormProps) {
   const { colors, isDark, card, background, text } = useThemeStyles()
+  const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const router = useRouter()
   const [formData, setFormData] = useState<ContactFormData>(
     initialData || {
@@ -266,23 +268,22 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                 </div>
                 <button
                   onClick={handleCancel}
-                  style={{
-                    padding: '8px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.cardHover
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
+                  {...getButtonPressHandlers('cancel')}
+                  style={getButtonPressStyle(
+                    'cancel',
+                    {
+                      padding: '8px',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    },
+                    'transparent',
+                    colors.cardHover
+                  )}
                 >
                   <X style={{ width: '20px', height: '20px', color: colors.text.secondary }} />
                 </button>
@@ -1163,53 +1164,45 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                 <button
                   type="button"
                   onClick={handleCancel}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: colors.cardHover,
-                    ...text.secondary,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.borderHover
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.cardHover
-                  }}
+                  {...getButtonPressHandlers('cancel-bottom')}
+                  style={getButtonPressStyle(
+                    'cancel-bottom',
+                    {
+                      padding: '12px 24px',
+                      ...text.secondary,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    },
+                    colors.cardHover,
+                    colors.borderHover
+                  )}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: isSubmitting ? colors.text.tertiary : colors.success,
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                    transition: 'background-color 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSubmitting) {
-                      e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSubmitting) {
-                      e.currentTarget.style.backgroundColor = colors.success
-                    }
-                  }}
+                  {...getButtonPressHandlers('save')}
+                  style={getButtonPressStyle(
+                    'save',
+                    {
+                      padding: '12px 24px',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    },
+                    isSubmitting ? colors.text.tertiary : colors.success,
+                    isDark ? '#059669' : '#15803d'
+                  )}
                 >
                   <Save style={{ width: '16px', height: '16px' }} />
                   {isSubmitting ? 'Saving...' : (isEditing ? 'Update Contact' : 'Create Contact')}
