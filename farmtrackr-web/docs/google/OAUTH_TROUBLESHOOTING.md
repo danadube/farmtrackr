@@ -1,112 +1,108 @@
-# Google OAuth Troubleshooting: Error 400 invalid_request
+# Google OAuth "Access Blocked" Troubleshooting Guide
 
-## Error: "Access blocked: Authorization Error" + "Error 400: invalid_request"
+## 🚨 Current Issue: "Access blocked: Authorization Error"
 
-This error means Google is rejecting the OAuth request. Common causes:
+Even with the correct Client ID, you're still getting blocked. This means there are configuration issues in your Google Cloud project.
 
-### 1. Redirect URI Mismatch (Most Common)
+## 🔍 Step-by-Step Troubleshooting
 
-The redirect URI must **exactly** match what's configured in Google Cloud Console.
+### 1. **Check OAuth Consent Screen Configuration**
 
-**Check in Google Cloud Console:**
-1. Go to **APIs & Services** → **Credentials**
-2. Click on your **Web application** client (not the iOS one)
-3. Check **"Authorized redirect URIs"**
-4. Ensure it **exactly** matches one of these:
+**Go to:** https://console.cloud.google.com/apis/credentials/consent
 
-**For Production (danadube.com):**
-```
-https://danadube.com/api/google/oauth/callback
-```
+**Required Settings:**
+- ✅ **App name**: `FarmTrackr`
+- ✅ **User support email**: Your email address
+- ✅ **Developer contact information**: Your email address
+- ✅ **App domain**: Leave blank for iOS apps
+- ✅ **Authorized domains**: Leave blank for iOS apps
 
-**For Development:**
-```
-http://localhost:3000/api/google/oauth/callback
-```
+### 2. **Add Test Users**
 
-**Common mistakes:**
-- ❌ `https://danadube.com/api/google/oauth/callback/` (trailing slash)
-- ❌ `http://danadube.com/api/google/oauth/callback` (http instead of https)
-- ❌ `https://www.danadube.com/api/google/oauth/callback` (www prefix)
-- ✅ `https://danadube.com/api/google/oauth/callback` (correct)
+**Critical Step:** You MUST add your email as a test user.
 
-**Fix:**
-- Make sure the redirect URI in Google Cloud Console matches exactly
-- Check your Vercel environment variable: `GOOGLE_OAUTH_REDIRECT_URI`
-- No trailing slashes, correct protocol (https for production)
+**How to:**
+1. In OAuth consent screen, scroll to "Test users"
+2. Click "Add Users"
+3. Add your Google account email address
+4. Click "Save"
 
-### 2. Missing Test User
+**Why this matters:** In development/testing mode, only authorized test users can access your app.
 
-If your app is in **"Testing"** status (not Published), you must add test users.
+### 3. **Verify OAuth 2.0 Client ID Configuration**
 
-**Fix:**
-1. Go to **APIs & Services** → **OAuth consent screen**
-2. Click on **"Audience"** tab
-3. Scroll to **"Test users"** section
-4. Click **"Add Users"**
-5. Add: `dana@danadube.com`
-6. Click **"Add"** then **"Save"**
-7. **Important:** Only test users can access the app in Testing mode
+**Go to:** https://console.cloud.google.com/apis/credentials
 
-### 3. Client ID/Secret Mismatch
+**Check your iOS OAuth 2.0 Client ID:**
+- ✅ **Application type**: iOS
+- ✅ **Bundle ID**: `com.danadube.FarmTrackr`
+- ✅ **App Store ID**: Leave blank (optional)
 
-Make sure you're using the **Web application** client credentials, not the iOS client.
+### 4. **Enable Google Sheets API**
 
-**Check:**
-- In Google Cloud Console → Credentials, you should see:
-  - iOS client: `FarmTrackr` (for iOS app)
-  - Web client: `FarmTrackr Web Client` or similar (for web app)
-- Use the **Web client** credentials in your environment variables
+**Go to:** https://console.cloud.google.com/apis/library/sheets.googleapis.com
 
-### 4. Environment Variables Not Set
+**Make sure:**
+- ✅ Google Sheets API is **ENABLED**
+- ✅ Status shows "API enabled"
 
-Verify your Vercel environment variables are set correctly:
+### 5. **Check Project Settings**
 
-```
-GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-client-secret
-GOOGLE_OAUTH_REDIRECT_URI=https://danadube.com/api/google/oauth/callback
-NEXT_PUBLIC_APP_URL=https://danadube.com
-```
+**Go to:** https://console.cloud.google.com/apis/credentials
 
-**Fix:**
-1. Go to Vercel → Project Settings → Environment Variables
-2. Verify all variables are set for Production environment
-3. Redeploy after adding/updating variables
+**Verify:**
+- ✅ You're in the correct Google Cloud project
+- ✅ The project has billing enabled (if required)
+- ✅ The project is not in a restricted organization
 
-### 5. OAuth Consent Screen Not Configured
+## 🛠️ Quick Fix Checklist
 
-Ensure the OAuth consent screen is fully configured:
+### Immediate Actions:
+1. **Add your email as test user** in OAuth consent screen
+2. **Enable Google Sheets API** if not already enabled
+3. **Verify bundle ID** matches exactly: `com.danadube.FarmTrackr`
+4. **Check project selection** - make sure you're in the right project
 
-**Check:**
-1. Go to **APIs & Services** → **OAuth consent screen**
-2. Verify:
-   - **Audience tab**: Set to External, test users added
-   - **Branding tab**: App name and support email filled
-   - **Data Access tab**: Spreadsheets scope added
+### Common Issues:
+- ❌ **Missing test user** - Most common cause
+- ❌ **API not enabled** - Google Sheets API must be enabled
+- ❌ **Wrong project** - Make sure you're in the correct Google Cloud project
+- ❌ **Bundle ID mismatch** - Must match exactly
 
-## Step-by-Step Fix Checklist
+## 🔧 Advanced Troubleshooting
 
-- [ ] **Redirect URI** matches exactly in Google Cloud Console
-- [ ] **Test user** (dana@danadube.com) added in Audience tab
-- [ ] **Environment variables** set correctly in Vercel
-- [ ] Using **Web application** client credentials (not iOS)
-- [ ] **OAuth consent screen** fully configured (all three tabs)
-- [ ] **Redeployed** after any changes
+### If Still Blocked:
 
-## Still Not Working?
+1. **Create a new OAuth 2.0 Client ID:**
+   - Delete the existing iOS client
+   - Create a new one with bundle ID `com.danadube.FarmTrackr`
+   - Update the Client ID in `GoogleSheetsConfig.swift`
 
-1. **Clear browser cache** and cookies for danadube.com
-2. **Try incognito/private window** to rule out browser issues
-3. **Check browser console** for additional error messages
-4. **Check Vercel logs** for server-side errors
-5. **Verify the redirect URI** is being generated correctly by checking the authorization URL
+2. **Check OAuth Consent Screen Publishing:**
+   - Make sure it's set to "Testing" mode
+   - Add all necessary test users
 
-## Testing the Redirect URI
+3. **Verify Redirect URI:**
+   - Should be: `com.danadube.FarmTrackr://oauth2redirect`
+   - This is handled automatically by iOS
 
-To verify the redirect URI is correct, check the authorization URL:
-1. In Settings → Google Integration, click "Connect Google Account"
-2. Look at the URL before redirecting - it should contain `redirect_uri=...`
-3. Compare that redirect_uri with what's in Google Cloud Console
-4. They must match **exactly** (no trailing slashes, correct protocol, correct domain)
+## 📱 Test the Fix
 
+After making changes:
+
+1. **Wait 5-10 minutes** for Google's systems to update
+2. **Restart the app** on the iPad simulator
+3. **Try Google Sheets authentication again**
+
+## 🆘 Still Having Issues?
+
+If you're still getting blocked after following these steps:
+
+1. **Check Google Cloud Console logs** for any error messages
+2. **Verify your Google account** has proper permissions
+3. **Try with a different Google account** as a test
+4. **Contact Google Cloud support** if the issue persists
+
+## 📞 Need Help?
+
+The most common fix is adding your email as a test user in the OAuth consent screen. This is required for all development/testing OAuth flows. 

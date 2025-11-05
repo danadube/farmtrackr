@@ -25,16 +25,42 @@ docs/
 │   ├── BRANDING_DEBUG_CHECKLIST.md   # Branding deployment debug guide
 │   └── BRANDING_DEPLOYMENT_FIX.md    # Branding gradient fix documentation
 │
-├── integration/                       # Integration documentation
-│   └── COMMISSION_SCANNER_INTEGRATION_SUMMARY.md
+├── commission/                        # Commission system documentation
+│   ├── README.md
+│   ├── COMMISSION_ROADMAP.md
+│   ├── COMMISSION_ROADMAP_SUMMARY.md
+│   ├── CALCULATION_COMPARISON_ANALYSIS.md
+│   ├── COMMISSION_IMPROVEMENT_ROADMAP.md
+│   ├── COMMISSION_PARITY_STATUS.md
+│   ├── COMMISSION_SHEET_SCANNER.md
+│   ├── COMMISSION_SYSTEM_AUDIT.md
+│   ├── COMMISSION_SCANNER_INTEGRATION_SUMMARY.md
+│   ├── COMMISSION_INTEGRATION.md
+│   └── PARITY_ACHIEVED_SUMMARY.md
+│
+├── architecture/                      # Architecture & design
+│   ├── README.md
+│   ├── FUTURE_ARCHITECTURE.md
+│   └── HSB_IMPLEMENTATION_SUMMARY.md
+│
+├── features/                          # Feature documentation
+│   ├── README.md
+│   ├── IMPORT_EXPORT_REORGANIZATION_PROPOSAL.md
+│   └── QUICK_ACTIONS_SUGGESTIONS.md
 │
 ├── setup/                             # Setup & configuration guides
+│   ├── README.md
 │   ├── DATABASE_SETUP.md
 │   ├── DEPLOYMENT_NOTES.md
 │   ├── QUICK_FIX_PRODUCTION.md
-│   └── VERSION_UPDATE.md
+│   ├── VERSION_UPDATE.md
+│   ├── VERCEL_DEPLOYMENT.md
+│   ├── OPENAI_API_KEY_SETUP.md
+│   ├── GOOGLE_CLOUD_SETUP_FARMTRACKR.md
+│   └── GIT_REPOSITORY_CORRUPTION_RECOVERY.md
 │
 ├── google/                            # Google integration
+│   ├── README.md
 │   ├── GOOGLE_CONTACTS_INTEGRATION.md
 │   ├── GOOGLE_OAUTH_SETUP.md
 │   ├── GOOGLE_SHEETS_SETUP.md
@@ -44,25 +70,29 @@ docs/
 │   ├── QUICK_GOOGLE_SETUP.md
 │   ├── SCOPE_CONFIGURATION.md
 │   ├── SECURITY_INCIDENT_RESPONSE.md
-│   ├── TROUBLESHOOTING_GOOGLE_OAUTH.md
 │   └── WEB_GOOGLE_OAUTH_SETUP.md
 │
 ├── planning/                          # Planning & roadmap
-│   ├── COMMISSION_INTEGRATION.md
-│   ├── ENHANCEMENT_SUGGESTIONS.md
+│   ├── README.md
 │   ├── PLANNING.md
+│   ├── ENHANCEMENT_SUGGESTIONS.md
 │   ├── TODO_ENHANCEMENTS.md
-│   └── ARCHIVED_* (archived planning docs)
+│   ├── ARCHIVED_TODO_SWIFT_APP.md
+│   └── ARCHIVED_APP_STATUS_SWIFT_APP.md
 │
 ├── guides/                            # User & developer guides
+│   ├── README.md
 │   ├── DOCUMENT_FEATURES_SUMMARY.md
-│   └── IMPORT_INSTRUCTIONS.md
+│   ├── IMPORT_INSTRUCTIONS.md
+│   └── CSV_IMPORT_COLUMNS.md
 │
 └── archive/                           # Archived documentation
     ├── IMPLEMENTATION_COMPLETE.md
     ├── NEXT_STEPS.md
     ├── WORK_TIME_ANALYSIS.md
-    └── TECHNICAL_DOCUMENTATION.md
+    ├── TECHNICAL_DOCUMENTATION.md
+    ├── RUN_NOTES_MIGRATION.md
+    └── glaab_farm_crm_prompt.md
 ```
 
 ## 🚀 Quick Links
@@ -83,12 +113,24 @@ docs/
 
 ### Development
 - **Planning**: `planning/PLANNING.md`
-- **Architecture**: `../FUTURE_ARCHITECTURE.md`
-- **Commission Integration**: `planning/COMMISSION_INTEGRATION.md`
+- **Architecture**: `architecture/FUTURE_ARCHITECTURE.md`
+- **Commission System**: `commission/README.md`
+- **Features**: `features/README.md`
 
 ### Troubleshooting
 - **Branding Issues**: `debug/BRANDING_DEBUG_CHECKLIST.md`
-- **Google OAuth**: `google/TROUBLESHOOTING_GOOGLE_OAUTH.md`
+- **Google OAuth**: `google/OAUTH_TROUBLESHOOTING.md`
+- **Git Issues**: `setup/GIT_REPOSITORY_CORRUPTION_RECOVERY.md`
+
+---
+
+## 📋 Organization Notes
+
+- **Commission docs** are in `commission/` (not mixed with planning)
+- **Architecture docs** are in `architecture/` (not root level)
+- **Feature docs** are in `features/` (not root level)
+- **Setup docs** consolidated in `setup/` (including deployment, API keys, etc.)
+- **Duplicate files** removed (kept most current versions)
 
 ---
 
