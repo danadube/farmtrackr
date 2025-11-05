@@ -65,7 +65,16 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
     pendingCount: 0
   })
   const [mostActiveFarm, setMostActiveFarm] = useState<{ name: string; count: number } | null>(null)
-  const [recentActivity, setRecentActivity] = useState<Array<{ type: 'contact' | 'transaction'; id: string; title: string; date: Date; link: string }>>([])
+  const [recentActivity, setRecentActivity] = useState<Array<{ 
+    type: 'contact' | 'transaction'; 
+    id: string; 
+    title: string; 
+    date: Date; 
+    link: string;
+    subtitle?: string;
+    metadata?: string;
+    value?: number;
+  }>>([])
   const [currentDateTime, setCurrentDateTime] = useState<Date>(new Date())
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
   const [calendarAppointments, setCalendarAppointments] = useState<Array<{ id: string; title: string; date: Date; time?: string; color?: string }>>([])
@@ -309,7 +318,16 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
     // Fetch activity feed
     const fetchActivityFeed = async () => {
       try {
-        const activities: Array<{ type: 'contact' | 'transaction'; id: string; title: string; date: Date; link: string }> = []
+        const activities: Array<{ 
+          type: 'contact' | 'transaction'; 
+          id: string; 
+          title: string; 
+          date: Date; 
+          link: string;
+          subtitle?: string;
+          metadata?: string;
+          value?: number;
+        }> = []
         
         // Recent contacts (last 10)
         const recentContacts = contacts
@@ -320,7 +338,9 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             id: c.id,
             title: c.organizationName || `${c.firstName || ''} ${c.lastName || ''}`.trim() || 'Unnamed Contact',
             date: c.dateCreated,
-            link: `/contacts/${c.id}`
+            link: `/contacts/${c.id}`,
+            subtitle: c.farm ? normalizeFarmName(c.farm) : undefined,
+            metadata: c.city && c.state ? `${c.city}, ${c.state}` : c.city || c.state || undefined
           }))
         
         activities.push(...recentContacts)
@@ -332,13 +352,65 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
           const recentTxs = transactions
             .sort((a: any, b: any) => new Date(b.createdAt || b.closingDate || 0).getTime() - new Date(a.createdAt || a.closingDate || 0).getTime())
             .slice(0, 5)
-            .map((t: any) => ({
-              type: 'transaction' as const,
-              id: t.id,
-              title: t.address || 'Transaction',
-              date: new Date(t.createdAt || t.closingDate || Date.now()),
-              link: `/commissions`
-            }))
+            .map((t: any) => {
+              let nci = null
+              try {
+                const calc = calculateCommission({
+                  brokerage: t.brokerage,
+                  transactionType: t.transactionType,
+                  closedPrice: parseFloat(String(t.closedPrice || 0)),
+                  commissionPct: parseFloat(String(t.commissionPct || 0)),
+                  referralPct: parseFloat(String(t.referralPct || 0)),
+                  referralFeeReceived: parseFloat(String(t.referralFeeReceived || 0)),
+                  eo: parseFloat(String(t.eo || 0)),
+                  royalty: t.royalty || '',
+                  companyDollar: t.companyDollar || '',
+                  hoaTransfer: parseFloat(String(t.hoaTransfer || 0)),
+                  homeWarranty: parseFloat(String(t.homeWarranty || 0)),
+                  kwCares: parseFloat(String(t.kwCares || 0)),
+                  kwNextGen: parseFloat(String(t.kwNextGen || 0)),
+                  boldScholarship: parseFloat(String(t.boldScholarship || 0)),
+                  tcConcierge: parseFloat(String(t.tcConcierge || 0)),
+                  jelmbergTeam: parseFloat(String(t.jelmbergTeam || 0)),
+                  bdhSplitPct: parseFloat(String(t.bdhSplitPct || 0)),
+                  preSplitDeduction: t.preSplitDeduction || '',
+                  asf: parseFloat(String(t.asf || 0)),
+                  foundation10: parseFloat(String(t.foundation10 || 0)),
+                  adminFee: parseFloat(String(t.adminFee || 0)),
+                  brokerageSplit: parseFloat(String(t.brokerageSplit || 0)),
+                  otherDeductions: parseFloat(String(t.otherDeductions || 0)),
+                  buyersAgentSplit: parseFloat(String(t.buyersAgentSplit || 0)),
+                  nci: t.notes ? (() => {
+                    try {
+                      const notesData = JSON.parse(t.notes)
+                      return notesData?.csvNci
+                    } catch {
+                      return t.netVolume
+                    }
+                  })() : t.netVolume
+                })
+                nci = parseFloat(calc.nci || '0')
+              } catch {
+                // Fallback to simple calculation
+                const price = parseFloat(String(t.closedPrice || 0))
+                const pct = parseFloat(String(t.commissionPct || 0))
+                nci = price * pct
+              }
+              
+              const closedDate = t.closedDate || t.closingDate
+              const dateStr = closedDate ? new Date(closedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : undefined
+              
+              return {
+                type: 'transaction' as const,
+                id: t.id,
+                title: t.address || 'Transaction',
+                date: new Date(t.createdAt || t.closingDate || Date.now()),
+                link: `/commissions`,
+                subtitle: t.clientType || undefined,
+                metadata: [dateStr, t.city, t.closedPrice ? `$${parseFloat(String(t.closedPrice)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : undefined].filter(Boolean).join(' • ') || undefined,
+                value: nci
+              }
+            })
           
           activities.push(...recentTxs)
         }
@@ -1294,66 +1366,108 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             >
               Recent Activity
             </h2>
-            <div style={{ padding: spacing(2), ...card }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
               {recentActivity.length === 0 ? (
-                <p style={{ fontSize: '14px', ...text.tertiary, margin: 0, textAlign: 'center', padding: spacing(4) }}>
-                  No recent activity
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
-                  {recentActivity.map((activity, index) => (
-                    <Link
-                      key={activity.id}
-                      href={activity.link}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: spacing(1.5),
-                        padding: spacing(1.5),
-                        borderRadius: spacing(0.75),
-                        textDecoration: 'none',
-                        backgroundColor: 'transparent',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = colors.cardHover
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: spacing(2),
-                          height: spacing(2),
-                          borderRadius: '50%',
-                          backgroundColor: activity.type === 'contact' ? colors.primary : colors.warning,
-                          flexShrink: 0
-                        }}
-                      />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ 
-                          fontSize: '14px', 
-                          fontWeight: '500',
-                          ...text.primary, 
-                          margin: 0,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {activity.title}
-                        </p>
-                        <p style={{ 
-                          fontSize: '12px', 
-                          ...text.tertiary, 
-                          margin: `${spacing(0.25)} 0 0 0`
-                        }}>
-                          {activity.date.toLocaleDateString()} {activity.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
+                <div style={{ padding: spacing(4), ...card, textAlign: 'center' }}>
+                  <p style={{ fontSize: '14px', ...text.tertiary, margin: 0 }}>
+                    No recent activity
+                  </p>
                 </div>
+              ) : (
+                recentActivity.map((activity) => (
+                  <Link
+                    key={activity.id}
+                    href={activity.link}
+                    style={{
+                      padding: '20px 24px',
+                      ...card,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      border: `1px solid ${colors.border}`,
+                      textDecoration: 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                      e.currentTarget.style.borderColor = colors.primary
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.card
+                      e.currentTarget.style.borderColor = colors.border
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                      <div style={{ flex: '1', minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                          <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '18px', margin: '0' }}>
+                            {activity.title}
+                          </h3>
+                          {activity.subtitle && (
+                            <span style={{ 
+                              padding: '4px 12px', 
+                              fontSize: '12px', 
+                              fontWeight: '600', 
+                              backgroundColor: activity.type === 'contact' 
+                                ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
+                                : (activity.subtitle === 'Buyer' 
+                                    ? (isDark ? '#1e3a5f' : '#3b82f6')
+                                    : (isDark ? '#78350f' : '#f59e0b')), 
+                              color: activity.type === 'contact' 
+                                ? colors.primary
+                                : (activity.subtitle === 'Buyer' 
+                                    ? (isDark ? colors.info : '#ffffff')
+                                    : (isDark ? colors.warning : '#ffffff')), 
+                              borderRadius: '999px', 
+                              flexShrink: 0 
+                            }}>
+                              {activity.type === 'contact' ? '🏠' : (activity.subtitle === 'Buyer' ? '🔵' : '⭐')} {activity.subtitle}
+                            </span>
+                          )}
+                          <span style={{ 
+                            padding: '4px 12px', 
+                            fontSize: '12px', 
+                            fontWeight: '500', 
+                            backgroundColor: activity.type === 'contact' 
+                              ? (isDark ? 'rgba(96, 165, 250, 0.2)' : 'rgba(96, 165, 250, 0.1)')
+                              : (isDark ? '#1a2542' : '#9273FF'),
+                            color: activity.type === 'contact' 
+                              ? colors.info || colors.primary
+                              : '#ffffff',
+                            borderRadius: '999px', 
+                            flexShrink: 0 
+                          }}>
+                            {activity.type === 'contact' ? '👤 Contact' : '💰 Transaction'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', ...text.secondary, flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: '600', color: colors.text.primary }}>
+                            📅 {activity.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          {activity.metadata && (
+                            <>
+                              <span>•</span>
+                              <span>{activity.metadata}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {activity.value !== undefined && activity.value !== null && (
+                        <div style={{ 
+                          minWidth: '120px', 
+                          textAlign: 'right', 
+                          padding: '12px', 
+                          borderRadius: '8px', 
+                          backgroundColor: colors.successLight, 
+                          border: `2px solid ${colors.success}` 
+                        }}>
+                          <p style={{ fontSize: '12px', fontWeight: '600', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>NCI</p>
+                          <p style={{ fontSize: '16px', fontWeight: '700', color: colors.success, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                            ${activity.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ))
               )}
             </div>
           </div>
