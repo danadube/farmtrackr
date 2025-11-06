@@ -573,8 +573,9 @@ export default function ImportExportPage() {
                   Contacts
                 </button>
                 <button
+                  {...getButtonPressHandlers('tab-transactions')}
                   onClick={() => setActiveTab('transactions')}
-                  style={{
+                  style={getButtonPressStyle('tab-transactions', {
                     padding: '10px 20px',
                     backgroundColor: activeTab === 'transactions' ? '#ffffff' : 'transparent',
                     color: activeTab === 'transactions' ? colors.primary : 'rgba(255, 255, 255, 0.85)',
@@ -585,17 +586,16 @@ export default function ImportExportPage() {
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.2s ease'
-                  }}
+                    gap: '8px'
+                  }, activeTab === 'transactions' ? '#ffffff' : 'transparent', 'rgba(255, 255, 255, 0.15)')}
                   onMouseEnter={(e) => {
-                    if (activeTab !== 'transactions') {
+                    if (activeTab !== 'transactions' && !pressedButtons.has('tab-transactions')) {
                       e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'
                       e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.6)'
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (activeTab !== 'transactions') {
+                    if (activeTab !== 'transactions' && !pressedButtons.has('tab-transactions')) {
                       e.currentTarget.style.backgroundColor = 'transparent'
                       e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)'
                     }

@@ -537,25 +537,24 @@ export default function ContactsPage() {
                 {!searchQuery && (
                   <Link 
                     href="/contacts/new" 
-                    style={{
-                      padding: '12px 24px',
-                      backgroundColor: colors.primary,
-                      color: '#ffffff',
-                      textDecoration: 'none',
-                      borderRadius: '10px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      transition: 'background-color 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.primaryHover
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.primary
-                    }}
+                    {...getButtonPressHandlers('add-first-contact')}
+                    style={getButtonPressStyle(
+                      'add-first-contact',
+                      {
+                        padding: '12px 24px',
+                        backgroundColor: colors.primary,
+                        color: '#ffffff',
+                        textDecoration: 'none',
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      },
+                      colors.primary,
+                      colors.primaryHover
+                    )}
                   >
                     <Plus style={{ width: '16px', height: '16px' }} />
                     Add First Contact
@@ -568,19 +567,18 @@ export default function ContactsPage() {
                   <Link 
                     key={contact.id} 
                     href={`/contacts/${contact.id}`} 
-                    style={{
-                      display: 'block',
-                      padding: '20px 24px',
-                      borderBottom: index < filteredContacts.length - 1 ? `1px solid ${colors.border}` : 'none',
-                      textDecoration: 'none',
-                      transition: 'background-color 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.cardHover
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent'
-                    }}
+                    {...getButtonPressHandlers(`contact-${contact.id}`)}
+                    style={getButtonPressStyle(
+                      `contact-${contact.id}`,
+                      {
+                        display: 'block',
+                        padding: '20px 24px',
+                        borderBottom: index < filteredContacts.length - 1 ? `1px solid ${colors.border}` : 'none',
+                        textDecoration: 'none'
+                      },
+                      'transparent',
+                      colors.cardHover
+                    )}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                       <ContactBadge contact={contact} size="md" shape="circle" />

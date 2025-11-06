@@ -24,6 +24,8 @@ docs/
 │
 ├── google/                      # Google integration docs
 │   ├── README.md
+│   ├── GMAIL_INTEGRATION_SETUP.md ⭐ NEW - Gmail API setup
+│   ├── emails.gs ⭐ NEW - Apps Script code for Gmail
 │   ├── GOOGLE_CONTACTS_INTEGRATION.md
 │   ├── GOOGLE_OAUTH_SETUP.md
 │   ├── GOOGLE_SHEETS_SETUP.md
@@ -112,6 +114,8 @@ docs/
 - **docs/setup/GOOGLE_CLOUD_SETUP_FARMTRACKR.md** - Google Cloud Console setup
 
 ### Google Integration
+- **docs/google/GMAIL_INTEGRATION_SETUP.md** ⭐ NEW - Gmail API integration (send/receive emails)
+- **docs/google/emails.gs** ⭐ NEW - Google Apps Script code for Gmail integration
 - **docs/google/QUICK_GOOGLE_SETUP.md** - Quick start guide
 - **docs/google/GOOGLE_OAUTH_SETUP.md** - OAuth setup (detailed)
 - **docs/google/WEB_GOOGLE_OAUTH_SETUP.md** - Web app OAuth setup

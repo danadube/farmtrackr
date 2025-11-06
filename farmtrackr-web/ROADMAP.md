@@ -687,8 +687,8 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
 
 ---
 
-### **v0.8.0 - Email & Communication Integration**
-**Focus:** Full email client integration (Gmail priority, Outlook support)
+### **v0.8.0 - Google Integration Suite**
+**Focus:** Complete Google ecosystem integration (Gmail, Calendar, Drive) - Google-first approach
 
 **Status:** 📋 Planned - Implementation strategy defined
 
@@ -696,31 +696,36 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
 
 #### **📋 Implementation Strategy Overview**
 
-**Recommended Approach:** Gmail API first, then add Outlook support via universal abstraction layer
+**Recommended Approach:** Focus on Google ecosystem first, then add Outlook support later (v0.9.0+)
 
-**Why Gmail First:**
+**Why Google-First:**
 - Already in Google ecosystem (Sheets, Apps Script)
-- Full send/receive capability
+- Full send/receive capability for Gmail
 - Native threading and search
 - Free for Google Workspace accounts
 - Simpler setup (no Azure registration needed)
 - Most real estate agents use Gmail/Google Workspace
+- Unified OAuth flow for all Google services
+- Consistent API patterns across Gmail, Calendar, Drive
 
 **Architecture:**
 ```
-CRM UI (Provider-agnostic)
+CRM UI
     ↓
-Email Service Layer (Abstraction)
+Google Services Layer
     ↓
-    ├─→ Gmail API (Primary)
-    └─→ Microsoft Graph API (Outlook - Phase 2)
+    ├─→ Gmail API (Email)
+    ├─→ Calendar API (Calendar)
+    └─→ Drive API (Documents)
 ```
+
+**Outlook Integration:** Deferred to v0.9.0+ after Google integrations are complete
 
 ---
 
-#### **Phase 1: Gmail Integration (Week 1-4)** - PRIORITY
+#### **Phase 1: Gmail Integration** - PRIORITY
 
-##### **A. Backend Setup (Week 1-2)**
+##### **A. Backend Setup**
 - [ ] **Gmail API Setup**
   - Gmail API authentication via Google Apps Script
   - OAuth 2.0 with Gmail scope (built-in)
@@ -743,7 +748,7 @@ Email Service Layer (Abstraction)
     - Thread ID
     - Saved By
 
-##### **B. Frontend UI (Week 2-3)**
+##### **B. Frontend UI**
 - [ ] **Email Panel in Transaction View**
   - Add "Emails" tab to transaction detail view
   - Email list view (filterable, searchable)
@@ -768,7 +773,7 @@ Email Service Layer (Abstraction)
   - Email threading and conversation view
   - Link emails to contacts and transactions
 
-##### **C. Core Features (Week 3-4)**
+##### **C. Core Features**
 - [ ] **Email Templates**
   - Template library (offer letter, showing confirmation, etc.)
   - Custom email templates
@@ -793,81 +798,71 @@ Email Service Layer (Abstraction)
 
 ---
 
-#### **Phase 2: Universal Email Layer (Week 5-6)** - FUTURE
+#### **Phase 2: Google Calendar Integration** - After Gmail Backend Setup
 
-##### **A. Abstraction Layer**
-- [ ] **Email Service Abstraction**
-  - Create unified `EmailService` class
-  - Provider-agnostic interface:
-    - `send(userId, to, subject, body, options)`
-    - `fetch(userId, query, maxResults)`
-    - `getUserConfig(userId)`
-  - Provider routing logic (Gmail vs Outlook)
-- [ ] **Configuration Management**
-  - Create `Email_Config` sheet:
-    - User Email
-    - Provider (gmail/outlook)
-    - Access Token (encrypted)
-    - Refresh Token (encrypted)
-    - Token Expiry
-    - Default From Address
-  - User-by-user provider selection
-  - Token refresh handling
-
-##### **B. Provider-Specific Implementations**
-- [ ] **Gmail Connector** (Already implemented in Phase 1)
-  - `sendViaGmail(to, subject, body, options)`
-  - `fetchFromGmail(query, maxResults)`
-  - Gmail-specific features (labels, threading, etc.)
-- [ ] **Outlook Connector** (New)
-  - `sendViaOutlook(config, to, subject, body, options)`
-  - `fetchFromOutlook(config, query, maxResults)`
-  - Microsoft Graph API integration
-  - OAuth 2.0 flow for Outlook
-  - Token refresh for Outlook
+- [ ] **Google Calendar API Setup**
+  - Enable Google Calendar API in Apps Script
+  - OAuth 2.0 with calendar scope (extend existing Gmail OAuth)
+  - Calendar service layer functions:
+    - `createCalendarEvent(contactId, title, startTime, endTime, location)`
+    - `getCalendarEvents(query, timeMin, timeMax)`
+    - `updateCalendarEvent(eventId, updates)`
+    - `deleteCalendarEvent(eventId)`
+    - `syncCalendarEventsToCRM(contactId)`
+- [ ] **Calendar Event Creation**
+  - Create calendar events from meetings/showings/appointments
+  - Link events to contacts and transactions
+  - Auto-sync calendar events to CRM activities
+  - Two-way sync (CRM → Calendar, Calendar → CRM)
+- [ ] **Calendar UI Integration**
+  - Calendar view in dashboard (enhance existing calendar card)
+  - Create event from contact/transaction pages
+  - View calendar events linked to contacts
+  - Calendar event reminders and notifications
+- [ ] **Event Management**
+  - Edit/delete calendar events from CRM
+  - Event details viewer (time, location, attendees, description)
+  - Recurring events support
+  - Event reminders and follow-ups
 
 ---
 
-#### **Phase 3: Outlook Integration (Week 7-10)** - FUTURE
+#### **Phase 3: Google Drive Integration** - Complete Google Ecosystem
 
-##### **A. Outlook Setup Requirements**
-- [ ] **Azure AD Application Registration**
-  - Register app in Azure Portal
-  - Configure redirect URI
-  - Set up API permissions:
-    - `Mail.ReadWrite`
-    - `Mail.Send`
-  - Generate client secret
-  - Store credentials in Apps Script properties
-- [ ] **Outlook OAuth Flow**
-  - `authorizeOutlook()` function
-  - OAuth callback handler (`doGet`)
-  - Token exchange (`exchangeOutlookCode`)
-  - Token refresh mechanism
-  - Store tokens in Email_Config sheet
+- [ ] **Google Drive API Setup**
+  - Enable Google Drive API in Apps Script
+  - OAuth 2.0 with Drive scope (extend existing Google OAuth)
+  - Drive service layer functions:
+    - `listDriveFiles(folderId, query)`
+    - `getDriveFile(fileId)`
+    - `createDriveFile(name, content, mimeType)`
+    - `updateDriveFile(fileId, content)`
+    - `deleteDriveFile(fileId)`
+    - `getDriveFileLink(fileId)`
+- [ ] **Drive UI Integration**
+  - Drive file browser in documents section
+  - View/list Drive files from CRM
+  - Link Drive documents to contacts/transactions
+  - Direct file links (open in Drive)
+  - File preview for common formats (PDF, images, etc.)
+- [ ] **Document Management**
+  - Create documents in Drive from CRM
+  - Upload files to Drive
+  - Organize files in Drive folders
+  - Search Drive files
+  - File metadata display (size, modified date, owner)
 
-##### **B. Outlook Features**
-- [ ] **Outlook Email Integration**
-  - Connect Outlook accounts
-  - Full email client (send/receive)
-  - Similar features to Gmail integration:
-    - Email composer
-    - Inbox view
-    - Search and filtering
-    - Attachments
-    - Threading (via conversation IDs)
-- [ ] **Outlook-Specific Features**
-  - Read receipts support
-  - Email scheduling (with Graph API)
-  - Corporate email support
-- [ ] **Outlook Calendar Sync** (Future - v0.8.1)
-  - Two-way calendar synchronization
-  - Event creation from FarmTrackr
-  - Calendar events linked to contacts/transactions
-- [ ] **Outlook People/Contacts Sync** (Future - v0.8.1)
-  - Import/export Outlook contacts
-  - Bidirectional contact sync
-  - Conflict resolution
+---
+
+#### **Phase 4: Outlook Integration** - DEFERRED TO v0.9.0+
+
+**Status:** Will be implemented after all Google integrations are complete and stable
+
+**Approach:** Will follow similar patterns as Google integrations but use Microsoft Graph API
+- Outlook Email Integration
+- Outlook Calendar Sync
+- Outlook People/Contacts Sync
+- Universal abstraction layer for multi-provider support
 
 ---
 
@@ -915,26 +910,26 @@ Email Service Layer (Abstraction)
 
 ---
 
-#### **✅ Implementation Timeline**
+#### **✅ Implementation Order**
 
 **Recommended Path: Gmail First (Option A)**
 
-1. **Week 1-2:** Set up Gmail API backend functions
-2. **Week 2-3:** Build CRM email UI (compose, view, list)
-3. **Week 3-4:** Add transaction linking and email log
-4. **Week 4:** Test with real transactions
-5. **Week 5:** Add templates and quick actions
-6. **Week 6:** Mobile optimization and notifications
-7. **Week 7+:** Add abstraction layer (if needed)
-8. **Week 8+:** Add Outlook support (only if requested)
+1. Set up Gmail API backend functions
+2. Build CRM email UI (compose, view, list)
+3. Add transaction linking and email log
+4. Test with real transactions
+5. Add templates and quick actions
+6. Mobile optimization and notifications
+7. Add abstraction layer (if needed)
+8. Add Outlook support (only if requested)
 
 **Alternative Path: Universal from Day 1 (Option B)**
 
-1. **Week 1:** Build abstraction layer
-2. **Week 2:** Implement Gmail connector
-3. **Week 3:** Implement Outlook connector
-4. **Week 4:** Test both providers
-5. **Week 5+:** Polish and optimize
+1. Build abstraction layer
+2. Implement Gmail connector
+3. Implement Outlook connector
+4. Test both providers
+5. Polish and optimize
 
 **Recommendation:** Start with Option A (Gmail First) because:
 - 80% of real estate agents use Gmail

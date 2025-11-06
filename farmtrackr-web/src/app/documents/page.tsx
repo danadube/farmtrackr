@@ -995,33 +995,45 @@ export default function DocumentsPage() {
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '16px' }}>
                             <button
+                              {...getButtonPressHandlers(`edit-letterhead-${letterhead.id}`)}
                               onClick={() => handleOpenLetterheadModal(letterhead)}
-                              style={{
-                                padding: '8px 12px',
-                                backgroundColor: colors.cardHover,
-                                border: `1px solid ${colors.border}`,
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                ...text.secondary
-                              }}
+                              style={getButtonPressStyle(
+                                `edit-letterhead-${letterhead.id}`,
+                                {
+                                  padding: '8px 12px',
+                                  backgroundColor: colors.cardHover,
+                                  border: `1px solid ${colors.border}`,
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  cursor: 'pointer',
+                                  ...text.secondary
+                                },
+                                colors.cardHover,
+                                colors.borderHover
+                              )}
                             >
                               <Edit style={{ width: '14px', height: '14px', marginRight: '4px', display: 'inline' }} />
                               Edit
                             </button>
                             <button
+                              {...getButtonPressHandlers(`delete-letterhead-${letterhead.id}`)}
                               onClick={() => handleDeleteLetterhead(letterhead.id)}
-                              style={{
-                                padding: '8px 12px',
-                                backgroundColor: 'transparent',
-                                border: `1px solid ${colors.error || '#ef4444'}`,
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                color: colors.error || '#ef4444'
-                              }}
+                              style={getButtonPressStyle(
+                                `delete-letterhead-${letterhead.id}`,
+                                {
+                                  padding: '8px 12px',
+                                  backgroundColor: 'transparent',
+                                  border: `1px solid ${colors.error || '#ef4444'}`,
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  cursor: 'pointer',
+                                  color: colors.error || '#ef4444'
+                                },
+                                'transparent',
+                                isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)'
+                              )}
                             >
                               <Trash2 style={{ width: '14px', height: '14px', marginRight: '4px', display: 'inline' }} />
                               Delete
@@ -1289,92 +1301,88 @@ export default function DocumentsPage() {
                       
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <button
-                          style={{
-                            padding: '8px',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'background-color 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = colors.cardHover
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent'
-                          }}
+                          {...getButtonPressHandlers(`view-doc-${doc.id}`)}
                           onClick={() => handleViewDocument(doc)}
+                          style={getButtonPressStyle(
+                            `view-doc-${doc.id}`,
+                            {
+                              padding: '8px',
+                              backgroundColor: 'transparent',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            },
+                            'transparent',
+                            colors.cardHover
+                          )}
                         >
                           <Eye style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
                         </button>
                         
                         <button
-                          style={{
-                            padding: '8px',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'background-color 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = colors.cardHover
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent'
-                          }}
+                          {...getButtonPressHandlers(`download-doc-${doc.id}`)}
                           onClick={() => handleDownloadDocument(doc)}
+                          style={getButtonPressStyle(
+                            `download-doc-${doc.id}`,
+                            {
+                              padding: '8px',
+                              backgroundColor: 'transparent',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            },
+                            'transparent',
+                            colors.cardHover
+                          )}
                         >
                           <Download style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
                         </button>
                         
                         <button
-                          style={{
-                            padding: '8px',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'background-color 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = colors.cardHover
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent'
-                          }}
+                          {...getButtonPressHandlers(`edit-doc-${doc.id}`)}
                           onClick={() => handleOpenDocModal(doc)}
+                          style={getButtonPressStyle(
+                            `edit-doc-${doc.id}`,
+                            {
+                              padding: '8px',
+                              backgroundColor: 'transparent',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            },
+                            'transparent',
+                            colors.cardHover
+                          )}
                         >
                           <Edit style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
                         </button>
                         <button
-                          style={{
-                            padding: '8px',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'background-color 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = colors.cardHover
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent'
-                          }}
+                          {...getButtonPressHandlers(`delete-doc-${doc.id}`)}
                           onClick={() => handleDeleteClick(doc)}
+                          style={getButtonPressStyle(
+                            `delete-doc-${doc.id}`,
+                            {
+                              padding: '8px',
+                              backgroundColor: 'transparent',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            },
+                            'transparent',
+                            isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)'
+                          )}
                         >
                           <Trash2 style={{ width: '16px', height: '16px', color: colors.error || '#ef4444' }} />
                         </button>

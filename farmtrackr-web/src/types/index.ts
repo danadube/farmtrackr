@@ -23,6 +23,7 @@ export interface ContactFormData {
   siteCity?: string
   siteState?: string
   siteZipCode?: string
+  website?: string
   notes?: string
 }
 
@@ -44,4 +45,54 @@ export interface Stats {
   totalContacts: number
   farmsWithContacts: number
   recentContacts: number
+}
+
+// Email Integration Types
+export interface EmailAttachment {
+  name: string
+  content?: string // Base64 encoded
+  mimeType?: string
+  size?: number
+}
+
+export interface EmailData {
+  to: string
+  subject: string
+  body: string
+  cc?: string
+  bcc?: string
+  transactionId?: string
+  contactId?: string
+  attachments?: EmailAttachment[]
+}
+
+export interface GmailMessage {
+  id: string
+  threadId: string
+  from: string
+  to: string
+  cc?: string
+  subject: string
+  body: string
+  plainBody: string
+  date: string
+  isUnread: boolean
+  attachments: EmailAttachment[]
+  labels: string[]
+}
+
+export interface EmailLogEntry {
+  messageId: string
+  transactionId?: string
+  contactId?: string
+  direction: 'sent' | 'received'
+  from: string
+  to: string
+  subject: string
+  date: string
+  bodyPreview: string
+  fullBody: string
+  attachments: EmailAttachment[]
+  threadId: string
+  savedBy: string
 }

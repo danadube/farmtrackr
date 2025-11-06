@@ -55,7 +55,7 @@ interface Transaction {
 export default function DashboardClient({ contacts, stats }: DashboardClientProps) {
   const [mounted, setMounted] = useState(false)
   const { colors, isDark, card, cardWithLeftBorder, headerCard, headerDivider, background, text, spacing } = useThemeStyles()
-  const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
+  const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [recentTransaction, setRecentTransaction] = useState<Transaction | null>(null)
   const [upcomingClosings, setUpcomingClosings] = useState<number>(0)
   const [thisMonthCommissions, setThisMonthCommissions] = useState<{ count: number; total: number }>({ count: 0, total: 0 })
@@ -76,6 +76,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
     metadata?: string;
     value?: number;
   }>>([])
+  const [googleContactsCount, setGoogleContactsCount] = useState<number>(0)
   const [currentDateTime, setCurrentDateTime] = useState<Date>(new Date())
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
   const [calendarAppointments, setCalendarAppointments] = useState<Array<{ id: string; title: string; date: Date; time?: string; color?: string }>>([])
@@ -126,6 +127,21 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
       }
     ]
     setCalendarAppointments(sampleAppointments)
+    
+    // Fetch Google Contacts count
+    const fetchGoogleContactsCount = async () => {
+      try {
+        const response = await fetch('/api/google-contacts/stats')
+        if (response.ok) {
+          const data = await response.json()
+          setGoogleContactsCount(data.totalContacts || 0)
+        }
+      } catch (error) {
+        console.error('Error fetching Google Contacts count:', error)
+      }
+    }
+    
+    fetchGoogleContactsCount()
     
     // Fetch recent transaction and commission stats
     const fetchTransactionData = async () => {
@@ -657,21 +673,20 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 {/* Google Contacts */}
                 <Link 
                   href="/google-contacts"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing(1.5),
-                    textDecoration: 'none',
-                    padding: spacing(1.5),
-                    borderRadius: spacing(1),
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                  }}
+                  {...getButtonPressHandlers('dashboard-google-contacts')}
+                  style={getButtonPressStyle(
+                    'dashboard-google-contacts',
+                    {
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1.5),
+                      textDecoration: 'none',
+                      padding: spacing(1.5),
+                      borderRadius: spacing(1)
+                    },
+                    'transparent',
+                    colors.cardHover
+                  )}
                 >
                   <div 
                     style={{
@@ -692,7 +707,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       Google Contacts
                     </p>
                     <p style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0' }}>
-                      0
+                      {googleContactsCount}
                     </p>
                   </div>
                 </Link>
@@ -703,21 +718,20 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 {/* Farm Contacts */}
                 <Link 
                   href="/contacts"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing(1.5),
-                    textDecoration: 'none',
-                    padding: spacing(1.5),
-                    borderRadius: spacing(1),
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                  }}
+                  {...getButtonPressHandlers('dashboard-farm-contacts')}
+                  style={getButtonPressStyle(
+                    'dashboard-farm-contacts',
+                    {
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1.5),
+                      textDecoration: 'none',
+                      padding: spacing(1.5),
+                      borderRadius: spacing(1)
+                    },
+                    'transparent',
+                    colors.cardHover
+                  )}
                 >
                   <div 
                     style={{
@@ -749,21 +763,20 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 {/* Active Farms */}
                 <Link 
                   href="/google-sheets"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing(1.5),
-                    textDecoration: 'none',
-                    padding: spacing(1.5),
-                    borderRadius: spacing(1),
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                  }}
+                  {...getButtonPressHandlers('dashboard-active-farms')}
+                  style={getButtonPressStyle(
+                    'dashboard-active-farms',
+                    {
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1.5),
+                      textDecoration: 'none',
+                      padding: spacing(1.5),
+                      borderRadius: spacing(1)
+                    },
+                    'transparent',
+                    colors.cardHover
+                  )}
                 >
                   <div 
                     style={{
@@ -797,38 +810,47 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               {recentTransaction && (
                 <Link 
                   href="/commissions"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    textDecoration: 'none',
-                    padding: spacing(2),
-                    ...cardWithLeftBorder(colors.info), // Sky Blue for transaction cards
-                    transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                    flex: 1,
-                    justifyContent: 'center'
-                  }}
+                  {...getButtonPressHandlers('dashboard-recent-transaction')}
+                  style={getButtonPressStyle(
+                    'dashboard-recent-transaction',
+                    {
+                      display: 'flex',
+                      flexDirection: 'column',
+                      textDecoration: 'none',
+                      padding: spacing(2),
+                      ...cardWithLeftBorder(colors.info), // Sky Blue for transaction cards
+                      flex: 1,
+                      justifyContent: 'center'
+                    },
+                    colors.card,
+                    colors.cardHover
+                  )}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.boxShadow = isDark 
-                      ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
-                      : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                    // Preserve left border color, only change other borders to match sidebar (info/blue)
-                    const computed = window.getComputedStyle(e.currentTarget)
-                    const leftBorderColor = computed.borderLeftColor
-                    const hoverColor = colors.info || colors.primary // Match sidebar color
-                    ;(e.currentTarget as HTMLElement).style.borderTopColor = hoverColor
-                    ;(e.currentTarget as HTMLElement).style.borderRightColor = hoverColor
-                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = hoverColor
-                    ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
+                    if (!pressedButtons.has('dashboard-recent-transaction')) {
+                      e.currentTarget.style.boxShadow = isDark 
+                        ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                        : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                      // Preserve left border color, only change other borders to match sidebar (info/blue)
+                      const computed = window.getComputedStyle(e.currentTarget)
+                      const leftBorderColor = computed.borderLeftColor
+                      const hoverColor = colors.info || colors.primary // Match sidebar color
+                      ;(e.currentTarget as HTMLElement).style.borderTopColor = hoverColor
+                      ;(e.currentTarget as HTMLElement).style.borderRightColor = hoverColor
+                      ;(e.currentTarget as HTMLElement).style.borderBottomColor = hoverColor
+                      ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                    // Preserve left border color, restore other borders
-                    const computed = window.getComputedStyle(e.currentTarget)
-                    const leftBorderColor = computed.borderLeftColor
-                    ;(e.currentTarget as HTMLElement).style.borderTopColor = colors.border
-                    ;(e.currentTarget as HTMLElement).style.borderRightColor = colors.border
-                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = colors.border
-                    ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
+                    if (!pressedButtons.has('dashboard-recent-transaction')) {
+                      e.currentTarget.style.boxShadow = card.boxShadow
+                      // Preserve left border color, restore other borders
+                      const computed = window.getComputedStyle(e.currentTarget)
+                      const leftBorderColor = computed.borderLeftColor
+                      ;(e.currentTarget as HTMLElement).style.borderTopColor = colors.border
+                      ;(e.currentTarget as HTMLElement).style.borderRightColor = colors.border
+                      ;(e.currentTarget as HTMLElement).style.borderBottomColor = colors.border
+                      ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
+                    }
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
@@ -875,38 +897,47 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               {quickStats.ytdTotal > 0 || quickStats.pendingCount > 0 ? (
                 <Link 
                   href="/commissions"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    textDecoration: 'none',
-                    padding: spacing(2),
-                    ...cardWithLeftBorder(colors.warning), // Tangerine for financial cards
-                    transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-                    flex: 1,
-                    justifyContent: 'center'
-                  }}
+                  {...getButtonPressHandlers('dashboard-quick-stats')}
+                  style={getButtonPressStyle(
+                    'dashboard-quick-stats',
+                    {
+                      display: 'flex',
+                      flexDirection: 'column',
+                      textDecoration: 'none',
+                      padding: spacing(2),
+                      ...cardWithLeftBorder(colors.warning), // Tangerine for financial cards
+                      flex: 1,
+                      justifyContent: 'center'
+                    },
+                    colors.card,
+                    colors.cardHover
+                  )}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.boxShadow = isDark 
-                      ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
-                      : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                    // Preserve left border color, only change other borders to match sidebar (warning/orange)
-                    const computed = window.getComputedStyle(e.currentTarget)
-                    const leftBorderColor = computed.borderLeftColor
-                    const hoverColor = colors.warning // Match sidebar color (orange)
-                    ;(e.currentTarget as HTMLElement).style.borderTopColor = hoverColor
-                    ;(e.currentTarget as HTMLElement).style.borderRightColor = hoverColor
-                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = hoverColor
-                    ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
+                    if (!pressedButtons.has('dashboard-quick-stats')) {
+                      e.currentTarget.style.boxShadow = isDark 
+                        ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                        : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                      // Preserve left border color, only change other borders to match sidebar (warning/orange)
+                      const computed = window.getComputedStyle(e.currentTarget)
+                      const leftBorderColor = computed.borderLeftColor
+                      const hoverColor = colors.warning // Match sidebar color (orange)
+                      ;(e.currentTarget as HTMLElement).style.borderTopColor = hoverColor
+                      ;(e.currentTarget as HTMLElement).style.borderRightColor = hoverColor
+                      ;(e.currentTarget as HTMLElement).style.borderBottomColor = hoverColor
+                      ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.boxShadow = card.boxShadow
-                    // Preserve left border color, restore other borders
-                    const computed = window.getComputedStyle(e.currentTarget)
-                    const leftBorderColor = computed.borderLeftColor
-                    ;(e.currentTarget as HTMLElement).style.borderTopColor = colors.border
-                    ;(e.currentTarget as HTMLElement).style.borderRightColor = colors.border
-                    ;(e.currentTarget as HTMLElement).style.borderBottomColor = colors.border
-                    ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
+                    if (!pressedButtons.has('dashboard-quick-stats')) {
+                      e.currentTarget.style.boxShadow = card.boxShadow
+                      // Preserve left border color, restore other borders
+                      const computed = window.getComputedStyle(e.currentTarget)
+                      const leftBorderColor = computed.borderLeftColor
+                      ;(e.currentTarget as HTMLElement).style.borderTopColor = colors.border
+                      ;(e.currentTarget as HTMLElement).style.borderRightColor = colors.border
+                      ;(e.currentTarget as HTMLElement).style.borderBottomColor = colors.border
+                      ;(e.currentTarget as HTMLElement).style.borderLeftColor = leftBorderColor
+                    }
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
@@ -1187,31 +1218,38 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         return (
                           <div
                             key={idx}
-                            style={{
-                              aspectRatio: '1',
-                              minHeight: spacing(3.5),
-                              padding: spacing(0.25),
-                              borderRadius: spacing(0.5),
-                              backgroundColor: day.isToday 
+                            {...getButtonPressHandlers(`calendar-day-${idx}`)}
+                            style={getButtonPressStyle(
+                              `calendar-day-${idx}`,
+                              {
+                                aspectRatio: '1',
+                                minHeight: spacing(3.5),
+                                padding: spacing(0.25),
+                                borderRadius: spacing(0.5),
+                                backgroundColor: day.isToday 
+                                  ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
+                                  : 'transparent',
+                                border: day.isToday ? `2px solid ${colors.primary}` : '2px solid transparent',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'flex-start',
+                                cursor: 'pointer',
+                                overflow: 'hidden',
+                                boxSizing: 'border-box'
+                              },
+                              day.isToday 
                                 ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
                                 : 'transparent',
-                              border: day.isToday ? `2px solid ${colors.primary}` : '2px solid transparent',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'flex-start',
-                              cursor: 'pointer',
-                              transition: 'background-color 0.2s',
-                              overflow: 'hidden',
-                              boxSizing: 'border-box'
-                            }}
+                              colors.cardHover
+                            )}
                             onMouseEnter={(e) => {
-                              if (!day.isToday) {
+                              if (!day.isToday && !pressedButtons.has(`calendar-day-${idx}`)) {
                                 (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
                               }
                             }}
                             onMouseLeave={(e) => {
-                              if (!day.isToday) {
+                              if (!day.isToday && !pressedButtons.has(`calendar-day-${idx}`)) {
                                 (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
                               }
                             }}
@@ -1330,6 +1368,136 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             </div>
           </div>
 
+          {/* Current Listings */}
+          <div style={{ marginBottom: spacing(4) }}>
+            <h2 
+              style={{
+                fontSize: '24px',
+                fontWeight: '600',
+                ...text.primary,
+                lineHeight: '32px',
+                marginBottom: spacing(1.5),
+                margin: `0 0 ${spacing(1.5)} 0`
+              }}
+            >
+              Current Listings
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: spacing(2) }}>
+              {/* Placeholder Listing Card */}
+              <Link
+                href="#"
+                {...getButtonPressHandlers('listing-479-desert-holly')}
+                style={getButtonPressStyle(
+                  'listing-479-desert-holly',
+                  {
+                    padding: spacing(3),
+                    ...card,
+                    cursor: 'pointer',
+                    border: `1px solid ${colors.border}`,
+                    textDecoration: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: spacing(2)
+                  },
+                  colors.card,
+                  colors.cardHover
+                )}
+                onMouseEnter={(e) => {
+                  if (!pressedButtons.has('listing-479-desert-holly')) {
+                    e.currentTarget.style.backgroundColor = colors.cardHover
+                    e.currentTarget.style.borderColor = colors.primary
+                    e.currentTarget.style.boxShadow = isDark 
+                      ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
+                      : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!pressedButtons.has('listing-479-desert-holly')) {
+                    e.currentTarget.style.backgroundColor = colors.card
+                    e.currentTarget.style.borderColor = colors.border
+                    e.currentTarget.style.boxShadow = card.boxShadow
+                  }
+                }}
+              >
+                {/* Header with Price and MLS */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing(2) }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontWeight: '700', ...text.primary, fontSize: '20px', margin: '0 0 4px 0' }}>
+                      $1,030,000
+                    </h3>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                      MLS# 219125533
+                    </p>
+                  </div>
+                  <span style={{
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    backgroundColor: isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)',
+                    color: colors.success,
+                    borderRadius: '999px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    Active
+                  </span>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0 0 4px 0' }}>
+                    479 Desert Holly Drive
+                  </p>
+                  <p style={{ fontSize: '14px', ...text.secondary, margin: '0' }}>
+                    Palm Desert, CA 92211
+                  </p>
+                </div>
+
+                {/* Property Details */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing(2), paddingTop: spacing(1.5), borderTop: `1px solid ${colors.border}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <Home style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                    <span style={{ fontSize: '13px', ...text.secondary }}>
+                      3 Bed • 4 Bath
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <Building2 style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                    <span style={{ fontSize: '13px', ...text.secondary }}>
+                      2,182 sq ft
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <Calendar style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                    <span style={{ fontSize: '13px', ...text.secondary }}>
+                      Built 1996
+                    </span>
+                  </div>
+                </div>
+
+                {/* Additional Info */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5), fontSize: '12px', ...text.tertiary }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <span style={{ fontWeight: '600', ...text.secondary }}>Type:</span>
+                    <span>Condominium</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <span style={{ fontWeight: '600', ...text.secondary }}>Subdivision:</span>
+                    <span>Indian Ridge</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <span style={{ fontWeight: '600', ...text.secondary }}>View:</span>
+                    <span>Golf Course</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <span style={{ fontWeight: '600', ...text.secondary }}>Listed:</span>
+                    <span>Feb 27, 2025</span>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
+
           {/* Recent Activity */}
           <div style={{ marginBottom: spacing(4) }}>
             <h2 
@@ -1356,21 +1524,30 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   <Link
                     key={activity.id}
                     href={activity.link}
-                    style={{
-                      padding: '20px 24px',
-                      ...card,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      border: `1px solid ${colors.border}`,
-                      textDecoration: 'none'
-                    }}
+                    {...getButtonPressHandlers(`activity-${activity.id}`)}
+                    style={getButtonPressStyle(
+                      `activity-${activity.id}`,
+                      {
+                        padding: '20px 24px',
+                        ...card,
+                        cursor: 'pointer',
+                        border: `1px solid ${colors.border}`,
+                        textDecoration: 'none'
+                      },
+                      colors.card,
+                      colors.cardHover
+                    )}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.cardHover
-                      e.currentTarget.style.borderColor = colors.primary
+                      if (!pressedButtons.has(`activity-${activity.id}`)) {
+                        e.currentTarget.style.backgroundColor = colors.cardHover
+                        e.currentTarget.style.borderColor = colors.primary
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.card
-                      e.currentTarget.style.borderColor = colors.border
+                      if (!pressedButtons.has(`activity-${activity.id}`)) {
+                        e.currentTarget.style.backgroundColor = colors.card
+                        e.currentTarget.style.borderColor = colors.border
+                      }
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>

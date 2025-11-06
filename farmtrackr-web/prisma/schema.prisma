@@ -32,6 +32,7 @@ model FarmContact {
   siteCity           String?
   siteState          String?
   siteZipCode        String?
+  website            String?
   notes              String?
   dateCreated        DateTime @default(now())
   dateModified       DateTime @updatedAt
@@ -61,6 +62,7 @@ model GeneralContact {
   siteCity           String?
   siteState          String?
   siteZipCode        String?
+  website            String?
   notes              String?
   googleContactsId   String? // Google Contacts resource ID for syncing
   dateCreated        DateTime @default(now())

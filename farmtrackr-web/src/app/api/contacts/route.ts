@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
         siteCity: cleanBody.siteCity,
         siteState: cleanBody.siteState,
         siteZipCode: cleanBody.siteZipCode ? String(cleanBody.siteZipCode).trim() : undefined,
+        website: cleanBody.website,
         notes: cleanBody.notes,
       },
     })

@@ -11,7 +11,12 @@ import {
   Palette,
   Lock,
   FileSpreadsheet,
-  Tag
+  Tag,
+  Home,
+  Globe,
+  Smartphone,
+  Megaphone,
+  HardDrive
 } from 'lucide-react'
 
 export default function FutureFeaturesPage() {
@@ -20,16 +25,23 @@ export default function FutureFeaturesPage() {
   const upcomingFeatures = [
     {
       icon: Mail,
-      title: 'Email Integration',
-      description: 'Full Gmail and Outlook integration with send/receive capabilities, email templates, and communication history tracking.',
+      title: 'Gmail Integration',
+      description: 'Full Gmail integration with send/receive capabilities, email templates, and communication history tracking. Link emails to contacts and transactions.',
       version: 'v0.8.0',
       status: 'planned'
     },
     {
       icon: Calendar,
-      title: 'Task Management & Reminders',
-      description: 'Task system with Apple Reminders sync, task linking to contacts and transactions, and pipeline integration.',
-      version: 'v0.10.0',
+      title: 'Google Calendar Integration',
+      description: 'Google Calendar sync with two-way synchronization. Create calendar events from meetings, showings, and appointments. Calendar events linked to contacts and transactions.',
+      version: 'v0.8.0',
+      status: 'planned'
+    },
+    {
+      icon: Home,
+      title: 'Current Listings & MLS Integration',
+      description: 'MLS integration for current listings that populate dashboard cards and detail pages. Auto-start transactions in pipeline when listing is added to MLS.',
+      version: 'v0.9.0',
       status: 'planned'
     },
     {
@@ -44,6 +56,34 @@ export default function FutureFeaturesPage() {
       title: 'Forms Integration',
       description: 'ZipForms, DocuSign, and CAR (California Association of Realtors) forms integration with electronic signature workflows.',
       version: 'v0.9.0',
+      status: 'planned'
+    },
+    {
+      icon: CheckSquare,
+      title: 'Task Management & Reminders',
+      description: 'Task system with Apple Reminders sync, task linking to contacts and transactions, and pipeline integration.',
+      version: 'v0.10.0',
+      status: 'planned'
+    },
+    {
+      icon: HardDrive,
+      title: 'Google Drive Integration',
+      description: 'View and manage Google Drive documents directly from the documents section. Link to documents, browse files, and create/upload files without leaving the app.',
+      version: 'v0.8.0',
+      status: 'planned'
+    },
+    {
+      icon: Megaphone,
+      title: 'Marketing Module',
+      description: 'Drip campaigns, auto emails, templates, social posts, and website integration with builders like Wix (embeddable forms for lead gen and open house).',
+      version: 'v0.11.0',
+      status: 'planned'
+    },
+    {
+      icon: Smartphone,
+      title: 'Mobile App',
+      description: 'Native mobile app with rich functionality, full feature parity with web app, and offline capabilities.',
+      version: 'v0.12.0',
       status: 'planned'
     },
     {

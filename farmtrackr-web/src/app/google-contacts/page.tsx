@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
@@ -46,6 +46,38 @@ interface GeneralContact {
   siteZipCode: string | null
   notes: string | null
   googleContactsId: string | null
+}
+
+// Format phone number to standard US format: (XXX) XXX-XXXX
+function formatPhoneNumber(phone: string | null | undefined): string {
+  if (!phone) return ''
+  
+  // Remove all non-digit characters
+  const cleaned = phone.replace(/\D/g, '')
+  
+  // Handle US numbers with +1 prefix (+1XXXXXXXXXX)
+  if (phone.startsWith('+1') && cleaned.length === 11 && cleaned[0] === '1') {
+    return `(${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`
+  }
+  
+  // Handle US numbers with country code (11 digits starting with 1, no +)
+  if (cleaned.length === 11 && cleaned[0] === '1') {
+    return `(${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`
+  }
+  
+  // Handle US numbers (10 digits)
+  if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`
+  }
+  
+  // Handle other international numbers (start with + and not +1, or have more than 11 digits)
+  if (phone.startsWith('+') && (cleaned.length > 11 || !phone.startsWith('+1'))) {
+    // For international, just clean up spacing but keep structure
+    return phone.trim()
+  }
+  
+  // If format doesn't match, return original
+  return phone
 }
 
 export default function GoogleContactsPage() {
@@ -170,6 +202,19 @@ export default function GoogleContactsPage() {
     return sortOrder === 'asc' ? comparison : -comparison
   })
 
+  // Calculate longest contact name for uniform column alignment
+  const longestNameWidth = useMemo(() => {
+    if (filteredContacts.length === 0) return 200 // Default width if no contacts
+    const longestName = filteredContacts.reduce((longest, contact) => {
+      const name = contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact'
+      return name.length > longest.length ? name : longest
+    }, '')
+    // Estimate: ~8px per character for 14px font + font-weight makes it wider
+    // Avatar (48px) + gap (12px) + text width + padding (16px)
+    const estimatedTextWidth = longestName.length * 8.5
+    return Math.max(200, 48 + 12 + estimatedTextWidth + 16) // Minimum 200px, or calculated width
+  }, [filteredContacts])
+
   const handleImport = async () => {
     if (googleConnectionStatus !== 'connected') {
       setImportStatus({ 
@@ -278,14 +323,14 @@ export default function GoogleContactsPage() {
                   style={{
                     width: '48px',
                     height: '48px',
-                    backgroundColor: colors.iconBg,
+                    backgroundColor: isDark ? '#064e3b' : '#dcfce7',
                     borderRadius: '12px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <Contact style={{ width: '24px', height: '24px', color: colors.primary }} />
+                  <Contact style={{ width: '24px', height: '24px', color: isDark ? '#ffffff' : colors.primary }} />
                 </div>
                 <div>
                   <h1 
@@ -302,34 +347,33 @@ export default function GoogleContactsPage() {
                     Manage contacts from your Google account
                   </p>
                 </div>
-                <Link 
-                  href="/print-labels"
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    color: '#ffffff',
-                    textDecoration: 'none',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.2s ease',
-                    border: '1px solid rgba(255, 255, 255, 0.3)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.25)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
-                  }}
-                >
-                  <Printer style={{ width: '16px', height: '16px' }} />
-                  Print Labels
-                </Link>
+                <div style={{ marginLeft: 'auto' }}>
+                  <Link 
+                    href="/print-labels"
+                    {...getButtonPressHandlers('print-labels-google')}
+                    style={getButtonPressStyle(
+                      'print-labels-google',
+                      {
+                        padding: '12px 24px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                        color: '#ffffff',
+                        textDecoration: 'none',
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        border: '1px solid rgba(255, 255, 255, 0.3)'
+                      },
+                      'rgba(255, 255, 255, 0.15)',
+                      'rgba(255, 255, 255, 0.25)'
+                    )}
+                  >
+                    <Printer style={{ width: '16px', height: '16px' }} />
+                    Print Labels
+                  </Link>
+                </div>
               </div>
               <div style={headerDivider} />
             </div>
@@ -739,74 +783,89 @@ export default function GoogleContactsPage() {
                       e.currentTarget.style.backgroundColor = 'transparent'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div
-                        style={{
-                          width: '48px',
-                          height: '48px',
-                          borderRadius: '50%',
-                          backgroundColor: colors.iconBg,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}
-                      >
-                        <span style={{ fontSize: '20px', fontWeight: '700', ...text.primary }}>
-                          {(() => {
-                            if (contact.firstName) return contact.firstName[0].toUpperCase()
-                            if (contact.lastName) return contact.lastName[0].toUpperCase()
-                            if (contact.organizationName) return contact.organizationName[0].toUpperCase()
-                            return '?'
-                          })()}
-                        </span>
-                      </div>
-                      <div style={{ flex: '1' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                          <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '14px', margin: '0' }}>
-                            {contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact'}
-                          </h3>
-                          {contact.tags && contact.tags.length > 0 && (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                              {contact.tags.slice(0, 3).map((tag, idx) => (
-                                <span
-                                  key={idx}
-                                  style={{
-                                    padding: '2px 8px',
-                                    fontSize: '11px',
-                                    backgroundColor: isDark ? '#065f46' : '#dcfce7',
-                                    color: colors.success,
-                                    borderRadius: '9999px',
-                                    fontWeight: '600',
-                                    border: `1px solid ${colors.success}`
-                                  }}
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                              {contact.tags.length > 3 && (
-                                <span
-                                  style={{
-                                    padding: '2px 8px',
-                                    fontSize: '11px',
-                                    backgroundColor: colors.cardHover,
-                                    ...text.secondary,
-                                    borderRadius: '9999px',
-                                    fontWeight: '600'
-                                  }}
-                                >
-                                  +{contact.tags.length - 3}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                    <div style={{ display: 'grid', gridTemplateColumns: `${longestNameWidth}px 1fr auto`, gap: '24px', alignItems: 'center', width: '100%' }}>
+                      {/* Column 1: Avatar and Name */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', minWidth: 0 }}>
+                        <div
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '50%',
+                            backgroundColor: isDark ? '#065f46' : '#dcfce7',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <span style={{ fontSize: '20px', fontWeight: '700', color: colors.success }}>
+                            {(() => {
+                              if (contact.firstName) return contact.firstName[0].toUpperCase()
+                              if (contact.lastName) return contact.lastName[0].toUpperCase()
+                              if (contact.organizationName) return contact.organizationName[0].toUpperCase()
+                              return '?'
+                            })()}
+                          </span>
                         </div>
+                        <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '14px', margin: '0' }}>
+                          {contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact'}
+                        </h3>
+                      </div>
+                      
+                      {/* Column 2: Contact Info (Phone 1, Phone 2, Email) - Left justified */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start', minWidth: '150px' }}>
+                        {contact.phoneNumber1 && (
+                          <span style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
+                            {formatPhoneNumber(contact.phoneNumber1)}
+                          </span>
+                        )}
+                        {contact.phoneNumber2 && (
+                          <span style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
+                            {formatPhoneNumber(contact.phoneNumber2)}
+                          </span>
+                        )}
                         {contact.email1 && (
-                          <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                          <span style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
                             {contact.email1}
-                          </p>
+                          </span>
                         )}
                       </div>
+                      
+                      {/* Column 3: Tags/Chips - Right justified */}
+                      {contact.tags && contact.tags.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'flex-end', flexShrink: 0 }}>
+                          {contact.tags.slice(0, 3).map((tag, idx) => (
+                            <span
+                              key={idx}
+                              style={{
+                                padding: '2px 8px',
+                                fontSize: '11px',
+                                backgroundColor: isDark ? '#065f46' : '#dcfce7',
+                                color: colors.success,
+                                borderRadius: '9999px',
+                                fontWeight: '600',
+                                border: `1px solid ${colors.success}`
+                              }}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          {contact.tags.length > 3 && (
+                            <span
+                              style={{
+                                padding: '2px 8px',
+                                fontSize: '11px',
+                                backgroundColor: colors.cardHover,
+                                ...text.secondary,
+                                borderRadius: '9999px',
+                                fontWeight: '600'
+                              }}
+                            >
+                              +{contact.tags.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </Link>
                 ))}
@@ -929,14 +988,14 @@ export default function GoogleContactsPage() {
                     width: '64px',
                     height: '64px',
                     borderRadius: '50%',
-                    backgroundColor: colors.iconBg,
+                    backgroundColor: isDark ? '#065f46' : '#dcfce7',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0
                   }}
                 >
-                  <span style={{ fontSize: '28px', fontWeight: '700', ...text.primary }}>
+                  <span style={{ fontSize: '28px', fontWeight: '700', color: colors.success }}>
                     {(() => {
                       if (selectedContact.firstName) return selectedContact.firstName[0].toUpperCase()
                       if (selectedContact.lastName) return selectedContact.lastName[0].toUpperCase()
@@ -1013,7 +1072,7 @@ export default function GoogleContactsPage() {
                     <div>
                       <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Phone</div>
                       <a href={`tel:${selectedContact.phoneNumber1}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
-                        {selectedContact.phoneNumber1}
+                        {formatPhoneNumber(selectedContact.phoneNumber1)}
                       </a>
                     </div>
                   </div>
@@ -1024,7 +1083,7 @@ export default function GoogleContactsPage() {
                     <div>
                       <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Phone 2</div>
                       <a href={`tel:${selectedContact.phoneNumber2}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
-                        {selectedContact.phoneNumber2}
+                        {formatPhoneNumber(selectedContact.phoneNumber2)}
                       </a>
                     </div>
                   </div>
@@ -1035,7 +1094,7 @@ export default function GoogleContactsPage() {
                     <div>
                       <div style={{ fontSize: '12px', ...text.tertiary, marginBottom: '2px' }}>Phone 3</div>
                       <a href={`tel:${selectedContact.phoneNumber3}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
-                        {selectedContact.phoneNumber3}
+                        {formatPhoneNumber(selectedContact.phoneNumber3)}
                       </a>
                     </div>
                   </div>
@@ -1127,7 +1186,7 @@ export default function GoogleContactsPage() {
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                       <div style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }}>📞</div>
                       <a href={`tel:${selectedContact.phoneNumber4}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
-                        {selectedContact.phoneNumber4}
+                        {formatPhoneNumber(selectedContact.phoneNumber4)}
                       </a>
                     </div>
                   )}
@@ -1135,7 +1194,7 @@ export default function GoogleContactsPage() {
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                       <div style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }}>📞</div>
                       <a href={`tel:${selectedContact.phoneNumber5}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
-                        {selectedContact.phoneNumber5}
+                        {formatPhoneNumber(selectedContact.phoneNumber5)}
                       </a>
                     </div>
                   )}
@@ -1143,7 +1202,7 @@ export default function GoogleContactsPage() {
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                       <div style={{ width: '18px', height: '18px', color: colors.text.tertiary, marginTop: '2px', flexShrink: 0 }}>📞</div>
                       <a href={`tel:${selectedContact.phoneNumber6}`} style={{ fontSize: '14px', color: colors.primary, textDecoration: 'none' }}>
-                        {selectedContact.phoneNumber6}
+                        {formatPhoneNumber(selectedContact.phoneNumber6)}
                       </a>
                     </div>
                   )}

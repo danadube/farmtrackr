@@ -23,7 +23,7 @@ import {
   CheckCircle2
 } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useSafePathname } from '@/hooks/useSafePathname'
 import { FarmTrackrLogo } from './FarmTrackrLogo'
 import { Footer } from './Footer'
 import { useButtonPress } from '@/hooks/useButtonPress'
@@ -34,11 +34,11 @@ interface SidebarProps {
 
 export function Sidebar({ children }: SidebarProps) {
   const { resolvedTheme } = useTheme()
-  const pathname = usePathname()
-  const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
+  const pathname = useSafePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
+  const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   
   // Ensure we read theme from DOM on mount (set by inline script)
   useEffect(() => {
@@ -83,7 +83,7 @@ export function Sidebar({ children }: SidebarProps) {
   const quickActionsGroups = [
     [
       { href: '/contacts/new', label: 'Add Contact', icon: Plus, iconColor: colors.primary },
-      { href: '/commissions#new', label: 'New Transaction', icon: DollarSign, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c' },
+      { href: '/commissions', label: 'New Transaction', icon: DollarSign, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c', hash: '#new' },
       { href: '/commissions', label: 'View Commissions', icon: Briefcase, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c', exactMatch: true },
     ],
     [
@@ -105,18 +105,17 @@ export function Sidebar({ children }: SidebarProps) {
     { href: '/future-features', label: 'Coming Soon', icon: Sparkles },
   ]
 
-  const isActive = (href: string, exactMatch?: boolean) => {
+  const isActive = (href: string, exactMatch?: boolean, hash?: string) => {
     if (href === '/') {
-      return pathname === '/'
+      return pathname === '/' && !hash
     }
     
-    // Check for hash in href (e.g., /commissions#new)
-    if (href.includes('#')) {
-      const [path, hash] = href.split('#')
-      if (pathname === path) {
+    // Check for hash
+    if (hash) {
+      if (pathname === href) {
         if (typeof window !== 'undefined') {
           const currentHash = window.location.hash
-          return currentHash === `#${hash}`
+          return currentHash === hash
         }
         return false
       }
@@ -176,7 +175,17 @@ export function Sidebar({ children }: SidebarProps) {
           zIndex: 50
         }}
       >
-        <Link href="/" style={{ textDecoration: 'none', color: colors.text.primary }}>
+        <Link 
+          href="/" 
+          style={{ 
+            textDecoration: 'none', 
+            color: colors.text.primary,
+            cursor: 'pointer',
+            pointerEvents: 'auto',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
           <FarmTrackrLogo size="md" variant="logo" showTitle={false} />
         </Link>
         <button
@@ -216,18 +225,33 @@ export function Sidebar({ children }: SidebarProps) {
           padding: '16px 24px',
           display: 'flex',
           flexDirection: 'column',
-          zIndex: 40,
+          zIndex: 1000,
           // Always visible on desktop (768px+), slide in/out on mobile
           transform: isDesktop 
             ? 'translateX(0)' 
             : (isMobileOpen ? 'translateX(0)' : 'translateX(-100%)'),
           transition: 'transform 0.3s ease',
+          pointerEvents: 'auto',
         }}
         id="sidebar"
       >
         {/* Logo - Aligned to top of sidebar */}
         <div style={{ marginBottom: '16px', marginTop: '-16px', width: '100%', padding: '0 8px', overflow: 'hidden' }}>
-          <Link href="/" style={{ textDecoration: 'none', color: colors.text.primary, display: 'block', width: '100%', lineHeight: 0, paddingTop: '16px' }}>
+          <Link 
+            href="/" 
+            style={{ 
+              textDecoration: 'none', 
+              color: colors.text.primary, 
+              display: 'block', 
+              width: '100%', 
+              lineHeight: 0, 
+              paddingTop: '16px',
+              cursor: 'pointer',
+              pointerEvents: 'auto',
+              position: 'relative',
+              zIndex: 1,
+            }}
+          >
             <FarmTrackrLogo size="lg" variant="logo" showTitle={false} />
           </Link>
         </div>
@@ -247,6 +271,11 @@ export function Sidebar({ children }: SidebarProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
+                onClick={(e) => {
+                  console.log('Navigation clicked:', item.href)
+                  e.stopPropagation()
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -266,6 +295,10 @@ export function Sidebar({ children }: SidebarProps) {
                   transition: 'all 0.2s ease',
                   // Force green left border for active items - brand guidelines (thicker for visibility)
                   borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
+                  cursor: 'pointer',
+                  pointerEvents: 'auto',
+                  position: 'relative',
+                  zIndex: 100,
                 }}
                 onMouseEnter={(e) => {
                   if (!active) {
@@ -320,9 +353,9 @@ export function Sidebar({ children }: SidebarProps) {
                   margin: '8px 0' 
                 }} />
               )}
-              {group.map((action) => {
+              {group.map((action, actionIndex) => {
                 const Icon = action.icon
-                const active = isActive(action.href, action.exactMatch)
+                const active = isActive(action.href, action.exactMatch, action.hash)
                 const iconBgColor = resolvedTheme === 'dark'
                   ? (action.iconColor === colors.primary ? 'rgba(104, 159, 56, 0.15)' :
                      action.iconColor === '#f97316' || action.iconColor === '#ea580c' ? 'rgba(249, 115, 22, 0.15)' :
@@ -333,10 +366,92 @@ export function Sidebar({ children }: SidebarProps) {
                      action.iconColor === '#2563eb' ? 'rgba(37, 99, 235, 0.1)' :
                      'rgba(147, 51, 234, 0.1)')
                 
+                // Use a unique key combining group index, action index, and href/hash
+                const uniqueKey = `quick-action-${groupIndex}-${actionIndex}-${action.href}${action.hash || ''}`
+                
+                // For links with hashes, use regular anchor to avoid RSC prefetch issues
+                if (action.hash) {
+                  return (
+                    <a
+                      key={uniqueKey}
+                      href={action.href + action.hash}
+                      onClick={(e) => {
+                        console.log('Quick action clicked (hash):', action.href, action.hash)
+                        e.stopPropagation()
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '12px 16px',
+                        borderRadius: '10px',
+                        textDecoration: 'none',
+                        backgroundColor: active 
+                          ? (resolvedTheme === 'dark' 
+                              ? 'rgba(104, 159, 56, 0.25)'
+                              : 'rgba(104, 159, 56, 0.12)')
+                          : 'transparent',
+                        color: active ? colors.primary : colors.text.secondary,
+                        fontWeight: active ? '600' : '500',
+                        fontSize: '14px',
+                        transition: 'all 0.2s ease',
+                        borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
+                        cursor: 'pointer',
+                        pointerEvents: 'auto',
+                        position: 'relative',
+                        zIndex: 100,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!active) {
+                          e.currentTarget.style.backgroundColor = resolvedTheme === 'dark'
+                            ? 'rgba(104, 159, 56, 0.15)'
+                            : 'rgba(104, 159, 56, 0.08)'
+                          e.currentTarget.style.borderLeftColor = 'rgba(104, 159, 56, 0.5)'
+                          e.currentTarget.style.color = colors.primary
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!active) {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                          e.currentTarget.style.borderLeftColor = 'transparent'
+                          e.currentTarget.style.color = colors.text.secondary
+                        }
+                      }}
+                    >
+                      <div 
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '8px',
+                          backgroundColor: iconBgColor,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        <Icon 
+                          style={{ 
+                            width: '18px', 
+                            height: '18px',
+                            color: action.iconColor
+                          }} 
+                        />
+                      </div>
+                      {action.label}
+                    </a>
+                  )
+                }
+                
                 return (
                   <Link
-                    key={action.href}
+                    key={uniqueKey}
                     href={action.href}
+                    prefetch={false}
+                    onClick={(e) => {
+                      console.log('Quick action clicked:', action.href)
+                      e.stopPropagation()
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -354,6 +469,10 @@ export function Sidebar({ children }: SidebarProps) {
                       fontSize: '14px',
                       transition: 'all 0.2s ease',
                       borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
+                      cursor: 'pointer',
+                      pointerEvents: 'auto',
+                      position: 'relative',
+                      zIndex: 100,
                     }}
                     onMouseEnter={(e) => {
                       if (!active) {
@@ -421,6 +540,11 @@ export function Sidebar({ children }: SidebarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
+                  onClick={(e) => {
+                    console.log('Future feature clicked:', item.href)
+                    e.stopPropagation()
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -438,7 +562,11 @@ export function Sidebar({ children }: SidebarProps) {
                     fontSize: '14px',
                     transition: 'all 0.2s ease',
                     borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
-                    opacity: 0.8
+                    opacity: 0.8,
+                    cursor: 'pointer',
+                    pointerEvents: 'auto',
+                    position: 'relative',
+                    zIndex: 100,
                   }}
                   onMouseEnter={(e) => {
                     if (!active) {
@@ -493,7 +621,7 @@ export function Sidebar({ children }: SidebarProps) {
       )}
 
       {/* Main Content */}
-      <div style={{ minHeight: '100vh' }}>
+      <div style={{ minHeight: '100vh', marginLeft: isDesktop ? '256px' : '0' }}>
         {children}
       </div>
     </div>

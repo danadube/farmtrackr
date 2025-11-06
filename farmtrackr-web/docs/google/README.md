@@ -13,6 +13,7 @@ This directory contains all documentation related to Google integrations (OAuth,
 - **OAUTH_TROUBLESHOOTING.md** - Troubleshooting OAuth issues
 
 ### Google Services
+- **GMAIL_INTEGRATION_SETUP.md** - Gmail API integration setup (send/receive emails) ⭐ NEW
 - **GOOGLE_SHEETS_SETUP.md** - Google Sheets API setup
 - **GOOGLE_CONTACTS_INTEGRATION.md** - Google Contacts integration plan
 
@@ -23,8 +24,9 @@ This directory contains all documentation related to Google integrations (OAuth,
 ## Quick Start
 
 1. **First Time Setup**: Follow `QUICK_GOOGLE_SETUP.md`
-2. **OAuth Issues**: Check `OAUTH_TROUBLESHOOTING.md`
-3. **Detailed Setup**: See `GOOGLE_OAUTH_SETUP.md` for complete instructions
+2. **Gmail Integration**: Follow `GMAIL_INTEGRATION_SETUP.md` for email send/receive setup
+3. **OAuth Issues**: Check `OAUTH_TROUBLESHOOTING.md`
+4. **Detailed Setup**: See `GOOGLE_OAUTH_SETUP.md` for complete instructions
 
 ## Note
 

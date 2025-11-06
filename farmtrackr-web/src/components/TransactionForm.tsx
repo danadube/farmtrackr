@@ -680,11 +680,13 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
                     }}
                   >
                     <option value="Sale">Regular Sale</option>
+                    <option value="Lease">Lease</option>
                     <option value="Referral $ Received">Referral $ Received</option>
                     <option value="Referral $ Paid">Referral $ Paid</option>
                   </select>
                   <p style={{ fontSize: '12px', ...text.tertiary, marginTop: '4px', marginBottom: '0' }}>
                     {formData.transactionType === 'Sale' && 'Standard buyer/seller transaction with commission'}
+                    {formData.transactionType === 'Lease' && 'Lease transaction with lease-specific commission calculations'}
                     {formData.transactionType === 'Referral $ Received' && 'You refer a client to another agent and receive a referral fee'}
                     {formData.transactionType === 'Referral $ Paid' && 'Another agent refers a client to you and you pay them a referral fee'}
                   </p>

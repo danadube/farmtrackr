@@ -42,6 +42,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
       siteCity: '',
       siteState: '',
       siteZipCode: '',
+      website: '',
       notes: ''
     }
   )
@@ -508,6 +509,28 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                       placeholder="(555) 123-4567"
                       value={formData.phoneNumber2 || ''}
                       onChange={(e) => handleInputChange('phoneNumber2', e.target.value)}
+                      style={getInputStyle(false)}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = colors.success
+                        e.target.style.outline = 'none'
+                        e.target.style.boxShadow = `0 0 0 3px ${colors.success}20`
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = colors.border
+                        e.target.style.boxShadow = 'none'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ gridColumn: 'span 2', boxSizing: 'border-box' }}>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
+                      Website URL
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://example.com"
+                      value={formData.website || ''}
+                      onChange={(e) => handleInputChange('website', e.target.value)}
                       style={getInputStyle(false)}
                       onFocus={(e) => {
                         e.target.style.borderColor = colors.success
