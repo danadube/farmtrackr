@@ -57,11 +57,10 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
         to: emailData.to,
         subject: emailData.subject,
         body: emailData.body,
-        options: {
-          ...emailData.options,
-          transactionId,
-          contactId: undefined // TODO: Add contactId if available
-        }
+        cc: emailData.cc,
+        bcc: emailData.bcc,
+        transactionId: transactionId,
+        contactId: undefined // TODO: Add contactId if available
       })
       
       if (result.success) {
