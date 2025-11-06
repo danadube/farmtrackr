@@ -159,7 +159,7 @@ export default function FutureFeaturesPage() {
                     Coming Soon
                   </h1>
                   <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '16px', margin: '0' }}>
-                    Planned features and roadmap items
+                    Planned features and roadmap items - Updated roadmap with Google integrations
                   </p>
                 </div>
               </div>
