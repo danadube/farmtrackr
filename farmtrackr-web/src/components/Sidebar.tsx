@@ -621,7 +621,7 @@ export function Sidebar({ children }: SidebarProps) {
       )}
 
       {/* Main Content */}
-      <div style={{ minHeight: '100vh', marginLeft: isDesktop ? '256px' : '0' }}>
+      <div style={{ minHeight: '100vh', marginLeft: isDesktop ? '256px' : '0', paddingLeft: isDesktop ? '24px' : '0' }}>
         {children}
       </div>
     </div>

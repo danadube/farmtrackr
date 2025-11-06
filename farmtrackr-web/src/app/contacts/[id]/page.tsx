@@ -87,8 +87,6 @@ export default function ContactDetailPage() {
       <Sidebar>
         <div 
           style={{ 
-            marginLeft: '256px', 
-            paddingLeft: '0',
             minHeight: '100vh',
             ...background,
             display: 'flex',
@@ -120,8 +118,6 @@ export default function ContactDetailPage() {
       <Sidebar>
         <div 
           style={{ 
-            marginLeft: '256px', 
-            paddingLeft: '0',
             minHeight: '100vh',
             ...background,
             display: 'flex',
@@ -183,8 +179,6 @@ export default function ContactDetailPage() {
       `}</style>
       <div 
         style={{ 
-          marginLeft: '256px', 
-          paddingLeft: '0',
           minHeight: '100vh',
           ...background
         }}

@@ -264,7 +264,7 @@ export default function PrintLabelsPage() {
 
   return (
     <Sidebar>
-      <div style={{ marginLeft: '256px', padding: '24px', overflow: 'auto', ...background }}>
+      <div style={{ padding: '24px', overflow: 'auto', ...background }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           {/* Header */}
           <div style={{ marginBottom: '24px' }}>

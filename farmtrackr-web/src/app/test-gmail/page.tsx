@@ -50,8 +50,6 @@ export default function TestGmailPage() {
     <Sidebar>
       <div 
         style={{ 
-          marginLeft: '256px', 
-          paddingLeft: '0',
           minHeight: '100vh',
           ...background
         }}

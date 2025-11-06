@@ -73,8 +73,6 @@ export default function GoogleContactDetailPage() {
       <Sidebar>
         <div 
           style={{ 
-            marginLeft: '256px', 
-            paddingLeft: '0',
             minHeight: '100vh',
             ...background,
             display: 'flex',
@@ -106,8 +104,6 @@ export default function GoogleContactDetailPage() {
       <Sidebar>
         <div 
           style={{ 
-            marginLeft: '256px', 
-            paddingLeft: '0',
             minHeight: '100vh',
             ...background,
             display: 'flex',
@@ -169,8 +165,6 @@ export default function GoogleContactDetailPage() {
       `}</style>
       <div 
         style={{ 
-          marginLeft: '256px', 
-          paddingLeft: '0',
           minHeight: '100vh',
           ...background
         }}
