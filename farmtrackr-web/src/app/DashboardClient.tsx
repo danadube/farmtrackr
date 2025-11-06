@@ -1368,7 +1368,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             </div>
           </div>
 
-          {/* Current Listings */}
+          {/* Current Listings Section */}
           <div style={{ marginBottom: spacing(4) }}>
             <h2 
               style={{
