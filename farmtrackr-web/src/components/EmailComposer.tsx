@@ -48,11 +48,9 @@ export function EmailComposer({
         to: to.trim(),
         subject: subject.trim() || '(No subject)',
         body: body.trim() || '',
-        options: {
-          cc: cc.trim() || undefined,
-          bcc: bcc.trim() || undefined,
-          transactionId: initialTransactionId
-        }
+        cc: cc.trim() || undefined,
+        bcc: bcc.trim() || undefined,
+        transactionId: initialTransactionId
       }
 
       const result = await onSend(emailData)
