@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
-import { Mail, Send, Inbox, Search, RefreshCw, Loader2, Paperclip, X } from 'lucide-react'
+import { Mail, Send, Inbox, Search, RefreshCw, Loader2, Paperclip, X, Reply, Forward } from 'lucide-react'
 import { GmailMessage, EmailData } from '@/types'
 import { sendEmail, fetchEmails, fetchTransactionEmails } from '@/lib/gmailService'
 import { EmailComposer } from './EmailComposer'
@@ -22,6 +22,9 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showComposer, setShowComposer] = useState(false)
   const [selectedEmail, setSelectedEmail] = useState<GmailMessage | null>(null)
+  const [replyMode, setReplyMode] = useState<'reply' | 'forward' | null>(null)
+  const [isReplying, setIsReplying] = useState(false)
+  const [isForwarding, setIsForwarding] = useState(false)
 
   useEffect(() => {
     if (contactEmail) {
@@ -65,12 +68,76 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
       
       if (result.success) {
         setShowComposer(false)
+        setReplyMode(null)
         loadEmails() // Refresh email list
       }
       return result
     } catch (error) {
       console.error('Error sending email:', error)
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  }
+
+  const handleReply = async (replyBody: string) => {
+    if (!selectedEmail) return
+
+    setIsReplying(true)
+    try {
+      const response = await fetch('/api/emails/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId: selectedEmail.id,
+          body: replyBody,
+          transactionId: transactionId
+        })
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        setReplyMode(null)
+        setSelectedEmail(null)
+        loadEmails() // Refresh email list
+      }
+      return result
+    } catch (error) {
+      console.error('Error replying to email:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    } finally {
+      setIsReplying(false)
+    }
+  }
+
+  const handleForward = async (forwardTo: string, forwardBody: string) => {
+    if (!selectedEmail) return
+
+    setIsForwarding(true)
+    try {
+      const response = await fetch('/api/emails/forward', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId: selectedEmail.id,
+          forwardTo: forwardTo,
+          body: forwardBody,
+          transactionId: transactionId
+        })
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        setReplyMode(null)
+        setSelectedEmail(null)
+        loadEmails() // Refresh email list
+      }
+      return result
+    } catch (error) {
+      console.error('Error forwarding email:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    } finally {
+      setIsForwarding(false)
     }
   }
 
@@ -411,31 +478,96 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
               <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
                 {selectedEmail.subject || '(No subject)'}
               </h3>
-              <button
-                type="button"
-                {...getButtonPressHandlers('close-email-detail')}
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setSelectedEmail(null)
-                }}
-                style={getButtonPressStyle(
-                  'close-email-detail',
-                  {
-                    padding: spacing(1),
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  },
-                  'transparent',
-                  colors.cardHover
-                )}
-              >
-                <X style={{ width: '20px', height: '20px', color: colors.text.secondary }} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('reply-email')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setReplyMode('reply')
+                  }}
+                  disabled={isReplying || isForwarding}
+                  style={getButtonPressStyle(
+                    'reply-email',
+                    {
+                      padding: `${spacing(1.5)} ${spacing(2)}`,
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: spacing(1),
+                      cursor: (isReplying || isForwarding) ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1),
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      opacity: (isReplying || isForwarding) ? 0.5 : 1
+                    },
+                    colors.cardHover,
+                    colors.borderHover
+                  )}
+                >
+                  <Reply style={{ width: '16px', height: '16px', color: colors.text.primary }} />
+                  Reply
+                </button>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('forward-email')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setReplyMode('forward')
+                  }}
+                  disabled={isReplying || isForwarding}
+                  style={getButtonPressStyle(
+                    'forward-email',
+                    {
+                      padding: `${spacing(1.5)} ${spacing(2)}`,
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: spacing(1),
+                      cursor: (isReplying || isForwarding) ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1),
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      opacity: (isReplying || isForwarding) ? 0.5 : 1
+                    },
+                    colors.cardHover,
+                    colors.borderHover
+                  )}
+                >
+                  <Forward style={{ width: '16px', height: '16px', color: colors.text.primary }} />
+                  Forward
+                </button>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('close-email-detail')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setSelectedEmail(null)
+                    setReplyMode(null)
+                  }}
+                  style={getButtonPressStyle(
+                    'close-email-detail',
+                    {
+                      padding: spacing(1),
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    },
+                    'transparent',
+                    colors.cardHover
+                  )}
+                >
+                  <X style={{ width: '20px', height: '20px', color: colors.text.secondary }} />
+                </button>
+              </div>
             </div>
             <div style={{ padding: spacing(3) }}>
               <div style={{ marginBottom: spacing(3) }}>
@@ -466,6 +598,45 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
                 }}
                 dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
               />
+              
+              {/* Reply/Forward Form */}
+              {replyMode && (
+                <div style={{ marginTop: spacing(3), paddingTop: spacing(3), borderTop: `1px solid ${colors.border}` }}>
+                  {replyMode === 'reply' ? (
+                    <EmailComposer
+                      initialTo={selectedEmail.from}
+                      initialSubject={`Re: ${selectedEmail.subject || ''}`}
+                      initialBody={`\n\n--- Original Message ---\nFrom: ${selectedEmail.from}\nTo: ${selectedEmail.to}\nDate: ${new Date(selectedEmail.date).toLocaleString()}\nSubject: ${selectedEmail.subject || ''}\n\n${selectedEmail.plainBody || ''}`}
+                      initialTransactionId={transactionId}
+                      onSend={async (emailData) => {
+                        const result = await handleReply(emailData.body)
+                        if (result.success) {
+                          return result
+                        }
+                        throw new Error(result.error || 'Failed to reply')
+                      }}
+                      onClose={() => setReplyMode(null)}
+                      isReplying={isReplying}
+                    />
+                  ) : (
+                    <EmailComposer
+                      initialTo=""
+                      initialSubject={`Fwd: ${selectedEmail.subject || ''}`}
+                      initialBody={`\n\n--- Forwarded Message ---\nFrom: ${selectedEmail.from}\nTo: ${selectedEmail.to}\nDate: ${new Date(selectedEmail.date).toLocaleString()}\nSubject: ${selectedEmail.subject || ''}\n\n${selectedEmail.plainBody || ''}`}
+                      initialTransactionId={transactionId}
+                      onSend={async (emailData) => {
+                        const result = await handleForward(emailData.to, emailData.body)
+                        if (result.success) {
+                          return result
+                        }
+                        throw new Error(result.error || 'Failed to forward')
+                      }}
+                      onClose={() => setReplyMode(null)}
+                      isForwarding={isForwarding}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

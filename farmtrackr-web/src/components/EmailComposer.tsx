@@ -23,6 +23,8 @@ interface EmailComposerProps {
   initialTransactionId?: string
   onSend: (emailData: EmailData) => Promise<{ success: boolean; error?: string }>
   onClose: () => void
+  isReplying?: boolean
+  isForwarding?: boolean
 }
 
 export function EmailComposer({
@@ -31,7 +33,9 @@ export function EmailComposer({
   initialBody = '',
   initialTransactionId,
   onSend,
-  onClose
+  onClose,
+  isReplying = false,
+  isForwarding = false
 }: EmailComposerProps) {
   const { colors, isDark, card, background, text, spacing } = useThemeStyles()
   const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
