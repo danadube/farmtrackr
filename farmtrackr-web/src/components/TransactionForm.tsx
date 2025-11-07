@@ -437,7 +437,7 @@ export function TransactionForm({ transactionId, onClose, onSuccess, asPage = fa
     }
   }
 
-  const formContent = (
+  const renderForm = () => (
     <div
       style={{
         backgroundColor: colors.card,
@@ -1569,7 +1569,7 @@ export function TransactionForm({ transactionId, onClose, onSuccess, asPage = fa
   if (asPage) {
     return (
       <>
-        {formContent}
+        {renderForm()}
         <style jsx global>{`
           @keyframes spin {
             from { transform: rotate(0deg); }
@@ -1598,7 +1598,7 @@ export function TransactionForm({ transactionId, onClose, onSuccess, asPage = fa
         onClick={onClose}
       >
         <div onClick={(e) => e.stopPropagation()}>
-          {formContent}
+          {renderForm()}
         </div>
       </div>
       <style jsx global>{`
