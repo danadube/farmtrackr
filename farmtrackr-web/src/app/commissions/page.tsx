@@ -29,6 +29,7 @@ import {
 import { TransactionForm } from '@/components/TransactionForm'
 import { calculateCommission } from '@/lib/commissionCalculations'
 import { useButtonPress } from '@/hooks/useButtonPress'
+import { EmailPanel } from '@/components/EmailPanel'
 import Link from 'next/link'
 
 interface Transaction {
@@ -92,6 +93,7 @@ export default function CommissionsPage() {
   const [isImporting, setIsImporting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [viewingTransaction, setViewingTransaction] = useState<Transaction | null>(null)
+  const [transactionDetailTab, setTransactionDetailTab] = useState<'details' | 'emails'>('details')
   
   // Filters and search
   const [filterYear, setFilterYear] = useState('all')
@@ -1857,50 +1859,99 @@ export default function CommissionsPage() {
             zIndex: 1000,
             padding: '20px'
           }}
-          onClick={() => setViewingTransaction(null)}
+          onClick={() => {
+            setViewingTransaction(null)
+            setTransactionDetailTab('details') // Reset to details tab when closing
+          }}
         >
           <div
             style={{
               ...card,
-              maxWidth: '600px',
+              maxWidth: transactionDetailTab === 'emails' ? '900px' : '600px',
               width: '100%',
               maxHeight: '90vh',
-              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
               position: 'relative',
               padding: '0'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                Transaction Details
-              </h2>
-              <button
-                onClick={() => setViewingTransaction(null)}
-                style={{
-                  padding: '8px',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <X style={{ width: '20px', height: '20px', color: colors.text.secondary }} />
-              </button>
+            <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                  Transaction Details
+                </h2>
+                <button
+                  onClick={() => setViewingTransaction(null)}
+                  style={{
+                    padding: '8px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <X style={{ width: '20px', height: '20px', color: colors.text.secondary }} />
+                </button>
+              </div>
+              
+              {/* Tabs */}
+              <div style={{ display: 'flex', gap: '8px', borderBottom: `1px solid ${colors.border}` }}>
+                <button
+                  onClick={() => setTransactionDetailTab('details')}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderBottom: transactionDetailTab === 'details' ? `2px solid ${colors.primary}` : '2px solid transparent',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: transactionDetailTab === 'details' ? '600' : '400',
+                    color: transactionDetailTab === 'details' ? colors.primary : colors.text.secondary,
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  Details
+                </button>
+                <button
+                  onClick={() => setTransactionDetailTab('emails')}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderBottom: transactionDetailTab === 'emails' ? `2px solid ${colors.primary}` : '2px solid transparent',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: transactionDetailTab === 'emails' ? '600' : '400',
+                    color: transactionDetailTab === 'emails' ? colors.primary : colors.text.secondary,
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  Emails
+                </button>
+              </div>
             </div>
 
             {/* Content */}
-            <div style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0 0 8px 0' }}>
-                  {viewingTransaction.address || 'N/A'}{viewingTransaction.city ? ` • ${viewingTransaction.city}` : ''}
-                </h3>
-              </div>
+            <div style={{ padding: '24px', minHeight: '400px', maxHeight: '70vh', overflowY: 'auto' }}>
+              {transactionDetailTab === 'emails' ? (
+                <EmailPanel 
+                  transactionId={viewingTransaction.id}
+                  contactEmail={(viewingTransaction as any).clientEmail}
+                />
+              ) : (
+                <>
+                  <div style={{ marginBottom: '24px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0 0 8px 0' }}>
+                      {viewingTransaction.address || 'N/A'}{viewingTransaction.city ? ` • ${viewingTransaction.city}` : ''}
+                    </h3>
+                  </div>
 
-              {(() => {
+                  {(() => {
                 const calc = getCommissionForTransaction(viewingTransaction)
                 const gci = parseFloat(calc.gci) || 0
                 const adjustedGci = parseFloat(calc.adjustedGci) || 0
@@ -2171,6 +2222,9 @@ export default function CommissionsPage() {
                   </>
                 )
               })()}
+                </>
+              )}
+            </div>
 
             {/* Footer Buttons */}
             <div style={{ padding: '24px', borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
