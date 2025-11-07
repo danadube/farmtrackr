@@ -54,7 +54,7 @@ interface Email {
 }
 
 export default function EmailsPage() {
-  const { colors, isDark, card, text, spacing } = useThemeStyles()
+  const { colors, isDark, card, headerCard, text, spacing } = useThemeStyles()
   const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
