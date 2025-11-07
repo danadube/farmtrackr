@@ -2222,6 +2222,7 @@ export default function CommissionsPage() {
                   </>
                 )
               })()}
+                </>
               )}
             </div>
 
@@ -2282,7 +2283,6 @@ export default function CommissionsPage() {
                 </button>
               </div>
             )}
-            </div>
           </div>
         </div>
       )}
