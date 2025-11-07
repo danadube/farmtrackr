@@ -22,7 +22,7 @@ Your Google Apps Script needs to be updated with the latest code that includes t
 Make sure to update the `SPREADSHEET_ID` at the top of the file:
 
 ```javascript
-const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'; // Replace with your actual spreadsheet ID
+const SPREADSHEET_ID = '1kfJyY9UsydzN2zPCG6LPmQ7iHnA92U8UMmk0hhIM4hE'; // Replace with your actual spreadsheet ID
 ```
 
 ### Step 4: Redeploy

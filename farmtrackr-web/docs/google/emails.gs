@@ -21,7 +21,7 @@
 const EMAIL_LOG_SHEET_NAME = 'Email_Log';
 const EMAIL_TEMPLATES_SHEET_NAME = 'Email_Templates';
 const TRANSACTIONS_SHEET_NAME = 'Transactions';
-const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'; // Replace with your spreadsheet ID
+const SPREADSHEET_ID = '1kfJyY9UsydzN2zPCG6LPmQ7iHnA92U8UMmk0hhIM4hE'; // Email log & templates sheet
 
 // ============================================
 // MAIN FUNCTIONS
