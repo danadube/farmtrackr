@@ -567,13 +567,21 @@ export default function EmailsPage() {
                   </span>
                 ) : (
                   (() => {
-                    const quickLabels = labels.filter(
-                      (label) => (label.value || label.name) !== 'LOGGED'
-                    )
-                    if (labels.some((label) => (label.value || label.name) === 'LOGGED')) {
-                      quickLabels.unshift({
+                    const sortedLabels = [...labels]
+                      .map((label) => ({
+                        ...label,
+                        displayName:
+                          (label.value || label.name) === 'LOGGED'
+                            ? 'Logged Emails'
+                            : label.name
+                      }))
+                      .sort((a, b) => (b.count || 0) - (a.count || 0))
+
+                    if (!sortedLabels.some((label) => (label.value || label.name) === 'LOGGED')) {
+                      sortedLabels.unshift({
                         name: 'Logged Emails',
-                        count: labels.find((label) => (label.value || label.name) === 'LOGGED')?.count || 0,
+                        displayName: 'Logged Emails',
+                        count: 0,
                         icon: '🗂️',
                         color: '#6b7280',
                         type: 'virtual',
@@ -581,8 +589,9 @@ export default function EmailsPage() {
                       })
                     }
 
-                    return quickLabels.slice(0, 6).map((label) => {
+                    return sortedLabels.slice(0, 6).map((label) => {
                       const labelValue = label.value || label.name
+                      const displayName = label.displayName || label.name
                       return (
                         <button
                           key={labelValue}
@@ -612,8 +621,8 @@ export default function EmailsPage() {
                           ) : (
                             getLabelIcon(labelValue)
                           )}
-                          <span>{label.name}</span>
-                          <span style={{ opacity: 0.7 }}>({label.count})</span>
+                          <span>{displayName}</span>
+                          <span style={{ opacity: 0.7 }}>({label.count || 0})</span>
                         </button>
                       )
                     })
