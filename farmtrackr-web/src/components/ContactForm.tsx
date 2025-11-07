@@ -221,25 +221,24 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
           margin: 4px 0; 
         }
       `}</style>
-      <div 
-        style={{ 
-          marginLeft: '256px', 
-          paddingLeft: '0',
-          minHeight: '100vh',
-          ...background
-        }}
-      >
+      <Sidebar>
         <div 
-          style={{
-            maxWidth: '1200px',
-            marginLeft: 'auto',
-            marginRight: 'auto',
-            paddingLeft: '48px',
-            paddingRight: '48px',
-            paddingTop: '32px',
-            paddingBottom: '32px'
+          style={{ 
+            minHeight: '100vh',
+            backgroundColor: colors.background
           }}
         >
+          <div 
+            style={{
+              maxWidth: '1200px',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              paddingLeft: '48px',
+              paddingRight: '48px',
+              paddingTop: '32px',
+              paddingBottom: '32px'
+            }}
+          >
           {/* Header */}
           <div style={{ marginBottom: '32px' }}>
             <div style={{ padding: '24px', ...card }}>
@@ -1233,12 +1232,11 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
               </div>
             </div>
           </form>
+          </div>
         </div>
-      </div>
+      </Sidebar>
     </>
   )
 
-  return (
-    <Sidebar children={sidebarContent} />
-  )
+  return sidebarContent
 }
