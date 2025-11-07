@@ -371,6 +371,12 @@ export default function CommissionsPage() {
     })
   }, [])
 
+  const formatCurrency = (value: number | string | null | undefined) => {
+    const num = Number(value)
+    if (isNaN(num)) return null
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+
   // Generate fee breakdown text for tooltip
   const getFeeBreakdown = (t: Transaction): string => {
     const calc = getCommissionForTransaction(t)
@@ -1761,16 +1767,16 @@ export default function CommissionsPage() {
                             {transaction.city && (
                               <span>{transaction.city}</span>
                             )}
-                            {transaction.city && transaction.closedPrice && <span>•</span>}
-                            {transaction.closedPrice && (
-                              <span>${transaction.closedPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            {transaction.city && formatCurrency(transaction.closedPrice) && <span>•</span>}
+                            {formatCurrency(transaction.closedPrice) && (
+                              <span>${formatCurrency(transaction.closedPrice)}</span>
                             )}
                           </div>
                         </div>
                         <div style={{ minWidth: '120px', textAlign: 'right', padding: '12px', borderRadius: '8px', backgroundColor: colors.successLight, border: `2px solid ${colors.success}` }}>
                           <p style={{ fontSize: '12px', fontWeight: '600', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>NCI</p>
                           <p style={{ fontSize: '16px', fontWeight: '700', color: colors.success, margin: '0', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                            ${nci.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ${formatCurrency(nci) || '0.00'}
                           </p>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -2022,13 +2028,13 @@ export default function CommissionsPage() {
                         <div>
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>List Price</p>
                           <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
-                            ${(parseFloat(String(viewingTransaction.listPrice || 0))).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            ${formatCurrency(viewingTransaction.listPrice) || '0.00'}
                           </p>
                         </div>
                         <div>
                           <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>Closed Price</p>
                           <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
-                            ${(parseFloat(String(viewingTransaction.closedPrice || 0))).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            ${formatCurrency(viewingTransaction.closedPrice) || '0.00'}
                           </p>
                         </div>
                         <div>
