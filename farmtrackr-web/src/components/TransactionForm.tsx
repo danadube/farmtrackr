@@ -1551,16 +1551,31 @@ export function TransactionForm({ transactionId, onClose, onSuccess, asPage = fa
             </button>
           </div>
         </form>
-      </div>
+  )
 
-      </div>
-    )
+  const formContainerStyle = {
+    backgroundColor: colors.card,
+    borderRadius: asPage ? '0' : '16px',
+    width: asPage ? '100%' : '90%',
+    maxWidth: asPage ? 'none' : '1000px',
+    maxHeight: asPage ? 'none' : '90vh',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    boxShadow: asPage ? 'none' : (isDark ? '0 20px 25px -5px rgba(0, 0, 0, 0.5)' : '0 20px 25px -5px rgba(0, 0, 0, 0.1)'),
+    border: asPage ? 'none' : `1px solid ${colors.border}`
   }
+
+  const formContent = (
+    <div style={formContainerStyle}>
+      {formHeader}
+      {formBody}
+    </div>
+  )
 
   if (asPage) {
     return (
       <>
-        {renderForm()}
+        {formContent}
         <style jsx global>{`
           @keyframes spin {
             from { transform: rotate(0deg); }
@@ -1589,7 +1604,7 @@ export function TransactionForm({ transactionId, onClose, onSuccess, asPage = fa
         onClick={onClose}
       >
         <div onClick={(e) => e.stopPropagation()}>
-          {renderForm()}
+          {formContent}
         </div>
       </div>
       <style jsx global>{`
