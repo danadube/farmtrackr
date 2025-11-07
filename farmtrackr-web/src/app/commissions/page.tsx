@@ -813,6 +813,8 @@ export default function CommissionsPage() {
     insights
   } = analytics
 
+const referralNet = referralFeesReceived - referralFeesPaid
+
   if (isLoading) {
     return (
       <Sidebar>
@@ -1545,10 +1547,82 @@ export default function CommissionsPage() {
             </div>
           </div>
 
-          {/* Analytics Charts - Temporarily disabled to allow page compilation */}
+          {/* Performance Summary */}
           {transactions.length > 0 && (
-            <div style={{ ...card, padding: '24px', marginBottom: '32px', textAlign: 'center', ...text.secondary }}>
-              <p style={{ margin: '0', fontSize: '14px' }}>Charts temporarily disabled during compilation. They will be available once the build completes.</p>
+            <div style={{ marginBottom: '32px' }}>
+              <div style={{ ...card, overflow: 'hidden' }}>
+                <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
+                  <h2 
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      ...text.primary,
+                      margin: '0'
+                    }}
+                  >
+                    Performance Summary
+                  </h2>
+                  <p style={{ fontSize: '14px', ...text.secondary, margin: '8px 0 0 0' }}>
+                    Based on {filteredTransactions.length} transaction{filteredTransactions.length === 1 ? '' : 's'} in view
+                  </p>
+                </div>
+                <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                  <div style={{ padding: '16px', borderRadius: '12px', border: `1px solid ${colors.border}`, backgroundColor: colors.cardHover }}>
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 6px 0', textTransform: 'uppercase' }}>Total Volume</p>
+                    <p style={{ fontSize: '22px', fontWeight: '700', ...text.primary, margin: '0 0 4px 0' }}>
+                      ${formatCurrency(totalVolume) || '0.00'}
+                    </p>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                      {totalTransactions.toLocaleString('en-US')} transaction{totalTransactions === 1 ? '' : 's'}
+                    </p>
+                  </div>
+                  <div style={{ padding: '16px', borderRadius: '12px', border: `1px solid ${colors.border}`, backgroundColor: colors.cardHover }}>
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 6px 0', textTransform: 'uppercase' }}>Closed Deals</p>
+                    <p style={{ fontSize: '22px', fontWeight: '700', ...text.primary, margin: '0 0 4px 0' }}>
+                      {closedTransactions.toLocaleString('en-US')}
+                    </p>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                      {closedTransactions === 1 ? 'Deal closed' : 'Deals closed'}
+                    </p>
+                  </div>
+                  <div style={{ padding: '16px', borderRadius: '12px', border: `1px solid ${colors.border}`, backgroundColor: colors.cardHover }}>
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 6px 0', textTransform: 'uppercase' }}>Total GCI</p>
+                    <p style={{ fontSize: '22px', fontWeight: '700', ...text.primary, margin: '0 0 4px 0' }}>
+                      ${formatCurrency(totalGCI) || '0.00'}
+                    </p>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                      Includes referral income
+                    </p>
+                  </div>
+                  <div style={{ padding: '16px', borderRadius: '12px', border: `1px solid ${colors.border}`, backgroundColor: colors.cardHover }}>
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 6px 0', textTransform: 'uppercase' }}>Total NCI</p>
+                    <p style={{ fontSize: '22px', fontWeight: '700', color: colors.success, margin: '0 0 4px 0' }}>
+                      ${formatCurrency(totalNCI) || '0.00'}
+                    </p>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                      Net after brokerage and referrals
+                    </p>
+                  </div>
+                  <div style={{ padding: '16px', borderRadius: '12px', border: `1px solid ${colors.border}`, backgroundColor: colors.cardHover }}>
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 6px 0', textTransform: 'uppercase' }}>Avg Commission</p>
+                    <p style={{ fontSize: '22px', fontWeight: '700', ...text.primary, margin: '0 0 4px 0' }}>
+                      ${formatCurrency(avgCommission) || '0.00'}
+                    </p>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                      Per closed transaction
+                    </p>
+                  </div>
+                  <div style={{ padding: '16px', borderRadius: '12px', border: `1px solid ${colors.border}`, backgroundColor: colors.cardHover }}>
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 6px 0', textTransform: 'uppercase' }}>Referral Net</p>
+                    <p style={{ fontSize: '22px', fontWeight: '700', color: referralNet >= 0 ? colors.info : colors.error, margin: '0 0 4px 0' }}>
+                      ${formatCurrency(referralNet) || '0.00'}
+                    </p>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                      Received vs. paid
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
