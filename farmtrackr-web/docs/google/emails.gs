@@ -488,32 +488,25 @@ function getGmailLabels() {
   } catch (e) {}
   
   // Custom real estate labels
-  const customLabels = [
-    'Clients',
-    'Transactions',
-    'Follow Up',
-    'Vendors',
-    'Inspections',
-    'Offers'
-  ];
-  
-  customLabels.forEach(labelName => {
-    try {
-      const label = GmailApp.getUserLabelByName(labelName);
-      if (label) {
+  try {
+    const userLabels = GmailApp.getUserLabels();
+    userLabels.slice(0, 20).forEach(label => {
+      try {
         const threads = label.getThreads(0, 100);
         labels.push({
-          id: labelName,
-          name: labelName,
+          id: label.getName(),
+          name: label.getName(),
           type: 'custom',
           count: threads.length,
           unreadCount: label.getUnreadCount(),
-          color: getCustomLabelColor(labelName),
-          icon: getCustomLabelIcon(labelName)
+          color: getCustomLabelColor(label.getName()),
+          icon: getCustomLabelIcon(label.getName())
         });
-      }
-    } catch (e) {}
-  });
+      } catch (e) {}
+    });
+  } catch (e) {
+    Logger.log('Error loading custom labels: ' + e.toString());
+  }
   
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
