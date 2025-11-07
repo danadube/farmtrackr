@@ -38,8 +38,10 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
   useEffect(() => {
     if (transactionId && transactionId !== 'all') {
       setSelectedLabel('LOGGED')
+    } else {
+      setSelectedLabel('INBOX')
     }
-  }, [transactionId])
+  }, [transactionId, contactEmail])
 
   const loadEmails = async (forceLoadAll: boolean = false) => {
     setLoading(true)
@@ -77,35 +79,44 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
       const response = await fetch(`/api/emails/list?${params}`)
       if (response.ok) {
         const data = await response.json()
-        if (data.success && data.emails) {
-          let filteredEmails = data.emails
-          
-          // Additional client-side filtering by contactEmail if provided
-          if (contactEmail && activeTab !== 'all') {
-            if (activeTab === 'sent') {
-              filteredEmails = filteredEmails.filter(email => 
-                email.to && email.to.toLowerCase().includes(contactEmail.toLowerCase())
-              )
-            } else if (activeTab === 'received') {
-              filteredEmails = filteredEmails.filter(email => 
-                email.from && email.from.toLowerCase().includes(contactEmail.toLowerCase())
-              )
-            }
-          }
-          
-          setEmails(filteredEmails)
-          
-          // If no emails found and we were filtering by transactionId, 
-          // automatically try loading all emails
-          if (filteredEmails.length === 0 && 
-              transactionId && 
-              transactionId !== 'all' && 
-              !forceLoadAll &&
-              !contactEmail) {
-            // Retry loading all emails
-            setTimeout(() => loadEmails(true), 500)
+        let emailsData: GmailMessage[] = []
+        if (Array.isArray(data)) {
+          emailsData = data as GmailMessage[]
+        } else if (Array.isArray(data?.emails)) {
+          emailsData = data.emails as GmailMessage[]
+        } else if (data?.success && Array.isArray(data?.data)) {
+          emailsData = data.data as GmailMessage[]
+        }
+
+        let filteredEmails = emailsData
+        
+        // Additional client-side filtering by contactEmail if provided
+        if (contactEmail && activeTab !== 'all') {
+          if (activeTab === 'sent') {
+            filteredEmails = filteredEmails.filter(email => 
+              email.to && email.to.toLowerCase().includes(contactEmail.toLowerCase())
+            )
+          } else if (activeTab === 'received') {
+            filteredEmails = filteredEmails.filter(email => 
+              email.from && email.from.toLowerCase().includes(contactEmail.toLowerCase())
+            )
           }
         }
+        
+        setEmails(filteredEmails)
+        
+        // If no emails found and we were filtering by transactionId, 
+        // automatically try loading all emails
+        if (filteredEmails.length === 0 && 
+            transactionId && 
+            transactionId !== 'all' && 
+            !forceLoadAll &&
+            !contactEmail) {
+          // Retry loading all emails
+          setTimeout(() => loadEmails(true), 500)
+        }
+      } else {
+        setEmails([])
       }
     } catch (error) {
       console.error('Error loading emails:', error)
