@@ -354,6 +354,7 @@ export default function EmailsPage() {
                     {...getButtonPressHandlers('create-test-emails')}
                     onClick={async () => {
                       try {
+                        setLoading(true)
                         const response = await fetch('/api/emails/test', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
@@ -361,11 +362,17 @@ export default function EmailsPage() {
                         })
                         const result = await response.json()
                         if (result.success) {
+                          alert(`Successfully created ${result.count || 5} test emails!`)
                           loadEmails()
                           loadLabels()
+                        } else {
+                          alert(`Error: ${result.error || 'Failed to create test emails'}`)
                         }
                       } catch (err) {
                         console.error('Error creating test emails:', err)
+                        alert(`Error: ${err instanceof Error ? err.message : 'Failed to create test emails'}`)
+                      } finally {
+                        setLoading(false)
                       }
                     }}
                     style={getButtonPressStyle(

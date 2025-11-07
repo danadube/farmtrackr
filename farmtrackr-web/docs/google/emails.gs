@@ -1248,6 +1248,89 @@ function doPost(e) {
 }
 
 /**
+ * Create test emails for development/testing
+ * @param {number} count - Number of test emails to create
+ * @returns {Object} Result object
+ */
+function createTestEmails(count) {
+  try {
+    const testEmails = [
+      {
+        to: 'test@example.com',
+        subject: 'Welcome to Your Home Search Journey!',
+        body: '<p>Hi Test Client,</p><p>Welcome! I\'m thrilled to help you find your perfect home.</p>',
+        direction: 'sent'
+      },
+      {
+        from: 'client@example.com',
+        subject: 'Re: Property Showing Confirmed',
+        body: '<p>Thank you for confirming the showing. I\'m looking forward to it!</p>',
+        direction: 'received'
+      },
+      {
+        to: 'buyer@example.com',
+        subject: 'Offer Received on Your Property',
+        body: '<p>Great news! We\'ve received an offer on your property.</p>',
+        direction: 'sent'
+      },
+      {
+        from: 'seller@example.com',
+        subject: 'Re: Offer Received',
+        body: '<p>Thank you for the update. Let\'s discuss this offer.</p>',
+        direction: 'received'
+      },
+      {
+        to: 'client@example.com',
+        subject: 'Closing Reminder - Your Closing is Coming Up!',
+        body: '<p>Your closing is scheduled for next week. Here\'s what you need to bring.</p>',
+        direction: 'sent'
+      }
+    ];
+    
+    const created = [];
+    const userEmail = Session.getActiveUser().getEmail();
+    
+    for (let i = 0; i < Math.min(count, testEmails.length); i++) {
+      const email = testEmails[i];
+      const messageId = `test-${Date.now()}-${i}`;
+      
+      // Log to Email_Log sheet
+      logEmailToSheet({
+        messageId: messageId,
+        transactionId: '', // Not linked initially
+        contactId: '',
+        direction: email.direction,
+        from: email.from || userEmail,
+        to: email.to || userEmail,
+        subject: email.subject,
+        body: email.body,
+        date: new Date(),
+        attachments: [],
+        threadId: `thread-${i}`
+      });
+      
+      created.push({
+        messageId: messageId,
+        subject: email.subject,
+        direction: email.direction
+      });
+    }
+    
+    return {
+      success: true,
+      count: created.length,
+      emails: created
+    };
+  } catch (error) {
+    Logger.log('Error creating test emails: ' + error.toString());
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
  * Web app entry point - Handle GET requests (for testing)
  */
 function doGet(e) {

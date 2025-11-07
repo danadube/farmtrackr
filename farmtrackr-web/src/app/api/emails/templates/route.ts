@@ -27,10 +27,20 @@ export async function GET(request: NextRequest) {
     })
     
     if (!response.ok) {
-      throw new Error(`Apps Script returned ${response.status}`)
+      const errorText = await response.text()
+      console.error('Apps Script error:', errorText)
+      throw new Error(`Apps Script returned ${response.status}: ${errorText}`)
     }
     
     const templates = await response.json()
+    // Wrap in success response format if it's an array
+    if (Array.isArray(templates)) {
+      return NextResponse.json({
+        success: true,
+        templates: templates
+      })
+    }
+    // If already wrapped, return as-is
     return NextResponse.json(templates)
   } catch (error) {
     console.error('Error getting templates:', error)

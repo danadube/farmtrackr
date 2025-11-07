@@ -65,7 +65,15 @@ export function EmailComposer({
         const data = await response.json()
         if (data.success && data.templates) {
           setTemplates(data.templates)
+        } else if (Array.isArray(data)) {
+          // Handle case where API returns array directly
+          setTemplates(data)
+        } else {
+          console.warn('Unexpected template response format:', data)
         }
+      } else {
+        const errorText = await response.text()
+        console.error('Error loading templates:', response.status, errorText)
       }
     } catch (err) {
       console.error('Error loading templates:', err)
