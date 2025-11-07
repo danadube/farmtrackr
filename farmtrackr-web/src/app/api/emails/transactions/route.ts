@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
       const prisma = new PrismaClient()
       
       // Use type assertion to avoid build-time type errors if schema changes haven't propagated
-      const transactions = await (prisma.transaction.findMany as any)({
+      // Cast both the method and the query object to bypass TypeScript strict checking
+      const query: any = {
         where: {
           status: {
             in: ['Active', 'Pending', 'Closing', 'Under Contract']
@@ -33,7 +34,8 @@ export async function GET(request: NextRequest) {
         orderBy: {
           closingDate: 'desc'
         }
-      })
+      }
+      const transactions = await (prisma.transaction.findMany as any)(query)
       
       await prisma.$disconnect()
       
