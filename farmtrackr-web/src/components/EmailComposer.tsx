@@ -1,10 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
-import { X, Send, Paperclip, Loader2 } from 'lucide-react'
+import { X, Send, Paperclip, Loader2, FileText, ChevronDown } from 'lucide-react'
 import { EmailData } from '@/types'
+import { TransactionSelector } from './TransactionSelector'
+import { RichTextEditor } from './RichTextEditor'
+
+interface EmailTemplate {
+  id: string
+  name: string
+  subject: string
+  body: string
+  variables?: string[]
+}
 
 interface EmailComposerProps {
   initialTo?: string
@@ -33,6 +43,57 @@ export function EmailComposer({
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showCcBcc, setShowCcBcc] = useState(false)
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(initialTransactionId || null)
+  const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
+  const [showTemplates, setShowTemplates] = useState(false)
+
+  // Load templates on mount
+  useEffect(() => {
+    loadTemplates()
+  }, [])
+
+  const loadTemplates = async () => {
+    try {
+      const response = await fetch('/api/emails/templates')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.templates) {
+          setTemplates(data.templates)
+        }
+      }
+    } catch (err) {
+      console.error('Error loading templates:', err)
+    }
+  }
+
+  const handleTemplateSelect = async (templateId: string) => {
+    try {
+      const response = await fetch('/api/emails/template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          templateId,
+          variables: {
+            // Add variables here based on selected transaction
+            clientName: 'Client Name',
+            propertyAddress: 'Property Address',
+          }
+        })
+      })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setSubject(data.subject || '')
+          setBody(data.body || '')
+          setSelectedTemplate(templateId)
+          setShowTemplates(false)
+        }
+      }
+    } catch (err) {
+      console.error('Error loading template:', err)
+    }
+  }
 
   const handleSend = async () => {
     if (!to.trim()) {
@@ -50,7 +111,7 @@ export function EmailComposer({
         body: body.trim() || '',
         cc: cc.trim() || undefined,
         bcc: bcc.trim() || undefined,
-        transactionId: initialTransactionId
+        transactionId: selectedTransactionId || undefined
       }
 
       const result = await onSend(emailData)
@@ -181,8 +242,116 @@ export function EmailComposer({
             />
           </div>
 
-          {/* CC/BCC Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+          {/* Transaction Selector */}
+          <div>
+            <label style={{ 
+              display: 'block',
+              fontSize: '12px',
+              ...text.tertiary,
+              marginBottom: spacing(1),
+              textTransform: 'uppercase'
+            }}>
+              Link to Transaction (Optional)
+            </label>
+            <TransactionSelector
+              selectedTransactionId={selectedTransactionId || undefined}
+              onSelect={setSelectedTransactionId}
+              placeholder="Select a transaction to link this email..."
+            />
+          </div>
+
+          {/* Templates & CC/BCC Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), flexWrap: 'wrap' }}>
+            {templates.length > 0 && (
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('select-template')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setShowTemplates(!showTemplates)
+                  }}
+                  style={getButtonPressStyle(
+                    'select-template',
+                    {
+                      padding: `${spacing(1)} ${spacing(2)}`,
+                      backgroundColor: 'transparent',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: spacing(1),
+                      fontSize: '12px',
+                      ...text.secondary,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1)
+                    },
+                    'transparent',
+                    colors.cardHover
+                  )}
+                >
+                  <FileText style={{ width: '14px', height: '14px' }} />
+                  Templates
+                  <ChevronDown style={{ width: '12px', height: '12px' }} />
+                </button>
+                {showTemplates && (
+                  <>
+                    <div
+                      style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 1000,
+                      }}
+                      onClick={() => setShowTemplates(false)}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        marginTop: spacing(1),
+                        backgroundColor: colors.card,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: spacing(1),
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        zIndex: 1001,
+                        minWidth: '200px',
+                        maxHeight: '300px',
+                        overflowY: 'auto',
+                      }}
+                    >
+                      {templates.map((template) => (
+                        <div
+                          key={template.id}
+                          {...getButtonPressHandlers(`template-${template.id}`)}
+                          onClick={() => handleTemplateSelect(template.id)}
+                          style={getButtonPressStyle(
+                            `template-${template.id}`,
+                            {
+                              padding: spacing(2),
+                              borderBottom: `1px solid ${colors.border}`,
+                              cursor: 'pointer',
+                              ...text.primary,
+                              fontSize: '14px',
+                            },
+                            colors.card,
+                            colors.cardHover
+                          )}
+                        >
+                          <div style={{ fontWeight: '500' }}>{template.name}</div>
+                          <div style={{ fontSize: '12px', ...text.tertiary, marginTop: '2px' }}>
+                            {template.subject}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             <button
               type="button"
               {...getButtonPressHandlers('toggle-cc-bcc')}
@@ -336,33 +505,10 @@ export function EmailComposer({
             }}>
               Message
             </label>
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
+            <RichTextEditor
+              content={body}
+              onChange={setBody}
               placeholder="Type your message here..."
-              style={{
-                flex: 1,
-                width: '100%',
-                padding: spacing(2),
-                backgroundColor: colors.card,
-                border: `1px solid ${colors.border}`,
-                borderRadius: spacing(1),
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                lineHeight: '1.6',
-                ...text.primary,
-                outline: 'none',
-                resize: 'none',
-                minHeight: '300px'
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = colors.primary
-                e.target.style.boxShadow = `0 0 0 3px ${colors.primary}20`
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = colors.border
-                e.target.style.boxShadow = 'none'
-              }}
             />
           </div>
 
