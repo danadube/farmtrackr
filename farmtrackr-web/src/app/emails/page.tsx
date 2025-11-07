@@ -211,12 +211,21 @@ export default function EmailsPage() {
       const response = await fetch(`/api/emails/list?${params}`)
       if (response.ok) {
         const data = await response.json()
-        if (data.success && data.emails) {
+        if (Array.isArray(data)) {
+          setEmails(data)
+        } else if (Array.isArray(data?.emails)) {
           setEmails(data.emails)
+        } else if (data?.success && Array.isArray(data?.data)) {
+          setEmails(data.data)
+        } else {
+          setEmails([])
         }
+      } else {
+        setEmails([])
       }
     } catch (err) {
       console.error('Error loading emails:', err)
+      setEmails([])
     } finally {
       setLoading(false)
     }
