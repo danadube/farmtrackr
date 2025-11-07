@@ -35,6 +35,12 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
     loadEmails()
   }, [contactEmail, activeTab, selectedLabel, transactionId])
 
+  useEffect(() => {
+    if (transactionId && transactionId !== 'all') {
+      setSelectedLabel('LOGGED')
+    }
+  }, [transactionId])
+
   const loadEmails = async (forceLoadAll: boolean = false) => {
     setLoading(true)
     try {
@@ -55,11 +61,11 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
       }
       
       // If a label is selected, filter by label
-      if (selectedLabel) {
-        params.append('label', selectedLabel)
-      } else {
-        params.append('label', 'INBOX') // Default to INBOX
-      }
+      const effectiveLabel =
+        selectedLabel ||
+        (transactionId && transactionId !== 'all' ? 'LOGGED' : 'INBOX')
+
+      params.append('label', effectiveLabel)
       
       // Add direction filter based on activeTab
       if (activeTab === 'sent') {
