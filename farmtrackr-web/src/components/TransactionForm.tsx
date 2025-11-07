@@ -437,20 +437,21 @@ export function TransactionForm({ transactionId, onClose, onSuccess, asPage = fa
     }
   }
 
-  const renderForm = () => (
-    <div
-      style={{
-        backgroundColor: colors.card,
-        borderRadius: asPage ? '0' : '16px',
-        width: asPage ? '100%' : '90%',
-        maxWidth: asPage ? 'none' : '1000px',
-        maxHeight: asPage ? 'none' : '90vh',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: asPage ? 'none' : (isDark ? '0 20px 25px -5px rgba(0, 0, 0, 0.5)' : '0 20px 25px -5px rgba(0, 0, 0, 0.1)'),
-        border: asPage ? 'none' : `1px solid ${colors.border}`
-      }}
-    >
+  const renderForm = () => {
+    return (
+      <div
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: asPage ? '0' : '16px',
+          width: asPage ? '100%' : '90%',
+          maxWidth: asPage ? 'none' : '1000px',
+          maxHeight: asPage ? 'none' : '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: asPage ? 'none' : (isDark ? '0 20px 25px -5px rgba(0, 0, 0, 0.5)' : '0 20px 25px -5px rgba(0, 0, 0, 0.1)'),
+          border: asPage ? 'none' : `1px solid ${colors.border}`
+        }}
+      >
         {/* Header */}
         <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1563,8 +1564,9 @@ export function TransactionForm({ transactionId, onClose, onSuccess, asPage = fa
         </form>
       </div>
 
-    </div>
-  )
+      </div>
+    )
+  }
 
   if (asPage) {
     return (
