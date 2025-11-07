@@ -88,6 +88,17 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
           }
           
           setEmails(filteredEmails)
+          
+          // If no emails found and we were filtering by transactionId, 
+          // automatically try loading all emails
+          if (filteredEmails.length === 0 && 
+              transactionId && 
+              transactionId !== 'all' && 
+              !forceLoadAll &&
+              !contactEmail) {
+            // Retry loading all emails
+            setTimeout(() => loadEmails(true), 500)
+          }
         }
       }
     } catch (error) {
