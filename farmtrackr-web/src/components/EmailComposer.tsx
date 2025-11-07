@@ -216,6 +216,7 @@ export function EmailComposer({
   }
 
   const handleTemplateSelect = async (templateId: string) => {
+    const template = templates.find((t) => t.id === templateId)
     try {
       const response = await fetch('/api/emails/template', {
         method: 'POST',
@@ -254,7 +255,6 @@ export function EmailComposer({
       }
     } catch (err) {
       console.error('Error loading template:', err)
-      const template = templates.find((t) => t.id === templateId)
       if (template) {
         setSubject(template.subject || '')
         setBody(template.body || '')
