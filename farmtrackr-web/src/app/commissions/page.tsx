@@ -867,17 +867,17 @@ export default function CommissionsPage() {
           ...background
         }}
       >
-        <div 
-          style={{
-            maxWidth: '1200px',
-            marginLeft: 'auto',
-            marginRight: 'auto',
-            paddingLeft: '48px',
-            paddingRight: '48px',
-            paddingTop: '32px',
-            paddingBottom: '32px'
-          }}
-        >
+          <div 
+            style={{
+              maxWidth: '1200px',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              paddingLeft: '64px',
+              paddingRight: '64px',
+              paddingTop: '32px',
+              paddingBottom: '32px'
+            }}
+          >
           {/* Page Header */}
           <div style={{ marginBottom: '32px' }}>
             <div 
@@ -1680,7 +1680,7 @@ export default function CommissionsPage() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '24px', paddingTop: '20px' }}>
                 {filteredTransactions.map((transaction) => {
                   const calc = getCommissionForTransaction(transaction)
                   const nci = parseFloat(calc.nci) || 0
