@@ -283,8 +283,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     </p>
                   </div>
                 </div>
-                {!asPage && (
-                  <button
+                <button
                   onClick={handleCancel}
                   {...getButtonPressHandlers('cancel')}
                   style={getButtonPressStyle(
