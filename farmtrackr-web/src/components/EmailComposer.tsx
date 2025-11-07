@@ -46,6 +46,7 @@ export function EmailComposer({
   const [body, setBody] = useState(initialBody)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isSubmitting = isSending || isReplying || isForwarding
   const [showCcBcc, setShowCcBcc] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(initialTransactionId || null)
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
