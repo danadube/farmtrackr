@@ -575,7 +575,7 @@ export function EmailComposer({
                 e.stopPropagation()
                 onClose()
               }}
-              disabled={isSending}
+              disabled={isSubmitting}
               style={getButtonPressStyle(
                 'cancel-email',
                 {
@@ -585,7 +585,7 @@ export function EmailComposer({
                   borderRadius: spacing(1),
                   fontSize: '14px',
                   ...text.secondary,
-                  cursor: isSending ? 'not-allowed' : 'pointer'
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer'
                 },
                 'transparent',
                 colors.cardHover
@@ -601,36 +601,36 @@ export function EmailComposer({
                 e.stopPropagation()
                 handleSend()
               }}
-              disabled={isSending || !to.trim()}
+              disabled={isSubmitting || !to.trim()}
               style={getButtonPressStyle(
                 'send-email',
                 {
                   padding: `${spacing(1.5)} ${spacing(3)}`,
-                  backgroundColor: isSending || !to.trim() ? colors.border : colors.primary,
+                  backgroundColor: isSubmitting || !to.trim() ? colors.border : colors.primary,
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: spacing(1),
                   fontSize: '14px',
                   fontWeight: '500',
-                  cursor: isSending || !to.trim() ? 'not-allowed' : 'pointer',
+                  cursor: isSubmitting || !to.trim() ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: spacing(1.5),
-                  opacity: isSending || !to.trim() ? 0.6 : 1
+                  opacity: isSubmitting || !to.trim() ? 0.6 : 1
                 },
                 colors.primary,
                 colors.primaryHover
               )}
             >
-              {isSending ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
-                  Sending...
+                  {isReplying ? 'Replying...' : isForwarding ? 'Forwarding...' : 'Sending...'}
                 </>
               ) : (
                 <>
                   <Send style={{ width: '16px', height: '16px' }} />
-                  Send
+                  {isReplying ? 'Reply' : isForwarding ? 'Forward' : 'Send'}
                 </>
               )}
             </button>
