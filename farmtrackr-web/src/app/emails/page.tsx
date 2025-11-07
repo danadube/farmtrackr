@@ -34,6 +34,7 @@ interface GmailLabel {
   icon?: string
   color?: string
   type?: string
+  value?: string
 }
 
 interface Email {
@@ -97,7 +98,8 @@ export default function EmailsPage() {
           count: label.count || 0,
           icon: label.icon,
           color: label.color,
-          type: label.type
+          type: label.type,
+          value: label.value || label.id || label.name
         }))
       } else if (Array.isArray(data?.labels)) {
         formattedLabels = data.labels.map((label: any) => ({
@@ -105,7 +107,8 @@ export default function EmailsPage() {
           count: label.count || 0,
           icon: label.icon,
           color: label.color,
-          type: label.type
+          type: label.type,
+          value: label.value || label.id || label.name
         }))
       } else if (data?.system || data?.custom || data?.virtual) {
         formattedLabels = [
@@ -115,7 +118,8 @@ export default function EmailsPage() {
                 count: label.count || 0,
                 icon: label.icon,
                 color: label.color,
-                type: label.type || 'system'
+                type: label.type || 'system',
+                value: label.value || label.id || label.name
               }))
             : []),
           ...(Array.isArray(data.custom)
@@ -124,7 +128,8 @@ export default function EmailsPage() {
                 count: label.count || 0,
                 icon: label.icon,
                 color: label.color,
-                type: label.type || 'custom'
+                type: label.type || 'custom',
+                value: label.value || label.id || label.name
               }))
             : []),
           ...(Array.isArray(data.virtual)
@@ -133,20 +138,26 @@ export default function EmailsPage() {
                 count: label.count || 0,
                 icon: label.icon,
                 color: label.color,
-                type: label.type || 'virtual'
+                type: label.type || 'virtual',
+                value: label.value || label.id || label.name
               }))
             : [])
         ]
       }
 
+      const getLabelValue = (label: GmailLabel) => label.value || label.name
+
       if (formattedLabels.length > 0) {
         setLabels(formattedLabels)
 
-        const inboxLabel = formattedLabels.find(l => l.name === 'INBOX')
+        const inboxLabel = formattedLabels.find(l => getLabelValue(l) === 'INBOX')
         setUnreadCount(inboxLabel?.count || 0)
 
-        if (!formattedLabels.some(l => l.name === selectedLabel)) {
-          setSelectedLabel(formattedLabels[0].name)
+        if (!formattedLabels.some(l => getLabelValue(l) === selectedLabel)) {
+          const defaultLabel = inboxLabel || formattedLabels[0]
+          if (defaultLabel) {
+            setSelectedLabel(getLabelValue(defaultLabel))
+          }
         }
         setShowLabelsMenu(false)
       } else {
@@ -555,18 +566,20 @@ export default function EmailsPage() {
                     No labels found. Click refresh to try again.
                   </span>
                 ) : (
-                  labels.slice(0, 6).map((label) => (
+                  labels.slice(0, 6).map((label) => {
+                    const labelValue = label.value || label.name
+                    return (
                     <button
-                      key={label.name}
-                      {...getButtonPressHandlers(`label-${label.name}`)}
-                      onClick={() => handleSelectLabel(label.name)}
+                      key={labelValue}
+                      {...getButtonPressHandlers(`label-${labelValue}`)}
+                      onClick={() => handleSelectLabel(labelValue)}
                       style={getButtonPressStyle(
-                        `label-${label.name}`,
+                        `label-${labelValue}`,
                         {
                           padding: `${spacing(1)} ${spacing(2)}`,
-                          backgroundColor: selectedLabel === label.name ? colors.primary : 'transparent',
-                          color: selectedLabel === label.name ? '#ffffff' : colors.text.primary,
-                          border: `1px solid ${selectedLabel === label.name ? colors.primary : colors.border}`,
+                          backgroundColor: selectedLabel === labelValue ? colors.primary : 'transparent',
+                          color: selectedLabel === labelValue ? '#ffffff' : colors.text.primary,
+                          border: `1px solid ${selectedLabel === labelValue ? colors.primary : colors.border}`,
                           borderRadius: spacing(1),
                           fontSize: '12px',
                           fontWeight: '500',
@@ -575,15 +588,16 @@ export default function EmailsPage() {
                           alignItems: 'center',
                           gap: spacing(1)
                         },
-                        selectedLabel === label.name ? colors.primary : colors.card,
-                        selectedLabel === label.name ? colors.primaryHover : colors.cardHover
+                        selectedLabel === labelValue ? colors.primary : colors.card,
+                        selectedLabel === labelValue ? colors.primaryHover : colors.cardHover
                       )}
                     >
-                      {getLabelIcon(label.name)}
+                      {getLabelIcon(labelValue)}
                       <span>{label.name}</span>
                       <span style={{ opacity: 0.7 }}>({label.count})</span>
                     </button>
-                  ))
+                    )
+                  })
                 )}
               </div>
 
@@ -606,10 +620,12 @@ export default function EmailsPage() {
                   }}
                 >
                   <div style={{ padding: spacing(2), display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
-                    {labels.map((label) => (
+                    {labels.map((label) => {
+                      const labelValue = label.value || label.name
+                      return (
                       <button
-                        key={`menu-${label.name}`}
-                        onClick={() => handleSelectLabel(label.name)}
+                        key={`menu-${labelValue}`}
+                        onClick={() => handleSelectLabel(labelValue)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -617,21 +633,22 @@ export default function EmailsPage() {
                           padding: spacing(1.5),
                           borderRadius: spacing(1),
                           border: 'none',
-                          backgroundColor: selectedLabel === label.name ? colors.primaryLight : 'transparent',
-                          color: selectedLabel === label.name ? colors.primary : colors.text.primary,
+                          backgroundColor: selectedLabel === labelValue ? colors.primaryLight : 'transparent',
+                          color: selectedLabel === labelValue ? colors.primary : colors.text.primary,
                           cursor: 'pointer',
                           fontSize: '13px',
-                          fontWeight: selectedLabel === label.name ? 600 : 500,
+                          fontWeight: selectedLabel === labelValue ? 600 : 500,
                           textAlign: 'left'
                         }}
                       >
                         <span style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                          {getLabelIcon(label.name)}
+                          {getLabelIcon(labelValue)}
                           {label.name}
                         </span>
                         <span style={{ fontSize: '12px', ...text.tertiary }}>({label.count})</span>
                       </button>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )}
