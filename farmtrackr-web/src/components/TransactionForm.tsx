@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
 import { calculateCommission, formatCurrencyForInput, parseCurrencyFromInput, formatPercentageForInput, parsePercentageFromInput } from '@/lib/commissionCalculations'
@@ -437,42 +437,43 @@ export function TransactionForm({ transactionId, onClose, onSuccess, asPage = fa
     }
   }
 
-  // Form content JSX - used in both page and modal modes
-  const formHeader = (
-    <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: '600', ...text.primary, margin: '0' }}>
-          {transactionId ? 'Edit Transaction' : 'New Transaction'}
-        </h2>
-        {!asPage && (
-          <button
-            onClick={onClose}
-            style={{
-              padding: '8px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background-color 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = colors.cardHover
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
-          >
-            <X style={{ width: '24px', height: '24px', color: colors.text.secondary }} />
-          </button>
-        )}
+  // Memoize form content to avoid JSX assignment issues in Next.js build
+  const formContent = useMemo(() => {
+    const formHeader = (
+      <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '600', ...text.primary, margin: '0' }}>
+            {transactionId ? 'Edit Transaction' : 'New Transaction'}
+          </h2>
+          {!asPage && (
+            <button
+              onClick={onClose}
+              style={{
+                padding: '8px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = colors.cardHover
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <X style={{ width: '24px', height: '24px', color: colors.text.secondary }} />
+            </button>
+          )}
+        </div>
       </div>
-    </div>
-  )
+    )
 
-  const formBody = (
+    const formBody = (
     <form onSubmit={handleSubmit} style={{ padding: '24px', overflowY: 'auto', flex: '1' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
@@ -1551,26 +1552,27 @@ export function TransactionForm({ transactionId, onClose, onSuccess, asPage = fa
             </button>
           </div>
         </form>
-  )
+    )
 
-  const formContainerStyle = {
-    backgroundColor: colors.card,
-    borderRadius: asPage ? '0' : '16px',
-    width: asPage ? '100%' : '90%',
-    maxWidth: asPage ? 'none' : '1000px',
-    maxHeight: asPage ? 'none' : '90vh',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    boxShadow: asPage ? 'none' : (isDark ? '0 20px 25px -5px rgba(0, 0, 0, 0.5)' : '0 20px 25px -5px rgba(0, 0, 0, 0.1)'),
-    border: asPage ? 'none' : `1px solid ${colors.border}`
-  }
+    const formContainerStyle = {
+      backgroundColor: colors.card,
+      borderRadius: asPage ? '0' : '16px',
+      width: asPage ? '100%' : '90%',
+      maxWidth: asPage ? 'none' : '1000px',
+      maxHeight: asPage ? 'none' : '90vh',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      boxShadow: asPage ? 'none' : (isDark ? '0 20px 25px -5px rgba(0, 0, 0, 0.5)' : '0 20px 25px -5px rgba(0, 0, 0, 0.1)'),
+      border: asPage ? 'none' : `1px solid ${colors.border}`
+    }
 
-  const formContent = (
-    <div style={formContainerStyle}>
-      {formHeader}
-      {formBody}
-    </div>
-  )
+    return (
+      <div style={formContainerStyle}>
+        {formHeader}
+        {formBody}
+      </div>
+    )
+  }, [asPage, transactionId, formData, colors, text, isDark, isSubmitting, isScanning, scanError, handleSubmit, handleScanCommissionSheet, handleInputChange, formatCurrencyForInput, parseCurrencyFromInput, formatPercentageForInput, parsePercentageFromInput, getButtonPressHandlers, getButtonPressStyle, onClose])
 
   if (asPage) {
     return (
