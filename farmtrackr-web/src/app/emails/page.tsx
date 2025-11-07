@@ -566,38 +566,58 @@ export default function EmailsPage() {
                     No labels found. Click refresh to try again.
                   </span>
                 ) : (
-                  labels.slice(0, 6).map((label) => {
-                    const labelValue = label.value || label.name
-                    return (
-                    <button
-                      key={labelValue}
-                      {...getButtonPressHandlers(`label-${labelValue}`)}
-                      onClick={() => handleSelectLabel(labelValue)}
-                      style={getButtonPressStyle(
-                        `label-${labelValue}`,
-                        {
-                          padding: `${spacing(1)} ${spacing(2)}`,
-                          backgroundColor: selectedLabel === labelValue ? colors.primary : 'transparent',
-                          color: selectedLabel === labelValue ? '#ffffff' : colors.text.primary,
-                          border: `1px solid ${selectedLabel === labelValue ? colors.primary : colors.border}`,
-                          borderRadius: spacing(1),
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: spacing(1)
-                        },
-                        selectedLabel === labelValue ? colors.primary : colors.card,
-                        selectedLabel === labelValue ? colors.primaryHover : colors.cardHover
-                      )}
-                    >
-                      {getLabelIcon(labelValue)}
-                      <span>{label.name}</span>
-                      <span style={{ opacity: 0.7 }}>({label.count})</span>
-                    </button>
+                  (() => {
+                    const quickLabels = labels.filter(
+                      (label) => (label.value || label.name) !== 'LOGGED'
                     )
-                  })
+                    if (labels.some((label) => (label.value || label.name) === 'LOGGED')) {
+                      quickLabels.unshift({
+                        name: 'Logged Emails',
+                        count: labels.find((label) => (label.value || label.name) === 'LOGGED')?.count || 0,
+                        icon: '🗂️',
+                        color: '#6b7280',
+                        type: 'virtual',
+                        value: 'LOGGED'
+                      })
+                    }
+
+                    return quickLabels.slice(0, 6).map((label) => {
+                      const labelValue = label.value || label.name
+                      return (
+                        <button
+                          key={labelValue}
+                          {...getButtonPressHandlers(`label-${labelValue}`)}
+                          onClick={() => handleSelectLabel(labelValue)}
+                          style={getButtonPressStyle(
+                            `label-${labelValue}`,
+                            {
+                              padding: `${spacing(1)} ${spacing(2)}`,
+                              backgroundColor: selectedLabel === labelValue ? colors.primary : 'transparent',
+                              color: selectedLabel === labelValue ? '#ffffff' : colors.text.primary,
+                              border: `1px solid ${selectedLabel === labelValue ? colors.primary : colors.border}`,
+                              borderRadius: spacing(1),
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: spacing(1)
+                            },
+                            selectedLabel === labelValue ? colors.primary : colors.card,
+                            selectedLabel === labelValue ? colors.primaryHover : colors.cardHover
+                          )}
+                        >
+                          {labelValue === 'LOGGED' ? (
+                            <Mail style={{ width: '16px', height: '16px', color: colors.text.secondary }} />
+                          ) : (
+                            getLabelIcon(labelValue)
+                          )}
+                          <span>{label.name}</span>
+                          <span style={{ opacity: 0.7 }}>({label.count})</span>
+                        </button>
+                      )
+                    })
+                  })()
                 )}
               </div>
 
