@@ -1563,39 +1563,51 @@ export function TransactionForm({ transactionId, onClose, onSuccess, asPage = fa
         </form>
       </div>
 
+    </div>
+  )
+
+  if (asPage) {
+    return (
+      <>
+        {formContent}
+        <style jsx global>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <div
+        style={{
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          right: '0',
+          bottom: '0',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}
+        onClick={onClose}
+      >
+        <div onClick={(e) => e.stopPropagation()}>
+          {formContent}
+        </div>
+      </div>
       <style jsx global>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </div>
-  )
-
-  if (asPage) {
-    return formContent
-  }
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        right: '0',
-        bottom: '0',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000
-      }}
-      onClick={onClose}
-    >
-      <div onClick={(e) => e.stopPropagation()}>
-        {formContent}
-      </div>
-    </div>
+    </>
   )
 }
 
