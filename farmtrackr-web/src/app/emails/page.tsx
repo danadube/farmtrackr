@@ -215,25 +215,25 @@ export default function EmailsPage() {
 
   return (
     <Sidebar>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: colors.background }}>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: colors.background }}>
         {/* Top Header */}
         <div style={{
-          backgroundColor: colors.primary,
+          ...headerCard,
           padding: spacing(3),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+          marginBottom: spacing(3)
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
-            <Mail style={{ width: '24px', height: '24px', color: '#ffffff' }} />
-            <h1 style={{ fontSize: '20px', fontWeight: '600', color: '#ffffff', margin: 0 }}>
+            <Mail style={{ width: '24px', height: '24px', color: colors.primary }} />
+            <h1 style={{ fontSize: '24px', fontWeight: '600', ...text.primary, margin: 0 }}>
               Emails
             </h1>
             {unreadCount > 0 && (
               <div style={{
-                backgroundColor: '#ffffff',
-                color: colors.primary,
+                backgroundColor: colors.error,
+                color: '#ffffff',
                 borderRadius: '50%',
                 width: '24px',
                 height: '24px',
@@ -255,8 +255,8 @@ export default function EmailsPage() {
                 'compose-email',
                 {
                   padding: `${spacing(1.5)} ${spacing(3)}`,
-                  backgroundColor: '#ffffff',
-                  color: colors.primary,
+                  backgroundColor: colors.primary,
+                  color: '#ffffff',
                   border: 'none',
                   borderRadius: spacing(1),
                   fontSize: '14px',
@@ -266,8 +266,8 @@ export default function EmailsPage() {
                   alignItems: 'center',
                   gap: spacing(1.5)
                 },
-                '#ffffff',
-                '#f0f0f0'
+                colors.primary,
+                colors.primaryHover
               )}
             >
               <Send style={{ width: '16px', height: '16px' }} />
@@ -276,32 +276,39 @@ export default function EmailsPage() {
             <button
               {...getButtonPressHandlers('refresh-emails')}
               onClick={loadEmails}
+              disabled={loading}
               style={getButtonPressStyle(
                 'refresh-emails',
                 {
                   padding: spacing(1.5),
                   backgroundColor: 'transparent',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  border: `1px solid ${colors.border}`,
                   borderRadius: spacing(1),
-                  cursor: 'pointer',
+                  cursor: loading ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  opacity: loading ? 0.6 : 1
                 },
                 'transparent',
-                'rgba(255, 255, 255, 0.2)'
+                colors.cardHover
               )}
             >
-              <RefreshCw style={{ width: '18px', height: '18px', color: '#ffffff' }} />
+              <RefreshCw style={{ 
+                width: '18px', 
+                height: '18px', 
+                color: colors.text.secondary,
+                animation: loading ? 'spin 1s linear infinite' : 'none'
+              }} />
             </button>
           </div>
         </div>
 
         {/* Transaction Context Bar */}
         <div style={{
+          ...card,
           padding: spacing(3),
-          backgroundColor: colors.card,
-          borderBottom: `1px solid ${colors.border}`,
+          marginBottom: spacing(3),
           display: 'flex',
           alignItems: 'center',
           gap: spacing(3),
@@ -336,14 +343,14 @@ export default function EmailsPage() {
           )}
         </div>
 
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flex: 1, gap: spacing(3), overflow: 'hidden' }}>
           {/* Left Pane - Navigation & Email List */}
           <div style={{
             width: '400px',
-            borderRight: `1px solid ${colors.border}`,
+            ...card,
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: colors.card
+            overflow: 'hidden'
           }}>
             {/* Gmail Labels Section */}
             <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}` }}>
@@ -561,7 +568,7 @@ export default function EmailsPage() {
           </div>
 
           {/* Right Pane - Email Detail */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: colors.background }}>
+          <div style={{ flex: 1, ...card, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {selectedEmail ? (
               <div style={{ flex: 1, overflowY: 'auto', padding: spacing(4) }}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -630,7 +637,7 @@ export default function EmailsPage() {
 
                   <div style={{
                     padding: spacing(4),
-                    backgroundColor: colors.card,
+                    backgroundColor: colors.background,
                     border: `1px solid ${colors.border}`,
                     borderRadius: spacing(1),
                     ...text.primary,
@@ -662,6 +669,13 @@ export default function EmailsPage() {
           onClose={() => setShowComposer(false)}
         />
       )}
+
+      <style jsx global>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </Sidebar>
   )
 }
