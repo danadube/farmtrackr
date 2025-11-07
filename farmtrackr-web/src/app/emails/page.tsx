@@ -701,6 +701,8 @@ export default function EmailsPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search emails..."
+                    name="emailSearch"
+                    id="emailSearch"
                     style={{
                       width: '100%',
                       padding: `${spacing(1.5)} ${spacing(1.5)} ${spacing(1.5)} ${spacing(5)}`,
@@ -716,6 +718,8 @@ export default function EmailsPage() {
               </div>
               <div style={{ display: 'flex', gap: spacing(2) }}>
                 <select
+                  name="statusFilter"
+                  id="statusFilter"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   style={{
