@@ -79,6 +79,7 @@ export interface GmailMessage {
   isUnread: boolean
   attachments: EmailAttachment[]
   labels: string[]
+  transactionId?: string
 }
 
 export interface EmailLogEntry {
