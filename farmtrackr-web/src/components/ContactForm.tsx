@@ -239,9 +239,19 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
               paddingBottom: '32px'
             }}
           >
-          {/* Header */}
+          {/* Page Header */}
           <div style={{ marginBottom: '32px' }}>
-            <div style={{ padding: '24px', ...card }}>
+            <div 
+              style={{
+                padding: '24px',
+                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
+                backgroundColor: 'transparent',
+                border: `1px solid ${colors.primary}`,
+                borderRadius: '16px',
+                position: 'relative' as const,
+                color: '#ffffff',
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div 
@@ -249,24 +259,32 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                       width: '48px',
                       height: '48px',
                       backgroundColor: colors.iconBg,
-                      borderRadius: '10px',
+                      borderRadius: '12px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}
                   >
-                    <User style={{ width: '24px', height: '24px', color: colors.success }} />
+                    <User style={{ width: '24px', height: '24px', color: colors.primary }} />
                   </div>
                   <div>
-                    <h1 style={{ fontSize: '24px', fontWeight: '700', ...text.primary, margin: '0 0 4px 0' }}>
+                    <h1 
+                      style={{
+                        fontSize: '28px',
+                        fontWeight: '700',
+                        color: '#ffffff',
+                        margin: '0 0 4px 0'
+                      }}
+                    >
                       {isEditing ? 'Edit Contact' : 'Add New Contact'}
                     </h1>
-                    <p style={{ ...text.secondary, fontSize: '14px', margin: '0' }}>
+                    <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '16px', margin: '0' }}>
                       {isEditing ? 'Update contact information' : 'Create a new farm contact'}
                     </p>
                   </div>
                 </div>
-                <button
+                {!asPage && (
+                  <button
                   onClick={handleCancel}
                   {...getButtonPressHandlers('cancel')}
                   style={getButtonPressStyle(

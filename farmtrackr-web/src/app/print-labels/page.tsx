@@ -266,14 +266,50 @@ export default function PrintLabelsPage() {
     <Sidebar>
       <div style={{ padding: '24px', overflow: 'auto', ...background }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          {/* Header */}
-          <div style={{ marginBottom: '24px' }}>
-            <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px', ...text.primary }}>
-              Print Labels
-            </h1>
-            <p style={{ fontSize: '14px', ...text.secondary }}>
-              Generate and print address labels for your contacts
-            </p>
+          {/* Page Header */}
+          <div style={{ marginBottom: '32px' }}>
+            <div 
+              style={{
+                padding: '24px',
+                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
+                backgroundColor: 'transparent',
+                border: `1px solid ${colors.primary}`,
+                borderRadius: '16px',
+                position: 'relative' as const,
+                color: '#ffffff',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div 
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    backgroundColor: colors.iconBg,
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Printer style={{ width: '24px', height: '24px', color: colors.primary }} />
+                </div>
+                <div>
+                  <h1 
+                    style={{
+                      fontSize: '28px',
+                      fontWeight: '700',
+                      color: '#ffffff',
+                      margin: '0 0 4px 0'
+                    }}
+                  >
+                    Print Labels
+                  </h1>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '16px', margin: '0' }}>
+                    Generate and print address labels for your contacts
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {isLoading ? (
