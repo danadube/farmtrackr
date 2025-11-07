@@ -35,7 +35,7 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
     loadEmails()
   }, [contactEmail, activeTab, selectedLabel, transactionId])
 
-  const loadEmails = async () => {
+  const loadEmails = async (forceLoadAll: boolean = false) => {
     setLoading(true)
     try {
       // Use the emails/list API which supports filtering by transaction
@@ -43,8 +43,9 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
         maxResults: '50'
       })
       
-      // If we have a transactionId, filter by it
-      if (transactionId && transactionId !== 'all') {
+      // If we have a transactionId and not forcing load all, filter by it
+      // Otherwise, load all emails so user can see and link them
+      if (transactionId && transactionId !== 'all' && !forceLoadAll) {
         params.append('transactionId', transactionId)
       }
       
@@ -477,7 +478,7 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    loadEmails()
+                    loadEmails(true) // Force load all emails, not just linked ones
                   }}
                   style={getButtonPressStyle(
                     'load-recent-emails',
