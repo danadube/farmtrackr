@@ -37,13 +37,15 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
 
   useEffect(() => {
     if (transactionId && transactionId !== 'all') {
-      setSelectedLabel((prev) => (prev === 'LOGGED' ? prev : 'LOGGED'))
+      setSelectedLabel('LOGGED')
+      loadEmails(false, 'LOGGED')
     } else {
-      setSelectedLabel((prev) => (prev === 'INBOX' ? prev : 'INBOX'))
+      setSelectedLabel('INBOX')
+      loadEmails(false, 'INBOX')
     }
   }, [transactionId])
 
-  const loadEmails = async (forceLoadAll: boolean = false) => {
+  const loadEmails = async (forceLoadAll: boolean = false, overrideLabel?: string | null) => {
     setLoading(true)
     try {
       // Use the emails/list API which supports filtering by transaction
@@ -64,6 +66,7 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
       
       // If a label is selected, filter by label
       const effectiveLabel =
+        overrideLabel ||
         selectedLabel ||
         (transactionId && transactionId !== 'all' ? 'LOGGED' : 'INBOX')
 
