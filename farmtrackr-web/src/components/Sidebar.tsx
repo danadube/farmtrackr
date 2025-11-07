@@ -357,7 +357,7 @@ export function Sidebar({ children }: SidebarProps) {
               )}
               {group.map((action, actionIndex) => {
                 const Icon = action.icon
-                const active = isActive(action.href, action.exactMatch, action.hash)
+                const active = isActive(action.href, action.exactMatch, (action as any).hash)
                 const iconBgColor = resolvedTheme === 'dark'
                   ? (action.iconColor === colors.primary ? 'rgba(104, 159, 56, 0.15)' :
                      action.iconColor === '#f97316' || action.iconColor === '#ea580c' ? 'rgba(249, 115, 22, 0.15)' :
@@ -369,16 +369,17 @@ export function Sidebar({ children }: SidebarProps) {
                      'rgba(147, 51, 234, 0.1)')
                 
                 // Use a unique key combining group index, action index, and href/hash
-                const uniqueKey = `quick-action-${groupIndex}-${actionIndex}-${action.href}${action.hash || ''}`
+                const actionHash = (action as any).hash
+                const uniqueKey = `quick-action-${groupIndex}-${actionIndex}-${action.href}${actionHash || ''}`
                 
                 // For links with hashes, use regular anchor to avoid RSC prefetch issues
-                if (action.hash) {
+                if (actionHash) {
                   return (
                     <a
                       key={uniqueKey}
-                      href={action.href + action.hash}
+                      href={action.href + actionHash}
                       onClick={(e) => {
-                        console.log('Quick action clicked (hash):', action.href, action.hash)
+                        console.log('Quick action clicked (hash):', action.href, actionHash)
                         e.stopPropagation()
                       }}
                       style={{
