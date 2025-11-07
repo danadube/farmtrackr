@@ -54,7 +54,7 @@ interface Email {
 }
 
 export default function EmailsPage() {
-  const { colors, isDark, card, background, text, spacing } = useThemeStyles()
+  const { colors, isDark, card, text, spacing } = useThemeStyles()
   const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
@@ -215,7 +215,7 @@ export default function EmailsPage() {
 
   return (
     <Sidebar>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: background }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: colors.background }}>
         {/* Top Header */}
         <div style={{
           backgroundColor: colors.primary,
@@ -561,7 +561,7 @@ export default function EmailsPage() {
           </div>
 
           {/* Right Pane - Email Detail */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: background }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: colors.background }}>
             {selectedEmail ? (
               <div style={{ flex: 1, overflowY: 'auto', padding: spacing(4) }}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
