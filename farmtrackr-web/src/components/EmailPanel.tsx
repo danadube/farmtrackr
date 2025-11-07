@@ -28,12 +28,13 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
   const [isForwarding, setIsForwarding] = useState(false)
   const [isLinking, setIsLinking] = useState(false)
   const [showLinkSelector, setShowLinkSelector] = useState(false)
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
 
   useEffect(() => {
     if (contactEmail) {
       loadEmails()
     }
-  }, [contactEmail, activeTab])
+  }, [contactEmail, activeTab, selectedLabel])
 
   const loadEmails = async () => {
     if (!contactEmail) return
@@ -46,9 +47,22 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
         ? `from:${contactEmail}`
         : `to:${contactEmail} OR from:${contactEmail}`
       
+      // If a label is selected, filter by label
+      let finalQuery = query
+      if (selectedLabel) {
+        finalQuery = `${query} label:${selectedLabel}`
+      }
+      
       const result = await fetchTransactionEmails(contactEmail, 50)
       if (result.success && result.emails) {
-        setEmails(result.emails)
+        // Filter by label if selected
+        let filteredEmails = result.emails
+        if (selectedLabel) {
+          filteredEmails = result.emails.filter(email => 
+            email.labels && email.labels.includes(selectedLabel)
+          )
+        }
+        setEmails(filteredEmails)
       }
     } catch (error) {
       console.error('Error loading emails:', error)
@@ -308,12 +322,13 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
         ))}
       </div>
 
-      {/* Search */}
+      {/* Search and Label Filter */}
       <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}` }}>
         <div style={{ 
           position: 'relative',
           display: 'flex',
-          alignItems: 'center'
+          alignItems: 'center',
+          marginBottom: spacing(2)
         }}>
           <Search style={{ 
             position: 'absolute', 
@@ -347,6 +362,52 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
             }}
           />
         </div>
+        
+        {/* Label Filter */}
+        {selectedLabel && (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: spacing(1.5),
+            flexWrap: 'wrap'
+          }}>
+            <span style={{ fontSize: '12px', ...text.tertiary }}>Filtered by:</span>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: spacing(1),
+              padding: `${spacing(1)} ${spacing(2)}`,
+              backgroundColor: colors.primaryLight || 'rgba(104, 159, 56, 0.1)',
+              border: `1px solid ${colors.primary}`,
+              borderRadius: spacing(1),
+              fontSize: '12px',
+              fontWeight: '500',
+              ...text.primary
+            }}>
+              {selectedLabel}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setSelectedLabel(null)
+                }}
+                style={{
+                  padding: 0,
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginLeft: spacing(0.5)
+                }}
+              >
+                <X style={{ width: '14px', height: '14px', color: colors.text.secondary }} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Email List */}
@@ -456,6 +517,52 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
                       }}>
                         {email.plainBody.substring(0, 150)}...
                       </p>
+                    )}
+                    {/* Labels */}
+                    {email.labels && email.labels.length > 0 && (
+                      <div style={{ 
+                        display: 'flex', 
+                        flexWrap: 'wrap', 
+                        gap: spacing(0.5),
+                        marginTop: spacing(1)
+                      }}>
+                        {email.labels.slice(0, 3).map((label) => (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              setSelectedLabel(label)
+                            }}
+                            style={{
+                              fontSize: '11px',
+                              padding: '2px 6px',
+                              backgroundColor: selectedLabel === label 
+                                ? colors.primary 
+                                : colors.background,
+                              color: selectedLabel === label 
+                                ? '#ffffff' 
+                                : colors.text.tertiary,
+                              border: `1px solid ${selectedLabel === label ? colors.primary : colors.border}`,
+                              borderRadius: spacing(0.5),
+                              cursor: 'pointer',
+                              fontWeight: '500'
+                            }}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                        {email.labels.length > 3 && (
+                          <span style={{
+                            fontSize: '11px',
+                            padding: '2px 6px',
+                            color: colors.text.tertiary
+                          }}>
+                            +{email.labels.length - 3}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                   {email.attachments && email.attachments.length > 0 && (
@@ -619,6 +726,47 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
                     minute: '2-digit'
                   })}
                 </p>
+                
+                {/* Labels */}
+                {selectedEmail.labels && selectedEmail.labels.length > 0 && (
+                  <div style={{ marginBottom: spacing(3) }}>
+                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 8px 0' }}>Labels</p>
+                    <div style={{ 
+                      display: 'flex', 
+                      flexWrap: 'wrap', 
+                      gap: spacing(1)
+                    }}>
+                      {selectedEmail.labels.map((label) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setSelectedLabel(label)
+                            setSelectedEmail(null) // Close detail view when filtering
+                          }}
+                          style={{
+                            fontSize: '12px',
+                            padding: `${spacing(1)} ${spacing(2)}`,
+                            backgroundColor: selectedLabel === label 
+                              ? colors.primary 
+                              : colors.background,
+                            color: selectedLabel === label 
+                              ? '#ffffff' 
+                              : colors.text.secondary,
+                            border: `1px solid ${selectedLabel === label ? colors.primary : colors.border}`,
+                            borderRadius: spacing(1),
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                          }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Transaction Linking */}
                 <div style={{ marginTop: spacing(3), paddingTop: spacing(3), borderTop: `1px solid ${colors.border}` }}>
