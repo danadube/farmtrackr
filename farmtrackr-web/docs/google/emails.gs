@@ -515,6 +515,25 @@ function getGmailLabels() {
     } catch (e) {}
   });
   
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(EMAIL_LOG_SHEET_NAME);
+    if (sheet) {
+      const loggedCount = Math.max(sheet.getLastRow() - 1, 0);
+      labels.push({
+        id: 'LOGGED',
+        name: 'Logged Emails',
+        type: 'virtual',
+        count: loggedCount,
+        unreadCount: 0,
+        color: '#6b7280',
+        icon: '🗂️'
+      });
+    }
+  } catch (e) {
+    Logger.log('Error loading logged email count: ' + e.toString());
+  }
+
   return labels;
 }
 
@@ -566,37 +585,99 @@ function getFilteredEmails(filters) {
     } = filters;
     
     let emails = [];
+    let loggedEmails = [];
     
     // Fetch from Gmail based on label
-    if (gmailLabel && gmailLabel !== 'all') {
+    if (gmailLabel && gmailLabel !== 'all' && gmailLabel !== 'LOGGED') {
       emails = fetchEmailsByLabel(gmailLabel, maxResults);
     } else {
       const result = getRecentEmails({ query: '', maxResults: maxResults });
       emails = result.emails || [];
     }
     
-    // Get logged emails for transaction context
+    // Get logged emails for transaction context and standalone entries
     try {
       const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
       const sheet = ss.getSheetByName(EMAIL_LOG_SHEET_NAME);
       
       if (sheet) {
         const logData = sheet.getDataRange().getValues();
-        
-        // Merge with logged data to add transaction IDs
-        emails = emails.map(email => {
-          for (let i = 1; i < logData.length; i++) {
-            if (logData[i][0] === email.id) { // Message ID column
-              email.transactionId = logData[i][1] || ''; // Transaction ID column
-              email.logId = logData[i][0]; // Log ID
-              break;
+        for (let i = 1; i < logData.length; i++) {
+          const row = logData[i];
+          const messageId = row[0];
+          if (!messageId) continue;
+
+          let isoDate = '';
+          const dateValue = row[7];
+          if (dateValue instanceof Date) {
+            isoDate = dateValue.toISOString();
+          } else if (dateValue) {
+            const parsedDate = new Date(dateValue);
+            if (!isNaN(parsedDate.getTime())) {
+              isoDate = parsedDate.toISOString();
             }
           }
-          return email;
-        });
+
+          let attachments = [];
+          try {
+            attachments = row[10] ? JSON.parse(row[10]) : [];
+          } catch (parseErr) {
+            Logger.log('Error parsing attachments JSON: ' + parseErr.toString());
+            attachments = [];
+          }
+
+          loggedEmails.push({
+            id: messageId,
+            messageId: messageId,
+            threadId: row[11] || messageId,
+            from: row[4] || '',
+            to: row[5] || '',
+            subject: row[6] || '',
+            body: row[9] || row[8] || '',
+            plainBody: row[9] || row[8] || '',
+            date: isoDate,
+            isUnread: false,
+            isStarred: false,
+            labels: ['LOGGED'],
+            attachments: attachments,
+            transactionId: row[1] || ''
+          });
+        }
       }
     } catch (e) {
       Logger.log('Email_Log sheet not found, skipping transaction linking');
+    }
+    
+    if (gmailLabel === 'LOGGED') {
+      emails = loggedEmails;
+    } else {
+      const hasGmailEmails = emails.length > 0;
+      const emailMap = new Map();
+      emails.forEach(email => {
+        if (!email.labels) {
+          email.labels = [];
+        }
+        emailMap.set(email.id, email);
+      });
+
+      loggedEmails.forEach(loggedEmail => {
+        const existing = emailMap.get(loggedEmail.id);
+        if (existing) {
+          existing.transactionId = loggedEmail.transactionId || existing.transactionId || '';
+          existing.labels = Array.from(new Set([...(existing.labels || []), ...loggedEmail.labels]));
+          existing.logged = true;
+          if (!existing.date && loggedEmail.date) {
+            existing.date = loggedEmail.date;
+          }
+          if (!existing.plainBody && loggedEmail.plainBody) {
+            existing.plainBody = loggedEmail.plainBody;
+          }
+        } else if (!gmailLabel || gmailLabel === 'all' || !hasGmailEmails) {
+          emailMap.set(loggedEmail.id, loggedEmail);
+        }
+      });
+
+      emails = Array.from(emailMap.values());
     }
     
     // Filter by transaction

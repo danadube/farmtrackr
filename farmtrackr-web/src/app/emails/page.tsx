@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
@@ -33,6 +33,7 @@ interface GmailLabel {
   count: number
   icon?: string
   color?: string
+  type?: string
 }
 
 interface Email {
@@ -67,6 +68,8 @@ export default function EmailsPage() {
   const [loading, setLoading] = useState(false)
   const [showComposer, setShowComposer] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [showLabelsMenu, setShowLabelsMenu] = useState(false)
+  const labelsSectionRef = useRef<HTMLDivElement | null>(null)
 
   // Load Gmail labels
   useEffect(() => {
@@ -81,33 +84,98 @@ export default function EmailsPage() {
   const loadLabels = async () => {
     try {
       const response = await fetch('/api/emails/labels')
-      if (response.ok) {
-        const data = await response.json()
-        if (data.system && data.custom) {
-          const allLabels: GmailLabel[] = [
-            ...data.system.map((l: any) => ({
-              name: l.name,
-              count: l.count || 0,
-              icon: l.icon
-            })),
-            ...data.custom.map((l: any) => ({
-              name: l.name,
-              count: l.count || 0,
-              icon: l.icon,
-              color: l.color
-            }))
-          ]
-          setLabels(allLabels)
-          
-          // Calculate unread count
-          const inboxLabel = allLabels.find(l => l.name === 'INBOX')
-          setUnreadCount(inboxLabel?.count || 0)
+      if (!response.ok) {
+        throw new Error(`Labels request failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      let formattedLabels: GmailLabel[] = []
+
+      if (Array.isArray(data)) {
+        formattedLabels = data.map((label: any) => ({
+          name: label.name,
+          count: label.count || 0,
+          icon: label.icon,
+          color: label.color,
+          type: label.type
+        }))
+      } else if (Array.isArray(data?.labels)) {
+        formattedLabels = data.labels.map((label: any) => ({
+          name: label.name,
+          count: label.count || 0,
+          icon: label.icon,
+          color: label.color,
+          type: label.type
+        }))
+      } else if (data?.system || data?.custom || data?.virtual) {
+        formattedLabels = [
+          ...(Array.isArray(data.system)
+            ? data.system.map((label: any) => ({
+                name: label.name,
+                count: label.count || 0,
+                icon: label.icon,
+                color: label.color,
+                type: label.type || 'system'
+              }))
+            : []),
+          ...(Array.isArray(data.custom)
+            ? data.custom.map((label: any) => ({
+                name: label.name,
+                count: label.count || 0,
+                icon: label.icon,
+                color: label.color,
+                type: label.type || 'custom'
+              }))
+            : []),
+          ...(Array.isArray(data.virtual)
+            ? data.virtual.map((label: any) => ({
+                name: label.name,
+                count: label.count || 0,
+                icon: label.icon,
+                color: label.color,
+                type: label.type || 'virtual'
+              }))
+            : [])
+        ]
+      }
+
+      if (formattedLabels.length > 0) {
+        setLabels(formattedLabels)
+
+        const inboxLabel = formattedLabels.find(l => l.name === 'INBOX')
+        setUnreadCount(inboxLabel?.count || 0)
+
+        if (!formattedLabels.some(l => l.name === selectedLabel)) {
+          setSelectedLabel(formattedLabels[0].name)
         }
+        setShowLabelsMenu(false)
+      } else {
+        setLabels([])
+        setUnreadCount(0)
+        setShowLabelsMenu(false)
       }
     } catch (err) {
       console.error('Error loading labels:', err)
+      setLabels([])
+      setUnreadCount(0)
+      setShowLabelsMenu(false)
     }
   }
+
+  useEffect(() => {
+    if (!showLabelsMenu) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (labelsSectionRef.current && !labelsSectionRef.current.contains(event.target as Node)) {
+        setShowLabelsMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showLabelsMenu])
 
   const loadEmails = async () => {
     setLoading(true)
@@ -185,7 +253,6 @@ export default function EmailsPage() {
   }
 
   const getLabelIcon = (labelName: string) => {
-    const label = labels.find(l => l.name === labelName)
     switch (labelName) {
       case 'INBOX':
         return <Inbox style={{ width: '16px', height: '16px' }} />
@@ -204,6 +271,8 @@ export default function EmailsPage() {
       case 'DRAFTS':
       case 'Drafts':
         return <FileEdit style={{ width: '16px', height: '16px' }} />
+      case 'LOGGED':
+        return <Mail style={{ width: '16px', height: '16px', color: colors.text.secondary }} />
       default:
         return <Mail style={{ width: '16px', height: '16px' }} />
     }
@@ -211,6 +280,11 @@ export default function EmailsPage() {
 
   const getLinkedEmailCount = () => {
     return emails.filter(e => e.transactionId).length
+  }
+
+  const handleSelectLabel = (labelName: string) => {
+    setSelectedLabel(labelName)
+    setShowLabelsMenu(false)
   }
 
   return (
@@ -453,12 +527,16 @@ export default function EmailsPage() {
             maxHeight: 'calc(100vh - 300px)'
           }}>
             {/* Gmail Labels Section */}
-            <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}` }}>
+            <div
+              ref={labelsSectionRef}
+              style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}`, position: 'relative' as const }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(2) }}>
                 <h3 style={{ fontSize: '12px', fontWeight: '600', ...text.tertiary, textTransform: 'uppercase', margin: 0 }}>
                   Gmail Folders/Labels
                 </h3>
                 <button
+                  onClick={() => setShowLabelsMenu((prev) => !prev)}
                   style={{
                     fontSize: '12px',
                     color: colors.primary,
@@ -472,36 +550,91 @@ export default function EmailsPage() {
                 </button>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing(1) }}>
-                {labels.slice(0, 7).map((label) => (
-                  <button
-                    key={label.name}
-                    {...getButtonPressHandlers(`label-${label.name}`)}
-                    onClick={() => setSelectedLabel(label.name)}
-                    style={getButtonPressStyle(
-                      `label-${label.name}`,
-                      {
-                        padding: `${spacing(1)} ${spacing(2)}`,
-                        backgroundColor: selectedLabel === label.name ? colors.primary : 'transparent',
-                        color: selectedLabel === label.name ? '#ffffff' : colors.text.primary,
-                        border: `1px solid ${selectedLabel === label.name ? colors.primary : colors.border}`,
-                        borderRadius: spacing(1),
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: spacing(1)
-                      },
-                      selectedLabel === label.name ? colors.primary : colors.card,
-                      selectedLabel === label.name ? colors.primaryHover : colors.cardHover
-                    )}
-                  >
-                    {getLabelIcon(label.name)}
-                    <span>{label.name}</span>
-                    <span style={{ opacity: 0.7 }}>({label.count})</span>
-                  </button>
-                ))}
+                {labels.length === 0 ? (
+                  <span style={{ fontSize: '12px', ...text.tertiary }}>
+                    No labels found. Click refresh to try again.
+                  </span>
+                ) : (
+                  labels.slice(0, 6).map((label) => (
+                    <button
+                      key={label.name}
+                      {...getButtonPressHandlers(`label-${label.name}`)}
+                      onClick={() => handleSelectLabel(label.name)}
+                      style={getButtonPressStyle(
+                        `label-${label.name}`,
+                        {
+                          padding: `${spacing(1)} ${spacing(2)}`,
+                          backgroundColor: selectedLabel === label.name ? colors.primary : 'transparent',
+                          color: selectedLabel === label.name ? '#ffffff' : colors.text.primary,
+                          border: `1px solid ${selectedLabel === label.name ? colors.primary : colors.border}`,
+                          borderRadius: spacing(1),
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: spacing(1)
+                        },
+                        selectedLabel === label.name ? colors.primary : colors.card,
+                        selectedLabel === label.name ? colors.primaryHover : colors.cardHover
+                      )}
+                    >
+                      {getLabelIcon(label.name)}
+                      <span>{label.name}</span>
+                      <span style={{ opacity: 0.7 }}>({label.count})</span>
+                    </button>
+                  ))
+                )}
               </div>
+
+              {showLabelsMenu && labels.length > 0 && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: spacing(3),
+                    zIndex: 30,
+                    backgroundColor: colors.background,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: spacing(1),
+                    boxShadow: isDark
+                      ? '0 12px 30px rgba(0, 0, 0, 0.6)'
+                      : '0 16px 40px rgba(15, 23, 42, 0.12)',
+                    minWidth: '240px',
+                    maxHeight: '260px',
+                    overflowY: 'auto'
+                  }}
+                >
+                  <div style={{ padding: spacing(2), display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
+                    {labels.map((label) => (
+                      <button
+                        key={`menu-${label.name}`}
+                        onClick={() => handleSelectLabel(label.name)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: spacing(1.5),
+                          borderRadius: spacing(1),
+                          border: 'none',
+                          backgroundColor: selectedLabel === label.name ? colors.primaryLight : 'transparent',
+                          color: selectedLabel === label.name ? colors.primary : colors.text.primary,
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: selectedLabel === label.name ? 600 : 500,
+                          textAlign: 'left'
+                        }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                          {getLabelIcon(label.name)}
+                          {label.name}
+                        </span>
+                        <span style={{ fontSize: '12px', ...text.tertiary }}>({label.count})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Search and Filter */}
@@ -583,86 +716,93 @@ export default function EmailsPage() {
                   No emails found
                 </div>
               ) : (
-                emails.map((email) => (
-                  <div
-                    key={email.id}
-                    {...getButtonPressHandlers(`email-${email.id}`)}
-                    onClick={() => setSelectedEmail(email)}
-                    style={getButtonPressStyle(
-                      `email-${email.id}`,
-                      {
-                        padding: spacing(3),
-                        borderBottom: `1px solid ${colors.border}`,
-                        cursor: 'pointer',
-                        backgroundColor: selectedEmail?.id === email.id ? colors.primaryLight : 'transparent',
-                        borderLeft: selectedEmail?.id === email.id ? `4px solid ${colors.primary}` : '4px solid transparent'
-                      },
-                      selectedEmail?.id === email.id ? colors.primaryLight : colors.card,
-                      colors.cardHover
-                    )}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: spacing(1) }}>
-                      <div style={{ display: 'flex', gap: spacing(1), flexWrap: 'wrap' }}>
-                        <span style={{
-                          padding: '2px 6px',
-                          fontSize: '10px',
-                          fontWeight: '600',
-                          backgroundColor: email.direction === 'received' ? '#e9d5ff' : '#dbeafe',
-                          color: email.direction === 'received' ? '#7c3aed' : '#1e40af',
-                          borderRadius: '4px',
-                          textTransform: 'uppercase'
-                        }}>
-                          {email.direction === 'received' ? 'Received' : 'Sent'}
-                        </span>
-                        {email.transactionId && (
+                emails.map((email) => {
+                  const attachments = (email as any)?.attachments as any[] | undefined
+                  const showAttachmentIcon = Boolean(email.hasAttachments || (attachments && attachments.length > 0))
+
+                  return (
+                    <div
+                      key={email.id}
+                      {...getButtonPressHandlers(`email-${email.id}`)}
+                      onClick={() => setSelectedEmail(email)}
+                      style={getButtonPressStyle(
+                        `email-${email.id}`,
+                        {
+                          padding: spacing(3),
+                          borderBottom: `1px solid ${colors.border}`,
+                          cursor: 'pointer',
+                          backgroundColor: selectedEmail?.id === email.id ? colors.primaryLight : 'transparent',
+                          borderLeft: selectedEmail?.id === email.id ? `4px solid ${colors.primary}` : '4px solid transparent'
+                        },
+                        selectedEmail?.id === email.id ? colors.primaryLight : colors.card,
+                        colors.cardHover
+                      )}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: spacing(1) }}>
+                        <div style={{ display: 'flex', gap: spacing(1), flexWrap: 'wrap' }}>
                           <span style={{
                             padding: '2px 6px',
                             fontSize: '10px',
                             fontWeight: '600',
-                            backgroundColor: colors.successLight,
-                            color: colors.success,
+                            backgroundColor: email.direction === 'received' ? '#e9d5ff' : '#dbeafe',
+                            color: email.direction === 'received' ? '#7c3aed' : '#1e40af',
+                            borderRadius: '4px',
+                            textTransform: 'uppercase'
+                          }}>
+                            {email.direction === 'received' ? 'Received' : 'Sent'}
+                          </span>
+                          {email.transactionId && (
+                            <span style={{
+                              padding: '2px 6px',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              backgroundColor: colors.successLight,
+                              color: colors.success,
+                              borderRadius: '4px'
+                            }}>
+                              TXN-{email.transactionId.slice(-6)}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                          {email.isStarred && <Star style={{ width: '14px', height: '14px', color: colors.warning, fill: colors.warning }} />}
+                          {showAttachmentIcon && (
+                            <Paperclip style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />
+                          )}
+                          <span style={{ fontSize: '12px', ...text.tertiary }}>
+                            {formatDate(email.date)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div style={{ fontSize: '14px', fontWeight: email.isUnread ? '600' : '400', ...text.primary, marginBottom: spacing(0.5) }}>
+                        From: {email.from}
+                      </div>
+                      
+                      <div style={{ fontSize: '14px', fontWeight: email.isUnread ? '600' : '400', ...text.primary, marginBottom: spacing(1) }}>
+                        {email.subject || '(No subject)'}
+                      </div>
+                      
+                      <div style={{ fontSize: '13px', ...text.secondary, marginBottom: spacing(1), lineHeight: '1.4' }}>
+                        {email.plainBody.substring(0, 100)}...
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: spacing(1), flexWrap: 'wrap' }}>
+                        {email.labels.slice(0, 3).map((label) => (
+                          <span key={label} style={{
+                            fontSize: '11px',
+                            padding: '2px 6px',
+                            backgroundColor: colors.background,
+                            color: colors.text.tertiary,
                             borderRadius: '4px'
                           }}>
-                            TXN-{email.transactionId.slice(-6)}
+                            {label.toLowerCase()}
                           </span>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                        {email.isStarred && <Star style={{ width: '14px', height: '14px', color: colors.warning, fill: colors.warning }} />}
-                        {email.hasAttachments && <Paperclip style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />}
-                        <span style={{ fontSize: '12px', ...text.tertiary }}>
-                          {formatDate(email.date)}
-                        </span>
+                        ))}
                       </div>
                     </div>
-                    
-                    <div style={{ fontSize: '14px', fontWeight: email.isUnread ? '600' : '400', ...text.primary, marginBottom: spacing(0.5) }}>
-                      From: {email.from}
-                    </div>
-                    
-                    <div style={{ fontSize: '14px', fontWeight: email.isUnread ? '600' : '400', ...text.primary, marginBottom: spacing(1) }}>
-                      {email.subject || '(No subject)'}
-                    </div>
-                    
-                    <div style={{ fontSize: '13px', ...text.secondary, marginBottom: spacing(1), lineHeight: '1.4' }}>
-                      {email.plainBody.substring(0, 100)}...
-                    </div>
-                    
-                    <div style={{ display: 'flex', gap: spacing(1), flexWrap: 'wrap' }}>
-                      {email.labels.slice(0, 3).map((label) => (
-                        <span key={label} style={{
-                          fontSize: '11px',
-                          padding: '2px 6px',
-                          backgroundColor: colors.background,
-                          color: colors.text.tertiary,
-                          borderRadius: '4px'
-                        }}>
-                          {label.toLowerCase()}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
           </div>
