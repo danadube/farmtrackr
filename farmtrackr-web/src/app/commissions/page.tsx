@@ -2226,61 +2226,63 @@ export default function CommissionsPage() {
               )}
             </div>
 
-            {/* Footer Buttons */}
-            <div style={{ padding: '24px', borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setViewingTransaction(null)}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: colors.cardHover,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  ...text.primary
-                }}
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  handleDelete(viewingTransaction.id)
-                  setViewingTransaction(null)
-                }}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: colors.error,
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  color: '#ffffff'
-                }}
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => {
-                  setEditingId(viewingTransaction.id)
-                  setViewingTransaction(null)
-                  setShowForm(true)
-                }}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: colors.primary,
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  color: '#ffffff'
-                }}
-              >
-                Edit Transaction
-              </button>
-            </div>
+            {/* Footer Buttons - Only show on Details tab */}
+            {transactionDetailTab === 'details' && (
+              <div style={{ padding: '24px', borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setViewingTransaction(null)}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: colors.cardHover,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    ...text.primary
+                  }}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    handleDelete(viewingTransaction.id)
+                    setViewingTransaction(null)
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: colors.error,
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    color: '#ffffff'
+                  }}
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingId(viewingTransaction.id)
+                    setViewingTransaction(null)
+                    setShowForm(true)
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: colors.primary,
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    color: '#ffffff'
+                  }}
+                >
+                  Edit Transaction
+                </button>
+              </div>
+            )}
             </div>
           </div>
         </div>
