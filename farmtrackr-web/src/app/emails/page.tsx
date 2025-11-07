@@ -71,6 +71,8 @@ export default function EmailsPage() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [showLabelsMenu, setShowLabelsMenu] = useState(false)
   const labelsSectionRef = useRef<HTMLDivElement | null>(null)
+  const [showLinkSelector, setShowLinkSelector] = useState(false)
+  const [isLinking, setIsLinking] = useState(false)
 
   // Load Gmail labels
   useEffect(() => {
@@ -81,6 +83,10 @@ export default function EmailsPage() {
   useEffect(() => {
     loadEmails()
   }, [selectedTransactionId, selectedLabel, searchQuery, statusFilter])
+
+  useEffect(() => {
+    setShowLinkSelector(false)
+  }, [selectedEmail?.id])
 
   const loadLabels = async () => {
     try {
@@ -252,6 +258,37 @@ export default function EmailsPage() {
     } catch (error) {
       console.error('Error sending email:', error)
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  }
+
+  const handleLinkEmail = async (transactionId: string | null) => {
+    if (!selectedEmail) return
+
+    setIsLinking(true)
+    try {
+      const response = await fetch('/api/emails/link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId: selectedEmail.id,
+          transactionId
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setShowLinkSelector(false)
+        setSelectedEmail({
+          ...selectedEmail,
+          transactionId: transactionId || undefined
+        })
+        loadEmails()
+      }
+    } catch (error) {
+      console.error('Error linking email:', error)
+    } finally {
+      setIsLinking(false)
     }
   }
 
@@ -875,38 +912,6 @@ export default function EmailsPage() {
                     {selectedEmail.subject || '(No subject)'}
                   </h2>
 
-                  {selectedEmail.transactionId && (
-                    <div style={{
-                      padding: spacing(2),
-                      backgroundColor: colors.successLight,
-                      border: `1px solid ${colors.success}`,
-                      borderRadius: spacing(1),
-                      marginBottom: spacing(3),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
-                        <Home style={{ width: '18px', height: '18px', color: colors.success }} />
-                        <span style={{ fontSize: '14px', fontWeight: '500', color: colors.success }}>
-                          Linked to Transaction: TXN-{selectedEmail.transactionId.slice(-6)}
-                        </span>
-                      </div>
-                      <button
-                        style={{
-                          fontSize: '12px',
-                          color: colors.success,
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          textDecoration: 'underline'
-                        }}
-                      >
-                        Change Transaction
-                      </button>
-                    </div>
-                  )}
-
                   <div style={{ marginBottom: spacing(4) }}>
                     <div style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(1) }}>
                       <strong>From:</strong> {selectedEmail.from}
@@ -932,6 +937,154 @@ export default function EmailsPage() {
                     <div style={{ fontSize: '14px', ...text.secondary }}>
                       <strong>Labels:</strong> {selectedEmail.labels.join(', ')}
                     </div>
+                  </div>
+
+                  <div style={{ marginTop: spacing(3), paddingTop: spacing(3), borderTop: `1px solid ${colors.border}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(2) }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
+                        <LinkIcon style={{ width: '16px', height: '16px', color: colors.text.secondary }} />
+                        <p style={{ fontSize: '12px', fontWeight: '600', ...text.tertiary, margin: '0', textTransform: 'uppercase' }}>
+                          Linked Transaction
+                        </p>
+                      </div>
+                      {!showLinkSelector && (
+                        <button
+                          type="button"
+                          {...getButtonPressHandlers('toggle-detail-link-selector')}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setShowLinkSelector(true)
+                          }}
+                          style={getButtonPressStyle(
+                            'toggle-detail-link-selector',
+                            {
+                              padding: `${spacing(1)} ${spacing(2)}`,
+                              backgroundColor: 'transparent',
+                              border: `1px solid ${colors.border}`,
+                              borderRadius: spacing(1),
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: spacing(1)
+                            },
+                            'transparent',
+                            colors.cardHover
+                          )}
+                        >
+                          {selectedEmail.transactionId ? (
+                            <>
+                              <Unlink style={{ width: '14px', height: '14px', color: colors.text.secondary }} />
+                              Change
+                            </>
+                          ) : (
+                            <>
+                              <LinkIcon style={{ width: '14px', height: '14px', color: colors.text.secondary }} />
+                              Link
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    {showLinkSelector ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
+                        <TransactionSelector
+                          selectedTransactionId={selectedEmail.transactionId || selectedTransactionId || undefined}
+                          onSelect={async (linkTransactionId) => {
+                            await handleLinkEmail(linkTransactionId)
+                          }}
+                          placeholder="Select transaction to link..."
+                        />
+                        <div style={{ display: 'flex', gap: spacing(1.5) }}>
+                          <button
+                            type="button"
+                            {...getButtonPressHandlers('cancel-detail-link')}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              setShowLinkSelector(false)
+                            }}
+                            disabled={isLinking}
+                            style={getButtonPressStyle(
+                              'cancel-detail-link',
+                              {
+                                padding: `${spacing(1.5)} ${spacing(2)}`,
+                                backgroundColor: colors.cardHover,
+                                border: `1px solid ${colors.border}`,
+                                borderRadius: spacing(1),
+                                cursor: isLinking ? 'not-allowed' : 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                opacity: isLinking ? 0.5 : 1
+                              },
+                              colors.cardHover,
+                              colors.borderHover
+                            )}
+                          >
+                            Cancel
+                          </button>
+                          {selectedEmail.transactionId && (
+                            <button
+                              type="button"
+                              {...getButtonPressHandlers('detail-unlink-email')}
+                              onClick={async (e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                await handleLinkEmail(null)
+                              }}
+                              disabled={isLinking}
+                              style={getButtonPressStyle(
+                                'detail-unlink-email',
+                                {
+                                  padding: `${spacing(1.5)} ${spacing(2)}`,
+                                  backgroundColor: colors.errorLight || '#fee2e2',
+                                  border: `1px solid ${colors.error}`,
+                                  borderRadius: spacing(1),
+                                  cursor: isLinking ? 'not-allowed' : 'pointer',
+                                  fontSize: '14px',
+                                  fontWeight: '500',
+                                  color: colors.error,
+                                  opacity: isLinking ? 0.5 : 1
+                                },
+                                colors.errorLight || '#fee2e2',
+                                colors.error
+                              )}
+                            >
+                              <Unlink style={{ width: '14px', height: '14px', marginRight: spacing(1) }} />
+                              Unlink
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : selectedEmail.transactionId ? (
+                      <div style={{
+                        padding: spacing(2),
+                        backgroundColor: colors.primaryLight || 'rgba(104, 159, 56, 0.1)',
+                        borderRadius: spacing(1),
+                        border: `1px solid ${colors.primary}`
+                      }}>
+                        <p style={{ fontSize: '14px', ...text.primary, margin: '0', fontWeight: '500' }}>
+                          Linked to Transaction
+                        </p>
+                        <p style={{ fontSize: '12px', ...text.secondary, margin: '4px 0 0 0' }}>
+                          Transaction ID: {selectedEmail.transactionId}
+                        </p>
+                      </div>
+                    ) : (
+                      <div style={{
+                        padding: spacing(2),
+                        backgroundColor: colors.cardHover,
+                        borderRadius: spacing(1),
+                        border: `1px dashed ${colors.border}`
+                      }}>
+                        <p style={{ fontSize: '14px', ...text.secondary, margin: '0', fontStyle: 'italic' }}>
+                          Not linked to any transaction
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div style={{
