@@ -31,38 +31,63 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
 
   useEffect(() => {
-    if (contactEmail) {
-      loadEmails()
-    }
-  }, [contactEmail, activeTab, selectedLabel])
+    // Load emails when filters change, even without contactEmail
+    loadEmails()
+  }, [contactEmail, activeTab, selectedLabel, transactionId])
 
   const loadEmails = async () => {
-    if (!contactEmail) return
-
     setLoading(true)
     try {
-      const query = activeTab === 'sent' 
-        ? `to:${contactEmail}`
-        : activeTab === 'received'
-        ? `from:${contactEmail}`
-        : `to:${contactEmail} OR from:${contactEmail}`
+      // Use the emails/list API which supports filtering by transaction
+      const params = new URLSearchParams({
+        maxResults: '50'
+      })
       
-      // If a label is selected, filter by label
-      let finalQuery = query
-      if (selectedLabel) {
-        finalQuery = `${query} label:${selectedLabel}`
+      // If we have a transactionId, filter by it
+      if (transactionId && transactionId !== 'all') {
+        params.append('transactionId', transactionId)
       }
       
-      const result = await fetchTransactionEmails(contactEmail, 50)
-      if (result.success && result.emails) {
-        // Filter by label if selected
-        let filteredEmails = result.emails
-        if (selectedLabel) {
-          filteredEmails = result.emails.filter(email => 
-            email.labels && email.labels.includes(selectedLabel)
-          )
+      // If we have a contactEmail, add it to search
+      if (contactEmail) {
+        params.append('search', contactEmail)
+      }
+      
+      // If a label is selected, filter by label
+      if (selectedLabel) {
+        params.append('label', selectedLabel)
+      } else {
+        params.append('label', 'INBOX') // Default to INBOX
+      }
+      
+      // Add direction filter based on activeTab
+      if (activeTab === 'sent') {
+        params.append('status', 'sent')
+      } else if (activeTab === 'received') {
+        params.append('status', 'received')
+      }
+
+      const response = await fetch(`/api/emails/list?${params}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.emails) {
+          let filteredEmails = data.emails
+          
+          // Additional client-side filtering by contactEmail if provided
+          if (contactEmail && activeTab !== 'all') {
+            if (activeTab === 'sent') {
+              filteredEmails = filteredEmails.filter(email => 
+                email.to && email.to.toLowerCase().includes(contactEmail.toLowerCase())
+              )
+            } else if (activeTab === 'received') {
+              filteredEmails = filteredEmails.filter(email => 
+                email.from && email.from.toLowerCase().includes(contactEmail.toLowerCase())
+              )
+            }
+          }
+          
+          setEmails(filteredEmails)
         }
-        setEmails(filteredEmails)
       }
     } catch (error) {
       console.error('Error loading emails:', error)
@@ -442,9 +467,42 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
               {searchQuery ? 'No emails match your search' : 'No emails found'}
             </p>
             {!contactEmail && (
-              <p style={{ fontSize: '12px', ...text.tertiary, margin: '0', textAlign: 'center' }}>
-                Add a contact email to view emails for this transaction
-              </p>
+              <>
+                <p style={{ fontSize: '12px', ...text.tertiary, margin: '0', textAlign: 'center' }}>
+                  {transactionId ? 'No emails linked to this transaction yet' : 'No emails found'}
+                </p>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('load-recent-emails')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    loadEmails()
+                  }}
+                  style={getButtonPressStyle(
+                    'load-recent-emails',
+                    {
+                      marginTop: spacing(2),
+                      padding: `${spacing(1.5)} ${spacing(3)}`,
+                      backgroundColor: colors.primary,
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: spacing(1),
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1)
+                    },
+                    colors.primary,
+                    colors.primaryHover
+                  )}
+                >
+                  <RefreshCw style={{ width: '16px', height: '16px' }} />
+                  Load Recent Emails
+                </button>
+              </>
             )}
           </div>
         ) : (
