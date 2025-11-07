@@ -84,7 +84,7 @@ export function Sidebar({ children }: SidebarProps) {
   const quickActionsGroups = [
     [
       { href: '/contacts/new', label: 'Add Contact', icon: Plus, iconColor: colors.primary },
-      { href: '/commissions', label: 'New Transaction', icon: DollarSign, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c', hash: '#new' },
+      { href: '/commissions/new', label: 'New Transaction', icon: DollarSign, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c' },
       { href: '/commissions', label: 'View Commissions', icon: Briefcase, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c', exactMatch: true },
     ],
     [
@@ -623,7 +623,7 @@ export function Sidebar({ children }: SidebarProps) {
       )}
 
       {/* Main Content */}
-      <div style={{ minHeight: '100vh', marginLeft: isDesktop ? '256px' : '0', paddingLeft: isDesktop ? '24px' : '0' }}>
+      <div style={{ minHeight: '100vh', marginLeft: isDesktop ? '256px' : '0', paddingLeft: isDesktop ? '0' : '0' }}>
         {children}
       </div>
     </div>

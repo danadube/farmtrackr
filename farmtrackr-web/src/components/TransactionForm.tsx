@@ -57,9 +57,10 @@ interface TransactionFormProps {
   transactionId?: string | null
   onClose: () => void
   onSuccess: () => void
+  asPage?: boolean // If true, render as page instead of modal
 }
 
-export function TransactionForm({ transactionId, onClose, onSuccess }: TransactionFormProps) {
+export function TransactionForm({ transactionId, onClose, onSuccess, asPage = false }: TransactionFormProps) {
   const { colors, isDark, text } = useThemeStyles()
   const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [manuallyEditedFields, setManuallyEditedFields] = useState<Set<string>>(new Set())
@@ -436,34 +437,20 @@ export function TransactionForm({ transactionId, onClose, onSuccess }: Transacti
     }
   }
 
-  return (
+  const formContent = (
     <div
       style={{
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        right: '0',
-        bottom: '0',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: colors.card,
+        borderRadius: asPage ? '0' : '16px',
+        width: asPage ? '100%' : '90%',
+        maxWidth: asPage ? 'none' : '1000px',
+        maxHeight: asPage ? 'none' : '90vh',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000
+        flexDirection: 'column',
+        boxShadow: asPage ? 'none' : (isDark ? '0 20px 25px -5px rgba(0, 0, 0, 0.5)' : '0 20px 25px -5px rgba(0, 0, 0, 0.1)'),
+        border: asPage ? 'none' : `1px solid ${colors.border}`
       }}
     >
-      <div
-        style={{
-          backgroundColor: colors.card,
-          borderRadius: '16px',
-          width: '90%',
-          maxWidth: '1000px',
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: isDark ? '0 20px 25px -5px rgba(0, 0, 0, 0.5)' : '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-          border: `1px solid ${colors.border}`
-        }}
-      >
         {/* Header */}
         <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border}` }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
