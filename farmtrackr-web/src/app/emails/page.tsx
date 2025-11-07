@@ -350,6 +350,47 @@ export default function EmailsPage() {
                       animation: loading ? 'spin 1s linear infinite' : 'none'
                     }} />
                   </button>
+                  <button
+                    {...getButtonPressHandlers('create-test-emails')}
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/emails/test', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ count: 5 })
+                        })
+                        const result = await response.json()
+                        if (result.success) {
+                          loadEmails()
+                          loadLabels()
+                        }
+                      } catch (err) {
+                        console.error('Error creating test emails:', err)
+                      }
+                    }}
+                    style={getButtonPressStyle(
+                      'create-test-emails',
+                      {
+                        padding: '12px 24px',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        backdropFilter: 'blur(10px)'
+                      },
+                      'rgba(255, 255, 255, 0.2)',
+                      'rgba(255, 255, 255, 0.3)'
+                    )}
+                  >
+                    <Mail style={{ width: '18px', height: '18px' }} />
+                    Create Test Emails
+                  </button>
                 </div>
               </div>
             </div>
