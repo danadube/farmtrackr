@@ -37,11 +37,11 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
 
   useEffect(() => {
     if (transactionId && transactionId !== 'all') {
-      setSelectedLabel('LOGGED')
+      setSelectedLabel((prev) => (prev === 'LOGGED' ? prev : 'LOGGED'))
     } else {
-      setSelectedLabel('INBOX')
+      setSelectedLabel((prev) => (prev === 'INBOX' ? prev : 'INBOX'))
     }
-  }, [transactionId, contactEmail])
+  }, [transactionId])
 
   const loadEmails = async (forceLoadAll: boolean = false) => {
     setLoading(true)
@@ -110,6 +110,7 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
         if (filteredEmails.length === 0 && 
             transactionId && 
             transactionId !== 'all' && 
+            effectiveLabel !== 'LOGGED' &&
             !forceLoadAll &&
             !contactEmail) {
           // Retry loading all emails
