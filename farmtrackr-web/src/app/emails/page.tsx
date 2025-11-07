@@ -215,105 +215,156 @@ export default function EmailsPage() {
 
   return (
     <Sidebar>
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: colors.background }}>
-        {/* Top Header */}
-        <div style={{
-          ...headerCard,
-          padding: spacing(3),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: spacing(3)
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
-            <Mail style={{ width: '24px', height: '24px', color: colors.primary }} />
-            <h1 style={{ fontSize: '24px', fontWeight: '600', ...text.primary, margin: 0 }}>
-              Emails
-            </h1>
-            {unreadCount > 0 && (
-              <div style={{
-                backgroundColor: colors.error,
+      <div 
+        style={{ 
+          minHeight: '100vh',
+          backgroundColor: colors.background
+        }}
+      >
+        <div 
+          style={{
+            maxWidth: '1200px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            paddingLeft: '48px',
+            paddingRight: '48px',
+            paddingTop: '32px',
+            paddingBottom: '32px'
+          }}
+        >
+          {/* Page Header */}
+          <div style={{ marginBottom: '32px' }}>
+            <div 
+              style={{
+                padding: '24px',
+                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
+                backgroundColor: 'transparent',
+                border: `1px solid ${colors.primary}`,
+                borderRadius: '16px',
+                position: 'relative' as const,
                 color: '#ffffff',
-                borderRadius: '50%',
-                width: '24px',
-                height: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '12px',
-                fontWeight: '600'
-              }}>
-                {unreadCount}
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div 
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      backgroundColor: colors.iconBg,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Mail style={{ width: '24px', height: '24px', color: colors.primary }} />
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <h1 
+                        style={{
+                          fontSize: '28px',
+                          fontWeight: '700',
+                          color: '#ffffff',
+                          margin: '0 0 4px 0'
+                        }}
+                      >
+                        Emails
+                      </h1>
+                      {unreadCount > 0 && (
+                        <div style={{
+                          backgroundColor: colors.error,
+                          color: '#ffffff',
+                          borderRadius: '50%',
+                          width: '28px',
+                          height: '28px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '14px',
+                          fontWeight: '600'
+                        }}>
+                          {unreadCount}
+                        </div>
+                      )}
+                    </div>
+                    <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '16px', margin: '0' }}>
+                      Manage your email communications and stay connected
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    {...getButtonPressHandlers('compose-email')}
+                    onClick={() => setShowComposer(true)}
+                    style={getButtonPressStyle(
+                      'compose-email',
+                      {
+                        padding: '12px 24px',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        backdropFilter: 'blur(10px)'
+                      },
+                      'rgba(255, 255, 255, 0.2)',
+                      'rgba(255, 255, 255, 0.3)'
+                    )}
+                  >
+                    <Send style={{ width: '18px', height: '18px' }} />
+                    Compose
+                  </button>
+                  <button
+                    {...getButtonPressHandlers('refresh-emails')}
+                    onClick={loadEmails}
+                    disabled={loading}
+                    style={getButtonPressStyle(
+                      'refresh-emails',
+                      {
+                        padding: '12px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                        border: 'none',
+                        borderRadius: '12px',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        opacity: loading ? 0.6 : 1
+                      },
+                      'rgba(255, 255, 255, 0.2)',
+                      'rgba(255, 255, 255, 0.3)'
+                    )}
+                  >
+                    <RefreshCw style={{ 
+                      width: '18px', 
+                      height: '18px', 
+                      color: '#ffffff',
+                      animation: loading ? 'spin 1s linear infinite' : 'none'
+                    }} />
+                  </button>
+                </div>
               </div>
-            )}
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
-            <button
-              {...getButtonPressHandlers('compose-email')}
-              onClick={() => setShowComposer(true)}
-              style={getButtonPressStyle(
-                'compose-email',
-                {
-                  padding: `${spacing(1.5)} ${spacing(3)}`,
-                  backgroundColor: colors.primary,
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: spacing(1),
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: spacing(1.5)
-                },
-                colors.primary,
-                colors.primaryHover
-              )}
-            >
-              <Send style={{ width: '16px', height: '16px' }} />
-              Compose
-            </button>
-            <button
-              {...getButtonPressHandlers('refresh-emails')}
-              onClick={loadEmails}
-              disabled={loading}
-              style={getButtonPressStyle(
-                'refresh-emails',
-                {
-                  padding: spacing(1.5),
-                  backgroundColor: 'transparent',
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: spacing(1),
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  opacity: loading ? 0.6 : 1
-                },
-                'transparent',
-                colors.cardHover
-              )}
-            >
-              <RefreshCw style={{ 
-                width: '18px', 
-                height: '18px', 
-                color: colors.text.secondary,
-                animation: loading ? 'spin 1s linear infinite' : 'none'
-              }} />
-            </button>
-          </div>
-        </div>
 
-        {/* Transaction Context Bar */}
-        <div style={{
-          ...card,
-          padding: spacing(3),
-          marginBottom: spacing(3),
-          display: 'flex',
-          alignItems: 'center',
-          gap: spacing(3),
-          flexWrap: 'wrap'
-        }}>
+          {/* Transaction Context Bar */}
+          <div style={{
+            ...card,
+            padding: spacing(3),
+            marginBottom: spacing(3),
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing(3),
+            flexWrap: 'wrap'
+          }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
             <span style={{ fontSize: '14px', ...text.secondary }}>View Emails For:</span>
             <div style={{ width: '300px' }}>
@@ -343,14 +394,15 @@ export default function EmailsPage() {
           )}
         </div>
 
-        <div style={{ display: 'flex', flex: 1, gap: spacing(3), overflow: 'hidden' }}>
+          <div style={{ display: 'flex', gap: spacing(3), minHeight: '600px' }}>
           {/* Left Pane - Navigation & Email List */}
           <div style={{
             width: '400px',
             ...card,
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            maxHeight: 'calc(100vh - 300px)'
           }}>
             {/* Gmail Labels Section */}
             <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}` }}>
@@ -568,7 +620,7 @@ export default function EmailsPage() {
           </div>
 
           {/* Right Pane - Email Detail */}
-          <div style={{ flex: 1, ...card, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ flex: 1, ...card, display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: 'calc(100vh - 300px)' }}>
             {selectedEmail ? (
               <div style={{ flex: 1, overflowY: 'auto', padding: spacing(4) }}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -657,6 +709,7 @@ export default function EmailsPage() {
                 Select an email to view
               </div>
             )}
+          </div>
           </div>
         </div>
       </div>
