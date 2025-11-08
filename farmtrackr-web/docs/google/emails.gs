@@ -820,7 +820,7 @@ function getDraftEmails() {
 function getAllTemplates() {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let sheet = ss.getSheetByName('Email_Templates');
+    let sheet = ss.getSheetByName(EMAIL_TEMPLATES_SHEET_NAME);
     
     // If sheet doesn't exist, return hardcoded templates
     if (!sheet) {
@@ -856,6 +856,152 @@ function getAllTemplates() {
     Logger.log('Error getting templates: ' + error.toString());
     // Return default templates on error
     return getDefaultTemplates();
+  }
+}
+
+/**
+ * Create or update an email template in the Email_Templates sheet
+ * @param {Object} template - Template payload
+ * @returns {Object} Result with templateId and template data
+ */
+function saveTemplate(template) {
+  if (!template) {
+    return {
+      success: false,
+      error: 'Template data is required'
+    };
+  }
+
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let sheet = ss.getSheetByName(EMAIL_TEMPLATES_SHEET_NAME);
+
+    if (!sheet) {
+      sheet = ss.insertSheet(EMAIL_TEMPLATES_SHEET_NAME);
+    }
+
+    // Ensure header row exists
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(['Template ID', 'Template Name', 'Category', 'Subject', 'Body', 'Variables', 'Active']);
+    } else {
+      const header = sheet.getRange(1, 1, 1, 7).getValues()[0];
+      if (header[0] !== 'Template ID' || header.length < 7) {
+        sheet.insertRowBefore(1);
+        sheet.getRange(1, 1, 1, 7).setValues([['Template ID', 'Template Name', 'Category', 'Subject', 'Body', 'Variables', 'Active']]);
+      }
+    }
+
+    const templateId = template.id && template.id !== '' ? template.id : 'template_' + new Date().getTime();
+    const variablesArray = Array.isArray(template.variables)
+      ? template.variables
+      : typeof template.variables === 'string'
+        ? template.variables.split(',').map(function (v) { return v.trim(); }).filter(function (v) { return v !== ''; })
+        : [];
+
+    const rowValues = [
+      templateId,
+      template.name || '',
+      template.category || '',
+      template.subject || '',
+      template.body || '',
+      variablesArray.join(','),
+      true
+    ];
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+      const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+      for (var i = 0; i < ids.length; i++) {
+        if (ids[i][0] === templateId) {
+          sheet.getRange(i + 2, 1, 1, rowValues.length).setValues([rowValues]);
+          return {
+            success: true,
+            templateId: templateId,
+            template: {
+              id: templateId,
+              name: template.name || '',
+              category: template.category || '',
+              subject: template.subject || '',
+              body: template.body || '',
+              variables: variablesArray
+            }
+          };
+        }
+      }
+    }
+
+    sheet.appendRow(rowValues);
+    return {
+      success: true,
+      templateId: templateId,
+      template: {
+        id: templateId,
+        name: template.name || '',
+        category: template.category || '',
+        subject: template.subject || '',
+        body: template.body || '',
+        variables: variablesArray
+      }
+    };
+  } catch (error) {
+    Logger.log('Error saving template: ' + error.toString());
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Delete an email template by ID
+ * @param {string} templateId - Template ID to delete
+ * @returns {Object} Result
+ */
+function deleteTemplate(templateId) {
+  if (!templateId) {
+    return {
+      success: false,
+      error: 'templateId is required'
+    };
+  }
+
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(EMAIL_TEMPLATES_SHEET_NAME);
+
+    if (!sheet) {
+      return {
+        success: false,
+        error: 'Email_Templates sheet not found'
+      };
+    }
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return {
+        success: false,
+        error: 'Template not found'
+      };
+    }
+
+    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < ids.length; i++) {
+      if (ids[i][0] === templateId) {
+        sheet.deleteRow(i + 2);
+        return { success: true };
+      }
+    }
+
+    return {
+      success: false,
+      error: 'Template not found'
+    };
+  } catch (error) {
+    Logger.log('Error deleting template: ' + error.toString());
+    return {
+      success: false,
+      error: error.toString()
+    };
   }
 }
 
@@ -1296,6 +1442,12 @@ function doPost(e) {
         break;
       case 'getTemplate':
         result = getTemplate(data.templateId, data.variables || {});
+        break;
+      case 'saveTemplate':
+        result = saveTemplate(data.template || {});
+        break;
+      case 'deleteTemplate':
+        result = deleteTemplate(data.templateId);
         break;
       case 'createTestEmails':
         result = createTestEmails(data.count || 5);
