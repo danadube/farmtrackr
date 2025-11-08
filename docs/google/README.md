@@ -21,3 +21,14 @@ For detailed OAuth setup, follow **GOOGLE_OAUTH_SETUP.md** and **OAUTH_CONSENT_S
 
 Most Google integrations are planned for v0.5.0. See the main **ROADMAP.md** for current status.
 
+## Calendar Integration
+
+FarmTrackr now supports Google Calendar sync for the dashboard schedule and the standalone calendar page.
+
+- **OAuth scope required:** `https://www.googleapis.com/auth/calendar`
+- Update your Google Cloud OAuth consent screen to include the new scope, then redeploy.
+- After deploying, reconnect Google from the in-app settings so the additional permission is granted.
+- API endpoints:
+  - `GET /api/google/calendar/events` (list events with `timeMin` / `timeMax`)
+  - `POST /api/google/calendar/events` (create events)
+

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/components/ThemeProvider'
 import { getThemeColors } from '@/lib/theme'
-import { 
+import {
   Home, 
   Users, 
   FileText, 
@@ -21,7 +21,8 @@ import {
   Briefcase,
   Printer,
   CheckCircle2,
-  Mail
+  Mail,
+  Calendar as CalendarIcon
 } from 'lucide-react'
 import Link from 'next/link'
 import { useSafePathname } from '@/hooks/useSafePathname'
@@ -78,6 +79,7 @@ export function Sidebar({ children }: SidebarProps) {
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/calendar', label: 'Calendar', icon: CalendarIcon },
   ]
 
   // Quick Actions grouped with separators

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { FarmContact, Stats } from '@/types'
-import { 
-  Users, 
-  Building2, 
-  FileText, 
-  Upload, 
-  Printer, 
+import {
+  Users,
+  Building2,
+  FileText,
+  Upload,
+  Printer,
   Plus,
   Calendar,
   TrendingUp,
@@ -22,7 +22,8 @@ import {
   CheckSquare,
   Bell,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react'
 import Link from 'next/link'
 import { FarmTrackrLogo } from '@/components/FarmTrackrLogo'
@@ -37,6 +38,118 @@ import { calculateCommission } from '@/lib/commissionCalculations'
 interface DashboardClientProps {
   contacts: FarmContact[];
   stats: Stats;
+}
+
+type GoogleCalendarApiEvent = {
+  id?: string
+  summary?: string | null
+  description?: string | null
+  location?: string | null
+  start?: {
+    date?: string | null
+    dateTime?: string | null
+  }
+  end?: {
+    date?: string | null
+    dateTime?: string | null
+  }
+}
+
+const CALENDAR_COLOR_PALETTE = [
+  '#f4516c',
+  '#673ab7',
+  '#42a5f5',
+  '#689f38',
+  '#ff9800',
+  '#fbc02d',
+  '#8d6e63',
+  '#26a69a',
+  '#5c6bc0',
+]
+
+function mapEventToAppointment(event: GoogleCalendarApiEvent, index: number) {
+  const start = parseCalendarDate(event.start)
+  if (!start) return null
+  const end = parseCalendarDate(event.end) || new Date(start.getTime() + 60 * 60 * 1000)
+  const isAllDay = !!event.start?.date && !event.start?.dateTime
+
+  return {
+    id: event.id || `${start.toISOString()}-${index}`,
+    title: event.summary || 'Untitled Event',
+    date: start,
+    time: isAllDay ? 'All Day' : formatTimeRange(start, end),
+    color: pickCalendarColor(event.id || event.summary || String(index)),
+  }
+}
+
+function parseCalendarDate(dateInput?: { date?: string | null; dateTime?: string | null }) {
+  if (!dateInput) return null
+  if (dateInput.dateTime) {
+    return new Date(dateInput.dateTime)
+  }
+  if (dateInput.date) {
+    return new Date(dateInput.date)
+  }
+  return null
+}
+
+function formatTimeRange(start: Date, end: Date) {
+  const startLabel = start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  const endLabel = end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  return `${startLabel} – ${endLabel}`
+}
+
+function pickCalendarColor(seed: string) {
+  const hash = hashString(seed)
+  const index = Math.abs(hash) % CALENDAR_COLOR_PALETTE.length
+  return CALENDAR_COLOR_PALETTE[index]
+}
+
+function hashString(value: string) {
+  let hash = 0
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash << 5) - hash + value.charCodeAt(i)
+    hash |= 0
+  }
+  return hash
+}
+
+function buildCalendarRangeKey(date: Date) {
+  return `${date.getFullYear()}-${date.getMonth()}`
+}
+
+function formatInputDate(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function createDateTime(date: string, time: string) {
+  if (!date) {
+    return new Date()
+  }
+  if (!time) {
+    return new Date(date)
+  }
+  return new Date(`${date}T${time}`)
+}
+
+function dashboardInputStyle(
+  colors: ReturnType<typeof useThemeStyles>['colors'],
+  text: ReturnType<typeof useThemeStyles>['text'],
+  spacing: ReturnType<typeof useThemeStyles>['spacing']
+) {
+  return {
+    width: '100%',
+    padding: `${spacing(0.75)} ${spacing(1)}`,
+    borderRadius: spacing(0.75),
+    border: `1px solid ${colors.border}`,
+    backgroundColor: colors.surface,
+    color: text.primary.color,
+    fontSize: '13px',
+    outline: 'none',
+  }
 }
 
 interface Transaction {
@@ -80,6 +193,155 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
   const [currentDateTime, setCurrentDateTime] = useState<Date>(new Date())
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
   const [calendarAppointments, setCalendarAppointments] = useState<Array<{ id: string; title: string; date: Date; time?: string; color?: string }>>([])
+  const [isCalendarLoading, setIsCalendarLoading] = useState(false)
+  const [calendarError, setCalendarError] = useState<string | null>(null)
+  const [calendarRequiresAuth, setCalendarRequiresAuth] = useState(false)
+  const [showQuickEventModal, setShowQuickEventModal] = useState(false)
+  const [isSavingQuickEvent, setIsSavingQuickEvent] = useState(false)
+  const [quickEventForm, setQuickEventForm] = useState({
+    title: '',
+    date: formatInputDate(new Date()),
+    startTime: '09:00',
+    endTime: '10:00',
+    location: '',
+    description: '',
+  })
+  const calendarInitializedRef = useRef(false)
+  const calendarRangeKeyRef = useRef<string | null>(null)
+
+  const loadCalendarAppointments = async (referenceDate: Date, force = false) => {
+    const rangeKey = buildCalendarRangeKey(referenceDate)
+    if (!force && calendarRangeKeyRef.current === rangeKey) {
+      return
+    }
+
+    const previousKey = calendarRangeKeyRef.current
+    calendarRangeKeyRef.current = rangeKey
+
+    setIsCalendarLoading(true)
+    setCalendarError(null)
+    setCalendarRequiresAuth(false)
+
+    try {
+      const today = new Date()
+      const monthStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1)
+      const monthEnd = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0)
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), 1)
+      const todayEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+
+      const DAY_MS = 24 * 60 * 60 * 1000
+      const timeMin = new Date(Math.min(monthStart.getTime(), todayStart.getTime()) - 7 * DAY_MS).toISOString()
+      const timeMax = new Date(Math.max(monthEnd.getTime(), todayEnd.getTime()) + 30 * DAY_MS).toISOString()
+
+      const params = new URLSearchParams({
+        timeMin,
+        timeMax,
+        maxResults: '250',
+      })
+
+      const response = await fetch(`/api/google/calendar/events?${params.toString()}`)
+      if (!response.ok) {
+        if (response.status === 401) {
+          setCalendarRequiresAuth(true)
+        } else {
+          const { error } = await response.json()
+          setCalendarError(error || 'Unable to load calendar events.')
+        }
+        setCalendarAppointments([])
+        return
+      }
+
+      const data = await response.json()
+      const mapped = (data.events || [])
+        .map((event: any, index: number) => mapEventToAppointment(event, index))
+        .filter((event: any) => !!event)
+        .sort((a: { date: Date }, b: { date: Date }) => a.date.getTime() - b.date.getTime())
+
+      setCalendarAppointments(mapped)
+    } catch (error) {
+      console.error('Error loading calendar events:', error)
+      setCalendarError(error instanceof Error ? error.message : 'Unexpected error loading calendar events.')
+      setCalendarAppointments([])
+      calendarRangeKeyRef.current = previousKey
+    } finally {
+      setIsCalendarLoading(false)
+    }
+  }
+
+  const handleOpenQuickEventModal = (targetDate?: Date) => {
+    const baseDate = targetDate ?? new Date()
+    setQuickEventForm({
+      title: '',
+      date: formatInputDate(baseDate),
+      startTime: '09:00',
+      endTime: '10:00',
+      location: '',
+      description: '',
+    })
+    setCalendarError(null)
+    setShowQuickEventModal(true)
+  }
+
+  const handleSaveQuickEvent = async () => {
+    if (!quickEventForm.title.trim()) {
+      setCalendarError('Please provide an event title.')
+      return
+    }
+
+    if (!quickEventForm.date) {
+      setCalendarError('Select a date for the event.')
+      return
+    }
+
+    const startDateTime = createDateTime(quickEventForm.date, quickEventForm.startTime)
+    const endDateTime = createDateTime(quickEventForm.date, quickEventForm.endTime)
+
+    if (startDateTime >= endDateTime) {
+      setCalendarError('End time must be after start time.')
+      return
+    }
+
+    setIsSavingQuickEvent(true)
+    setCalendarError(null)
+
+    try {
+      const response = await fetch('/api/google/calendar/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          summary: quickEventForm.title,
+          description: quickEventForm.description || undefined,
+          location: quickEventForm.location || undefined,
+          start: { dateTime: startDateTime.toISOString() },
+          end: { dateTime: endDateTime.toISOString() },
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        if (response.status === 401) {
+          setCalendarRequiresAuth(true)
+        }
+        throw new Error(data.error || 'Failed to create event.')
+      }
+
+      setShowQuickEventModal(false)
+      setQuickEventForm({
+        title: '',
+        date: formatInputDate(new Date()),
+        startTime: '09:00',
+        endTime: '10:00',
+        location: '',
+        description: '',
+      })
+      await loadCalendarAppointments(calendarDate, true)
+    } catch (error) {
+      console.error('Error creating calendar event:', error)
+      setCalendarError(error instanceof Error ? error.message : 'Unexpected error creating event.')
+    } finally {
+      setIsSavingQuickEvent(false)
+    }
+  }
 
   // Validation issue counts (subtract dismissed) – must be declared before any early returns
   const [issuesCount, setIssuesCount] = useState(0)
@@ -94,39 +356,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
     updateDateTime()
     const dateTimeInterval = setInterval(updateDateTime, 60000) // Update every minute
 
-    // Sample appointments data (in production, this would come from Google Calendar API)
-    const today = new Date()
-    const sampleAppointments = [
-      {
-        id: '1',
-        title: 'Storquest - 245.00',
-        date: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
-        time: '9:00 AM',
-        color: '#f4516c' // Pink/Cherry
-      },
-      {
-        id: '2',
-        title: 'Liz-Work',
-        date: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
-        time: '5:00 PM',
-        color: '#673ab7' // Purple/Plum
-      },
-      {
-        id: '3',
-        title: 'Client Meeting',
-        date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2),
-        time: '2:00 PM',
-        color: '#42a5f5' // Sky Blue
-      },
-      {
-        id: '4',
-        title: 'Property Showing',
-        date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 5),
-        time: '10:00 AM',
-        color: '#689f38' // Meadow Green
-      }
-    ]
-    setCalendarAppointments(sampleAppointments)
+    loadCalendarAppointments(new Date(), true)
+    calendarInitializedRef.current = true
     
     // Fetch Google Contacts count
     const fetchGoogleContactsCount = async () => {
@@ -470,6 +701,11 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
       if (dateTimeInterval) clearInterval(dateTimeInterval)
     }
   }, [mounted, contacts])
+
+  useEffect(() => {
+    if (!calendarInitializedRef.current) return
+    loadCalendarAppointments(calendarDate)
+  }, [calendarDate])
 
   const computeCounts = () => {
     const allIssues = validateAllContacts(contacts)
@@ -1162,6 +1398,22 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
 
                 {/* Calendar Grid */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                  {isCalendarLoading && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: spacing(1), padding: spacing(1.5) }}>
+                      <Loader2 style={{ width: '16px', height: '16px', color: colors.primary, animation: 'spin 1s linear infinite' }} />
+                      <span style={{ fontSize: '12px', ...text.secondary }}>Loading events…</span>
+                    </div>
+                  )}
+                  {!isCalendarLoading && calendarRequiresAuth && (
+                    <p style={{ fontSize: '12px', ...text.secondary, margin: `0 0 ${spacing(1)} 0` }}>
+                      Connect Google Calendar to view upcoming events.
+                    </p>
+                  )}
+                  {!isCalendarLoading && !calendarRequiresAuth && calendarError && (
+                    <p style={{ fontSize: '12px', color: colors.error, margin: `0 0 ${spacing(1)} 0` }}>
+                      {calendarError}
+                    </p>
+                  )}
                   {/* Day Headers */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: spacing(0.25), marginBottom: spacing(1), minWidth: 0 }}>
                     {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day, idx) => (
@@ -1241,6 +1493,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                                 : 'transparent',
                               colors.cardHover
                             )}
+                        onDoubleClick={() => handleOpenQuickEventModal(day.date)}
                             onMouseEnter={(e) => {
                               if (!day.isToday && !pressedButtons.has(`calendar-day-${idx}`)) {
                                 (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
@@ -1295,7 +1548,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               </div>
 
               {/* Today Card - Spans rows 2-3 to match Farms + Tasks combined height */}
-              <div 
+              <div
                 style={{
                   padding: spacing(2),
                   ...cardWithLeftBorder(colors.info || colors.primary), // Sky Blue sidebar
@@ -1307,9 +1560,37 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                   height: '100%'
                 }}
               >
-                <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, marginBottom: spacing(1.5), margin: `0 0 ${spacing(1.5)} 0` }}>
-                  Today's Schedule
-                </h4>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(1.5), gap: spacing(1) }}>
+                  <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0 }}>
+                    Today's Schedule
+                  </h4>
+                  <button
+                    type="button"
+                    {...getButtonPressHandlers('today-add-event')}
+                    onClick={() => handleOpenQuickEventModal(new Date())}
+                    style={getButtonPressStyle(
+                      'today-add-event',
+                      {
+                        padding: `${spacing(0.5)} ${spacing(1.5)}`,
+                        borderRadius: spacing(0.75),
+                        border: `1px solid ${colors.border}`,
+                        backgroundColor: colors.cardHover,
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        color: text.secondary.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: spacing(0.5),
+                        cursor: 'pointer',
+                      },
+                      colors.cardHover,
+                      colors.borderHover
+                    )}
+                  >
+                    <Plus style={{ width: '12px', height: '12px' }} />
+                    Add
+                  </button>
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), maxHeight: '200px', overflowY: 'auto' }}>
                   {(() => {
                     const today = new Date()
@@ -1317,6 +1598,33 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       const aptDate = new Date(apt.date)
                       return aptDate.toDateString() === today.toDateString()
                     })
+
+                    if (isCalendarLoading) {
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: spacing(1) }}>
+                          <Loader2 style={{ width: '16px', height: '16px', color: colors.primary, animation: 'spin 1s linear infinite' }} />
+                          <span style={{ fontSize: '12px', ...text.secondary }}>
+                            Loading today's events…
+                          </span>
+                        </div>
+                      )
+                    }
+
+                    if (calendarRequiresAuth) {
+                      return (
+                        <p style={{ fontSize: '12px', ...text.secondary, margin: 0 }}>
+                          Connect Google Calendar to manage your schedule.
+                        </p>
+                      )
+                    }
+
+                    if (calendarError) {
+                      return (
+                        <p style={{ fontSize: '12px', color: colors.error, margin: 0 }}>
+                          {calendarError}
+                        </p>
+                      )
+                    }
                     
                     if (todayAppointments.length === 0) {
                       return (
@@ -1629,5 +1937,185 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
         </div>
       </div>
     </Sidebar>
+
+      {showQuickEventModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1200,
+            padding: spacing(2),
+          }}
+          onClick={() => {
+            if (!isSavingQuickEvent) {
+              setShowQuickEventModal(false)
+            }
+          }}
+        >
+          <div
+            style={{
+              ...card,
+              width: '100%',
+              maxWidth: '420px',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              padding: spacing(3),
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing(1.5),
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, ...text.primary }}>Add Calendar Event</h3>
+              <p style={{ margin: `${spacing(0.5)} 0 0 0`, fontSize: '13px', ...text.secondary }}>
+                Create a quick appointment for your Google Calendar.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, ...text.tertiary, marginBottom: spacing(0.5) }}>
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={quickEventForm.title}
+                  onChange={(e) => setQuickEventForm((prev) => ({ ...prev, title: e.target.value }))}
+                  placeholder="Client meeting, property showing..."
+                  style={dashboardInputStyle(colors, text, spacing)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing(1) }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, ...text.tertiary, marginBottom: spacing(0.5) }}>
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={quickEventForm.date}
+                    onChange={(e) => setQuickEventForm((prev) => ({ ...prev, date: e.target.value }))}
+                    style={dashboardInputStyle(colors, text, spacing)}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, ...text.tertiary, marginBottom: spacing(0.5) }}>
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    value={quickEventForm.startTime}
+                    onChange={(e) => setQuickEventForm((prev) => ({ ...prev, startTime: e.target.value }))}
+                    style={dashboardInputStyle(colors, text, spacing)}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, ...text.tertiary, marginBottom: spacing(0.5) }}>
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={quickEventForm.endTime}
+                    onChange={(e) => setQuickEventForm((prev) => ({ ...prev, endTime: e.target.value }))}
+                    style={dashboardInputStyle(colors, text, spacing)}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, ...text.tertiary, marginBottom: spacing(0.5) }}>
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    value={quickEventForm.location}
+                    onChange={(e) => setQuickEventForm((prev) => ({ ...prev, location: e.target.value }))}
+                    placeholder="123 Main St, Palm Desert"
+                    style={dashboardInputStyle(colors, text, spacing)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, ...text.tertiary, marginBottom: spacing(0.5) }}>
+                  Description
+                </label>
+                <textarea
+                  value={quickEventForm.description}
+                  onChange={(e) => setQuickEventForm((prev) => ({ ...prev, description: e.target.value }))}
+                  rows={4}
+                  placeholder="Include notes, attendees, or reminders."
+                  style={{ ...dashboardInputStyle(colors, text, spacing), resize: 'vertical' }}
+                />
+              </div>
+
+              {calendarError && (
+                <p style={{ fontSize: '12px', color: colors.error, margin: 0 }}>
+                  {calendarError}
+                </p>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing(1) }}>
+              <button
+                type="button"
+                {...getButtonPressHandlers('quick-event-cancel')}
+                onClick={() => {
+                  if (!isSavingQuickEvent) {
+                    setShowQuickEventModal(false)
+                  }
+                }}
+                disabled={isSavingQuickEvent}
+                style={getButtonPressStyle(
+                  'quick-event-cancel',
+                  {
+                    padding: `${spacing(0.75)} ${spacing(2)}`,
+                    borderRadius: spacing(0.75),
+                    border: `1px solid ${colors.border}`,
+                    backgroundColor: colors.surface,
+                    fontSize: '13px',
+                    color: text.secondary.color,
+                    cursor: isSavingQuickEvent ? 'not-allowed' : 'pointer',
+                  },
+                  colors.surface,
+                  colors.cardHover
+                )}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                {...getButtonPressHandlers('quick-event-save')}
+                onClick={handleSaveQuickEvent}
+                disabled={isSavingQuickEvent}
+                style={getButtonPressStyle(
+                  'quick-event-save',
+                  {
+                    padding: `${spacing(0.75)} ${spacing(2.5)}`,
+                    borderRadius: spacing(0.75),
+                    border: 'none',
+                    backgroundColor: colors.primary,
+                    color: '#fff',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(0.75),
+                    cursor: isSavingQuickEvent ? 'wait' : 'pointer',
+                  },
+                  colors.primary,
+                  colors.primaryHover
+                )}
+              >
+                {isSavingQuickEvent && <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />}
+                Save Event
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
   )
 }
