@@ -91,8 +91,33 @@ export default function CalendarPage() {
   const [showCalendarPicker, setShowCalendarPicker] = useState(false)
 
   useEffect(() => {
-    loadCalendars()
+    let storedSelection: string[] | undefined
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('calendar.selectedCalendars')
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed)) {
+            storedSelection = parsed.filter((id) => typeof id === 'string')
+            if (storedSelection.length > 0) {
+              setSelectedCalendars(storedSelection)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to restore calendar selection:', error)
+      }
+    }
+    loadCalendars(storedSelection)
   }, [])
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.setItem('calendar.selectedCalendars', JSON.stringify(selectedCalendars))
+    } catch (error) {
+      console.error('Failed to persist calendar selection:', error)
+    }
+  }, [selectedCalendars])
 
   useEffect(() => {
     fetchEvents()
@@ -175,7 +200,7 @@ export default function CalendarPage() {
     }
   }
 
-  const loadCalendars = async () => {
+  const loadCalendars = async (initialSelection?: string[]) => {
     try {
       const response = await fetch('/api/google/calendar/list')
       if (!response.ok) {
@@ -189,10 +214,27 @@ export default function CalendarPage() {
       const calendarList: GoogleCalendar[] = data.calendars || []
       setCalendars(calendarList)
 
-      if (calendarList.length > 0 && selectedCalendars.length === 0) {
-        const primary = calendarList.find((calendar) => calendar.primary)
-        setSelectedCalendars([primary?.id || calendarList[0].id])
+      if (calendarList.length === 0) {
+        setSelectedCalendars([])
+        return
       }
+
+      const baseSelection = initialSelection ?? selectedCalendars
+      const validSelection = baseSelection.filter((id) =>
+        calendarList.some((calendar) => calendar.id === id)
+      )
+
+      const nextSelection =
+        validSelection.length > 0
+          ? validSelection
+          : [calendarList.find((calendar) => calendar.primary)?.id || calendarList[0].id]
+
+      setSelectedCalendars((prev) => {
+        if (arraysEqual(prev, nextSelection)) {
+          return prev
+        }
+        return nextSelection
+      })
     } catch (error) {
       console.error('Failed to load calendar list:', error)
     }
@@ -708,150 +750,121 @@ export default function CalendarPage() {
             </div>
           )}
 
-          {/* Calendar Content */}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: spacing(2) }}>
-            <div style={{ ...card, padding: spacing(2.5), minHeight: '600px', display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
-              <div
-                style={{
-                  ...gridTemplateForView(view),
-                  gap: view === 'month' ? '4px' : spacing(1),
-                  flex: 1,
-                }}
-              >
-                {renderCalendarGrid({
-                  view,
-                  calendarCells,
-                  eventsByDate: segmentedEvents,
-                  selectedDate,
-                  setSelectedDate,
-                  pressedButtons,
-                  getButtonPressHandlers,
-                  getButtonPressStyle,
-                  colors,
-                  text,
-                  spacing,
-                })}
+          {/* Day Details */}
+          <div style={{ ...card, padding: spacing(2.5), display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(1) }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: text.primary.color }}>
+                  {formatDateHeading(selectedDate)}
+                </h2>
+                <p style={{ margin: `${spacing(0.5)} 0 0 0`, fontSize: '12px', color: text.tertiary.color }}>
+                  {selectedDateEvents.length} event{selectedDateEvents.length === 1 ? '' : 's'}
+                </p>
               </div>
-
-              {isLoading && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: spacing(1.5), padding: spacing(2), borderRadius: spacing(1), backgroundColor: colors.surface }}>
-                  <Loader2 style={{ width: '18px', height: '18px', color: colors.primary, animation: 'spin 1s linear infinite' }} />
-                  <p style={{ margin: 0, fontSize: '13px', color: text.secondary.color }}>
-                    Loading events…
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
-              <div style={{ ...card, padding: spacing(2.5), display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(1) }}>
-                  <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: text.primary.color }}>
-                    {formatDateHeading(selectedDate)}
-                  </h2>
-                  <button
-                    type="button"
-                    {...getButtonPressHandlers('calendar-add-selected')}
-                    onClick={handleOpenCreateModal}
-                    style={getButtonPressStyle(
-                      'calendar-add-selected',
-                      {
-                        padding: `${spacing(0.75)} ${spacing(1.5)}`,
-                        borderRadius: spacing(0.75),
-                        border: `1px solid ${colors.border}`,
-                        backgroundColor: colors.surface,
-                        fontSize: '12px',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                      },
-                      colors.surface,
-                      colors.cardHover
-                    )}
-                  >
-                    Add Event
-                  </button>
-                </div>
-
-                {selectedDateEvents.length === 0 ? (
-                  <p style={{ margin: 0, fontSize: '13px', color: text.tertiary.color }}>No events on this day.</p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
-                    {selectedDateEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        style={{
-                          padding: spacing(1.25),
-                          borderRadius: spacing(1),
-                          backgroundColor: colors.cardHover,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: spacing(0.5),
-                          borderLeft: `4px solid ${event.calendarColor || colors.primary}`,
-                        }}
-                      >
-                        <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {event.title}
-                        </p>
-                        <p style={{ margin: 0, fontSize: '12px', color: text.secondary.color }}>
-                          {event.isAllDay ? 'All day' : `${event.startLabel} – ${event.endLabel}`}
-                        </p>
-                        {event.location && (
-                          <p style={{ margin: 0, fontSize: '12px', color: text.secondary.color }}>
-                            {event.location}
-                          </p>
-                        )}
-                        {event.description && (
-                          <p style={{ margin: 0, fontSize: '12px', color: text.tertiary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {event.description}
-                          </p>
-                        )}
-                        {event.htmlLink && (
-                          <a
-                            href={event.htmlLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ marginTop: spacing(0.5), fontSize: '12px', fontWeight: 500, color: colors.primary, textDecoration: 'none' }}
-                          >
-                            Open in Google Calendar
-                          </a>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+              <button
+                type="button"
+                {...getButtonPressHandlers('calendar-add-selected')}
+                onClick={handleOpenCreateModal}
+                style={getButtonPressStyle(
+                  'calendar-add-selected',
+                  {
+                    padding: `${spacing(0.75)} ${spacing(1.5)}`,
+                    borderRadius: spacing(0.75),
+                    border: `1px solid ${colors.border}`,
+                    backgroundColor: colors.surface,
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                  },
+                  colors.surface,
+                  colors.cardHover
                 )}
-              </div>
-
-              <div style={{ ...card, padding: spacing(2.5), display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
-                <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: text.primary.color }}>Upcoming</h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
-                  {events.slice(0, 5).map((event) => (
-                    <div
-                      key={event.id}
-                      style={{
-                        padding: spacing(1.5),
-                        borderRadius: spacing(1),
-                        border: `1px solid ${colors.border}`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: spacing(0.5),
-                      }}
-                    >
-                      <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {event.title}
-                      </p>
-                      <p style={{ margin: 0, fontSize: '12px', color: text.secondary.color }}>
-                        {formatUpcomingEventRange(event)}
-                      </p>
-                    </div>
-                  ))}
-                  {events.length === 0 && !isLoading && (
-                    <p style={{ margin: `${spacing(1)} 0 0 0`, fontSize: '13px', color: text.tertiary.color }}>
-                      No upcoming events in this range.
-                    </p>
-                  )}
-                </div>
-              </div>
+              >
+                Add Event
+              </button>
             </div>
+
+            {selectedDateEvents.length === 0 ? (
+              <p style={{ margin: 0, fontSize: '13px', color: text.tertiary.color }}>No events on this day.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
+                {selectedDateEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    style={{
+                      padding: spacing(1.25),
+                      borderRadius: spacing(1),
+                      backgroundColor: colors.cardHover,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: spacing(0.5),
+                      borderLeft: `4px solid ${event.calendarColor || colors.primary}`,
+                    }}
+                  >
+                    <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {event.title}
+                    </p>
+                    <p style={{ margin: 0, fontSize: '12px', color: text.secondary.color }}>
+                      {event.isAllDay ? 'All day' : `${event.startLabel} – ${event.endLabel}`}
+                    </p>
+                    {event.location && (
+                      <p style={{ margin: 0, fontSize: '12px', color: text.secondary.color }}>
+                        {event.location}
+                      </p>
+                    )}
+                    {event.description && (
+                      <p style={{ margin: 0, fontSize: '12px', color: text.tertiary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {event.description}
+                      </p>
+                    )}
+                    {event.htmlLink && (
+                      <a
+                        href={event.htmlLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ marginTop: spacing(0.5), fontSize: '12px', fontWeight: 500, color: colors.primary, textDecoration: 'none' }}
+                      >
+                        Open in Google Calendar
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Calendar Content */}
+          <div style={{ ...card, padding: spacing(2.5), minHeight: '600px', display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
+            <div
+              style={{
+                ...gridTemplateForView(view),
+                gap: view === 'month' ? '4px' : spacing(1),
+                flex: 1,
+              }}
+            >
+              {renderCalendarGrid({
+                view,
+                calendarCells,
+                eventsByDate: segmentedEvents,
+                selectedDate,
+                setSelectedDate,
+                pressedButtons,
+                getButtonPressHandlers,
+                getButtonPressStyle,
+                colors,
+                text,
+                spacing,
+              })}
+            </div>
+
+            {isLoading && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: spacing(1.5), padding: spacing(2), borderRadius: spacing(1), backgroundColor: colors.surface }}>
+                <Loader2 style={{ width: '18px', height: '18px', color: colors.primary, animation: 'spin 1s linear infinite' }} />
+                <p style={{ margin: 0, fontSize: '13px', color: text.secondary.color }}>
+                  Loading events…
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1085,19 +1098,6 @@ function formatTime(date: Date) {
 
 function formatDateHeading(date: Date) {
   return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-}
-
-function formatUpcomingEventRange(event: NormalizedEvent) {
-  if (event.isAllDay) {
-    return `${event.start.toLocaleDateString()} · All day`
-  }
-
-  const sameDay = event.start.toDateString() === event.end.toDateString()
-  if (sameDay) {
-    return `${event.start.toLocaleDateString()} · ${event.startLabel} – ${event.endLabel}`
-  }
-
-  return `${event.start.toLocaleString()} – ${event.end.toLocaleString()}`
 }
 
 function formatViewHeader(date: Date, view: CalendarView) {
@@ -1449,5 +1449,12 @@ function inputStyle(colors: ReturnType<typeof useThemeStyles>['colors'], text: R
     fontSize: '13px',
     outline: 'none',
   } as React.CSSProperties
+}
+
+function arraysEqual(a: string[], b: string[]) {
+  if (a.length !== b.length) return false
+  const sortedA = [...a].sort()
+  const sortedB = [...b].sort()
+  return sortedA.every((value, index) => value === sortedB[index])
 }
 
