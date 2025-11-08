@@ -752,6 +752,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
   ).sort()
 
   return (
+    <>
     <Sidebar>
       <div 
         style={{ 
@@ -1938,7 +1939,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
       </div>
     </Sidebar>
 
-      {showQuickEventModal && (
+    {showQuickEventModal && (
         <div
           style={{
             position: 'fixed',
@@ -2116,6 +2117,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
             </div>
           </div>
         </div>
-      )}
+    )}
+    </>
   )
 }
