@@ -785,20 +785,6 @@ export default function EmailsPage() {
                   <option value="read">Read</option>
                   <option value="starred">Starred</option>
                 </select>
-                <select
-                  style={{
-                    flex: 1,
-                    padding: spacing(1.5),
-                    backgroundColor: colors.background,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: spacing(1),
-                    fontSize: '14px',
-                    ...text.primary,
-                    outline: 'none'
-                  }}
-                >
-                  <option>Load Template...</option>
-                </select>
               </div>
             </div>
 
