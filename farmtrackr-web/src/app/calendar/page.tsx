@@ -8,6 +8,15 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, Ref
 
 type CalendarView = 'month' | 'week' | 'day'
 
+type GoogleCalendar = {
+  id: string
+  summary: string
+  description?: string | null
+  backgroundColor?: string | null
+  foregroundColor?: string | null
+  primary?: boolean | null
+}
+
 type ApiCalendarEvent = {
   id: string
   summary?: string | null
@@ -37,6 +46,9 @@ type NormalizedEvent = {
   startLabel: string
   endLabel: string
   htmlLink?: string
+  calendarId?: string
+  calendarName?: string
+  calendarColor?: string
 }
 
 type CreateEventState = {
@@ -74,11 +86,31 @@ export default function CalendarPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [createForm, setCreateForm] = useState<CreateEventState>(INITIAL_CREATE_EVENT_STATE)
   const [isSavingEvent, setIsSavingEvent] = useState(false)
+  const [calendars, setCalendars] = useState<GoogleCalendar[]>([])
+  const [selectedCalendars, setSelectedCalendars] = useState<string[]>([])
+  const [showCalendarPicker, setShowCalendarPicker] = useState(false)
+
+  useEffect(() => {
+    loadCalendars()
+  }, [])
 
   useEffect(() => {
     fetchEvents()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentDate, view])
+  }, [currentDate, view, selectedCalendars])
+
+  useEffect(() => {
+    if (!showCalendarPicker) return
+    const handleClickOutside = (event: MouseEvent) => {
+      const popover = document.getElementById('calendar-picker-popover')
+      const toggle = document.getElementById('calendar-picker-toggle')
+      if (popover && !popover.contains(event.target as Node) && toggle && !toggle.contains(event.target as Node)) {
+        setShowCalendarPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showCalendarPicker])
 
   const fetchEvents = async (forceRefresh = false) => {
     setIsLoading((prev) => prev || !forceRefresh)
@@ -87,31 +119,52 @@ export default function CalendarPage() {
     setRequiresAuth(false)
 
     try {
-      const { start, end } = getViewDateRange(currentDate, view)
-      const params = new URLSearchParams({
-        timeMin: start.toISOString(),
-        timeMax: end.toISOString(),
-        maxResults: '250',
-      })
-
-      const response = await fetch(`/api/google/calendar/events?${params.toString()}`)
-      if (!response.ok) {
-        if (response.status === 401) {
-          setRequiresAuth(true)
-        } else {
-          const { error: apiError } = await response.json()
-          setError(apiError || 'Unable to load calendar events.')
-        }
+      if (selectedCalendars.length === 0) {
         setEvents([])
+        setIsLoading(false)
+        setIsRefreshing(false)
         return
       }
 
-      const data = await response.json()
-      const normalizedEvents: NormalizedEvent[] = (data.events || []).map((event: ApiCalendarEvent) =>
-        normalizeEvent(event)
-      ).filter((event) => event.start && event.end)
+      const { start, end } = getViewDateRange(currentDate, view)
 
-      setEvents(normalizedEvents)
+      const results = await Promise.all(
+        selectedCalendars.map(async (calendarId) => {
+          const params = new URLSearchParams({
+            calendarId,
+            timeMin: start.toISOString(),
+            timeMax: end.toISOString(),
+            maxResults: '250',
+          })
+
+          const response = await fetch(`/api/google/calendar/events?${params.toString()}`)
+          return { calendarId, response }
+        })
+      )
+
+      const aggregatedEvents: NormalizedEvent[] = []
+      for (const { calendarId, response } of results) {
+        if (!response.ok) {
+          if (response.status === 401) {
+            setRequiresAuth(true)
+          } else {
+            const { error: apiError } = await response.json()
+            setError((prev) => prev || apiError || 'Unable to load calendar events.')
+          }
+          continue
+        }
+
+        const data = await response.json()
+        const meta = calendars.find((calendar) => calendar.id === calendarId)
+        const normalized = (data.events || [])
+          .map((event: ApiCalendarEvent) => normalizeEvent(event, meta))
+          .filter((event: NormalizedEvent | null): event is NormalizedEvent => !!event)
+
+        aggregatedEvents.push(...normalized)
+      }
+
+      aggregatedEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
+      setEvents(aggregatedEvents)
     } catch (err) {
       console.error('Failed to fetch calendar events:', err)
       setError(err instanceof Error ? err.message : 'Unexpected error while loading events.')
@@ -119,6 +172,29 @@ export default function CalendarPage() {
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
+    }
+  }
+
+  const loadCalendars = async () => {
+    try {
+      const response = await fetch('/api/google/calendar/list')
+      if (!response.ok) {
+        if (response.status === 401) {
+          setRequiresAuth(true)
+        }
+        return
+      }
+
+      const data = await response.json()
+      const calendarList: GoogleCalendar[] = data.calendars || []
+      setCalendars(calendarList)
+
+      if (calendarList.length > 0 && selectedCalendars.length === 0) {
+        const primary = calendarList.find((calendar) => calendar.primary)
+        setSelectedCalendars([primary?.id || calendarList[0].id])
+      }
+    } catch (error) {
+      console.error('Failed to load calendar list:', error)
     }
   }
 
@@ -426,33 +502,192 @@ export default function CalendarPage() {
                 </p>
               </div>
 
-              <div style={{ display: 'flex', gap: spacing(0.5), backgroundColor: colors.surface, borderRadius: spacing(0.75), border: `1px solid ${colors.border}`, padding: spacing(0.5) }}>
-                {(['month', 'week', 'day'] as CalendarView[]).map((option) => (
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1), flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative' }}>
                   <button
-                    key={option}
                     type="button"
-                    {...getButtonPressHandlers(`calendar-view-${option}`)}
-                    onClick={() => setView(option)}
+                    id="calendar-picker-toggle"
+                    {...getButtonPressHandlers('calendar-picker-toggle')}
+                    onClick={() => setShowCalendarPicker((prev) => !prev)}
                     style={getButtonPressStyle(
-                      `calendar-view-${option}`,
+                      'calendar-picker-toggle',
                       {
-                        padding: `${spacing(0.75)} ${spacing(1.5)}`,
-                        borderRadius: spacing(0.5),
-                        border: 'none',
-                        backgroundColor: view === option ? colors.primary : 'transparent',
-                        color: view === option ? '#fff' : text.secondary.color,
+                        padding: `${spacing(1)} ${spacing(2)}`,
+                        borderRadius: spacing(0.75),
+                        border: `1px solid ${colors.border}`,
+                        backgroundColor: colors.surface,
                         fontSize: '13px',
-                        fontWeight: view === option ? 600 : 500,
+                        fontWeight: 500,
                         cursor: 'pointer',
-                        textTransform: 'capitalize',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: spacing(1),
+                        color: text.secondary.color,
                       },
-                      view === option ? colors.primary : 'transparent',
-                      view === option ? colors.primaryHover : colors.cardHover
+                      colors.surface,
+                      colors.cardHover
                     )}
                   >
-                    {option}
+                    Calendars
+                    <span style={{ fontSize: '12px', color: text.tertiary.color }}>
+                      {selectedCalendars.length === 0 ? 'None' : `${selectedCalendars.length} selected`}
+                    </span>
                   </button>
-                ))}
+                  {showCalendarPicker && (
+                    <div
+                      id="calendar-picker-popover"
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 8px)',
+                        right: 0,
+                        width: '260px',
+                        maxHeight: '320px',
+                        overflowY: 'auto',
+                        borderRadius: spacing(1),
+                        border: `1px solid ${colors.border}`,
+                        backgroundColor: colors.surface,
+                        boxShadow: '0 10px 40px rgba(15, 23, 42, 0.18)',
+                        padding: spacing(1.5),
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: spacing(1),
+                        zIndex: 40,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(0.5) }}>
+                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: text.primary.color }}>
+                          Visible calendars
+                        </p>
+                        <button
+                          type="button"
+                          {...getButtonPressHandlers('calendar-select-all')}
+                          onClick={() => setSelectedCalendars(calendars.map((calendar) => calendar.id))}
+                          style={getButtonPressStyle(
+                            'calendar-select-all',
+                            {
+                              border: 'none',
+                              background: 'transparent',
+                              color: colors.primary,
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                            },
+                            'transparent',
+                            colors.cardHover
+                          )}
+                        >
+                          Select all
+                        </button>
+                      </div>
+
+                      {calendars.length === 0 ? (
+                        <p style={{ margin: 0, fontSize: '12px', color: text.tertiary.color }}>
+                          No calendars available. Connect Google Calendar from settings.
+                        </p>
+                      ) : (
+                        calendars.map((calendar) => {
+                          const checked = selectedCalendars.includes(calendar.id)
+                          return (
+                            <label
+                              key={calendar.id}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: spacing(1),
+                                padding: spacing(0.75),
+                                borderRadius: spacing(0.75),
+                                backgroundColor: checked ? colors.cardHover : 'transparent',
+                                cursor: 'pointer',
+                                fontSize: '13px',
+                                color: text.primary.color,
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) => {
+                                  setSelectedCalendars((prev) => {
+                                    if (e.target.checked) {
+                                      return Array.from(new Set([...prev, calendar.id]))
+                                    }
+                                    return prev.filter((id) => id !== calendar.id)
+                                  })
+                                }}
+                              />
+                              <span
+                                style={{
+                                  width: '10px',
+                                  height: '10px',
+                                  borderRadius: '50%',
+                                  backgroundColor: calendar.backgroundColor || '#2563eb',
+                                }}
+                              />
+                              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {calendar.summary}
+                                {calendar.primary && (
+                                  <span style={{ marginLeft: spacing(0.5), fontSize: '11px', color: colors.primary }}>
+                                    (Primary)
+                                  </span>
+                                )}
+                              </span>
+                            </label>
+                          )
+                        })
+                      )}
+
+                      <button
+                        type="button"
+                        {...getButtonPressHandlers('calendar-picker-close')}
+                        onClick={() => setShowCalendarPicker(false)}
+                        style={getButtonPressStyle(
+                          'calendar-picker-close',
+                          {
+                            marginTop: spacing(1),
+                            padding: `${spacing(0.75)} ${spacing(2)}`,
+                            borderRadius: spacing(0.75),
+                            border: `1px solid ${colors.border}`,
+                            backgroundColor: colors.surface,
+                            color: text.secondary.color,
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                          },
+                          colors.surface,
+                          colors.cardHover
+                        )}
+                      >
+                        Done
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: spacing(0.5), backgroundColor: colors.surface, borderRadius: spacing(0.75), border: `1px solid ${colors.border}`, padding: spacing(0.5) }}>
+                  {(['month', 'week', 'day'] as CalendarView[]).map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      {...getButtonPressHandlers(`calendar-view-${option}`)}
+                      onClick={() => setView(option)}
+                      style={getButtonPressStyle(
+                        `calendar-view-${option}`,
+                        {
+                          padding: `${spacing(0.75)} ${spacing(1.5)}`,
+                          borderRadius: spacing(0.5),
+                          border: 'none',
+                          backgroundColor: view === option ? colors.primary : 'transparent',
+                          color: view === option ? '#fff' : text.secondary.color,
+                          fontSize: '13px',
+                          fontWeight: view === option ? 600 : 500,
+                          cursor: 'pointer',
+                          textTransform: 'capitalize',
+                        },
+                        view === option ? colors.primary : 'transparent',
+                        view === option ? colors.primaryHover : colors.cardHover
+                      )}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -542,7 +777,18 @@ export default function CalendarPage() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
                     {selectedDateEvents.map((event) => (
-                      <div key={event.id} style={{ padding: spacing(1.5), borderRadius: spacing(1), backgroundColor: colors.cardHover, display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
+                      <div
+                        key={event.id}
+                        style={{
+                          padding: spacing(1.25),
+                          borderRadius: spacing(1),
+                          backgroundColor: colors.cardHover,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: spacing(0.5),
+                          borderLeft: `4px solid ${event.calendarColor || colors.primary}`,
+                        }}
+                      >
                         <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {event.title}
                         </p>
@@ -799,13 +1045,14 @@ export default function CalendarPage() {
   )
 }
 
-function normalizeEvent(event: ApiCalendarEvent): NormalizedEvent {
+function normalizeEvent(event: ApiCalendarEvent, calendar?: GoogleCalendar): NormalizedEvent | null {
   const startDate = parseEventDate(event.start)
   const endDate = parseEventDate(event.end)
+  if (!startDate || !endDate) return null
   const isAllDay = !!event.start?.date && !event.start?.dateTime
 
   return {
-    id: event.id,
+    id: event.id || `${startDate.getTime()}-${endDate.getTime()}`,
     title: event.summary || 'Untitled Event',
     description: event.description || undefined,
     location: event.location || undefined,
@@ -815,10 +1062,13 @@ function normalizeEvent(event: ApiCalendarEvent): NormalizedEvent {
     startLabel: formatTime(startDate),
     endLabel: formatTime(endDate),
     htmlLink: event.htmlLink || undefined,
+    calendarId: calendar?.id,
+    calendarName: calendar?.summary,
+    calendarColor: calendar?.backgroundColor || undefined,
   }
 }
 
-function parseEventDate(dateInput: ApiCalendarEvent['start'] | ApiCalendarEvent['end']): Date {
+function parseEventDate(dateInput: ApiCalendarEvent['start'] | ApiCalendarEvent['end']): Date | null {
   if (dateInput?.dateTime) {
     return new Date(dateInput.dateTime)
   }
@@ -826,7 +1076,7 @@ function parseEventDate(dateInput: ApiCalendarEvent['start'] | ApiCalendarEvent[
     // All-day events
     return new Date(dateInput.date)
   }
-  return new Date()
+  return null
 }
 
 function formatTime(date: Date) {
@@ -1033,7 +1283,7 @@ function renderCalendarGrid({
                   padding: `${spacing(0.5)} ${spacing(0.75)}`,
                 }}
               >
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: colors.primary }} />
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: event.calendarColor || colors.primary }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), minWidth: 0 }}>
                   <span style={{ fontSize: '11px', fontWeight: 600, color: text.primary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {event.title}
@@ -1079,8 +1329,8 @@ function renderCalendarGrid({
             padding: spacing(1.5),
             display: 'flex',
             flexDirection: 'column',
-            gap: spacing(1),
-            minHeight: view === 'day' ? '520px' : '320px',
+            gap: spacing(0.75),
+            minHeight: view === 'day' ? '380px' : '260px',
             cursor: 'pointer',
           },
           colors.surface,
@@ -1122,10 +1372,11 @@ function renderCalendarGrid({
                 style={{
                   borderRadius: spacing(0.75),
                   backgroundColor: colors.cardHover,
-                  padding: spacing(1.25),
+                  padding: spacing(1),
                   display: 'flex',
                   flexDirection: 'column',
                   gap: spacing(0.5),
+                  borderLeft: `4px solid ${event.calendarColor || colors.primary}`,
                 }}
               >
                 <span style={{ fontSize: '13px', fontWeight: 600, color: text.primary.color }}>
@@ -1164,7 +1415,7 @@ function gridTemplateForView(view: CalendarView) {
 
   return {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
   }
 }
 
