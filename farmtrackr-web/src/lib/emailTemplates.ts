@@ -12,6 +12,15 @@ export interface EmailTemplate {
 
 export const DEFAULT_EMAIL_TEMPLATES: EmailTemplate[] = [
   {
+    id: 'blank',
+    name: 'Blank Email',
+    category: 'General',
+    subject: '',
+    body: '<p></p>',
+    variables: [],
+    isLocal: true,
+  },
+  {
     id: 'welcome_buyer',
     name: 'Welcome - New Buyer',
     category: 'Buyer',

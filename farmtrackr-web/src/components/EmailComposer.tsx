@@ -136,6 +136,11 @@ const DEFAULT_TEMPLATES: EmailTemplate[] = [
   },
 ]
 
+type EmailComposerPropsExtended = EmailComposerProps & {
+  initialTemplates?: EmailTemplate[]
+  onTemplatePopulate?: (template: EmailTemplate) => void
+}
+
 export function EmailComposer({
   initialTo = '',
   initialSubject = '',
@@ -144,8 +149,10 @@ export function EmailComposer({
   onSend,
   onClose,
   isReplying = false,
-  isForwarding = false
-}: EmailComposerProps) {
+  isForwarding = false,
+  initialTemplates,
+  onTemplatePopulate,
+}: EmailComposerPropsExtended) {
   const { colors, isDark, card, background, text, spacing } = useThemeStyles()
   const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [to, setTo] = useState(initialTo)
@@ -158,7 +165,7 @@ export function EmailComposer({
   const isSubmitting = isSending || isReplying || isForwarding
   const [showCcBcc, setShowCcBcc] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(initialTransactionId || null)
-  const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const [templates, setTemplates] = useState<EmailTemplate[]>(initialTemplates || DEFAULT_EMAIL_TEMPLATES)
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [showTemplates, setShowTemplates] = useState(false)
 
@@ -166,6 +173,13 @@ export function EmailComposer({
   useEffect(() => {
     loadTemplates()
   }, [])
+
+  // Load templates whenever initialTemplates changes
+  useEffect(() => {
+    if (initialTemplates && initialTemplates.length > 0) {
+      setTemplates(initialTemplates)
+    }
+  }, [initialTemplates])
 
   const loadTemplates = async () => {
     try {
@@ -227,6 +241,7 @@ export function EmailComposer({
         setBody(template.body || '')
         setSelectedTemplate(templateId)
         setShowTemplates(false)
+        onTemplatePopulate?.(template)
         return
       }
 
@@ -237,6 +252,11 @@ export function EmailComposer({
           setBody(data.body || '')
           setSelectedTemplate(templateId)
           setShowTemplates(false)
+          onTemplatePopulate?.({
+            ...(template || { id: templateId, name: data.name || 'Template', subject: data.subject || '', body: data.body || '' }),
+            subject: data.subject,
+            body: data.body,
+          })
         }
       } else if (template) {
         // Fallback to local template if API call fails
@@ -244,6 +264,7 @@ export function EmailComposer({
         setBody(template.body || '')
         setSelectedTemplate(templateId)
         setShowTemplates(false)
+        onTemplatePopulate?.(template)
       }
     } catch (err) {
       console.error('Error loading template:', err)
@@ -252,6 +273,7 @@ export function EmailComposer({
         setBody(template.body || '')
         setSelectedTemplate(templateId)
         setShowTemplates(false)
+        onTemplatePopulate?.(template)
       }
     }
   }

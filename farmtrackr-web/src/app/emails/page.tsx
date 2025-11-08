@@ -7,6 +7,7 @@ import { useButtonPress } from '@/hooks/useButtonPress'
 import { EmailPanel } from '@/components/EmailPanel'
 import { EmailComposer } from '@/components/EmailComposer'
 import { TransactionSelector } from '@/components/TransactionSelector'
+import { DEFAULT_EMAIL_TEMPLATES, EmailTemplate } from '@/lib/emailTemplates'
 import { 
   Mail, 
   Send, 
@@ -74,10 +75,15 @@ export default function EmailsPage() {
   const labelsSectionRef = useRef<HTMLDivElement | null>(null)
   const [showLinkSelector, setShowLinkSelector] = useState(false)
   const [isLinking, setIsLinking] = useState(false)
+  const [templates, setTemplates] = useState<EmailTemplate[]>(DEFAULT_EMAIL_TEMPLATES)
 
   // Load Gmail labels
   useEffect(() => {
     loadLabels()
+  }, [])
+
+  useEffect(() => {
+    loadTemplates()
   }, [])
 
   // Load emails when filters change
@@ -177,6 +183,43 @@ export default function EmailsPage() {
       setLabels([])
       setUnreadCount(0)
       setShowLabelsMenu(false)
+    }
+  }
+
+  const loadTemplates = async () => {
+    try {
+      const response = await fetch('/api/emails/templates')
+      if (!response.ok) {
+        setTemplates(DEFAULT_EMAIL_TEMPLATES)
+        return
+      }
+
+      const data = await response.json()
+      let templateList: EmailTemplate[] = []
+      if (data.success && Array.isArray(data.templates)) {
+        templateList = data.templates
+      } else if (Array.isArray(data)) {
+        templateList = data
+      }
+
+      if (templateList.length === 0) {
+        setTemplates(DEFAULT_EMAIL_TEMPLATES)
+      } else {
+        const defaultMap = new Map(DEFAULT_EMAIL_TEMPLATES.map((t) => [t.id, t]))
+        const combined = templateList.map((t: EmailTemplate) => ({
+          ...defaultMap.get(t.id),
+          ...t,
+        }))
+        DEFAULT_EMAIL_TEMPLATES.forEach((template) => {
+          if (!combined.find((item) => item.id === template.id)) {
+            combined.push(template)
+          }
+        })
+        setTemplates(combined)
+      }
+    } catch (error) {
+      console.error('Error loading templates:', error)
+      setTemplates(DEFAULT_EMAIL_TEMPLATES)
     }
   }
 
