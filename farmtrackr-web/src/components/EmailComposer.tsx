@@ -7,15 +7,7 @@ import { X, Send, Paperclip, Loader2, FileText, ChevronDown } from 'lucide-react
 import { EmailData } from '@/types'
 import { TransactionSelector } from './TransactionSelector'
 import { RichTextEditor } from './RichTextEditor'
-
-interface EmailTemplate {
-  id: string
-  name: string
-  subject: string
-  body: string
-  variables?: string[]
-  isLocal?: boolean
-}
+import { DEFAULT_EMAIL_TEMPLATES, EmailTemplate } from '@/lib/emailTemplates'
 
 interface EmailComposerProps {
   initialTo?: string

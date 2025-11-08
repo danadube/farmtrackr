@@ -96,6 +96,7 @@ export function Sidebar({ children }: SidebarProps) {
       { href: '/google-contacts', label: 'Google Contacts', icon: Contact, iconColor: colors.primary },
       { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet, iconColor: resolvedTheme === 'dark' ? '#60a5fa' : '#2563eb' },
       { href: '/emails', label: 'Emails', icon: Mail, iconColor: resolvedTheme === 'dark' ? '#60a5fa' : '#2563eb' },
+      { href: '/emails/templates', label: 'Email Templates', icon: FileText, iconColor: resolvedTheme === 'dark' ? '#facc15' : '#ca8a04' },
     ],
     [
       { href: '/data-quality', label: 'Data Quality', icon: CheckCircle2, iconColor: resolvedTheme === 'dark' ? '#a855f7' : '#9333ea' },
