@@ -850,6 +850,25 @@ function formatUpcomingEventRange(event: NormalizedEvent) {
   return `${event.start.toLocaleString()} – ${event.end.toLocaleString()}`
 }
 
+function formatViewHeader(date: Date, view: CalendarView) {
+  if (view === 'month') {
+    return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+  }
+
+  if (view === 'week') {
+    const startOfWeek = new Date(date)
+    startOfWeek.setDate(date.getDate() - date.getDay())
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 6)
+
+    const startLabel = startOfWeek.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    const endLabel = endOfWeek.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+    return `${startLabel} – ${endLabel}`
+  }
+
+  return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+}
+
 function getViewDateRange(date: Date, view: CalendarView) {
   if (view === 'month') {
     const start = new Date(date.getFullYear(), date.getMonth(), 1)
