@@ -3,8 +3,21 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
-// Charts temporarily disabled - import commented out
-// import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend
+} from 'recharts'
 import { 
   DollarSign, 
   Plus, 
@@ -81,6 +94,10 @@ interface Transaction {
 
 export default function CommissionsPage() {
   const { colors, isDark, card, headerCard, headerDivider, headerTint, background, text } = useThemeStyles()
+  const pieColors = useMemo(
+    () => [colors.primary, colors.info, colors.analytics, colors.warning, colors.success],
+    [colors]
+  )
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -1621,6 +1638,199 @@ const referralNet = referralFeesReceived - referralFeesPaid
                       Received vs. paid
                     </p>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Performance Charts */}
+          {transactions.length > 0 && (
+            <div style={{ marginBottom: '32px' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: '24px'
+                }}
+              >
+                <div
+                  style={{
+                    ...card,
+                    padding: '24px',
+                    gridColumn: chartData.length > 0 ? 'span 2' : 'span 1',
+                    minHeight: '320px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px'
+                  }}
+                >
+                  <div>
+                    <h2 style={{ fontSize: '18px', fontWeight: 600, ...text.primary, margin: 0 }}>
+                      Monthly Production
+                    </h2>
+                    <p style={{ fontSize: '13px', ...text.secondary, margin: '6px 0 0 0' }}>
+                      GCI and NCI performance across closed months
+                    </p>
+                  </div>
+                  {chartData.length > 0 ? (
+                    <div style={{ width: '100%', height: 260 }}>
+                      <ResponsiveContainer>
+                        <LineChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+                          <XAxis
+                            dataKey="month"
+                            stroke={colors.text.secondary}
+                            tick={{ fontSize: 12, fill: colors.text.secondary }}
+                          />
+                          <YAxis
+                            stroke={colors.text.secondary}
+                            tick={{ fontSize: 12, fill: colors.text.secondary }}
+                            tickFormatter={(value) => {
+                              const formatted = formatCurrency(value)
+                              return formatted ? `$${formatted}` : '$0.00'
+                            }}
+                          />
+                          <Tooltip
+                            formatter={(value: number | string) => {
+                              const numeric = typeof value === 'number' ? value : Number(value)
+                              const formatted = formatCurrency(numeric)
+                              return formatted ? [`$${formatted}`, 'Amount'] : ['$0.00', 'Amount']
+                            }}
+                          />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="gci"
+                            stroke={colors.info}
+                            strokeWidth={2}
+                            dot={{ r: 3 }}
+                            name="Gross Commission (GCI)"
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="nci"
+                            stroke={colors.primary}
+                            strokeWidth={2}
+                            dot={{ r: 3 }}
+                            name="Net Commission (NCI)"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '13px', ...text.secondary, margin: '16px 0 0 0' }}>
+                      Not enough closed transactions with commission data to render this chart yet.
+                    </p>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    ...card,
+                    padding: '24px',
+                    minHeight: '280px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px'
+                  }}
+                >
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 600, ...text.primary, margin: 0 }}>
+                      Client Mix
+                    </h3>
+                    <p style={{ fontSize: '13px', ...text.secondary, margin: '6px 0 0 0' }}>
+                      Buyer vs. seller transactions
+                    </p>
+                  </div>
+                  {pieData.some((slice) => slice.value > 0) ? (
+                    <div style={{ width: '100%', height: 220 }}>
+                      <ResponsiveContainer>
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius={50}
+                            outerRadius={80}
+                            paddingAngle={4}
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={entry.name} fill={pieColors[index % pieColors.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value: number | string) => [`${Number(value) || 0} transactions`, 'Count']}
+                          />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '13px', ...text.secondary, margin: '16px 0 0 0' }}>
+                      No client-side transactions recorded in the current filter window.
+                    </p>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    ...card,
+                    padding: '24px',
+                    minHeight: '280px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px'
+                  }}
+                >
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 600, ...text.primary, margin: 0 }}>
+                      Brokerage Contribution
+                    </h3>
+                    <p style={{ fontSize: '13px', ...text.secondary, margin: '6px 0 0 0' }}>
+                      Net commission by brokerage affiliation
+                    </p>
+                  </div>
+                  {brokerageData.some((brokerage) => brokerage.value > 0) ? (
+                    <div style={{ width: '100%', height: 220 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={brokerageData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+                          <XAxis
+                            dataKey="name"
+                            stroke={colors.text.secondary}
+                            tick={{ fontSize: 12, fill: colors.text.secondary }}
+                          />
+                          <YAxis
+                            stroke={colors.text.secondary}
+                            tick={{ fontSize: 12, fill: colors.text.secondary }}
+                            tickFormatter={(value) => {
+                              const formatted = formatCurrency(value)
+                              return formatted ? `$${formatted}` : '$0.00'
+                            }}
+                          />
+                          <Tooltip
+                            formatter={(value: number | string) => {
+                              const numeric = typeof value === 'number' ? value : Number(value)
+                              const formatted = formatCurrency(numeric)
+                              return formatted
+                                ? [`$${formatted}`, 'Net Commission']
+                                : ['$0.00', 'Net Commission']
+                            }}
+                          />
+                          <Bar
+                            dataKey="value"
+                            fill={colors.analytics}
+                            radius={[8, 8, 0, 0]}
+                            name="Net Commission"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '13px', ...text.secondary, margin: '16px 0 0 0' }}>
+                      No brokerage data available for the current filters.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

@@ -110,14 +110,19 @@ export function Sidebar({ children }: SidebarProps) {
 
   const sections: SidebarSection[] = [
     {
-      id: 'core',
-      title: 'Core Work',
+      id: 'workspace',
+      title: 'Workspace',
       defaultOpen: true,
       items: [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/calendar', label: 'Calendar', icon: CalendarIcon },
-        { href: '/commissions', label: 'Commissions', icon: Briefcase },
         { href: '/listings', label: 'Listings', icon: Home },
+        {
+          href: '/commissions',
+          label: 'Commissions',
+          icon: Briefcase,
+          iconColor: resolvedTheme === 'dark' ? '#f97316' : '#d97706'
+        },
         { href: '/contacts', label: 'Contacts', icon: Users },
         { href: '/tasks', label: 'Tasks', icon: CheckCircle2 },
       ],
@@ -138,16 +143,8 @@ export function Sidebar({ children }: SidebarProps) {
       items: [
         { href: '/documents', label: 'Documents', icon: FileText },
         { href: '/print-labels', label: 'Print Labels', icon: Printer },
-        { href: '/drive', label: 'Drive', icon: Upload },
-      ],
-    },
-    {
-      id: 'integrations',
-      title: 'Integrations',
-      defaultOpen: false,
-      items: [
         { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet },
-        { href: '/integrations', label: 'Integrations', icon: Sparkles },
+        { href: '/drive', label: 'Drive', icon: Upload },
       ],
     },
     {
@@ -157,6 +154,7 @@ export function Sidebar({ children }: SidebarProps) {
       items: [
         { href: '/import-export', label: 'Import & Export', icon: Upload },
         { href: '/data-quality', label: 'Data Quality', icon: TrendingUp },
+        { href: '/integrations', label: 'Integrations', icon: Sparkles },
         { href: '/settings', label: 'Settings', icon: Settings },
       ],
     },

@@ -662,6 +662,107 @@ export async function advanceListingStage(listingId: string, client: PrismaClien
   })
 }
 
+export async function moveListingToStage(
+  listingId: string,
+  targetStageKey: string | null,
+  client: PrismaClient = prisma
+) {
+  const now = new Date()
+
+  return client.$transaction(async (tx: TxClient) => {
+    const listing = await tx.listing.findUnique({
+      where: { id: listingId },
+      include: {
+        stageInstances: {
+          orderBy: { order: 'asc' },
+          include: { tasks: true }
+        }
+      }
+    })
+
+    if (!listing) {
+      throw new Error('Listing not found')
+    }
+
+    if (targetStageKey === null) {
+      for (const stage of listing.stageInstances) {
+        await tx.listingStageInstance.update({
+          where: { id: stage.id },
+          data: {
+            status: 'COMPLETED',
+            startedAt: stage.startedAt ?? now,
+            completedAt: stage.completedAt ?? now
+          }
+        })
+      }
+
+      await tx.listing.update({
+        where: { id: listingId },
+        data: {
+          currentStageKey: null,
+          currentStageStartedAt: null,
+          status: 'CLOSED'
+        }
+      })
+    } else {
+      const targetStage = listing.stageInstances.find((stage) => stage.key === targetStageKey)
+
+      if (!targetStage) {
+        throw new Error('Target stage not found for listing')
+      }
+
+      if (targetStage.status === 'ACTIVE' && listing.currentStageKey === targetStage.key) {
+        return tx.listing.findUniqueOrThrow({
+          where: { id: listingId },
+          include: LISTING_INCLUDE
+        })
+      }
+
+      for (const stage of listing.stageInstances) {
+        if (stage.id === targetStage.id) {
+          await setStageActive(tx, stage.id, now)
+        } else if (stage.order < targetStage.order) {
+          await tx.listingStageInstance.update({
+            where: { id: stage.id },
+            data: {
+              status: 'COMPLETED',
+              startedAt: stage.startedAt ?? now,
+              completedAt: stage.completedAt ?? now
+            }
+          })
+        } else {
+          await tx.listingStageInstance.update({
+            where: { id: stage.id },
+            data: {
+              status: 'PENDING',
+              startedAt: null,
+              completedAt: null
+            }
+          })
+          await tx.listingTaskInstance.updateMany({
+            where: { stageInstanceId: stage.id },
+            data: { completed: false, completedAt: null }
+          })
+        }
+      }
+
+      await tx.listing.update({
+        where: { id: listingId },
+        data: {
+          currentStageKey: targetStage.key ?? null,
+          currentStageStartedAt: now,
+          status: deriveStatusForStage(targetStage.key)
+        }
+      })
+    }
+
+    return tx.listing.findUniqueOrThrow({
+      where: { id: listingId },
+      include: LISTING_INCLUDE
+    })
+  })
+}
+
 const iso = (value: Date | string | null | undefined) => {
   if (!value) return null
   return value instanceof Date ? value.toISOString() : value

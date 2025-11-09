@@ -641,7 +641,16 @@ export default function ImportExportPage() {
           {activeTab === 'contacts' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
               {/* Import Contacts Section */}
-              <div style={{ padding: '32px', ...card }}>
+              <div
+                style={{
+                  padding: '32px',
+                  ...card,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '24px',
+                  height: '100%'
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
                   <FileUp style={{ width: '24px', height: '24px', color: colors.success }} />
                   <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, margin: '0' }}>
@@ -935,7 +944,16 @@ export default function ImportExportPage() {
               </div>
 
               {/* Export Contacts Section */}
-              <div style={{ padding: '32px', ...card }}>
+              <div
+                style={{
+                  padding: '32px',
+                  ...card,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '24px',
+                  height: '100%'
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
                   <FileDown style={{ width: '24px', height: '24px', color: colors.success }} />
                   <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, margin: '0' }}>
@@ -1445,37 +1463,49 @@ export default function ImportExportPage() {
                 )}
 
                 {/* Template Download */}
-                <div style={{ marginBottom: '24px' }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.secondary, marginBottom: '12px' }}>
-                    Download Template
+                <div
+                  style={{
+                    marginTop: 'auto',
+                    paddingTop: '24px',
+                    borderTop: `1px solid ${colors.border}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}
+                >
+                  <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.secondary, margin: 0 }}>
+                    Download Sample CSV
                   </h3>
-                  <p style={{ fontSize: '12px', ...text.tertiary, marginBottom: '12px' }}>
-                    Use our template file to ensure proper formatting:
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: 0 }}>
+                    Use this sample to match the expected columns and data formats.
                   </p>
                   <button
                     onClick={() => handleDownloadTemplate('transactions', 'csv')}
                     style={{
-                      padding: '8px 12px',
-                      backgroundColor: colors.cardHover,
+                      padding: '10px 14px',
+                      backgroundColor: colors.surface,
                       border: `1px solid ${colors.border}`,
-                      borderRadius: '8px',
+                      borderRadius: '10px',
                       fontSize: '13px',
                       ...text.secondary,
                       cursor: 'pointer',
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      transition: 'background-color 0.2s ease'
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease, border-color 0.2s ease'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.borderHover
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                      e.currentTarget.style.borderColor = colors.borderHover
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.cardHover
+                      e.currentTarget.style.backgroundColor = colors.surface
+                      e.currentTarget.style.borderColor = colors.border
                     }}
                   >
-                    <Download style={{ width: '14px', height: '14px' }} />
-                    Transaction Template (CSV)
+                    <Download style={{ width: '16px', height: '16px' }} />
+                    Download CSV
                   </button>
                 </div>
 
@@ -1618,18 +1648,26 @@ export default function ImportExportPage() {
                   </span>
                 </div>
 
-                <div style={{ marginBottom: '24px' }}>
-                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '16px', lineHeight: '1.5' }}>
+                <div
+                  style={{
+                    marginTop: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px'
+                  }}
+                >
+                  <p style={{ fontSize: '14px', ...text.secondary, margin: 0, lineHeight: '1.5' }}>
                     Export your transaction data to CSV format. The export includes all transaction details including commission calculations.
                   </p>
 
-                  <div style={{ 
-                    padding: '16px', 
-                    backgroundColor: colors.cardHover, 
-                    borderRadius: '10px',
-                    marginBottom: '16px'
-                  }}>
-                    <p style={{ fontSize: '13px', ...text.secondary, margin: '0 0 8px 0' }}>
+                  <div
+                    style={{
+                      padding: '16px',
+                      backgroundColor: colors.cardHover,
+                      borderRadius: '10px'
+                    }}
+                  >
+                    <p style={{ fontSize: '13px', ...text.secondary, margin: 0 }}>
                       <strong style={{ ...text.primary }}>Note:</strong> For filtered exports or advanced options, use the export feature on the{' '}
                       <Link href="/commissions" style={{ color: colors.primary, textDecoration: 'underline' }}>
                         Commissions page
@@ -1649,7 +1687,7 @@ export default function ImportExportPage() {
                       border: 'none',
                       borderRadius: '12px',
                       fontSize: '14px',
-                      fontWeight: '500',
+                      fontWeight: '600',
                       cursor: transactions.length === 0 ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -1672,7 +1710,7 @@ export default function ImportExportPage() {
                     Export All Transactions as CSV ({transactions.length} total)
                   </button>
 
-                  <p style={{ fontSize: '12px', ...text.tertiary, marginTop: '12px', marginBottom: '0' }}>
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: 0 }}>
                     For filtered exports (by year, brokerage, etc.), use the export feature on the{' '}
                     <Link href="/commissions" style={{ color: colors.primary, textDecoration: 'underline' }}>
                       Commissions page

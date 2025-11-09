@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
+import { Home } from 'lucide-react'
+import { ListingDetailModal } from '@/components/listings/ListingDetailModal'
 import type {
   ListingClient,
   ListingStageClient,
@@ -163,7 +165,10 @@ const TaskList = ({
   }
 
   return (
-    <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+    <ul
+      style={{ listStyle: 'none', margin: 0, padding: 0 }}
+      onClick={(event) => event.stopPropagation()}
+    >
       {stageInstance.tasks.map((task) => (
         <li
           key={task.id}
@@ -191,6 +196,7 @@ const TaskList = ({
               onChange={() => onToggleTask(listingId, task, !task.completed)}
               disabled={disabled}
               style={{ width: '16px', height: '16px', cursor: disabled ? 'not-allowed' : 'pointer' }}
+              onClick={(event) => event.stopPropagation()}
             />
             <span
               style={{
@@ -226,6 +232,8 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
   const { colors, card, cardWithLeftBorder, headerCard, headerDivider, background } = theme
 
   const [listings, setListings] = useState<ListingClient[]>(initialListings)
+  const [detailListing, setDetailListing] = useState<ListingClient | null>(null)
+  const [draggingListingId, setDraggingListingId] = useState<string | null>(null)
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>(() => {
     const preferred =
       pipelineTemplates.find((template) => template.type === 'listing') ??
@@ -306,6 +314,10 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
     return columns
   }, [filteredListings, selectedPipeline])
 
+  const draggingListing = draggingListingId ? listings.find((listing) => listing.id === draggingListingId) : null
+  const draggingStageKey =
+    draggingListing && selectedPipeline ? getListingColumnKey(draggingListing, selectedPipeline) : null
+
   const refreshListings = async (silent = false) => {
     if (!silent) {
       setIsRefreshing(true)
@@ -338,7 +350,13 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
     setUpdatingListingId(listingId)
     setFeedback(null)
 
-    const previous = listings
+    const previous = listings.map((listing) => ({
+      ...listing,
+      stageInstances: listing.stageInstances.map((stage) => ({
+        ...stage,
+        tasks: stage.tasks.map((taskItem) => ({ ...taskItem }))
+      }))
+    }))
     setListings((prev) =>
       prev.map((listing) => {
         if (listing.id !== listingId) return listing
@@ -402,6 +420,41 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
     }
   }
 
+  const handleMoveListing = async (listingId: string, targetStageKey: string | null) => {
+    const currentListing = listings.find((listing) => listing.id === listingId)
+    if (!currentListing) return
+
+    const currentKey = getListingColumnKey(currentListing, selectedPipeline ?? null)
+    if ((currentKey ?? null) === targetStageKey) {
+      setDraggingListingId(null)
+      return
+    }
+
+    setUpdatingListingId(listingId)
+    setFeedback(null)
+
+    try {
+      const response = await fetch(`/api/listings/${listingId}/move`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stageKey: targetStageKey })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to move listing')
+      }
+
+      const updatedListing: ListingClient = await response.json()
+      updateListingInState(updatedListing)
+    } catch (error) {
+      console.error('Error moving listing', error)
+      setFeedback('Unable to move that listing. Please try again.')
+    } finally {
+      setUpdatingListingId(null)
+      setDraggingListingId(null)
+    }
+  }
+
   const toggleCardExpansion = (listingId: string) => {
     setExpandedCards((prev) => ({
       ...prev,
@@ -409,7 +462,13 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
     }))
   }
 
-const handleCreateListing = async (event: FormEvent<HTMLFormElement>) => {
+  const openDetailModal = (listing: ListingClient) => {
+    setDetailListing(listing)
+  }
+
+  const closeDetailModal = () => setDetailListing(null)
+
+  const handleCreateListing = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setFormError(null)
     setFeedback(null)
@@ -476,8 +535,29 @@ const handleCreateListing = async (event: FormEvent<HTMLFormElement>) => {
           padding: '18px 20px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px'
+          gap: '16px',
+          cursor: 'pointer'
         }}
+        role="button"
+        tabIndex={0}
+        onClick={() => {
+          if (draggingListingId) return
+          openDetailModal(listing)
+        }}
+        onKeyDown={(event) => {
+          if (draggingListingId) return
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            openDetailModal(listing)
+          }
+        }}
+        draggable
+        onDragStart={(event) => {
+          setDraggingListingId(listing.id)
+          event.dataTransfer?.setData('text/plain', listing.id)
+          event.dataTransfer.effectAllowed = 'move'
+        }}
+        onDragEnd={() => setDraggingListingId(null)}
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
           <div>
@@ -526,7 +606,10 @@ const handleCreateListing = async (event: FormEvent<HTMLFormElement>) => {
         >
           <button
             type="button"
-            onClick={() => toggleCardExpansion(listing.id)}
+            onClick={(event) => {
+              event.stopPropagation()
+              toggleCardExpansion(listing.id)
+            }}
             style={{
               background: 'transparent',
               border: 'none',
@@ -579,7 +662,10 @@ const handleCreateListing = async (event: FormEvent<HTMLFormElement>) => {
           </div>
           <button
             type="button"
-            onClick={() => handleAdvanceStage(listing.id)}
+            onClick={(event) => {
+              event.stopPropagation()
+              handleAdvanceStage(listing.id)
+            }}
             disabled={disableActions}
             style={{
               padding: '10px 16px',
@@ -857,12 +943,28 @@ const handleCreateListing = async (event: FormEvent<HTMLFormElement>) => {
               flexWrap: 'wrap'
             }}
           >
-            <div style={{ flex: '1 1 320px' }}>
-              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 700 }}>Listings Pipeline</h1>
-              <p style={{ margin: '8px 0 0', fontSize: '16px', maxWidth: '520px' }}>
-                Track every listing from preparation through close. Each column reflects a pipeline stage with its
-                associated tasks.
-              </p>
+            <div style={{ flex: '1 1 320px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  backgroundColor: 'rgba(255,255,255,0.22)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff'
+                }}
+              >
+                <Home style={{ width: '28px', height: '28px' }} />
+              </div>
+              <div>
+                <h1 style={{ margin: 0, fontSize: '30px', fontWeight: 700, color: '#ffffff' }}>Listings Pipeline</h1>
+                <p style={{ margin: '8px 0 0', fontSize: '16px', maxWidth: '520px', color: 'rgba(255,255,255,0.85)' }}>
+                  Track every listing from preparation through close. Each column reflects a pipeline stage with its
+                  associated tasks.
+                </p>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
@@ -965,42 +1067,72 @@ const handleCreateListing = async (event: FormEvent<HTMLFormElement>) => {
               paddingBottom: '12px'
             }}
           >
-            {pipelineColumns.map((column) => (
-              <div
-                key={column.key}
-                style={{
-                  minWidth: '320px',
-                  flex: '0 0 320px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '16px'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 700, color: colors.text.primary }}>{column.name}</div>
-                  <div style={{ fontSize: '13px', color: colors.text.secondary }}>
-                    {column.listings.length} listing{column.listings.length === 1 ? '' : 's'}
+            {pipelineColumns.map((column) => {
+              const targetStageKey = column.key === '__closed__' ? null : column.key
+              const isDifferentStage =
+                !!draggingListingId && (draggingStageKey ?? null) !== (targetStageKey ?? null)
+              const isDroppable =
+                isDifferentStage && (targetStageKey !== null || column.key === '__closed__')
+
+              return (
+                <div
+                  key={column.key}
+                  onDragOver={(event) => {
+                    if (!draggingListingId || !isDroppable) return
+                    event.preventDefault()
+                    event.dataTransfer.dropEffect = 'move'
+                  }}
+                  onDrop={(event) => {
+                    if (!draggingListingId || !isDroppable) return
+                    event.preventDefault()
+                    handleMoveListing(draggingListingId, targetStageKey)
+                  }}
+                  style={{
+                    minWidth: '320px',
+                    flex: '0 0 320px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: colors.text.primary }}>{column.name}</div>
+                    <div style={{ fontSize: '13px', color: colors.text.secondary }}>
+                      {column.listings.length} listing{column.listings.length === 1 ? '' : 's'}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '16px',
+                      padding: isDroppable ? '4px' : 0,
+                      borderRadius: isDroppable ? '14px' : undefined,
+                      backgroundColor: isDroppable ? colors.cardHover : 'transparent',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                  >
+                    {column.listings.length === 0 ? (
+                      <div
+                        style={{
+                          ...card,
+                          padding: '18px',
+                          color: colors.text.secondary,
+                          fontSize: '13px',
+                          textAlign: 'center',
+                          border: isDroppable ? `1px dashed ${colors.primary}` : `1px solid ${colors.border}`,
+                          backgroundColor: isDroppable ? colors.cardHover : card.backgroundColor
+                        }}
+                      >
+                        Nothing here yet. As listings move, they’ll land in this stage.
+                      </div>
+                    ) : (
+                      column.listings.map((listing) => renderListingCard(listing, column.key))
+                    )}
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {column.listings.length === 0 ? (
-                    <div
-                      style={{
-                        ...card,
-                        padding: '18px',
-                        color: colors.text.secondary,
-                        fontSize: '13px',
-                        textAlign: 'center'
-                      }}
-                    >
-                      Nothing here yet. As listings move, they’ll land in this stage.
-                    </div>
-                  ) : (
-                    column.listings.map((listing) => renderListingCard(listing, column.key))
-                  )}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <div
@@ -1018,6 +1150,7 @@ const handleCreateListing = async (event: FormEvent<HTMLFormElement>) => {
         </div>
       </div>
       {renderModal()}
+      <ListingDetailModal listing={detailListing} onClose={closeDetailModal} />
     </Sidebar>
   )
 }

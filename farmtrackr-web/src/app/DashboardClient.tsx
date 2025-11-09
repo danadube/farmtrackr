@@ -27,6 +27,8 @@ import {
   Loader2
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ListingDetailModal } from '@/components/listings/ListingDetailModal'
 import { FarmTrackrLogo } from '@/components/FarmTrackrLogo'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
@@ -208,6 +210,7 @@ interface Transaction {
 }
 
 export default function DashboardClient({ contacts, stats, listings: initialListings = [] }: DashboardClientProps) {
+  const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const { colors, isDark, card, cardWithLeftBorder, headerCard, headerDivider, background, text, spacing } = useThemeStyles()
   const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
@@ -253,6 +256,7 @@ export default function DashboardClient({ contacts, stats, listings: initialList
   const calendarRangeKeyRef = useRef<string | null>(null)
 
   const listings = initialListings
+  const [detailListing, setDetailListing] = useState<ListingClient | null>(null)
 
   const listingsByStage = useMemo(() => {
     const groups: Record<'pre_listing' | 'active_listing' | 'escrow', ListingClient[]> = {
@@ -1084,12 +1088,22 @@ export default function DashboardClient({ contacts, stats, listings: initialList
                           return (
                             <div
                               key={listing.id}
+                              onClick={() => setDetailListing(listing)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault()
+                                  setDetailListing(listing)
+                                }
+                              }}
+                              role="button"
+                              tabIndex={0}
                               style={{
                                 ...cardWithLeftBorder(column.accent),
                                 padding: spacing(1.75),
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: spacing(1)
+                                gap: spacing(1),
+                                cursor: 'pointer'
                               }}
                             >
                               <div>
@@ -2113,6 +2127,12 @@ export default function DashboardClient({ contacts, stats, listings: initialList
         </div>
       </div>
     </Sidebar>
+
+    <ListingDetailModal
+      listing={detailListing}
+      onClose={() => setDetailListing(null)}
+      onOpenPipeline={() => router.push('/listings')}
+    />
 
     {showQuickEventModal && (
         <div

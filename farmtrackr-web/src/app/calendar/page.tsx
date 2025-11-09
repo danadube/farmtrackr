@@ -72,7 +72,7 @@ const INITIAL_CREATE_EVENT_STATE: CreateEventState = {
 }
 
 export default function CalendarPage() {
-  const { colors, text, card, cardWithLeftBorder, spacing } = useThemeStyles()
+  const { colors, text, card, cardWithLeftBorder, headerCard, headerDivider, spacing } = useThemeStyles()
   const { getButtonPressHandlers, getButtonPressStyle, pressedButtons } = useButtonPress()
 
   const [currentDate, setCurrentDate] = useState(() => new Date())
@@ -382,7 +382,7 @@ export default function CalendarPage() {
           }}
         >
           {/* Page Header */}
-          <div style={{ ...card, padding: spacing(3), display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
+          <div style={{ ...headerCard, padding: spacing(3), display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing(2) }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
                 <div
@@ -390,18 +390,18 @@ export default function CalendarPage() {
                     width: spacing(5),
                     height: spacing(5),
                     borderRadius: spacing(1.5),
-                    backgroundColor: colors.primary,
+                    backgroundColor: 'rgba(255,255,255,0.22)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#fff',
+                    color: '#ffffff',
                   }}
                 >
                   <CalendarIcon style={{ width: '22px', height: '22px' }} />
                 </div>
                 <div>
-                  <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: text.primary.color }}>Calendar</h1>
-                  <p style={{ margin: `${spacing(0.5)} 0 0 0`, fontSize: '14px', color: text.secondary.color }}>
+                  <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: '#ffffff' }}>Calendar</h1>
+                  <p style={{ margin: `${spacing(0.5)} 0 0 0`, fontSize: '14px', color: 'rgba(255,255,255,0.85)' }}>
                     Stay on top of showings, closings, and follow-ups synced with Google Calendar.
                   </p>
                 </div>
@@ -732,6 +732,7 @@ export default function CalendarPage() {
                 </div>
               </div>
             </div>
+            <div style={{ ...headerDivider, marginTop: spacing(1) }} />
           </div>
 
           {/* Alerts */}
