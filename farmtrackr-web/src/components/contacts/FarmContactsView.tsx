@@ -190,6 +190,7 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
             </div>
           </div>
         ) : (
+          <>
         {/* Page Header */}
         <div style={{ marginBottom: '32px' }}>
           <div style={{ padding: '24px', ...headerTint(colors.primary) }}>
@@ -694,6 +695,7 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
             </div>
           )}
         </div>
+          </>
         )}
       </div>
     </div>
