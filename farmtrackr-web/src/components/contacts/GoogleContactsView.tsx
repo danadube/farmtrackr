@@ -690,12 +690,28 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                 const tags = contact.tags || []
 
                 return (
-                  <div
+                  <button
+                    {...getButtonPressHandlers(`google-contact-${contact.id}`)}
                     key={contact.id}
-                    style={{
-                      borderBottom: `1px solid ${colors.border}`,
-                      padding: '20px 24px',
+                    onClick={() => {
+                      setSelectedContact(contact)
+                      setShowContactModal(true)
                     }}
+                    style={getButtonPressStyle(
+                      `google-contact-${contact.id}`,
+                      {
+                        width: '100%',
+                        display: 'block',
+                        padding: '20px 24px',
+                        border: 'none',
+                        borderBottom: `1px solid ${colors.border}`,
+                        textAlign: 'left',
+                        backgroundColor: 'transparent',
+                        cursor: 'pointer',
+                      },
+                      'transparent',
+                      colors.cardHover
+                    )}
                   >
                     <div
                       style={{
@@ -762,14 +778,14 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                               <span
                                 key={tag}
                                 style={{
-                                  padding: '3px 8px',
+                                  padding: '2px 6px',
                                   borderRadius: '999px',
                                   backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : colors.primaryLight,
                                   color: isDark ? '#ffffff' : colors.primary,
-                                  fontSize: '11px',
+                                  fontSize: '10.5px',
                                   fontWeight: 600,
                                   textTransform: 'uppercase',
-                                  letterSpacing: '0.03em',
+                                  letterSpacing: '0.02em',
                                   border: isDark ? '1px solid rgba(255,255,255,0.2)' : `1px solid ${colors.primary}`,
                                 }}
                               >
@@ -792,38 +808,9 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                             )}
                           </div>
                         )}
-                        <button
-                          type="button"
-                          {...getButtonPressHandlers(`view-google-${contact.id}`)}
-                          onClick={() => {
-                            setSelectedContact(contact)
-                            setShowContactModal(true)
-                          }}
-                          style={getButtonPressStyle(
-                            `view-google-${contact.id}`,
-                            {
-                              padding: '10px 16px',
-                              backgroundColor: colors.cardHover,
-                              color: secondaryColor,
-                              border: `1px solid ${colors.border}`,
-                              borderRadius: '10px',
-                              fontSize: '13px',
-                              fontWeight: 500,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              cursor: 'pointer',
-                            },
-                            colors.cardHover,
-                            colors.borderHover
-                          )}
-                        >
-                          <Edit style={{ width: '14px', height: '14px' }} />
-                          View Details
-                        </button>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 )
               })}
             </div>
