@@ -85,6 +85,18 @@ const formatDate = (value: string | Date | null | undefined) => {
   })
 }
 
+const formatCurrency = (value: number | null | undefined) => {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return '—'
+  }
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(Number(value))
+}
+
 const categorizeTaskName = (name: string | null | undefined): TaskCategory => {
   if (!name) return 'workflow'
   const normalized = normalizeTaskName(name)
