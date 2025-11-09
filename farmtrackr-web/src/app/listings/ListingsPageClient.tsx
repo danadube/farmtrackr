@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
+import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import type {
   ListingClient,
@@ -830,8 +831,9 @@ const handleCreateListing = async (event: FormEvent<HTMLFormElement>) => {
   }
 
   return (
-    <div style={{ ...background, minHeight: '100vh' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '36px 40px 48px' }}>
+    <Sidebar>
+      <div style={{ ...background, minHeight: '100vh' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '36px 40px 48px' }}>
         <section
           style={{
             ...headerCard,
@@ -1005,9 +1007,10 @@ const handleCreateListing = async (event: FormEvent<HTMLFormElement>) => {
             Add a pipeline template to get started with listings.
           </div>
         )}
+        </div>
       </div>
       {renderModal()}
-    </div>
+    </Sidebar>
   )
 }
 
