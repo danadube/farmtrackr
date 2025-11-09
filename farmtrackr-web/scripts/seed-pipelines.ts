@@ -51,7 +51,8 @@ async function seedPipeline(filePath: string) {
   })
 
   const stages = pipeline.stages ?? []
-  for (const [index, stage] of stages.entries()) {
+  for (let index = 0; index < stages.length; index++) {
+    const stage = stages[index]
     const stageRecord = await prisma.listingStageTemplate.create({
       data: {
         pipelineTemplateId: record.id,
