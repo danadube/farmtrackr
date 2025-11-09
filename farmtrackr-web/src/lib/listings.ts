@@ -1,5 +1,3 @@
-'use server'
-
 import { Prisma, PrismaClient, ListingStatus } from '@prisma/client'
 import type {
   ContactSummary,
