@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react'
 import { useTheme } from '@/components/ThemeProvider'
 import { getThemeColors } from '@/lib/theme'
 import {
-  Home, 
-  Users, 
-  FileText, 
-  TrendingUp, 
-  Upload, 
+  Users,
+  FileText,
+  TrendingUp,
+  Upload,
   Settings,
   FileSpreadsheet,
   LayoutDashboard,
@@ -22,9 +21,12 @@ import {
   Printer,
   CheckCircle2,
   Mail,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  ChevronDown
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useSafePathname } from '@/hooks/useSafePathname'
 import { FarmTrackrLogo } from './FarmTrackrLogo'
 import { Footer } from './Footer'
@@ -34,6 +36,31 @@ interface SidebarProps {
   children: React.ReactNode
 }
 
+type SidebarItem = {
+  href: string
+  label: string
+  icon: LucideIcon
+  iconColor?: string
+  exactMatch?: boolean
+  hash?: string
+}
+
+type QuickCreateOption = {
+  id: string
+  label: string
+  description: string
+  href: string
+  icon: LucideIcon
+  accent?: string
+}
+
+type SidebarSection = {
+  id: string
+  title: string
+  defaultOpen?: boolean
+  items: SidebarItem[]
+}
+
 export function Sidebar({ children }: SidebarProps) {
   const { resolvedTheme } = useTheme()
   const pathname = useSafePathname()
@@ -41,6 +68,9 @@ export function Sidebar({ children }: SidebarProps) {
   const [isDesktop, setIsDesktop] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
   const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
+  const router = useRouter()
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({})
+  const [showQuickCreate, setShowQuickCreate] = useState(false)
   
   // Ensure we read theme from DOM on mount (set by inline script)
   useEffect(() => {
@@ -77,38 +107,141 @@ export function Sidebar({ children }: SidebarProps) {
     return () => window.removeEventListener('resize', checkIsDesktop)
   }, [])
 
-  const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/calendar', label: 'Calendar', icon: CalendarIcon },
+  const sections: SidebarSection[] = [
+    {
+      id: 'core',
+      title: 'Core Work',
+      defaultOpen: true,
+      items: [
+        { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/calendar', label: 'Calendar', icon: CalendarIcon },
+        { href: '/commissions', label: 'Commissions', icon: Briefcase },
+        { href: '/contacts', label: 'Contacts', icon: Users },
+        { href: '/tasks', label: 'Tasks', icon: CheckCircle2 },
+      ],
+    },
+    {
+      id: 'communication',
+      title: 'Communication',
+      defaultOpen: true,
+      items: [
+        { href: '/emails', label: 'Emails', icon: Mail },
+        { href: '/emails/templates', label: 'Email Templates', icon: FileText, iconColor: resolvedTheme === 'dark' ? '#facc15' : '#ca8a04' },
+      ],
+    },
+    {
+      id: 'docs-assets',
+      title: 'Documents & Assets',
+      defaultOpen: false,
+      items: [
+        { href: '/documents', label: 'Documents', icon: FileText },
+        { href: '/print-labels', label: 'Print Labels', icon: Printer },
+        { href: '/drive', label: 'Drive', icon: Upload },
+      ],
+    },
+    {
+      id: 'integrations',
+      title: 'Integrations',
+      defaultOpen: false,
+      items: [
+        { href: '/google-contacts', label: 'Google Contacts', icon: Contact },
+        { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet },
+        { href: '/integrations', label: 'Integrations', icon: Sparkles },
+      ],
+    },
+    {
+      id: 'tools',
+      title: 'Tools & Settings',
+      defaultOpen: false,
+      items: [
+        { href: '/import-export', label: 'Import & Export', icon: Upload },
+        { href: '/data-quality', label: 'Data Quality', icon: TrendingUp },
+        { href: '/settings', label: 'Settings', icon: Settings },
+      ],
+    },
+    {
+      id: 'resources',
+      title: 'Resources',
+      defaultOpen: false,
+      items: [
+        { href: '/future-features', label: 'Roadmap', icon: Sparkles },
+      ],
+    },
   ]
 
-  // Quick Actions grouped with separators
-  const quickActionsGroups = [
-    [
-      { href: '/contacts/new', label: 'Add Contact', icon: Plus, iconColor: colors.primary },
-      { href: '/commissions/new', label: 'New Transaction', icon: DollarSign, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c' },
-      { href: '/commissions', label: 'View Commissions', icon: Briefcase, iconColor: resolvedTheme === 'dark' ? '#f97316' : '#ea580c', exactMatch: true },
-    ],
-    [
-      { href: '/import-export', label: 'Import & Export', icon: Upload, iconColor: colors.primary },
-      { href: '/documents', label: 'Documents', icon: FileText, iconColor: resolvedTheme === 'dark' ? '#60a5fa' : '#2563eb' },
-      { href: '/print-labels', label: 'Print Labels', icon: Printer, iconColor: resolvedTheme === 'dark' ? '#60a5fa' : '#2563eb' },
-    ],
-    [
-      { href: '/google-contacts', label: 'Google Contacts', icon: Contact, iconColor: colors.primary },
-      { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet, iconColor: resolvedTheme === 'dark' ? '#60a5fa' : '#2563eb' },
-      { href: '/emails', label: 'Emails', icon: Mail, iconColor: resolvedTheme === 'dark' ? '#60a5fa' : '#2563eb' },
-      { href: '/emails/templates', label: 'Email Templates', icon: FileText, iconColor: resolvedTheme === 'dark' ? '#facc15' : '#ca8a04' },
-    ],
-    [
-      { href: '/data-quality', label: 'Data Quality', icon: CheckCircle2, iconColor: resolvedTheme === 'dark' ? '#a855f7' : '#9333ea' },
-      { href: '/settings', label: 'Settings', icon: Settings, iconColor: resolvedTheme === 'dark' ? '#a855f7' : '#9333ea' },
-    ],
+  const quickCreateOptions: QuickCreateOption[] = [
+    {
+      id: 'contact',
+      label: 'Add Contact',
+      description: 'Create a new CRM contact',
+      href: '/contacts/new',
+      icon: Users,
+      accent: colors.primary,
+    },
+    {
+      id: 'farm-contact',
+      label: 'Add Farm Contact',
+      description: 'Capture a farm lead quickly',
+      href: '/contacts/new?type=farm',
+      icon: Users,
+      accent: resolvedTheme === 'dark' ? '#22c55e' : '#16a34a',
+    },
+    {
+      id: 'transaction',
+      label: 'New Transaction',
+      description: 'Start a new deal record',
+      href: '/commissions/new',
+      icon: DollarSign,
+      accent: resolvedTheme === 'dark' ? '#f97316' : '#ea580c',
+    },
+    {
+      id: 'email',
+      label: 'New Email',
+      description: 'Compose from the email hub',
+      href: '/emails?compose=new',
+      icon: Mail,
+      accent: resolvedTheme === 'dark' ? '#60a5fa' : '#2563eb',
+    },
   ]
 
-  const futureFeaturesItems = [
-    { href: '/future-features', label: 'Coming Soon', icon: Sparkles },
-  ]
+  const handleQuickCreate = (href: string) => {
+    setShowQuickCreate(false)
+    if (!isDesktop) {
+      setIsMobileOpen(false)
+    }
+    router.push(href)
+  }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const stored = localStorage.getItem('sidebar.sectionState')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed && typeof parsed === 'object') {
+          setOpenSections(parsed)
+          return
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load sidebar section state:', error)
+    }
+    const defaults: Record<string, boolean> = {}
+    sections.forEach((section) => {
+      defaults[section.id] = section.defaultOpen ?? true
+    })
+    setOpenSections(defaults)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (Object.keys(openSections).length === 0) return
+    try {
+      localStorage.setItem('sidebar.sectionState', JSON.stringify(openSections))
+    } catch (error) {
+      console.error('Failed to persist sidebar section state:', error)
+    }
+  }, [openSections])
 
   const isActive = (href: string, exactMatch?: boolean, hash?: string) => {
     if (href === '/') {
@@ -262,349 +395,196 @@ export function Sidebar({ children }: SidebarProps) {
         </div>
 
         {/* Navigation Items */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const active = isActive(item.href)
-            // Dashboard uses primary color (green)
-            const iconColor = colors.primary
-            const iconBgColor = resolvedTheme === 'dark'
-              ? 'rgba(104, 159, 56, 0.15)'
-              : 'rgba(104, 159, 56, 0.1)'
-            
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                prefetch={false}
-                onClick={(e) => {
-                  console.log('Navigation clicked:', item.href)
-                  e.stopPropagation()
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  textDecoration: 'none',
-                  // Active state: more visible background with higher opacity/contrast
-                  backgroundColor: active 
-                    ? (resolvedTheme === 'dark' 
-                        ? 'rgba(104, 159, 56, 0.25)' // 25% opacity for dark mode
-                        : 'rgba(104, 159, 56, 0.12)') // 12% opacity for light mode
-                    : 'transparent',
-                  color: active ? colors.primary : colors.text.secondary,
-                  fontWeight: active ? '600' : '500',
-                  fontSize: '14px',
-                  transition: 'all 0.2s ease',
-                  // Force green left border for active items - brand guidelines (thicker for visibility)
-                  borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
-                  cursor: 'pointer',
-                  pointerEvents: 'auto',
-                  position: 'relative',
-                  zIndex: 100,
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    // More visible hover state
-                    e.currentTarget.style.backgroundColor = resolvedTheme === 'dark'
-                      ? 'rgba(104, 159, 56, 0.15)' // Subtle green tint on hover in dark mode
-                      : 'rgba(104, 159, 56, 0.08)' // Subtle green tint on hover in light mode
-                    e.currentTarget.style.borderLeftColor = 'rgba(104, 159, 56, 0.5)' // Visible green border on hover
-                    e.currentTarget.style.color = colors.primary // Change text to green on hover
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.borderLeftColor = 'transparent'
-                    e.currentTarget.style.color = colors.text.secondary // Restore original text color
-                  }
-                }}
-              >
-                <div 
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    backgroundColor: iconBgColor,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}
-                >
-                  <Icon 
-                    style={{ 
-                      width: '18px', 
-                      height: '18px',
-                      color: iconColor
-                    }} 
-                  />
-                </div>
-                {item.label}
-              </Link>
-            )
-          })}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+          <button
+            type="button"
+            {...getButtonPressHandlers('open-quick-create')}
+            onClick={() => setShowQuickCreate(true)}
+            style={getButtonPressStyle(
+              'open-quick-create',
+              {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: 'none',
+                backgroundColor: colors.primary,
+                color: '#ffffff',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxShadow: resolvedTheme === 'dark'
+                  ? '0 8px 18px rgba(104, 159, 56, 0.25)'
+                  : '0 10px 24px rgba(104, 159, 56, 0.22)',
+                transition: 'transform 0.2s ease',
+              },
+              colors.primary,
+              colors.primaryHover
+            )}
+          >
+            <Plus style={{ width: '16px', height: '16px' }} />
+            New
+          </button>
 
-          {/* Quick Actions Groups */}
-          {quickActionsGroups.map((group, groupIndex) => (
-            <div key={groupIndex}>
-              {groupIndex > 0 && (
-                <div style={{ 
-                  height: '1px', 
-                  backgroundColor: colors.border, 
-                  margin: '8px 0' 
-                }} />
-              )}
-              {group.map((action, actionIndex) => {
-                const Icon = action.icon
-                const active = isActive(action.href, action.exactMatch, (action as any).hash)
-                const iconBgColor = resolvedTheme === 'dark'
-                  ? (action.iconColor === colors.primary ? 'rgba(104, 159, 56, 0.15)' :
-                     action.iconColor === '#f97316' || action.iconColor === '#ea580c' ? 'rgba(249, 115, 22, 0.15)' :
-                     action.iconColor === '#60a5fa' || action.iconColor === '#2563eb' ? 'rgba(96, 165, 250, 0.15)' :
-                     'rgba(168, 85, 247, 0.15)')
-                  : (action.iconColor === colors.primary ? 'rgba(104, 159, 56, 0.1)' :
-                     action.iconColor === '#ea580c' ? 'rgba(234, 88, 12, 0.1)' :
-                     action.iconColor === '#2563eb' ? 'rgba(37, 99, 235, 0.1)' :
-                     'rgba(147, 51, 234, 0.1)')
-                
-                // Use a unique key combining group index, action index, and href/hash
-                const actionHash = (action as any).hash
-                const uniqueKey = `quick-action-${groupIndex}-${actionIndex}-${action.href}${actionHash || ''}`
-                
-                // For links with hashes, use regular anchor to avoid RSC prefetch issues
-                if (actionHash) {
-                  return (
-                    <a
-                      key={uniqueKey}
-                      href={action.href + actionHash}
-                      onClick={(e) => {
-                        console.log('Quick action clicked (hash):', action.href, actionHash)
-                        e.stopPropagation()
-                      }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '12px 16px',
-                        borderRadius: '10px',
-                        textDecoration: 'none',
-                        backgroundColor: active 
-                          ? (resolvedTheme === 'dark' 
-                              ? 'rgba(104, 159, 56, 0.25)'
-                              : 'rgba(104, 159, 56, 0.12)')
-                          : 'transparent',
-                        color: active ? colors.primary : colors.text.secondary,
-                        fontWeight: active ? '600' : '500',
-                        fontSize: '14px',
-                        transition: 'all 0.2s ease',
-                        borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
-                        cursor: 'pointer',
-                        pointerEvents: 'auto',
-                        position: 'relative',
-                        zIndex: 100,
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!active) {
-                          e.currentTarget.style.backgroundColor = resolvedTheme === 'dark'
-                            ? 'rgba(104, 159, 56, 0.15)'
-                            : 'rgba(104, 159, 56, 0.08)'
-                          e.currentTarget.style.borderLeftColor = 'rgba(104, 159, 56, 0.5)'
-                          e.currentTarget.style.color = colors.primary
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!active) {
-                          e.currentTarget.style.backgroundColor = 'transparent'
-                          e.currentTarget.style.borderLeftColor = 'transparent'
-                          e.currentTarget.style.color = colors.text.secondary
-                        }
-                      }}
-                    >
-                      <div 
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '8px',
-                          backgroundColor: iconBgColor,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}
-                      >
-                        <Icon 
-                          style={{ 
-                            width: '18px', 
-                            height: '18px',
-                            color: action.iconColor
-                          }} 
-                        />
-                      </div>
-                      {action.label}
-                    </a>
-                  )
-                }
-                
-                return (
-                  <Link
-                    key={uniqueKey}
-                    href={action.href}
-                    prefetch={false}
-                    onClick={(e) => {
-                      console.log('Quick action clicked:', action.href)
-                      e.stopPropagation()
-                    }}
-                    style={{
+          {sections.map((section) => {
+            const open = openSections[section.id] ?? section.defaultOpen ?? true
+            return (
+              <div key={section.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers(`toggle-${section.id}`)}
+                  onClick={() =>
+                    setOpenSections((prev) => {
+                      const current = prev[section.id]
+                      const next = current === undefined ? !(section.defaultOpen ?? true) : !current
+                      return { ...prev, [section.id]: next }
+                    })
+                  }
+                  style={getButtonPressStyle(
+                    `toggle-${section.id}`,
+                    {
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '12px',
-                      padding: '12px 16px',
-                      borderRadius: '10px',
-                      textDecoration: 'none',
-                      backgroundColor: active 
-                        ? (resolvedTheme === 'dark' 
-                            ? 'rgba(104, 159, 56, 0.25)'
-                            : 'rgba(104, 159, 56, 0.12)')
-                        : 'transparent',
-                      color: active ? colors.primary : colors.text.secondary,
-                      fontWeight: active ? '600' : '500',
-                      fontSize: '14px',
-                      transition: 'all 0.2s ease',
-                      borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
+                      justifyContent: 'space-between',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      color: colors.text.secondary,
+                      fontSize: '12px',
+                      letterSpacing: '0.02em',
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
                       cursor: 'pointer',
-                      pointerEvents: 'auto',
-                      position: 'relative',
-                      zIndex: 100,
+                    },
+                    'transparent',
+                    colors.cardHover
+                  )}
+                >
+                  <span>{section.title}</span>
+                  <ChevronDown
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      transition: 'transform 0.2s ease',
+                      transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
                     }}
-                    onMouseEnter={(e) => {
-                      if (!active) {
-                        e.currentTarget.style.backgroundColor = resolvedTheme === 'dark'
-                          ? 'rgba(104, 159, 56, 0.15)'
-                          : 'rgba(104, 159, 56, 0.08)'
-                        e.currentTarget.style.borderLeftColor = 'rgba(104, 159, 56, 0.5)'
-                        e.currentTarget.style.color = colors.primary
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!active) {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                        e.currentTarget.style.borderLeftColor = 'transparent'
-                        e.currentTarget.style.color = colors.text.secondary
-                      }
-                    }}
-                  >
-                    <div 
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '8px',
-                        backgroundColor: iconBgColor,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}
-                    >
-                      <Icon 
-                        style={{ 
-                          width: '18px', 
-                          height: '18px',
-                          color: action.iconColor
-                        }} 
-                      />
-                    </div>
-                    {action.label}
-                  </Link>
-                )
-              })}
-            </div>
-          ))}
-
-          {/* Future Features Section */}
-          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${colors.border}` }}>
-            <div style={{ padding: '0 16px 8px 16px', marginBottom: '4px' }}>
-              <p style={{ 
-                fontSize: '11px', 
-                fontWeight: '600', 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.5px',
-                color: colors.text.tertiary,
-                margin: '0'
-              }}>
-                Coming Soon
-              </p>
-            </div>
-            {futureFeaturesItems.map((item) => {
-              const Icon = item.icon
-              const active = isActive(item.href)
-              
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  prefetch={false}
-                  onClick={(e) => {
-                    console.log('Future feature clicked:', item.href)
-                    e.stopPropagation()
-                  }}
+                  />
+                </button>
+                <div
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '12px 16px',
-                    borderRadius: '10px',
-                    textDecoration: 'none',
-                    backgroundColor: active 
-                      ? (resolvedTheme === 'dark' 
-                          ? 'rgba(104, 159, 56, 0.25)'
-                          : 'rgba(104, 159, 56, 0.12)')
-                      : 'transparent',
-                    color: active ? colors.primary : colors.text.tertiary,
-                    fontWeight: active ? '600' : '500',
-                    fontSize: '14px',
-                    transition: 'all 0.2s ease',
-                    borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
-                    opacity: 0.8,
-                    cursor: 'pointer',
-                    pointerEvents: 'auto',
-                    position: 'relative',
-                    zIndex: 100,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.backgroundColor = resolvedTheme === 'dark'
-                        ? 'rgba(104, 159, 56, 0.15)'
-                        : 'rgba(104, 159, 56, 0.08)'
-                      e.currentTarget.style.borderLeftColor = 'rgba(104, 159, 56, 0.5)'
-                      e.currentTarget.style.color = colors.primary
-                      e.currentTarget.style.opacity = '1'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.backgroundColor = 'transparent'
-                      e.currentTarget.style.borderLeftColor = 'transparent'
-                      e.currentTarget.style.color = colors.text.tertiary
-                      e.currentTarget.style.opacity = '0.8'
-                    }
+                    flexDirection: 'column',
+                    gap: '4px',
+                    overflow: 'hidden',
+                    maxHeight: open ? `${section.items.length * 48 + 16}px` : '0px',
+                    transition: 'max-height 0.25s ease',
                   }}
                 >
-                  <Icon 
-                    style={{ 
-                      width: '20px', 
-                      height: '20px',
-                      color: active ? colors.primary : 'inherit'
-                    }} 
-                  />
-                  {item.label}
-                </Link>
-              )
-            })}
-          </div>
+                  {section.items.map((item) => {
+                    const Icon = item.icon
+                    const active = isActive(item.href, item.exactMatch, item.hash)
+                    const iconColor = item.iconColor || colors.primary
+                    const iconBgColor = resolvedTheme === 'dark'
+                      ? 'rgba(255, 255, 255, 0.06)'
+                      : 'rgba(15, 23, 42, 0.04)'
+
+                    const content = (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 14px 10px 20px',
+                          marginLeft: '4px',
+                          borderRadius: '10px',
+                          backgroundColor: active
+                            ? (resolvedTheme === 'dark'
+                                ? 'rgba(104, 159, 56, 0.22)'
+                                : 'rgba(104, 159, 56, 0.12)')
+                            : 'transparent',
+                          color: active ? colors.primary : colors.text.secondary,
+                          fontWeight: active ? 600 : 500,
+                          fontSize: '13px',
+                          borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease, border-color 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.backgroundColor = resolvedTheme === 'dark'
+                              ? 'rgba(255,255,255,0.06)'
+                              : 'rgba(15,23,42,0.04)'
+                            e.currentTarget.style.borderLeftColor = 'rgba(104, 159, 56, 0.4)'
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                            e.currentTarget.style.borderLeftColor = 'transparent'
+                          }
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '8px',
+                            backgroundColor: iconBgColor,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Icon
+                            style={{
+                              width: '16px',
+                              height: '16px',
+                              color: iconColor,
+                            }}
+                          />
+                        </div>
+                        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {item.label}
+                        </span>
+                      </div>
+                    )
+
+                    if (item.hash) {
+                      return (
+                        <a
+                          key={`${section.id}-${item.href}${item.hash}`}
+                          href={`${item.href}${item.hash}`}
+                          style={{ textDecoration: 'none' }}
+                        >
+                          {content}
+                        </a>
+                      )
+                    }
+
+                    return (
+                      <Link
+                        key={`${section.id}-${item.href}`}
+                        href={item.href}
+                        prefetch={false}
+                        style={{ textDecoration: 'none' }}
+                        onClick={() => {
+                          if (!isDesktop) {
+                            setIsMobileOpen(false)
+                          }
+                        }}
+                      >
+                        {content}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
         </nav>
 
         {/* Footer in Sidebar */}
@@ -624,6 +604,145 @@ export function Sidebar({ children }: SidebarProps) {
           }}
           onClick={() => setIsMobileOpen(false)}
         />
+      )}
+
+      {showQuickCreate && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.55)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 1200,
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            padding: '80px 24px',
+          }}
+          onClick={() => setShowQuickCreate(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '680px',
+              background: colors.surface,
+              borderRadius: '18px',
+              padding: '28px 32px 36px 32px',
+              boxShadow: resolvedTheme === 'dark'
+                ? '0 32px 60px rgba(15, 23, 42, 0.65)'
+                : '0 34px 68px rgba(15, 23, 42, 0.18)',
+              border: `1px solid ${colors.border}`,
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: colors.text.primary }}>Start something new</h3>
+                <p style={{ margin: '6px 0 0 0', fontSize: '14px', color: colors.text.secondary }}>
+                  Pick one of the quick actions to jump right into creating.
+                </p>
+              </div>
+              <button
+                type="button"
+                {...getButtonPressHandlers('close-quick-create')}
+                onClick={() => setShowQuickCreate(false)}
+                style={getButtonPressStyle(
+                  'close-quick-create',
+                  {
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)',
+                    color: colors.text.secondary,
+                    cursor: 'pointer',
+                  },
+                  'transparent',
+                  colors.cardHover
+                )}
+              >
+                <X style={{ width: '18px', height: '18px' }} />
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '14px',
+                marginTop: '20px',
+              }}
+            >
+              {quickCreateOptions.map((option) => {
+                const Icon = option.icon
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => handleQuickCreate(option.href)}
+                    style={{
+                      textAlign: 'left',
+                      padding: '18px 20px',
+                      borderRadius: '16px',
+                      border: `1px solid ${colors.border}`,
+                      background: resolvedTheme === 'dark'
+                        ? 'rgba(255, 255, 255, 0.04)'
+                        : '#f9fafb',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '14px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+                      boxShadow: '0 6px 18px rgba(15, 23, 42, 0.04)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)'
+                      e.currentTarget.style.boxShadow = resolvedTheme === 'dark'
+                        ? '0 14px 28px rgba(0,0,0,0.35)'
+                        : '0 18px 34px rgba(15,23,42,0.12)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = '0 6px 18px rgba(15, 23, 42, 0.04)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          background: option.accent || colors.primary,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ffffff',
+                          boxShadow: resolvedTheme === 'dark'
+                            ? `0 8px 18px ${option.accent ? `${option.accent}55` : 'rgba(104,159,56,0.35)'}`
+                            : `0 10px 22px ${option.accent ? `${option.accent}33` : 'rgba(104,159,56,0.25)'}`,
+                        }}
+                      >
+                        <Icon style={{ width: '18px', height: '18px' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>
+                          {option.label}
+                        </span>
+                        <span style={{ fontSize: '13px', color: colors.text.secondary }}>
+                          {option.description}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Main Content */}
