@@ -50,7 +50,7 @@ const stageAccent = (status: string, colors: ReturnType<typeof useThemeStyles>['
   }
 }
 
-export function ListingDetailModal({ listing, onClose, onOpenPipeline, onToggleTask, isUpdating }: ListingDetailModalProps) {
+export function ListingDetailModal({ listing, onClose, onOpenPipeline, onToggleTask, isUpdating, onAddTask, onUpdateTask, onAttachDocument }: ListingDetailModalProps) {
   const { colors, card, cardWithLeftBorder, text, spacing } = useThemeStyles()
 
   if (!listing) return null

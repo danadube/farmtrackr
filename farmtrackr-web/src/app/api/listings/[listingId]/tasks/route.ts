@@ -33,3 +33,4 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: 'Failed to create listing task' }, { status: 500 })
   }
 }
+
