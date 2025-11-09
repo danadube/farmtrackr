@@ -42,6 +42,89 @@ const PIPELINE_INCLUDE = Prisma.validator<Prisma.ListingPipelineTemplateInclude>
 export type ListingWithRelations = Prisma.ListingGetPayload<{ include: typeof LISTING_INCLUDE }>
 export type ListingPipelineTemplateWithStages = Prisma.ListingPipelineTemplateGetPayload<{ include: typeof PIPELINE_INCLUDE }>
 
+type StageTemplateDefinition = {
+  key: string
+  name: string
+  order: number
+  durationDays?: number
+  trigger?: string
+  tasks: Array<{
+    name: string
+    dueInDays?: number
+    autoRepeat?: boolean
+    autoComplete?: boolean
+    triggerOn?: string
+  }>
+}
+
+type PipelineTemplateDefinition = {
+  name: string
+  type: string
+  description?: string
+  stages: StageTemplateDefinition[]
+}
+
+const SELLER_PIPELINE_TEMPLATE: PipelineTemplateDefinition = {
+  name: 'Listing Transaction (Seller Side)',
+  type: 'listing',
+  description: 'End-to-end workflow for representing the seller from pre-listing through close of escrow in California.',
+  stages: [
+    {
+      key: 'pre_listing',
+      name: 'Pre-Listing',
+      order: 1,
+      durationDays: 7,
+      trigger: 'listingAgreementSigned',
+      tasks: [
+        { name: 'Conduct pre-listing consultation', dueInDays: 1 },
+        { name: 'Confirm ownership & title (Prelim report)', dueInDays: 2 },
+        { name: 'Gather property data & disclosures', dueInDays: 3 },
+        { name: 'Execute Residential Listing Agreement (RLA)', dueInDays: 1 },
+        { name: 'Provide Seller’s Advisory (SA)', dueInDays: 1 },
+        { name: 'Obtain Agency Disclosure (AD)', dueInDays: 1 },
+        { name: 'Sign Wire Fraud Advisory (WFA)', dueInDays: 1 },
+        { name: 'Complete Property Photo & Internet Advertising Agreement (PRA)', dueInDays: 1 },
+        { name: 'Input listing data into MLS', dueInDays: 2 },
+        { name: 'Order Natural Hazard Disclosure (NHD)', dueInDays: 2 }
+      ]
+    },
+    {
+      key: 'active_listing',
+      name: 'Active Listing',
+      order: 2,
+      durationDays: 21,
+      trigger: 'listingPublished',
+      tasks: [
+        { name: 'Complete TDS and SPQ', dueInDays: 2 },
+        { name: 'Provide additional disclosures (MCA, ESD, FLD, FHDS, WCMD, AVID)', dueInDays: 5 },
+        { name: 'Coordinate optional inspections (home, pest, roof)', dueInDays: 7 },
+        { name: 'Launch marketing campaign (MLS, photos, flyers, open houses)', dueInDays: 1 },
+        { name: 'Review offers received', dueInDays: 3, autoRepeat: true },
+        { name: 'Negotiate and accept offer', triggerOn: 'offerAccepted' }
+      ]
+    },
+    {
+      key: 'escrow',
+      name: 'Escrow / Under Contract',
+      order: 3,
+      durationDays: 30,
+      trigger: 'escrowOpened',
+      tasks: [
+        { name: 'Verify EMD deposit with escrow', dueInDays: 3 },
+        { name: 'Provide all disclosures to buyer', dueInDays: 5 },
+        { name: 'Coordinate buyer inspections', dueInDays: 10 },
+        { name: 'Respond to Request for Repairs (RFR/SCO)', dueInDays: 5 },
+        { name: 'Monitor appraisal and loan progress', dueInDays: 7, autoRepeat: true },
+        { name: 'Track contingency removals (CR)', dueInDays: 17 },
+        { name: 'Prepare closing documents', dueInDays: 28 },
+        { name: 'Verify final walkthrough (VP)', dueInDays: 29 },
+        { name: 'Confirm closing and fund disbursement', triggerOn: 'closingConfirmed' },
+        { name: 'Send post-closing package to seller', dueInDays: 31 }
+      ]
+    }
+  ]
+}
+
 const DASHBOARD_SEED_LISTINGS: Array<{
   title: string
   address: string
@@ -86,7 +169,7 @@ const DASHBOARD_SEED_LISTINGS: Array<{
 
 async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
   const existing = await client.listingPipelineTemplate.findFirst({
-    where: { name: 'Listing Transaction (Seller Side)' },
+    where: { name: SELLER_PIPELINE_TEMPLATE.name },
     select: { id: true }
   })
 
@@ -99,85 +182,55 @@ async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
     }
   }
 
-  try {
-    const fs = await import('fs/promises')
-    const path = await import('path')
-    const root = process.cwd()
-    const filePath = path.join(root, 'docs', 'pipelines', 'listing-transaction-seller.json')
-    const raw = await fs.readFile(filePath, 'utf-8')
-    const pipeline = JSON.parse(raw) as {
-      name: string
-      type?: string
-      description?: string
-      stages?: Array<{
-        key?: string
-        name: string
-        order?: number
-        durationDays?: number
-        trigger?: string
-        tasks?: Array<{
-          name: string
-          dueInDays?: number
-          autoRepeat?: boolean
-          autoComplete?: boolean
-          triggerOn?: string
-        }>
-      }>
-    }
-
-    const template = existing
-      ? await client.listingPipelineTemplate.update({
-          where: { id: existing.id },
-          data: {
-            description: pipeline.description ?? null,
-            type: pipeline.type ?? 'listing'
-          }
-        })
-      : await client.listingPipelineTemplate.create({
-          data: {
-            name: pipeline.name,
-            description: pipeline.description ?? null,
-            type: pipeline.type ?? 'listing'
-          }
-        })
-
-    await client.listingStageTemplate.deleteMany({
-      where: { pipelineTemplateId: template.id }
-    })
-
-    const stages = pipeline.stages ?? []
-    for (let index = 0; index < stages.length; index++) {
-      const stage = stages[index]
-      const stageRecord = await client.listingStageTemplate.create({
+  const template = existing
+    ? await client.listingPipelineTemplate.update({
+        where: { id: existing.id },
         data: {
-          pipelineTemplateId: template.id,
-          key: stage.key ?? stage.name.toLowerCase().replace(/\s+/g, '_'),
-          name: stage.name,
-          sequence: stage.order ?? index + 1,
-          durationDays: stage.durationDays ?? null,
-          trigger: stage.trigger ?? null
+          description: SELLER_PIPELINE_TEMPLATE.description ?? null,
+          type: SELLER_PIPELINE_TEMPLATE.type
+        }
+      })
+    : await client.listingPipelineTemplate.create({
+        data: {
+          name: SELLER_PIPELINE_TEMPLATE.name,
+          description: SELLER_PIPELINE_TEMPLATE.description ?? null,
+          type: SELLER_PIPELINE_TEMPLATE.type
         }
       })
 
-      if (stage.tasks?.length) {
-        await client.listingTaskTemplate.createMany({
-          data: stage.tasks.map((task) => ({
-            stageTemplateId: stageRecord.id,
-            name: task.name,
-            dueInDays: task.dueInDays ?? null,
-            autoRepeat: task.autoRepeat ?? false,
-            autoComplete: task.autoComplete ?? false,
-            triggerOn: task.triggerOn ?? null
-          }))
-        })
-      }
-    }
+  await client.listingStageTemplate.deleteMany({
+    where: { pipelineTemplateId: template.id }
+  })
 
-    return template.id
-  } catch (error) {
-    console.error('Failed to seed listing pipeline template:', error)
-    return existing?.id ?? null
+  const stages = SELLER_PIPELINE_TEMPLATE.stages
+  for (let index = 0; index < stages.length; index++) {
+    const stage = stages[index]
+    const stageRecord = await client.listingStageTemplate.create({
+      data: {
+        pipelineTemplateId: template.id,
+        key: stage.key,
+        name: stage.name,
+        sequence: stage.order ?? index + 1,
+        durationDays: stage.durationDays ?? null,
+        trigger: stage.trigger ?? null
+      }
+    })
+
+    if (stage.tasks.length) {
+      await client.listingTaskTemplate.createMany({
+        data: stage.tasks.map((task) => ({
+          stageTemplateId: stageRecord.id,
+          name: task.name,
+          dueInDays: task.dueInDays ?? null,
+          autoRepeat: task.autoRepeat ?? false,
+          autoComplete: task.autoComplete ?? false,
+          triggerOn: task.triggerOn ?? null
+        }))
+      })
+    }
   }
+
+  return template.id
 }
 
 async function ensureSeedListings(client: PrismaClient = prisma) {
@@ -192,18 +245,13 @@ async function ensureSeedListings(client: PrismaClient = prisma) {
   }
 
   for (const seed of DASHBOARD_SEED_LISTINGS) {
-    const existing = await client.listing.findFirst({
+    await client.listing.deleteMany({
       where: {
         address: seed.address,
         city: seed.city,
         state: seed.state
-      },
-      select: { id: true }
+      }
     })
-
-    if (existing) {
-      continue
-    }
 
     const created = await createListingFromTemplate(
       {
