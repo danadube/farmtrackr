@@ -135,16 +135,10 @@ const stageStatusBadgeLabel = (status: ListingStageClient['status']) => {
 }
 
 const TaskList = ({
-  listingId,
   stageInstance,
-  onToggleTask,
-  disabled,
   colors
 }: {
-  listingId: string
   stageInstance: ListingStageClient | null
-  onToggleTask: (listingId: string, task: ListingTaskClient, completed: boolean) => void
-  disabled: boolean
   colors: ReturnType<typeof useThemeStyles>['colors']
 }) => {
   if (!stageInstance || stageInstance.tasks.length === 0) {
@@ -164,66 +158,31 @@ const TaskList = ({
     )
   }
 
+  const completedCount = stageInstance.tasks.filter((task) => task.completed).length
+  const totalCount = stageInstance.tasks.length
+
+  const latestCompletionDate = stageInstance.tasks
+    .filter((task) => task.completedAt)
+    .map((task) => task.completedAt!)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0]
+
   return (
-    <ul
-      style={{ listStyle: 'none', margin: 0, padding: 0 }}
-      onClick={(event) => event.stopPropagation()}
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px'
+      }}
     >
-      {stageInstance.tasks.map((task) => (
-        <li
-          key={task.id}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            padding: '10px 0',
-            borderBottom: `1px solid ${colors.border}`
-          }}
-        >
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              flex: 1,
-              cursor: disabled ? 'not-allowed' : 'pointer'
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={task.completed}
-              onChange={() => onToggleTask(listingId, task, !task.completed)}
-              disabled={disabled}
-              style={{ width: '16px', height: '16px', cursor: disabled ? 'not-allowed' : 'pointer' }}
-              onClick={(event) => event.stopPropagation()}
-            />
-            <span
-              style={{
-                fontSize: '14px',
-                color: task.completed ? colors.text.secondary : colors.text.primary,
-                textDecoration: task.completed ? 'line-through' : 'none',
-                transition: 'color 0.2s ease'
-              }}
-            >
-              {task.name}
-            </span>
-          </label>
-          <div style={{ textAlign: 'right' }}>
-            {task.dueDate ? (
-              <div style={{ fontSize: '12px', color: colors.text.secondary }}>Due {formatDate(task.dueDate)}</div>
-            ) : task.dueInDays !== null ? (
-              <div style={{ fontSize: '12px', color: colors.text.secondary }}>
-                Due in {task.dueInDays} day{task.dueInDays === 1 ? '' : 's'}
-              </div>
-            ) : null}
-            {task.completed && task.completedAt ? (
-              <div style={{ fontSize: '12px', color: colors.success }}>Done {formatDate(task.completedAt)}</div>
-            ) : null}
-          </div>
-        </li>
-      ))}
-    </ul>
+      <div style={{ fontSize: '13px', color: colors.text.secondary }}>
+        Completed {completedCount} of {totalCount} task{totalCount === 1 ? '' : 's'}
+      </div>
+      {latestCompletionDate ? (
+        <div style={{ fontSize: '12px', color: colors.success }}>
+          Latest completion: {formatDate(latestCompletionDate)}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -664,10 +623,7 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
 
         {cardExpanded ? (
           <TaskList
-            listingId={listing.id}
             stageInstance={stageInstance}
-            onToggleTask={handleToggleTask}
-            disabled={disableActions}
             colors={colors}
           />
         ) : null}
