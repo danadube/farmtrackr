@@ -1,0 +1,56 @@
+{
+  "name": "Buyer Transaction (Buyer Side)",
+  "type": "buyer",
+  "description": "Pipeline for representing a buyer from consultation through close of escrow in California.",
+  "stages": [
+    {
+      "key": "pre_offer",
+      "name": "Pre-Offer",
+      "order": 1,
+      "durationDays": 5,
+      "trigger": "buyerRepresentationSigned",
+      "tasks": [
+        { "name": "Conduct buyer consultation", "dueInDays": 1 },
+        { "name": "Provide Agency Disclosure (AD)", "dueInDays": 1 },
+        { "name": "Sign Buyer Representation Agreement (BRE)", "dueInDays": 1 },
+        { "name": "Provide Buyer’s Inspection Advisory (BIA)", "dueInDays": 1 },
+        { "name": "Sign Wire Fraud Advisory (WFA)", "dueInDays": 1 },
+        { "name": "Obtain pre-approval letter", "dueInDays": 2 },
+        { "name": "Collect proof of funds", "dueInDays": 2 }
+      ]
+    },
+    {
+      "key": "offer_submission",
+      "name": "Offer Submission",
+      "order": 2,
+      "durationDays": 3,
+      "trigger": "offerDrafted",
+      "tasks": [
+        { "name": "Prepare Residential Purchase Agreement (RPA)", "dueInDays": 1 },
+        { "name": "Attach applicable addenda (PA, FA, COP, etc.)", "dueInDays": 1 },
+        { "name": "Include buyer advisories", "dueInDays": 1 },
+        { "name": "Submit complete offer package", "dueInDays": 2 },
+        { "name": "Negotiate offer and obtain acceptance", "triggerOn": "offerAccepted" }
+      ]
+    },
+    {
+      "key": "buyer_escrow",
+      "name": "Escrow / Under Contract",
+      "order": 3,
+      "durationDays": 30,
+      "trigger": "buyerEscrowOpened",
+      "tasks": [
+        { "name": "Deposit EMD within 3 business days", "dueInDays": 3 },
+        { "name": "Receive and review seller disclosures (TDS, SPQ, NHD)", "dueInDays": 5 },
+        { "name": "Schedule inspections and review reports", "dueInDays": 10 },
+        { "name": "Submit Request for Repairs (RRR)", "dueInDays": 15 },
+        { "name": "Coordinate appraisal and lender process", "dueInDays": 7, "autoRepeat": true },
+        { "name": "Track contingency removals (CR)", "dueInDays": 21 },
+        { "name": "Conduct final walkthrough (VP)", "dueInDays": 29 },
+        { "name": "Sign loan and escrow documents", "dueInDays": 30 },
+        { "name": "Confirm funding and key delivery", "triggerOn": "closingConfirmed" }
+      ]
+    }
+  ]
+}
+

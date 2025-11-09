@@ -71,6 +71,8 @@ model GeneralContact {
   dateCreated        DateTime @default(now())
   dateModified       DateTime @updatedAt
 
+  listings           Listing[] @relation("ListingBuyerClient")
+
   @@map("general_contacts")
 }
 
@@ -98,7 +100,7 @@ model LabelTemplate {
 
 model Document {
   id          String   @id @default(cuid())
-  title       String
+  title       String   @unique
   description String?
   type        String? // Document type: 'template', 'contact', 'report', or null
   content     String? // Store document content as text
@@ -225,6 +227,9 @@ model Transaction {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  listingId String? @unique
+  listing   Listing? @relation(name: "ListingTransaction", fields: [listingId], references: [id], onDelete: SetNull)
+
   // Relations
   emails EmailLog[]
 
@@ -235,6 +240,155 @@ model Transaction {
   @@index([status])
   @@index([clientEmail])
   @@map("transactions")
+}
+
+model ListingPipelineTemplate {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  type        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stages ListingStageTemplate[]
+
+  @@map("listing_pipeline_templates")
+}
+
+model ListingStageTemplate {
+  id                  String   @id @default(cuid())
+  pipelineTemplateId  String
+  key                 String
+  name                String
+  sequence            Int
+  durationDays        Int?
+  trigger             String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  pipelineTemplate ListingPipelineTemplate @relation(fields: [pipelineTemplateId], references: [id], onDelete: Cascade)
+  tasks             ListingTaskTemplate[]
+
+  @@map("listing_stage_templates")
+  @@index([pipelineTemplateId])
+}
+
+model ListingTaskTemplate {
+  id               String   @id @default(cuid())
+  stageTemplateId  String
+  name             String
+  dueInDays        Int?
+  autoRepeat       Boolean  @default(false)
+  autoComplete     Boolean  @default(false)
+  triggerOn        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  stageTemplate ListingStageTemplate @relation(fields: [stageTemplateId], references: [id], onDelete: Cascade)
+
+  @@map("listing_task_templates")
+  @@index([stageTemplateId])
+}
+
+model Listing {
+  id                   String          @id @default(cuid())
+  title                String?
+  status               ListingStatus   @default(DRAFT)
+  pipelineTemplateId   String?
+  currentStageKey      String?
+  currentStageStartedAt DateTime?
+  sellerId             String?
+  buyerClientId        String?
+  address              String?
+  city                 String?
+  state                String?
+  zipCode              String?
+  listPrice            Decimal?        @db.Decimal(12, 2)
+  targetListDate       DateTime?
+  projectedCloseDate   DateTime?
+  notes                String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  pipelineTemplate ListingPipelineTemplate? @relation(fields: [pipelineTemplateId], references: [id], onDelete: SetNull)
+  seller           FarmContact?             @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  buyerClient      GeneralContact?          @relation("ListingBuyerClient", fields: [buyerClientId], references: [id], onDelete: SetNull)
+  stageInstances   ListingStageInstance[]
+  taskInstances    ListingTaskInstance[]
+  transaction      Transaction?             @relation(name: "ListingTransaction")
+
+  @@map("listings")
+  @@index([pipelineTemplateId])
+  @@index([sellerId])
+  @@index([buyerClientId])
+  @@index([status])
+}
+
+model ListingStageInstance {
+  id               String             @id @default(cuid())
+  listingId        String
+  stageTemplateId  String?
+  key              String?
+  name             String?
+  order            Int
+  status           ListingStageStatus @default(ACTIVE)
+  startedAt        DateTime           @default(now())
+  completedAt      DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  listing       Listing               @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  stageTemplate ListingStageTemplate? @relation(fields: [stageTemplateId], references: [id], onDelete: SetNull)
+  tasks         ListingTaskInstance[]
+
+  @@map("listing_stage_instances")
+  @@index([listingId])
+  @@index([stageTemplateId])
+  @@index([status])
+}
+
+model ListingTaskInstance {
+  id              String   @id @default(cuid())
+  listingId       String
+  stageInstanceId String?
+  taskTemplateId  String?
+  name            String
+  dueDate         DateTime?
+  dueInDays       Int?
+  completed       Boolean  @default(false)
+  completedAt     DateTime?
+  notes           String?
+  autoRepeat      Boolean  @default(false)
+  autoComplete    Boolean  @default(false)
+  triggerOn       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  listing       Listing               @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  stageInstance ListingStageInstance? @relation(fields: [stageInstanceId], references: [id], onDelete: SetNull)
+  taskTemplate  ListingTaskTemplate?  @relation(fields: [taskTemplateId], references: [id], onDelete: SetNull)
+
+  @@map("listing_task_instances")
+  @@index([listingId])
+  @@index([stageInstanceId])
+  @@index([taskTemplateId])
+  @@index([completed])
+  @@index([dueDate])
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  UNDER_CONTRACT
+  CLOSED
+  CANCELLED
+  ARCHIVED
+}
+
+enum ListingStageStatus {
+  ACTIVE
+  COMPLETED
+  SKIPPED
 }
 
 // Email Log - Hybrid storage (metadata in DB, full content in Google Sheets)

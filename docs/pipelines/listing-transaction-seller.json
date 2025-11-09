@@ -1,0 +1,61 @@
+{
+  "name": "Listing Transaction (Seller Side)",
+  "type": "listing",
+  "description": "End-to-end workflow for representing the seller from pre-listing through close of escrow in California.",
+  "stages": [
+    {
+      "key": "pre_listing",
+      "name": "Pre-Listing",
+      "order": 1,
+      "durationDays": 7,
+      "trigger": "listingAgreementSigned",
+      "tasks": [
+        { "name": "Conduct pre-listing consultation", "dueInDays": 1 },
+        { "name": "Confirm ownership & title (Prelim report)", "dueInDays": 2 },
+        { "name": "Gather property data & disclosures", "dueInDays": 3 },
+        { "name": "Execute Residential Listing Agreement (RLA)", "dueInDays": 1 },
+        { "name": "Provide Seller’s Advisory (SA)", "dueInDays": 1 },
+        { "name": "Obtain Agency Disclosure (AD)", "dueInDays": 1 },
+        { "name": "Sign Wire Fraud Advisory (WFA)", "dueInDays": 1 },
+        { "name": "Complete Property Photo & Internet Advertising Agreement (PRA)", "dueInDays": 1 },
+        { "name": "Input listing data into MLS", "dueInDays": 2 },
+        { "name": "Order Natural Hazard Disclosure (NHD)", "dueInDays": 2 }
+      ]
+    },
+    {
+      "key": "active_listing",
+      "name": "Active Listing",
+      "order": 2,
+      "durationDays": 21,
+      "trigger": "listingPublished",
+      "tasks": [
+        { "name": "Complete TDS and SPQ", "dueInDays": 2 },
+        { "name": "Provide additional disclosures (MCA, ESD, FLD, FHDS, WCMD, AVID)", "dueInDays": 5 },
+        { "name": "Coordinate optional inspections (home, pest, roof)", "dueInDays": 7 },
+        { "name": "Launch marketing campaign (MLS, photos, flyers, open houses)", "dueInDays": 1 },
+        { "name": "Review offers received", "dueInDays": 3, "autoRepeat": true },
+        { "name": "Negotiate and accept offer", "triggerOn": "offerAccepted" }
+      ]
+    },
+    {
+      "key": "escrow",
+      "name": "Escrow / Under Contract",
+      "order": 3,
+      "durationDays": 30,
+      "trigger": "escrowOpened",
+      "tasks": [
+        { "name": "Verify EMD deposit with escrow", "dueInDays": 3 },
+        { "name": "Provide all disclosures to buyer", "dueInDays": 5 },
+        { "name": "Coordinate buyer inspections", "dueInDays": 10 },
+        { "name": "Respond to Request for Repairs (RFR/SCO)", "dueInDays": 5 },
+        { "name": "Monitor appraisal and loan progress", "dueInDays": 7, "autoRepeat": true },
+        { "name": "Track contingency removals (CR)", "dueInDays": 17 },
+        { "name": "Prepare closing documents", "dueInDays": 28 },
+        { "name": "Verify final walkthrough (VP)", "dueInDays": 29 },
+        { "name": "Confirm closing and fund disbursement", "triggerOn": "closingConfirmed" },
+        { "name": "Send post-closing package to seller", "dueInDays": 31 }
+      ]
+    }
+  ]
+}
+

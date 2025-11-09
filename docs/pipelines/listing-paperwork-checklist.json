@@ -1,0 +1,49 @@
+{
+  "name": "Listing Paperwork Checklist",
+  "description": "Document requirements for a California residential listing.",
+  "sections": [
+    {
+      "title": "Agency & Advisory Forms",
+      "items": [
+        "Residential Listing Agreement (RLA)",
+        "Agency Disclosure (AD)",
+        "Wire Fraud Advisory (WFA)",
+        "Seller’s Advisory (SA)",
+        "Property Photo & Internet Advertising Agreement (PRA)"
+      ]
+    },
+    {
+      "title": "Seller Disclosures",
+      "items": [
+        "Transfer Disclosure Statement (TDS)",
+        "Seller Property Questionnaire (SPQ)",
+        "Market Conditions Advisory (MCA)",
+        "Earthquake Safety Disclosure (ESD)",
+        "Lead Based Paint Disclosure (FLD)",
+        "Fire Hardening & Defensible Space (FHDS)",
+        "Water-Conserving Plumbing Fixtures (WCMD)",
+        "Agent Visual Inspection Disclosure (AVID)"
+      ]
+    },
+    {
+      "title": "Supporting Reports",
+      "items": [
+        "Preliminary Title Report",
+        "Natural Hazard Disclosure (NHD)",
+        "Home Inspection Report",
+        "Pest Inspection Report",
+        "Roof Inspection Report"
+      ]
+    },
+    {
+      "title": "MLS & Marketing",
+      "items": [
+        "MLS Input Sheet",
+        "Professional Photography Order",
+        "Marketing Copy Approval",
+        "Open House Schedule"
+      ]
+    }
+  ]
+}
+

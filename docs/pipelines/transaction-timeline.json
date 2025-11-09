@@ -1,0 +1,18 @@
+{
+  "name": "California Listing Transaction Timeline",
+  "description": "Suggested milestone timeline for a standard 30-day escrow following an accepted offer.",
+  "milestones": [
+    { "day": 0, "label": "Offer Accepted / Escrow Opened", "category": "Escrow" },
+    { "day": 3, "label": "Earnest Money Deposit (EMD) received", "category": "Finance" },
+    { "day": 5, "label": "Seller disclosures delivered (TDS, SPQ, NHD)", "category": "Disclosures" },
+    { "day": 7, "label": "Buyer inspections completed", "category": "Inspections" },
+    { "day": 10, "label": "Request for Repairs negotiated", "category": "Negotiations" },
+    { "day": 17, "label": "Loan & appraisal contingencies removed", "category": "Contingencies" },
+    { "day": 21, "label": "All contingencies removed (CR form)", "category": "Contingencies" },
+    { "day": 25, "label": "Loan docs delivered to escrow", "category": "Finance" },
+    { "day": 28, "label": "Seller/buyer signing appointments", "category": "Escrow" },
+    { "day": 29, "label": "Final walkthrough (VP form)", "category": "Inspections" },
+    { "day": 30, "label": "Closing – Record/keys to buyer, proceeds to seller", "category": "Closing" }
+  ]
+}
+

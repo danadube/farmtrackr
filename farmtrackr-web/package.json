@@ -11,7 +11,8 @@
     "vercel-build": "prisma generate && prisma db push && next build",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
-    "import-data": "tsx scripts/import-local-data.ts"
+    "import-data": "tsx scripts/import-local-data.ts",
+    "seed:pipelines": "tsx scripts/seed-pipelines.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.18.0",
