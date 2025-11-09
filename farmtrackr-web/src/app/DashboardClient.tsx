@@ -1514,7 +1514,6 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                                   : 'transparent',
                               colors.cardHover
                             )}
-                        onDoubleClick={() => handleOpenQuickEventModal(day.date)}
                             onMouseEnter={(e) => {
                               if (!day.isSelected && !pressedButtons.has(`calendar-day-${idx}`)) {
                                 (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
