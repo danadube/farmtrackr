@@ -14,12 +14,14 @@ interface ContactFormProps {
   initialData?: ContactFormData
   contactId?: string
   isEditing?: boolean
+  variant?: 'farm' | 'general'
 }
 
-export default function ContactForm({ initialData, contactId, isEditing = false }: ContactFormProps) {
+export default function ContactForm({ initialData, contactId, isEditing = false, variant = 'farm' }: ContactFormProps) {
   const { colors, isDark, card, background, text } = useThemeStyles()
   const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const router = useRouter()
+  const isFarmVariant = variant === 'farm'
   const [formData, setFormData] = useState<ContactFormData>(
     initialData || {
       firstName: '',
@@ -56,6 +58,8 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
 
   // Fetch unique farms from existing contacts
   useEffect(() => {
+    if (!isFarmVariant) return
+
     const fetchFarms = async () => {
       try {
         const response = await fetch('/api/contacts')
@@ -75,7 +79,7 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
       }
     }
     fetchFarms()
-  }, [])
+  }, [isFarmVariant])
 
   type NoteEntry = { id: string; html: string; createdAt: string }
   const parseNotes = (notesRaw: string | undefined | null): NoteEntry[] => {
@@ -276,10 +280,14 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                         margin: '0 0 4px 0'
                       }}
                     >
-                      {isEditing ? 'Edit Contact' : 'Add New Contact'}
+                      {isEditing ? 'Edit Contact' : isFarmVariant ? 'Add Farm Contact' : 'Add Contact'}
                     </h1>
                     <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '16px', margin: '0' }}>
-                      {isEditing ? 'Update contact information' : 'Create a new farm contact'}
+                      {isEditing
+                        ? 'Update contact information'
+                        : isFarmVariant
+                        ? 'Create a new farm contact'
+                        : 'Create a new contact without farm details'}
                     </p>
                   </div>
                 </div>
@@ -397,36 +405,38 @@ export default function ContactForm({ initialData, contactId, isEditing = false 
                     />
                   </div>
 
-                  <div style={{ boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
-                      Farm
-                    </label>
-                    <select
-                      value={formData.farm || ''}
-                      onChange={(e) => handleInputChange('farm', e.target.value)}
-                      style={{
-                        ...getInputStyle(false),
-                        cursor: 'pointer',
-                        appearance: 'auto'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = colors.success
-                        e.target.style.outline = 'none'
-                        e.target.style.boxShadow = `0 0 0 3px ${colors.success}20`
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = colors.border
-                        e.target.style.boxShadow = 'none'
-                      }}
-                    >
-                      <option value="">Select a farm</option>
-                      {availableFarms.map((farm) => (
-                        <option key={farm} value={farm}>
-                          {farm}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {isFarmVariant && (
+                    <div style={{ boxSizing: 'border-box' }}>
+                      <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
+                        Farm
+                      </label>
+                      <select
+                        value={formData.farm || ''}
+                        onChange={(e) => handleInputChange('farm', e.target.value)}
+                        style={{
+                          ...getInputStyle(false),
+                          cursor: 'pointer',
+                          appearance: 'auto'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = colors.success
+                          e.target.style.outline = 'none'
+                          e.target.style.boxShadow = `0 0 0 3px ${colors.success}20`
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = colors.border
+                          e.target.style.boxShadow = 'none'
+                        }}
+                      >
+                        <option value="">Select a farm</option>
+                        {availableFarms.map((farm) => (
+                          <option key={farm} value={farm}>
+                            {farm}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
 

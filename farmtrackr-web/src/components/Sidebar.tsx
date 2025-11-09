@@ -144,7 +144,6 @@ export function Sidebar({ children }: SidebarProps) {
       title: 'Integrations',
       defaultOpen: false,
       items: [
-        { href: '/google-contacts', label: 'Google Contacts', icon: Contact },
         { href: '/google-sheets', label: 'Google Sheets', icon: FileSpreadsheet },
         { href: '/integrations', label: 'Integrations', icon: Sparkles },
       ],
@@ -172,9 +171,9 @@ export function Sidebar({ children }: SidebarProps) {
   const quickCreateOptions: QuickCreateOption[] = [
     {
       id: 'contact',
-      label: 'Add Contact',
+      label: 'Add General Contact',
       description: 'Create a new CRM contact',
-      href: '/contacts/new',
+      href: '/contacts/new?type=general',
       icon: Users,
       accent: colors.primary,
     },

@@ -120,7 +120,7 @@ export default function GoogleContactDetailPage() {
               The contact you're looking for doesn't exist.
             </p>
             <Link 
-              href="/google-contacts"
+              href="/contacts?view=google"
               style={{
                 padding: '12px 24px',
                 backgroundColor: colors.success,
@@ -138,7 +138,7 @@ export default function GoogleContactDetailPage() {
                 e.currentTarget.style.backgroundColor = colors.success
               }}
             >
-              Back to Google Contacts
+              Back to Contacts
             </Link>
           </div>
         </div>

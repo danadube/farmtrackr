@@ -614,7 +614,7 @@ export default function ImportExportPage() {
                   </span>
                 </Link>
                 <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>•</span>
-                <Link href="/google-contacts" style={{ color: 'rgba(255, 255, 255, 0.95)', textDecoration: 'none' }}>
+                <Link href="/contacts?view=google" style={{ color: 'rgba(255, 255, 255, 0.95)', textDecoration: 'none' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                     <Users style={{ width: '14px', height: '14px' }} />
                     Sync Google Contacts
@@ -1745,7 +1745,7 @@ export default function ImportExportPage() {
                         Google Sheets
                       </Link>
                       {' or '}
-                      <Link href="/google-contacts" style={{ color: colors.primary, textDecoration: 'underline' }}>
+                      <Link href="/contacts?view=google" style={{ color: colors.primary, textDecoration: 'underline' }}>
                         Google Contacts
                       </Link>
                       {' '}pages for sync options.

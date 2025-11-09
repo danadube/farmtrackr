@@ -915,7 +915,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               >
                 {/* Google Contacts */}
                 <Link 
-                  href="/google-contacts"
+                  href="/contacts?view=google"
                   {...getButtonPressHandlers('dashboard-google-contacts')}
                   style={getButtonPressStyle(
                     'dashboard-google-contacts',
