@@ -16,7 +16,7 @@ import {
   Edit,
   Mail,
   MapPin,
-  Printer,
+  Plus,
 } from 'lucide-react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
@@ -196,17 +196,6 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
       return sortOrder === 'asc' ? comparison : -comparison
     })
 
-  const longestNameWidth = useMemo(() => {
-    if (filteredContacts.length === 0) return 200
-    const longestName = filteredContacts.reduce((longest, contact) => {
-      const name =
-        contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact'
-      return name.length > longest.length ? name : longest
-    }, '')
-    const estimatedTextWidth = longestName.length * 8.5
-    return Math.max(200, 48 + 12 + estimatedTextWidth + 16)
-  }, [filteredContacts])
-
   const handleImport = async () => {
     if (googleConnectionStatus !== 'connected') {
       setImportStatus({
@@ -295,10 +284,6 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
           paddingBottom: '32px',
         }}
       >
-        {viewSwitcher && (
-          <div style={{ marginBottom: '20px' }}>{viewSwitcher}</div>
-        )}
-
         <div style={{ marginBottom: '32px' }}>
           <div style={{ padding: '24px', ...headerTint(colors.primary) }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -315,7 +300,7 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
               >
                 <Contact style={{ width: '24px', height: '24px', color: isDark ? '#ffffff' : colors.primary }} />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between', gap: '16px' }}>
                 <div>
                   <h1
                     style={{
@@ -331,12 +316,12 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                     Manage contacts synced from your Google account
                   </p>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                   <Link
-                    href="/print-labels"
-                    {...getButtonPressHandlers('print-labels-google')}
+                    href="/contacts/new?type=general"
+                    {...getButtonPressHandlers('add-google-contact')}
                     style={getButtonPressStyle(
-                      'print-labels-google',
+                      'add-google-contact',
                       {
                         padding: '12px 24px',
                         backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -354,8 +339,8 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                       'rgba(255, 255, 255, 0.25)'
                     )}
                   >
-                    <Printer style={{ width: '16px', height: '16px' }} />
-                    Print Labels
+                    <Plus style={{ width: '16px', height: '16px' }} />
+                    Add Contact
                   </Link>
                   <button
                     type="button"
@@ -389,6 +374,10 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
             <div style={headerDivider} />
           </div>
         </div>
+
+        {viewSwitcher && (
+          <div style={{ marginBottom: '24px' }}>{viewSwitcher}</div>
+        )}
 
         <div
           style={{
@@ -705,75 +694,101 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                     style={{
                       borderBottom: `1px solid ${colors.border}`,
                       padding: '20px 24px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div
-                        style={{
-                          width: '48px',
-                          height: '48px',
-                          borderRadius: '12px',
-                          backgroundColor: colors.iconBg,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 600,
-                          fontSize: '16px',
-                          color: colors.primary,
-                          minWidth: `${Math.min(longestNameWidth, 300)}px`,
-                        }}
-                      >
-                        {displayName.charAt(0).toUpperCase() || 'C'}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0 0 4px 0' }}>
-                          {displayName}
-                        </h3>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: '13px', ...text.secondary }}>
-                          {contact.email1 && (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                              <Mail style={{ width: '14px', height: '14px', color: colors.primary }} />
-                              {contact.email1}
-                            </span>
-                          )}
-                          {contact.city && (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                              <MapPin style={{ width: '14px', height: '14px', color: colors.info }} />
-                              {contact.city}
-                              {contact.state ? `, ${contact.state}` : ''}
-                            </span>
-                          )}
-                          {contact.phoneNumber1 && (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                              <PhoneIcon style={{ width: '14px', height: '14px', color: colors.success }} />
-                              {formatPhoneNumber(contact.phoneNumber1)}
-                            </span>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, 0.9fr)',
+                        gap: '24px',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                        <div
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '12px',
+                            backgroundColor: colors.iconBg,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 600,
+                            fontSize: '16px',
+                            color: colors.primary,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {displayName.charAt(0).toUpperCase() || 'C'}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <h3 style={{ fontSize: '15px', fontWeight: 600, ...text.primary, margin: '0 0 4px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {displayName}
+                          </h3>
+                          {(contact.organizationName && contact.organizationName !== displayName) && (
+                            <p style={{ fontSize: '12px', ...text.tertiary, margin: 0 }}>{contact.organizationName}</p>
                           )}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', ...text.secondary }}>
+                        {contact.email1 && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            <Mail style={{ width: '14px', height: '14px', color: colors.primary }} />
+                            {contact.email1}
+                          </span>
+                        )}
+                        {contact.phoneNumber1 && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            <PhoneIcon style={{ width: '14px', height: '14px', color: colors.success }} />
+                            {formatPhoneNumber(contact.phoneNumber1)}
+                          </span>
+                        )}
+                        {(contact.city || contact.state) && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            <MapPin style={{ width: '14px', height: '14px', color: colors.info }} />
+                            {contact.city}
+                            {contact.state ? `, ${contact.state}` : ''}
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         {contact.tags && contact.tags.length > 0 && (
-                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                            {contact.tags.map((tag) => (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'flex-end' }}>
+                            {contact.tags.slice(0, 3).map((tag) => (
                               <span
                                 key={tag}
                                 style={{
                                   padding: '4px 10px',
                                   borderRadius: '999px',
-                                  backgroundColor: colors.primaryLight,
-                                  color: colors.primary,
+                                  backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : colors.primaryLight,
+                                  color: isDark ? '#ffffff' : colors.primary,
                                   fontSize: '12px',
                                   fontWeight: 600,
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.03em',
+                                  border: isDark ? '1px solid rgba(255,255,255,0.2)' : `1px solid ${colors.primary}`,
                                 }}
                               >
                                 {tag}
                               </span>
                             ))}
+                            {contact.tags.length > 3 && (
+                              <span
+                                style={{
+                                  padding: '2px 8px',
+                                  fontSize: '11px',
+                                  backgroundColor: colors.cardHover,
+                                  ...text.secondary,
+                                  borderRadius: '999px',
+                                  fontWeight: '600',
+                                }}
+                              >
+                                +{contact.tags.length - 3}
+                              </span>
+                            )}
                           </div>
                         )}
                         <button

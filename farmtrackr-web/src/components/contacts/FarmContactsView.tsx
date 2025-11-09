@@ -21,7 +21,7 @@ import { normalizeFarmName } from '@/lib/farmNames'
 import { ContactBadge } from '@/components/ContactBadge'
 
 export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode }) {
-  const { colors, card, headerTint, headerDivider, background, text } = useThemeStyles()
+  const { colors, isDark, card, headerTint, headerDivider, background, text } = useThemeStyles()
   const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
 
   const [contacts, setContacts] = useState<FarmContact[]>([])
@@ -161,10 +161,6 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
           paddingBottom: '32px',
         }}
       >
-        {viewSwitcher && (
-          <div style={{ marginBottom: '20px' }}>{viewSwitcher}</div>
-        )}
-
         {loading ? (
           <div
             style={{
@@ -218,35 +214,7 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
                   </p>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Link
-                  href="/contacts/new?type=general"
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    color: '#ffffff',
-                    textDecoration: 'none',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.2s ease',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.25)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
-                  }}
-                >
-                  <Plus style={{ width: '16px', height: '16px' }} />
-                  Add General Contact
-                </Link>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 <Link
                   href="/contacts/new?type=farm"
                   style={{
@@ -276,8 +244,8 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
                   href="/print-labels"
                   style={{
                     padding: '12px 24px',
-                    backgroundColor: colors.primaryLight,
-                    color: '#ffffff',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.15)' : colors.primaryLight,
+                    color: isDark ? '#ffffff' : colors.primary,
                     textDecoration: 'none',
                     borderRadius: '10px',
                     fontSize: '14px',
@@ -286,15 +254,19 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
                     alignItems: 'center',
                     gap: '8px',
                     transition: 'all 0.2s ease',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.3)' : `1px solid ${colors.primary}`,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.25)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)'
+                    e.currentTarget.style.backgroundColor = isDark
+                      ? 'rgba(255, 255, 255, 0.25)'
+                      : colors.primary
+                    e.currentTarget.style.color = '#ffffff'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primaryLight
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+                    e.currentTarget.style.backgroundColor = isDark
+                      ? 'rgba(255, 255, 255, 0.15)'
+                      : colors.primaryLight
+                    e.currentTarget.style.color = isDark ? '#ffffff' : colors.primary
                   }}
                 >
                   <Printer style={{ width: '16px', height: '16px' }} />
@@ -305,6 +277,10 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
             <div style={headerDivider} />
           </div>
         </div>
+
+        {viewSwitcher && (
+          <div style={{ marginBottom: '24px' }}>{viewSwitcher}</div>
+        )}
 
         {/* Stats Summary */}
         <div
@@ -642,53 +618,97 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
                     colors.cardHover
                   )}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <ContactBadge contact={contact} size="md" shape="circle" />
-                    <div style={{ flex: '1' }}>
-                      <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '14px', margin: '0 0 4px 0' }}>
-                        {contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim()}
-                      </h3>
-                      <p style={{ fontSize: '13px', ...text.secondary, margin: '0 0 2px 0' }}>
-                        {contact.farm ? normalizeFarmName(contact.farm) : ''}
-                      </p>
-                      {contact.email1 && (
-                        <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>{contact.email1}</p>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, 0.8fr)',
+                      gap: '24px',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                      <ContactBadge contact={contact} size="md" shape="circle" />
+                      <div style={{ minWidth: 0 }}>
+                        <h3 style={{ fontWeight: '600', ...text.primary, fontSize: '15px', margin: '0 0 4px 0', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim()}
+                        </h3>
+                        {contact.farm && (
+                          <p style={{ fontSize: '13px', ...text.secondary, margin: 0 }}>
+                            {normalizeFarmName(contact.farm)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', ...text.secondary }}>
+                      {contact.email1 && <span>{contact.email1}</span>}
+                      {contact.phoneNumber1 && <span>{contact.phoneNumber1}</span>}
+                      <span style={{ fontSize: '12px', ...text.tertiary }}>
+                        Added {contact.dateCreated.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      {contact.tags && contact.tags.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'flex-end' }}>
+                          {contact.tags.slice(0, 3).map((tag, idx) => (
+                            <span
+                              key={idx}
+                              style={{
+                                padding: '2px 10px',
+                                fontSize: '11px',
+                                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : colors.primaryLight,
+                                color: isDark ? '#ffffff' : colors.primary,
+                                borderRadius: '999px',
+                                fontWeight: 600,
+                                border: isDark ? '1px solid rgba(255,255,255,0.2)' : `1px solid ${colors.primary}`,
+                              }}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          {contact.tags.length > 3 && (
+                            <span
+                              style={{
+                                padding: '2px 8px',
+                                fontSize: '11px',
+                                backgroundColor: colors.cardHover,
+                                ...text.secondary,
+                                borderRadius: '999px',
+                                fontWeight: '600',
+                              }}
+                            >
+                              +{contact.tags.length - 3}
+                            </span>
+                          )}
+                        </div>
                       )}
+                      <button
+                        style={{
+                          padding: '8px',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background-color 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = colors.cardHover
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                        }}
+                      >
+                        <MoreHorizontal style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                      </button>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: '12px', ...text.secondary, margin: '0' }}>
-                        {contact.dateCreated.toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                    <button
-                      style={{
-                        padding: '8px',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'background-color 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = colors.cardHover
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                      }}
-                    >
-                      <MoreHorizontal style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
-                    </button>
                   </div>
                 </Link>
               ))}
