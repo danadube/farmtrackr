@@ -42,6 +42,190 @@ const PIPELINE_INCLUDE = Prisma.validator<Prisma.ListingPipelineTemplateInclude>
 export type ListingWithRelations = Prisma.ListingGetPayload<{ include: typeof LISTING_INCLUDE }>
 export type ListingPipelineTemplateWithStages = Prisma.ListingPipelineTemplateGetPayload<{ include: typeof PIPELINE_INCLUDE }>
 
+const DASHBOARD_SEED_LISTINGS: Array<{
+  title: string
+  address: string
+  city: string
+  state: string
+  zipCode: string
+  listPrice: number
+  targetStage: 'pre_listing' | 'active_listing' | 'escrow'
+  notes?: string
+}> = [
+  {
+    title: '46552 Arapahoe Circle',
+    address: '46552 Arapahoe Circle',
+    city: 'Indian Wells',
+    state: 'CA',
+    zipCode: '92210',
+    listPrice: 569000,
+    targetStage: 'active_listing',
+    notes: 'Mountain Cove single-family retreat with vaulted ceilings, dual patios, and turnkey furnishings.'
+  },
+  {
+    title: '479 Desert Holly Drive',
+    address: '479 Desert Holly Drive',
+    city: 'Palm Desert',
+    state: 'CA',
+    zipCode: '92211',
+    listPrice: 930000,
+    targetStage: 'escrow',
+    notes: 'Indian Ridge Country Club condo on the 7th fairway with retractable awnings and full-time amenities.'
+  },
+  {
+    title: '55359 Winged Foot',
+    address: '55359 Winged Foot',
+    city: 'La Quinta',
+    state: 'CA',
+    zipCode: '92253',
+    listPrice: 439000,
+    targetStage: 'pre_listing',
+    notes: 'PGA West fifth-floor condominium with double fairway views and fully remodeled interiors.'
+  }
+]
+
+async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
+  const existing = await client.listingPipelineTemplate.findFirst({
+    where: { name: 'Listing Transaction (Seller Side)' },
+    select: { id: true }
+  })
+
+  if (existing) {
+    const stageCount = await client.listingStageTemplate.count({
+      where: { pipelineTemplateId: existing.id }
+    })
+    if (stageCount > 0) {
+      return existing.id
+    }
+  }
+
+  try {
+    const fs = await import('fs/promises')
+    const path = await import('path')
+    const root = process.cwd()
+    const filePath = path.join(root, 'docs', 'pipelines', 'listing-transaction-seller.json')
+    const raw = await fs.readFile(filePath, 'utf-8')
+    const pipeline = JSON.parse(raw) as {
+      name: string
+      type?: string
+      description?: string
+      stages?: Array<{
+        key?: string
+        name: string
+        order?: number
+        durationDays?: number
+        trigger?: string
+        tasks?: Array<{
+          name: string
+          dueInDays?: number
+          autoRepeat?: boolean
+          autoComplete?: boolean
+          triggerOn?: string
+        }>
+      }>
+    }
+
+    const template = existing
+      ? await client.listingPipelineTemplate.update({
+          where: { id: existing.id },
+          data: {
+            description: pipeline.description ?? null,
+            type: pipeline.type ?? 'listing'
+          }
+        })
+      : await client.listingPipelineTemplate.create({
+          data: {
+            name: pipeline.name,
+            description: pipeline.description ?? null,
+            type: pipeline.type ?? 'listing'
+          }
+        })
+
+    await client.listingStageTemplate.deleteMany({
+      where: { pipelineTemplateId: template.id }
+    })
+
+    for (const [index, stage] of (pipeline.stages ?? []).entries()) {
+      const stageRecord = await client.listingStageTemplate.create({
+        data: {
+          pipelineTemplateId: template.id,
+          key: stage.key ?? stage.name.toLowerCase().replace(/\s+/g, '_'),
+          name: stage.name,
+          sequence: stage.order ?? index + 1,
+          durationDays: stage.durationDays ?? null,
+          trigger: stage.trigger ?? null
+        }
+      })
+
+      if (stage.tasks?.length) {
+        await client.listingTaskTemplate.createMany({
+          data: stage.tasks.map((task) => ({
+            stageTemplateId: stageRecord.id,
+            name: task.name,
+            dueInDays: task.dueInDays ?? null,
+            autoRepeat: task.autoRepeat ?? false,
+            autoComplete: task.autoComplete ?? false,
+            triggerOn: task.triggerOn ?? null
+          }))
+        })
+      }
+    }
+
+    return template.id
+  } catch (error) {
+    console.error('Failed to seed listing pipeline template:', error)
+    return existing?.id ?? null
+  }
+}
+
+async function ensureSeedListings(client: PrismaClient = prisma) {
+  if (DASHBOARD_SEED_LISTINGS.length === 0) {
+    return
+  }
+
+  const pipelineTemplateId = await ensureListingPipelineTemplate(client)
+
+  if (!pipelineTemplateId) {
+    return
+  }
+
+  for (const seed of DASHBOARD_SEED_LISTINGS) {
+    const existing = await client.listing.findFirst({
+      where: {
+        address: seed.address,
+        city: seed.city,
+        state: seed.state
+      },
+      select: { id: true }
+    })
+
+    if (existing) {
+      continue
+    }
+
+    const created = await createListingFromTemplate(
+      {
+        pipelineTemplateId,
+        title: seed.title,
+        address: seed.address,
+        city: seed.city,
+        state: seed.state,
+        zipCode: seed.zipCode,
+        listPrice: seed.listPrice,
+        notes: seed.notes
+      },
+      client
+    )
+
+    if (seed.targetStage === 'active_listing') {
+      await advanceListingStage(created.id, client)
+    } else if (seed.targetStage === 'escrow') {
+      await advanceListingStage(created.id, client)
+      await advanceListingStage(created.id, client)
+    }
+  }
+}
+
 export type CreateListingInput = {
   pipelineTemplateId: string
   title?: string
@@ -116,6 +300,7 @@ export async function getListingPipelineTemplates(client: PrismaClient = prisma)
 }
 
 export async function getListings(client: PrismaClient = prisma) {
+  await ensureSeedListings(client)
   return client.listing.findMany({
     orderBy: { createdAt: 'desc' },
     include: LISTING_INCLUDE

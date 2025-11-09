@@ -1,6 +1,7 @@
 import { Stats, FarmContact } from '@/types'
 import DashboardClient from './DashboardClient'
 import { prisma } from '@/lib/prisma'
+import { getListings, serializeListing } from '@/lib/listings'
 
 // Force dynamic rendering (don't pre-render at build time)
 export const dynamic = 'force-dynamic'
@@ -58,6 +59,7 @@ async function getStats(): Promise<Stats> {
 export default async function DashboardPage() {
   const contacts = await getContacts()
   const stats = await getStats()
+  const listings = await getListings()
   
-  return <DashboardClient contacts={contacts} stats={stats} />
+  return <DashboardClient contacts={contacts} stats={stats} listings={listings.map(serializeListing)} />
 }
