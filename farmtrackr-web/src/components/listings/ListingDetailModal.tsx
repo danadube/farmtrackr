@@ -19,6 +19,18 @@ import {
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import type { ListingClient, ListingTaskClient } from '@/types/listings'
 
+type ListingDetailModalProps = {
+  listing: ListingClient | null
+  onClose: () => void
+  onOpenPipeline?: () => void
+  onToggleTask?: (listingId: string, task: ListingTaskClient, completed: boolean) => void
+  onToggleSkip?: (listingId: string, task: ListingTaskClient, skipped: boolean) => void
+  isUpdating?: boolean
+  onAddTask?: (stageInstanceId: string, payload: { name: string; dueDate?: string | null }) => Promise<void> | void
+  onUpdateTask?: (taskId: string, updates: { name?: string; dueDate?: string | null }) => Promise<void> | void
+  onAttachDocument?: (taskId: string, file: File | null) => Promise<void> | void
+}
+
 type TaskCategory = 'document' | 'marketing' | 'workflow'
 
 const DOCUMENT_KEYWORDS = ['agreement', 'disclosure', 'contract', 'escrow', 'contingency', 'document', 'advisory', 'package', 'instructions', 'deed', 'hud', 'rpa', 'settlement', 'closing', 'verification', 'repair', 'offer', 'addenda', 'invoice', 'statement']
