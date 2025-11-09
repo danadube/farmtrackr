@@ -3,7 +3,7 @@
 import { Prisma, PrismaClient } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
-const LISTING_INCLUDE = {
+const LISTING_INCLUDE = Prisma.validator<Prisma.ListingInclude>()({
   pipelineTemplate: {
     select: { id: true, name: true, type: true }
   },
@@ -14,14 +14,14 @@ const LISTING_INCLUDE = {
     select: { id: true, firstName: true, lastName: true, organizationName: true, email1: true, phoneNumber1: true }
   },
   stageInstances: {
-    orderBy: { order: 'asc' as const },
+    orderBy: { order: 'asc' as Prisma.SortOrder },
     include: {
       tasks: {
-        orderBy: { createdAt: 'asc' }
+        orderBy: { createdAt: 'asc' as Prisma.SortOrder }
       }
     }
   }
-}
+})
 
 export type CreateListingInput = {
   pipelineTemplateId: string
