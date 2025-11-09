@@ -97,6 +97,17 @@ const formatCurrency = (value: number | null | undefined) => {
   }).format(Number(value))
 }
 
+const stageAccent = (status: string, colors: ReturnType<typeof useThemeStyles>['colors']) => {
+  switch (status) {
+    case 'COMPLETED':
+      return colors.success
+    case 'ACTIVE':
+      return colors.primary
+    default:
+      return colors.warning
+  }
+}
+
 const categorizeTaskName = (name: string | null | undefined): TaskCategory => {
   if (!name) return 'workflow'
   const normalized = normalizeTaskName(name)
