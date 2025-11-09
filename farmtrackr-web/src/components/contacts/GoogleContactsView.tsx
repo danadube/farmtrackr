@@ -687,6 +687,7 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                   contact.organizationName ||
                   `${contact.firstName || ''} ${contact.lastName || ''}`.trim() ||
                   'Unnamed Contact'
+                const tags = contact.tags || []
 
                 return (
                   <div
@@ -755,17 +756,17 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        {contact.tags && contact.tags.length > 0 && (
+                        {tags.length > 0 && (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'flex-end' }}>
-                            {contact.tags.slice(0, 3).map((tag) => (
+                            {tags.slice(0, 3).map((tag) => (
                               <span
                                 key={tag}
                                 style={{
-                                  padding: '4px 10px',
+                                  padding: '3px 8px',
                                   borderRadius: '999px',
                                   backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : colors.primaryLight,
                                   color: isDark ? '#ffffff' : colors.primary,
-                                  fontSize: '12px',
+                                  fontSize: '11px',
                                   fontWeight: 600,
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.03em',
@@ -775,7 +776,7 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                                 {tag}
                               </span>
                             ))}
-                            {contact.tags.length > 3 && (
+                            {tags.length > 3 && (
                               <span
                                 style={{
                                   padding: '2px 8px',
@@ -786,7 +787,7 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                                   fontWeight: '600',
                                 }}
                               >
-                                +{contact.tags.length - 3}
+                                +{tags.length - 3}
                               </span>
                             )}
                           </div>
