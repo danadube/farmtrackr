@@ -152,6 +152,13 @@ function dashboardInputStyle(
   }
 }
 
+function formatScheduleHeading(date: Date) {
+  const today = new Date()
+  const isToday = date.toDateString() === today.toDateString()
+  const headingDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+  return isToday ? `Today's Schedule` : `Schedule – ${headingDate}`
+}
+
 interface Transaction {
   id: string
   address: string | null
@@ -192,6 +199,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
   const [googleContactsCount, setGoogleContactsCount] = useState<number>(0)
   const [currentDateTime, setCurrentDateTime] = useState<Date>(new Date())
   const [calendarDate, setCalendarDate] = useState<Date>(new Date())
+  const [calendarSelectedDate, setCalendarSelectedDate] = useState<Date>(new Date())
   const [calendarAppointments, setCalendarAppointments] = useState<Array<{ id: string; title: string; date: Date; time?: string; color?: string }>>([])
   const [isCalendarLoading, setIsCalendarLoading] = useState(false)
   const [calendarError, setCalendarError] = useState<string | null>(null)
@@ -269,7 +277,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
   }
 
   const handleOpenQuickEventModal = (targetDate?: Date) => {
-    const baseDate = targetDate ?? new Date()
+    const baseDate = targetDate ?? calendarSelectedDate ?? new Date()
     setQuickEventForm({
       title: '',
       date: formatInputDate(baseDate),
@@ -1347,6 +1355,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         const newDate = new Date(calendarDate)
                         newDate.setMonth(newDate.getMonth() - 1)
                         setCalendarDate(newDate)
+                        setCalendarSelectedDate(newDate)
                       }}
                       {...getButtonPressHandlers('calendar-prev')}
                       style={getButtonPressStyle(
@@ -1373,6 +1382,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         const newDate = new Date(calendarDate)
                         newDate.setMonth(newDate.getMonth() + 1)
                         setCalendarDate(newDate)
+                        setCalendarSelectedDate(newDate)
                       }}
                       {...getButtonPressHandlers('calendar-next')}
                       style={getButtonPressStyle(
@@ -1423,8 +1433,8 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                         style={{
                           textAlign: 'center',
                           fontSize: '11px',
-                          fontWeight: '600',
-                          ...text.secondary,
+                          fontWeight: '700',
+                          color: text.primary.color,
                           padding: `${spacing(0.75)} ${spacing(0.25)}`
                         }}
                       >
@@ -1443,18 +1453,20 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       const startDate = new Date(firstDay)
                       startDate.setDate(startDate.getDate() - startDate.getDay())
                       
-                      const days: Array<{ date: Date; isCurrentMonth: boolean; isToday: boolean }> = []
+                      const days: Array<{ date: Date; isCurrentMonth: boolean; isToday: boolean; isSelected: boolean }> = []
                       const currentDate = new Date(startDate)
                       
                       for (let i = 0; i < 42; i++) {
                         const isCurrentMonth = currentDate.getMonth() === month
                         const today = new Date()
                         const isToday = currentDate.toDateString() === today.toDateString()
+                        const isSelected = currentDate.toDateString() === calendarSelectedDate.toDateString()
                         
                         days.push({
                           date: new Date(currentDate),
                           isCurrentMonth,
-                          isToday
+                          isToday,
+                          isSelected
                         })
                         
                         currentDate.setDate(currentDate.getDate() + 1)
@@ -1477,10 +1489,16 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                                 minHeight: spacing(3.5),
                                 padding: spacing(0.25),
                                 borderRadius: spacing(0.5),
-                                backgroundColor: day.isToday 
-                                  ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
-                                  : 'transparent',
-                                border: day.isToday ? `2px solid ${colors.primary}` : '2px solid transparent',
+                                backgroundColor: day.isSelected
+                                  ? (isDark ? 'rgba(104, 159, 56, 0.25)' : 'rgba(104, 159, 56, 0.15)')
+                                  : day.isToday
+                                    ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
+                                    : 'transparent',
+                                border: day.isSelected
+                                  ? `2px solid ${colors.primary}`
+                                  : day.isToday
+                                    ? `1px solid ${colors.primary}`
+                                    : '1px solid transparent',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
@@ -1489,29 +1507,46 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                                 overflow: 'hidden',
                                 boxSizing: 'border-box'
                               },
-                              day.isToday 
-                                ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
-                                : 'transparent',
+                              day.isSelected
+                                ? (isDark ? 'rgba(104, 159, 56, 0.25)' : 'rgba(104, 159, 56, 0.15)')
+                                : day.isToday 
+                                  ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
+                                  : 'transparent',
                               colors.cardHover
                             )}
                         onDoubleClick={() => handleOpenQuickEventModal(day.date)}
                             onMouseEnter={(e) => {
-                              if (!day.isToday && !pressedButtons.has(`calendar-day-${idx}`)) {
+                              if (!day.isSelected && !pressedButtons.has(`calendar-day-${idx}`)) {
                                 (e.currentTarget as HTMLElement).style.backgroundColor = colors.cardHover
                               }
                             }}
                             onMouseLeave={(e) => {
-                              if (!day.isToday && !pressedButtons.has(`calendar-day-${idx}`)) {
-                                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                              if (!day.isSelected && !pressedButtons.has(`calendar-day-${idx}`)) {
+                                (e.currentTarget as HTMLElement).style.backgroundColor = day.isToday
+                                  ? (isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)')
+                                  : 'transparent'
                               }
+                            }}
+                            onClick={() => {
+                              setCalendarSelectedDate(day.date)
+                              if (day.date.getMonth() !== calendarDate.getMonth()) {
+                                setCalendarDate(new Date(day.date))
+                              }
+                            }}
+                            onDoubleClick={() => {
+                              setCalendarSelectedDate(day.date)
+                              if (day.date.getMonth() !== calendarDate.getMonth()) {
+                                setCalendarDate(new Date(day.date))
+                              }
+                              handleOpenQuickEventModal(day.date)
                             }}
                           >
                             <span
                               style={{
                                 fontSize: '11px',
-                                fontWeight: day.isToday ? '700' : '500',
+                                fontWeight: day.isSelected ? '700' : day.isToday ? '600' : '500',
                                 color: day.isCurrentMonth 
-                                  ? (day.isToday ? colors.primary : text.primary.color)
+                                  ? (day.isSelected ? colors.primary : day.isToday ? colors.primary : text.primary.color)
                                   : text.tertiary.color,
                                 marginBottom: '1px'
                               }}
@@ -1548,7 +1583,7 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
               </div>
 
-              {/* Today Card - Spans rows 2-3 to match Farms + Tasks combined height */}
+              {/* Schedule Card - spans rows 2-3 */}
               <div
                 style={{
                   padding: spacing(2),
@@ -1563,12 +1598,12 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(1.5), gap: spacing(1) }}>
                   <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0 }}>
-                    Today's Schedule
+                    {formatScheduleHeading(calendarSelectedDate)}
                   </h4>
                   <button
                     type="button"
                     {...getButtonPressHandlers('today-add-event')}
-                    onClick={() => handleOpenQuickEventModal(new Date())}
+                    onClick={() => handleOpenQuickEventModal(calendarSelectedDate)}
                     style={getButtonPressStyle(
                       'today-add-event',
                       {
@@ -1594,10 +1629,10 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), maxHeight: '200px', overflowY: 'auto' }}>
                   {(() => {
-                    const today = new Date()
-                    const todayAppointments = calendarAppointments.filter(apt => {
+                    const scheduleDate = calendarSelectedDate || new Date()
+                    const scheduleAppointments = calendarAppointments.filter(apt => {
                       const aptDate = new Date(apt.date)
-                      return aptDate.toDateString() === today.toDateString()
+                      return aptDate.toDateString() === scheduleDate.toDateString()
                     })
 
                     if (isCalendarLoading) {
@@ -1627,15 +1662,15 @@ export default function DashboardClient({ contacts, stats }: DashboardClientProp
                       )
                     }
                     
-                    if (todayAppointments.length === 0) {
+                    if (scheduleAppointments.length === 0) {
                       return (
                         <p style={{ fontSize: '12px', ...text.tertiary, margin: 0, fontStyle: 'italic' }}>
-                          No appointments today
+                          No appointments for this day
                         </p>
                       )
                     }
                     
-                    return todayAppointments.map((apt) => (
+                    return scheduleAppointments.map((apt) => (
                       <div
                         key={apt.id}
                         style={{
