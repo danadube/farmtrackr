@@ -1,6 +1,13 @@
 'use server'
 
 import { Prisma, PrismaClient, ListingStatus } from '@prisma/client'
+import type {
+  ContactSummary,
+  ListingClient,
+  ListingStageClient,
+  ListingTaskClient,
+  PipelineTemplateClient
+} from '@/types/listings'
 import { prisma } from '@/lib/prisma'
 
 const LISTING_INCLUDE = Prisma.validator<Prisma.ListingInclude>()({
@@ -22,6 +29,20 @@ const LISTING_INCLUDE = Prisma.validator<Prisma.ListingInclude>()({
     }
   }
 })
+
+const PIPELINE_INCLUDE = Prisma.validator<Prisma.ListingPipelineTemplateInclude>()({
+  stages: {
+    orderBy: { sequence: 'asc' as Prisma.SortOrder },
+    include: {
+      tasks: {
+        orderBy: { createdAt: 'asc' as Prisma.SortOrder }
+      }
+    }
+  }
+})
+
+export type ListingWithRelations = Prisma.ListingGetPayload<{ include: typeof LISTING_INCLUDE }>
+export type ListingPipelineTemplateWithStages = Prisma.ListingPipelineTemplateGetPayload<{ include: typeof PIPELINE_INCLUDE }>
 
 export type CreateListingInput = {
   pipelineTemplateId: string
@@ -92,16 +113,7 @@ async function setStageActive(tx: TxClient, stageInstanceId: string, now: Date) 
 export async function getListingPipelineTemplates(client: PrismaClient = prisma) {
   return client.listingPipelineTemplate.findMany({
     orderBy: { name: 'asc' },
-    include: {
-      stages: {
-        orderBy: { sequence: 'asc' },
-        include: {
-          tasks: {
-            orderBy: { createdAt: 'asc' }
-          }
-        }
-      }
-    }
+    include: PIPELINE_INCLUDE
   })
 }
 
@@ -115,16 +127,7 @@ export async function getListings(client: PrismaClient = prisma) {
 export async function createListingFromTemplate(input: CreateListingInput, client: PrismaClient = prisma) {
   const template = await client.listingPipelineTemplate.findUnique({
     where: { id: input.pipelineTemplateId },
-    include: {
-      stages: {
-        orderBy: { sequence: 'asc' },
-        include: {
-          tasks: {
-            orderBy: { createdAt: 'asc' }
-          }
-        }
-      }
-    }
+    include: PIPELINE_INCLUDE
   })
 
   if (!template) {
@@ -213,13 +216,6 @@ export async function createListingFromTemplate(input: CreateListingInput, clien
   })
 
   return result
-}
-
-export async function getListingById(listingId: string, client: PrismaClient = prisma) {
-  return client.listing.findUnique({
-    where: { id: listingId },
-    include: LISTING_INCLUDE
-  })
 }
 
 export type UpdateListingTaskInput = {
@@ -412,5 +408,107 @@ export async function advanceListingStage(listingId: string, client: PrismaClien
       include: LISTING_INCLUDE
     })
   })
+}
+
+const iso = (value: Date | string | null | undefined) => {
+  if (!value) return null
+  return value instanceof Date ? value.toISOString() : value
+}
+
+const decimalToNumber = (value: Prisma.Decimal | number | null | undefined) => {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'number') return value
+  return value.toNumber()
+}
+
+const buildContactSummary = (contact?: {
+  id: string
+  firstName: string | null
+  lastName: string | null
+  organizationName: string | null
+  email1: string | null
+  phoneNumber1: string | null
+}): ContactSummary | null => {
+  if (!contact) return null
+  const nameParts = [contact.firstName, contact.lastName].filter(Boolean)
+  const displayName =
+    contact.organizationName ||
+    (nameParts.length > 0 ? nameParts.join(' ') : null) ||
+    'Contact'
+  return {
+    id: contact.id,
+    displayName,
+    email: contact.email1 ?? null,
+    phone: contact.phoneNumber1 ?? null
+  }
+}
+
+export function serializeListing(listing: ListingWithRelations): ListingClient {
+  return {
+    id: listing.id,
+    title: listing.title ?? null,
+    status: listing.status as ListingClient['status'],
+    pipelineTemplateId: listing.pipelineTemplateId ?? null,
+    pipelineName: listing.pipelineTemplate?.name ?? null,
+    pipelineType: listing.pipelineTemplate?.type ?? null,
+    currentStageKey: listing.currentStageKey ?? null,
+    currentStageStartedAt: iso(listing.currentStageStartedAt),
+    seller: buildContactSummary(listing.seller ?? undefined),
+    buyerClient: buildContactSummary(listing.buyerClient ?? undefined),
+    address: listing.address ?? null,
+    city: listing.city ?? null,
+    state: listing.state ?? null,
+    zipCode: listing.zipCode ?? null,
+    listPrice: decimalToNumber(listing.listPrice),
+    targetListDate: iso(listing.targetListDate),
+    projectedCloseDate: iso(listing.projectedCloseDate),
+    notes: listing.notes ?? null,
+    createdAt: iso(listing.createdAt) as string,
+    updatedAt: iso(listing.updatedAt) as string,
+    stageInstances: listing.stageInstances.map((stage) => ({
+      id: stage.id,
+      key: stage.key ?? null,
+      name: stage.name ?? null,
+      order: stage.order,
+      status: stage.status as ListingStageClient['status'],
+      startedAt: iso(stage.startedAt),
+      completedAt: iso(stage.completedAt),
+      tasks: stage.tasks.map((task) => ({
+        id: task.id,
+        name: task.name,
+        stageInstanceId: task.stageInstanceId,
+        dueInDays: task.dueInDays ?? null,
+        dueDate: iso(task.dueDate),
+        completed: task.completed,
+        completedAt: iso(task.completedAt),
+        notes: task.notes ?? null,
+        autoRepeat: task.autoRepeat,
+        autoComplete: task.autoComplete,
+        triggerOn: task.triggerOn ?? null
+      }))
+    }))
+  }
+}
+
+export function serializePipelineTemplate(template: ListingPipelineTemplateWithStages): PipelineTemplateClient {
+  const stageCount = template.stages.length
+  const taskCount = template.stages.reduce((sum, stage) => sum + stage.tasks.length, 0)
+  return {
+    id: template.id,
+    name: template.name,
+    type: template.type,
+    description: template.description ?? null,
+    stageCount,
+    taskCount,
+    stages: template.stages.map((stage) => ({
+      id: stage.id,
+      key: stage.key,
+      name: stage.name,
+      sequence: stage.sequence,
+      durationDays: stage.durationDays ?? null,
+      trigger: stage.trigger ?? null,
+      taskCount: stage.tasks.length
+    }))
+  }
 }
 

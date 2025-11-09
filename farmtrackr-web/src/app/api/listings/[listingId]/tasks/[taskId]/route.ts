@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { completeListingTask } from '@/lib/listings'
+import { completeListingTask, serializeListing } from '@/lib/listings'
 
 type RouteContext = {
   params: {
@@ -24,7 +24,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       notes: body.notes
     })
 
-    return NextResponse.json(listing)
+    return NextResponse.json(serializeListing(listing))
   } catch (error) {
     console.error('Error updating listing task:', error)
     return NextResponse.json({ error: 'Failed to update task' }, { status: 500 })

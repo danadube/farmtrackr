@@ -22,7 +22,8 @@ import {
   CheckCircle2,
   Mail,
   Calendar as CalendarIcon,
-  ChevronDown
+  ChevronDown,
+  Home
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
@@ -116,6 +117,7 @@ export function Sidebar({ children }: SidebarProps) {
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/calendar', label: 'Calendar', icon: CalendarIcon },
         { href: '/commissions', label: 'Commissions', icon: Briefcase },
+        { href: '/listings', label: 'Listings', icon: Home },
         { href: '/contacts', label: 'Contacts', icon: Users },
         { href: '/tasks', label: 'Tasks', icon: CheckCircle2 },
       ],
@@ -192,6 +194,14 @@ export function Sidebar({ children }: SidebarProps) {
       href: '/commissions/new',
       icon: DollarSign,
       accent: resolvedTheme === 'dark' ? '#f97316' : '#ea580c',
+    },
+    {
+      id: 'listing',
+      label: 'New Listing',
+      description: 'Start a listing pipeline',
+      href: '/listings#new',
+      icon: Home,
+      accent: resolvedTheme === 'dark' ? '#facc15' : '#d97706',
     },
     {
       id: 'email',

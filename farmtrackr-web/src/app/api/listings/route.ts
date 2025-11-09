@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getListings, createListingFromTemplate } from '@/lib/listings'
+import { getListings, createListingFromTemplate, serializeListing } from '@/lib/listings'
 
 export async function GET() {
   try {
     const listings = await getListings()
-    return NextResponse.json(listings)
+    return NextResponse.json(listings.map(serializeListing))
   } catch (error) {
     console.error('Error fetching listings:', error)
     return NextResponse.json({ error: 'Failed to fetch listings' }, { status: 500 })
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       notes: body.notes
     })
 
-    return NextResponse.json(listing, { status: 201 })
+    return NextResponse.json(serializeListing(listing), { status: 201 })
   } catch (error) {
     console.error('Error creating listing:', error)
     return NextResponse.json({ error: 'Failed to create listing' }, { status: 500 })
