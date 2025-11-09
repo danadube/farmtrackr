@@ -72,72 +72,138 @@ type PipelineTemplateDefinition = {
 const SELLER_PIPELINE_TEMPLATE: PipelineTemplateDefinition = {
   name: 'Listing Transaction (Seller Side)',
   type: 'listing',
-  description: 'End-to-end workflow for representing the seller from pre-listing through close of escrow in California.',
+  description: 'End-to-end workflow for representing the seller from intake through close of escrow in California.',
   stages: [
     {
-      key: 'pre_listing',
-      name: 'Pre-Listing',
+      key: 'pre_listing_intake',
+      name: 'Pre-Listing / Intake',
       order: 1,
-      durationDays: 7,
-      trigger: 'listingAgreementSigned',
+      durationDays: 5,
       tasks: [
-        { name: 'Conduct pre-listing consultation', dueInDays: 1 },
-        { name: 'Confirm ownership & title (Prelim report)', dueInDays: 2 },
-        { name: 'Execute Residential Listing Agreement (RLA)', dueInDays: 1 },
-        { name: 'Provide Seller’s Advisory (SA)', dueInDays: 1 },
-        { name: 'Obtain Agency Disclosure (AD)', dueInDays: 1 },
-        { name: 'Sign Wire Fraud Advisory (WFA)', dueInDays: 1 },
-        { name: 'Prepare Seller’s Estimated Net Sheet', dueInDays: 2 },
-        { name: 'Collect MLS Exclusion (SELM) if applicable', dueInDays: 2 },
-        { name: 'Gather property data & disclosures', dueInDays: 3 },
-        { name: 'Schedule professional photography and videography', dueInDays: 4 },
-        { name: 'Order Cubi Casa floorplan for MLS', dueInDays: 4 },
-        { name: 'Order Natural Hazard Disclosure (NHD)', dueInDays: 2 },
-        { name: 'Input listing data into MLS', dueInDays: 5 }
+        { name: 'Seller Interview & CMA', dueInDays: 1 },
+        { name: 'Property Information Sheet', dueInDays: 1 },
+        { name: 'Preliminary Title Report Request', dueInDays: 2 },
+        { name: 'HOA Documents Request', dueInDays: 2 },
+        { name: 'Disclosure Package Review', dueInDays: 3 }
       ]
     },
     {
-      key: 'active_listing',
-      name: 'Active Listing',
+      key: 'listing_agreement_execution',
+      name: 'Listing Agreement Execution',
       order: 2,
+      durationDays: 5,
+      trigger: 'listingAgreementSigned',
+      tasks: [
+        { name: 'Residential Listing Agreement (RLA)', dueInDays: 1 },
+        { name: 'Seller Advisory (SA)', dueInDays: 1 },
+        { name: 'Agency Disclosure', dueInDays: 1 },
+        { name: 'Estimated Seller Proceeds Worksheet', dueInDays: 2 },
+        { name: 'MLS Input Sheet', dueInDays: 2 },
+        { name: 'Listing Authorization & Hold Harmless', dueInDays: 2 },
+        { name: 'Wire Fraud Advisory', dueInDays: 2 },
+        { name: 'Coming Soon Agreement (if applicable)', dueInDays: 3 }
+      ]
+    },
+    {
+      key: 'disclosure_period',
+      name: 'Disclosure Period',
+      order: 3,
+      durationDays: 10,
+      tasks: [
+        { name: 'Transfer Disclosure Statement (TDS)', dueInDays: 3 },
+        { name: 'Natural Hazard Disclosure (NHD)', dueInDays: 3 },
+        { name: 'Seller Property Questionnaire (SPQ)', dueInDays: 3 },
+        { name: 'Exempt Seller Disclosure (if built pre-1960)', dueInDays: 4 },
+        { name: 'Lead-Based Paint Disclosure (pre-1978)', dueInDays: 4 },
+        { name: \"Megan's Law Database Notice\", dueInDays: 4 },
+        { name: 'Military Ordnance Disclosure (if applicable)', dueInDays: 4 },
+        { name: 'Water-Conserving Plumbing Fixtures Disclosure', dueInDays: 5 },
+        { name: 'Smoke/Carbon Monoxide Detector Compliance', dueInDays: 5 },
+        { name: 'HOA Documents Package', dueInDays: 6 },
+        { name: 'Preliminary Title Report', dueInDays: 6 },
+        { name: 'Property Tax Information', dueInDays: 7 },
+        { name: 'Home Warranty Information (optional)', dueInDays: 8 }
+      ]
+    },
+    {
+      key: 'active_marketing',
+      name: 'Active Marketing',
+      order: 4,
       durationDays: 21,
       trigger: 'listingPublished',
       tasks: [
-        { name: 'Complete Transfer Disclosure Statement (TDS)', dueInDays: 2 },
-        { name: 'Complete Seller Property Questionnaire (SPQ)', dueInDays: 2 },
-        { name: 'Provide additional disclosures (MCA, ESD, FLD, FHDS, WCMD, AVID)', dueInDays: 5 },
-        { name: 'Assemble disclosure packet for buyers', dueInDays: 5 },
-        { name: 'Design listing brochure and flyer', dueInDays: 3 },
-        { name: 'Publish property website & MLS remarks', dueInDays: 2 },
-        { name: 'Plan open house schedule', dueInDays: 4 },
-        { name: 'Launch marketing campaign (MLS, photos, flyers, open houses)', dueInDays: 1 },
-        { name: 'Coordinate optional inspections (home, pest, roof)', dueInDays: 7 },
-        { name: 'Review offers received', dueInDays: 3, autoRepeat: true },
-        { name: 'Negotiate and accept offer', triggerOn: 'offerAccepted' }
+        { name: 'Professional Photos', dueInDays: 2 },
+        { name: 'MLS Listing Live', dueInDays: 2 },
+        { name: 'Lockbox Installation & Authorization', dueInDays: 2 },
+        { name: 'Showing Instructions', dueInDays: 3 },
+        { name: 'Broker Tour / Open House', dueInDays: 7 },
+        { name: 'Offer Presentation Protocol', dueInDays: 10 }
       ]
     },
     {
-      key: 'escrow',
-      name: 'Escrow / Under Contract',
-      order: 3,
-      durationDays: 30,
+      key: 'offer_acceptance_escrow',
+      name: 'Offer Acceptance & Opening Escrow',
+      order: 5,
+      durationDays: 7,
+      trigger: 'offerAccepted',
+      tasks: [
+        { name: 'Residential Purchase Agreement (RPA)', dueInDays: 1 },
+        { name: 'Counter Offer', dueInDays: 1 },
+        { name: 'Seller Multiple Counter Offer (SMCO)', dueInDays: 1 },
+        { name: 'Agency Confirmation', dueInDays: 1 },
+        { name: 'Estimated Buyer Costs', dueInDays: 2 },
+        { name: 'Escrow Instructions', dueInDays: 2 },
+        { name: 'Opening Package to Escrow', dueInDays: 3 },
+        { name: 'MLS Status Update (Pending)', dueInDays: 3 },
+        { name: 'Sign Rider Update (In Escrow)', dueInDays: 3 }
+      ]
+    },
+    {
+      key: 'escrow_contingencies',
+      name: 'Escrow Period - Contingencies',
+      order: 6,
+      durationDays: 21,
       trigger: 'escrowOpened',
       tasks: [
-        { name: 'Upload fully executed purchase agreement (RPA)', dueInDays: 1 },
-        { name: 'Log counter offer signatures', dueInDays: 1 },
-        { name: 'Verify EMD deposit with escrow', dueInDays: 3 },
-        { name: 'Provide all disclosures to buyer', dueInDays: 5 },
-        { name: 'Deliver escrow instructions', dueInDays: 5 },
-        { name: 'Coordinate buyer inspections', dueInDays: 10 },
-        { name: 'Respond to Request for Repairs (RFR/SCO)', dueInDays: 5 },
-        { name: 'Monitor appraisal and loan progress', dueInDays: 7, autoRepeat: true },
-        { name: 'Collect signed contingency removal forms', dueInDays: 17 },
-        { name: 'Track contingency removals (CR)', dueInDays: 17 },
-        { name: 'Prepare closing documents', dueInDays: 28 },
-        { name: 'Confirm closing disclosure / settlement statement (HUD/CD)', dueInDays: 28 },
-        { name: 'Verify final walkthrough (VP)', dueInDays: 29 },
-        { name: 'Confirm closing and fund disbursement', triggerOn: 'closingConfirmed' },
-        { name: 'Send post-closing package to seller', dueInDays: 31 }
+        { name: \"Buyer's Inspection Advisory\", dueInDays: 2 },
+        { name: 'Request for Repair', dueInDays: 7 },
+        { name: 'Response to Request for Repair', dueInDays: 9 },
+        { name: 'Verification of Property Condition (VP)', dueInDays: 12 },
+        { name: 'Contingency Removal - Inspection', dueInDays: 14 },
+        { name: 'Contingency Removal - Appraisal', dueInDays: 16 },
+        { name: 'Contingency Removal - Loan', dueInDays: 18 },
+        { name: 'Appraisal Report Review', dueInDays: 10 },
+        { name: 'Loan Approval Verification', dueInDays: 19 }
+      ]
+    },
+    {
+      key: 'close_preparation',
+      name: 'Final Walk-Through & Close Preparation',
+      order: 7,
+      durationDays: 7,
+      tasks: [
+        { name: 'Final Walk-Through Confirmation', dueInDays: 2 },
+        { name: 'Smoke Detector Compliance Certificate', dueInDays: 2 },
+        { name: 'Final Utility Readings', dueInDays: 3 },
+        { name: 'HOA Move-Out Requirements', dueInDays: 3 },
+        { name: 'Final Closing Statement Review', dueInDays: 4 },
+        { name: 'Commission Instructions to Escrow', dueInDays: 5 }
+      ]
+    },
+    {
+      key: 'close_of_escrow',
+      name: 'Close of Escrow',
+      order: 8,
+      durationDays: 5,
+      trigger: 'closingConfirmed',
+      tasks: [
+        { name: 'Grant Deed Recording', dueInDays: 1 },
+        { name: 'Final Closing Disclosure', dueInDays: 1 },
+        { name: 'Wire Instructions / Check Pickup', dueInDays: 2 },
+        { name: 'Keys, Garage Openers, Mailbox Key Transfer', dueInDays: 2 },
+        { name: 'Final Commission Statement', dueInDays: 3 },
+        { name: 'MLS Status Update (Sold)', dueInDays: 3 },
+        { name: 'Post-Close Client Gift', dueInDays: 4 }
       ]
     }
   ]
@@ -150,7 +216,11 @@ const DASHBOARD_SEED_LISTINGS: Array<{
   state: string
   zipCode: string
   listPrice: number
-  targetStage: 'pre_listing' | 'active_listing' | 'escrow'
+  targetStage:
+    | 'pre_listing_intake'
+    | 'listing_agreement_execution'
+    | 'active_marketing'
+    | 'escrow_contingencies'
   notes?: string
 }> = [
   {
@@ -160,7 +230,7 @@ const DASHBOARD_SEED_LISTINGS: Array<{
     state: 'CA',
     zipCode: '92210',
     listPrice: 569000,
-    targetStage: 'active_listing',
+    targetStage: 'active_marketing',
     notes: 'Mountain Cove single-family retreat with vaulted ceilings, dual patios, and turnkey furnishings.'
   },
   {
@@ -170,7 +240,7 @@ const DASHBOARD_SEED_LISTINGS: Array<{
     state: 'CA',
     zipCode: '92211',
     listPrice: 930000,
-    targetStage: 'escrow',
+    targetStage: 'escrow_contingencies',
     notes: 'Indian Ridge Country Club condo on the 7th fairway with retractable awnings and full-time amenities.'
   },
   {
@@ -180,7 +250,7 @@ const DASHBOARD_SEED_LISTINGS: Array<{
     state: 'CA',
     zipCode: '92253',
     listPrice: 439000,
-    targetStage: 'pre_listing',
+    targetStage: 'listing_agreement_execution',
     notes: 'PGA West fifth-floor condominium with double fairway views and fully remodeled interiors.'
   }
 ]
@@ -195,7 +265,7 @@ async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
     const stageCount = await client.listingStageTemplate.count({
       where: { pipelineTemplateId: existing.id }
     })
-    if (stageCount > 0) {
+    if (stageCount === SELLER_PIPELINE_TEMPLATE.stages.length) {
       return existing.id
     }
   }

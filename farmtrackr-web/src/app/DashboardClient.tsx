@@ -259,22 +259,27 @@ export default function DashboardClient({ contacts, stats, listings: initialList
   const [detailListing, setDetailListing] = useState<ListingClient | null>(null)
 
   const listingsByStage = useMemo(() => {
-    const groups: Record<'pre_listing' | 'active_listing' | 'escrow', ListingClient[]> = {
-      pre_listing: [],
-      active_listing: [],
+    const groups: Record<'intake' | 'marketing' | 'escrow', ListingClient[]> = {
+      intake: [],
+      marketing: [],
       escrow: []
     }
 
     listings.forEach((listing) => {
       const stage = getActiveStageInstance(listing)
-      const key = (stage?.key ?? listing.currentStageKey ?? 'pre_listing') as keyof typeof groups
+      const key = (stage?.key ?? listing.currentStageKey ?? 'pre_listing_intake') || ''
+      const normalized = key.toLowerCase()
 
-      if (key === 'active_listing') {
-        groups.active_listing.push(listing)
-      } else if (key === 'escrow') {
+      if (normalized.includes('escrow') || normalized.includes('close')) {
         groups.escrow.push(listing)
+      } else if (
+        normalized.includes('marketing') ||
+        normalized.includes('offer') ||
+        normalized.includes('listing_agreement')
+      ) {
+        groups.marketing.push(listing)
       } else {
-        groups.pre_listing.push(listing)
+        groups.intake.push(listing)
       }
     })
 
@@ -283,13 +288,13 @@ export default function DashboardClient({ contacts, stats, listings: initialList
 
   const listingColumnConfig = [
     {
-      key: 'pre_listing' as const,
+      key: 'intake' as const,
       title: 'Pre-Listing',
       description: 'Preparing to launch',
       accent: colors.warning
     },
     {
-      key: 'active_listing' as const,
+      key: 'marketing' as const,
       title: 'Active',
       description: 'On the market now',
       accent: colors.primary

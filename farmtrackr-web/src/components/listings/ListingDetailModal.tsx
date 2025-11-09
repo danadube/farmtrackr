@@ -74,6 +74,89 @@ const EXACT_TASK_CATEGORY = new Map<string, TaskCategory>(
   ).map(([name, category]) => [normalizeTaskName(name), category])
 )
 
+type TaskMetadata = {
+  name: string
+  category: TaskCategory
+  party?: string
+  form?: string
+  notes?: string
+}
+
+const RAW_TASK_METADATA: TaskMetadata[] = [
+  { name: 'Seller Interview & CMA', category: 'workflow', party: 'Agent', notes: 'Market analysis, pricing strategy' },
+  { name: 'Property Information Sheet', category: 'document', party: 'Seller', notes: 'Property details, features, upgrades' },
+  { name: 'Preliminary Title Report Request', category: 'document', party: 'Agent / Title', notes: 'Order early to identify issues' },
+  { name: 'HOA Documents Request', category: 'document', party: 'Seller / HOA', notes: 'CC&Rs, financials, rules' },
+  { name: 'Disclosure Package Review', category: 'document', party: 'Seller', notes: 'Pre-identify potential issues' },
+  { name: 'Residential Listing Agreement (RLA)', category: 'document', party: 'Agent & Seller', form: 'CAR Form RLA' },
+  { name: 'Seller Advisory (SA)', category: 'document', party: 'Agent & Seller', form: 'CAR Form SA' },
+  { name: 'Agency Disclosure', category: 'document', party: 'Agent & Seller', form: 'CAR Form AD' },
+  { name: 'Estimated Seller Proceeds Worksheet', category: 'document', party: 'Agent', form: 'CAR Form ESP' },
+  { name: 'MLS Input Sheet', category: 'document', party: 'Agent', notes: 'Complete before publishing listing' },
+  { name: 'Listing Authorization & Hold Harmless', category: 'document', party: 'Seller', form: 'CAR Form LAH' },
+  { name: 'Wire Fraud Advisory', category: 'document', party: 'Seller', form: 'CAR Form WFA' },
+  { name: 'Coming Soon Agreement (if applicable)', category: 'document', party: 'Agent & Seller', form: 'CAR Form CSA' },
+  { name: 'Transfer Disclosure Statement (TDS)', category: 'document', party: 'Seller', form: 'CAR Form TDS' },
+  { name: 'Natural Hazard Disclosure (NHD)', category: 'document', party: 'Vendor', notes: 'Order from third-party provider' },
+  { name: 'Seller Property Questionnaire (SPQ)', category: 'document', party: 'Seller', form: 'CAR Form SPQ' },
+  { name: 'Exempt Seller Disclosure (if built pre-1960)', category: 'document', party: 'Seller', form: 'CAR Form ESD' },
+  { name: 'Lead-Based Paint Disclosure (pre-1978)', category: 'document', party: 'Seller', notes: 'Federal disclosure form' },
+  { name: "Megan's Law Database Notice", category: 'document', party: 'Agent', form: 'CAR Form ML' },
+  { name: 'Military Ordnance Disclosure (if applicable)', category: 'document', party: 'Seller', form: 'CAR Form MOD' },
+  { name: 'Water-Conserving Plumbing Fixtures Disclosure', category: 'document', party: 'Seller', form: 'CAR Form WCF' },
+  { name: 'Smoke/Carbon Monoxide Detector Compliance', category: 'document', party: 'Seller', form: 'CAR Form SSD' },
+  { name: 'HOA Documents Package', category: 'document', party: 'HOA / Seller', notes: 'Governing docs, financials, rules' },
+  { name: 'Preliminary Title Report', category: 'document', party: 'Title Company', notes: 'Review for liens or defects' },
+  { name: 'Property Tax Information', category: 'document', party: 'Agent', notes: 'County tax detail for buyers' },
+  { name: 'Home Warranty Information (optional)', category: 'document', party: 'Agent', notes: 'Optional coverage details' },
+  { name: 'Professional Photos', category: 'marketing', party: 'Photographer', notes: 'Schedule shoot' },
+  { name: 'MLS Listing Live', category: 'marketing', party: 'Agent', notes: 'Syndication to portals' },
+  { name: 'Lockbox Installation & Authorization', category: 'workflow', party: 'Agent', form: 'CAR Form LBA' },
+  { name: 'Showing Instructions', category: 'workflow', party: 'Agent / Seller', notes: 'Access details, pets, alarms' },
+  { name: 'Broker Tour / Open House', category: 'marketing', party: 'Agent', notes: 'Plan marketing events' },
+  { name: 'Offer Presentation Protocol', category: 'workflow', party: 'Agent', notes: 'Set multi-offer strategy' },
+  { name: 'Residential Purchase Agreement (RPA)', category: 'document', party: 'Buyer Agent', form: 'CAR Form RPA' },
+  { name: 'Counter Offer', category: 'document', party: 'Agent & Seller', form: 'CAR Form CO' },
+  { name: 'Seller Multiple Counter Offer (SMCO)', category: 'document', party: 'Agent & Seller', form: 'CAR Form SMCO' },
+  { name: 'Agency Confirmation', category: 'document', party: 'Both Agents', form: 'CAR Form AC' },
+  { name: 'Estimated Buyer Costs', category: 'document', party: 'Buyer Agent', form: 'CAR Form EBC' },
+  { name: 'Escrow Instructions', category: 'document', party: 'Escrow Officer', notes: 'Opening instructions' },
+  { name: 'Opening Package to Escrow', category: 'document', party: 'Listing Agent', notes: 'RPA, disclosures, prelim' },
+  { name: 'MLS Status Update (Pending)', category: 'workflow', party: 'Agent', notes: 'Change status to Pending/In Escrow' },
+  { name: 'Sign Rider Update (In Escrow)', category: 'marketing', party: 'Agent', notes: 'Update signage' },
+  { name: "Buyer's Inspection Advisory", category: 'document', party: 'Buyer Agent', form: 'CAR Form BIA' },
+  { name: 'Request for Repair', category: 'document', party: 'Buyer Agent', form: 'CAR Form RR' },
+  { name: 'Response to Request for Repair', category: 'document', party: 'Seller Agent', form: 'CAR Form RRR' },
+  { name: 'Verification of Property Condition (VP)', category: 'document', party: 'Both Agents', form: 'CAR Form VP' },
+  { name: 'Contingency Removal - Inspection', category: 'document', party: 'Buyer', form: 'CAR Form CR' },
+  { name: 'Contingency Removal - Appraisal', category: 'document', party: 'Buyer', form: 'CAR Form CR' },
+  { name: 'Contingency Removal - Loan', category: 'document', party: 'Buyer', form: 'CAR Form CR' },
+  { name: 'Appraisal Report Review', category: 'workflow', party: 'Listing Agent', notes: 'Confirm value meets contract price' },
+  { name: 'Loan Approval Verification', category: 'workflow', party: 'Buyer Agent', notes: 'Lender confirmation' },
+  { name: 'Final Walk-Through Confirmation', category: 'document', party: 'Buyer Agent', form: 'CAR Form RE' },
+  { name: 'Smoke Detector Compliance Certificate', category: 'document', party: 'Seller', notes: 'Local requirement' },
+  { name: 'Final Utility Readings', category: 'workflow', party: 'Seller', notes: 'Water, gas, electric' },
+  { name: 'HOA Move-Out Requirements', category: 'document', party: 'Seller / HOA', notes: 'Schedule, fees, elevator reservations' },
+  { name: 'Final Closing Statement Review', category: 'document', party: 'Escrow & Agents', notes: 'HUD-1 / Closing Disclosure' },
+  { name: 'Commission Instructions to Escrow', category: 'document', party: 'Listing Broker', notes: 'Broker payment directions' },
+  { name: 'Grant Deed Recording', category: 'document', party: 'Title Company', notes: 'County recorder confirmation' },
+  { name: 'Final Closing Disclosure', category: 'document', party: 'Escrow', notes: 'Signed by all parties' },
+  { name: 'Wire Instructions / Check Pickup', category: 'workflow', party: 'Escrow / Seller', notes: 'Verify instructions before release' },
+  { name: 'Keys, Garage Openers, Mailbox Key Transfer', category: 'workflow', party: 'Seller & Agent', notes: 'Deliver to buyer' },
+  { name: 'Final Commission Statement', category: 'document', party: 'Escrow / Broker', notes: 'Broker accounting' },
+  { name: 'MLS Status Update (Sold)', category: 'workflow', party: 'Agent', notes: 'Change status to Sold/Closed' },
+  { name: 'Post-Close Client Gift', category: 'marketing', party: 'Agent', notes: 'Optional thank-you gesture' }
+]
+
+const TASK_METADATA = new Map<string, TaskMetadata>(
+  RAW_TASK_METADATA.map((item) => [normalizeTaskName(item.name), item])
+)
+
+const getTaskMetadata = (name: string | null | undefined) => {
+  if (!name) return undefined
+  return TASK_METADATA.get(normalizeTaskName(name))
+}
+
 const formatDate = (value: string | Date | null | undefined) => {
   if (!value) return ''
   const date = typeof value === 'string' ? new Date(value) : value
@@ -110,6 +193,10 @@ const stageAccent = (status: string, colors: ReturnType<typeof useThemeStyles>['
 
 const categorizeTaskName = (name: string | null | undefined): TaskCategory => {
   if (!name) return 'workflow'
+  const metadata = getTaskMetadata(name)
+  if (metadata) {
+    return metadata.category
+  }
   const normalized = normalizeTaskName(name)
   const exact = EXACT_TASK_CATEGORY.get(normalized)
   if (exact) {
@@ -251,6 +338,10 @@ export function ListingDetailModal({
     const isUploading = uploadingTaskId === task.id
     const isSkipped = task.skipped
     const dueInputValue = isEditing ? editTaskDueDate : toDateInputValue(task.dueDate)
+    const metadata = getTaskMetadata(task.name)
+    const partyLabel = metadata?.party ?? '—'
+    const formLabel = metadata?.form ?? '—'
+    const notesLabel = metadata?.notes ?? ''
 
     const statusLabel = isSkipped
       ? 'Marked not required'
@@ -527,6 +618,31 @@ export function ListingDetailModal({
               </>
             )}
           </div>
+
+          {metadata ? (
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: spacing(0.75),
+                fontSize: '12px',
+                color: colors.text.secondary,
+                marginTop: spacing(0.5)
+              }}
+            >
+              <span>
+                <span style={{ fontWeight: 600, color: colors.text.primary }}>Party:</span> {partyLabel}
+              </span>
+              <span>
+                <span style={{ fontWeight: 600, color: colors.text.primary }}>Form:</span> {formLabel}
+              </span>
+              {notesLabel ? (
+                <span>
+                  <span style={{ fontWeight: 600, color: colors.text.primary }}>Notes:</span> {notesLabel}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25) }}>
