@@ -1385,12 +1385,23 @@ const referralNet = referralFeesReceived - referralFeesPaid
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', alignItems: 'stretch', marginBottom: '12px' }}>
                 {/* Import from File */}
-                <div style={quickActionCardStyle}>
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: colors.cardHover,
+                  borderRadius: '10px',
+                  border: `1px solid ${colors.border}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  minHeight: '100%'
+                }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Upload style={{ width: '16px', height: '16px', color: colors.success }} />
                     <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0 }}>Import from File</h4>
                   </div>
-                  <p style={quickActionDescriptionStyle}>Upload CSV or Excel files with transaction data</p>
+                  <p style={{ fontSize: '12px', color: text.tertiary.color, margin: 0, lineHeight: '1.4' }}>
+                    Upload CSV or Excel files with transaction data
+                  </p>
                   <div style={{ marginTop: 'auto' }}>
                     <input
                       ref={fileInputRef}
@@ -1439,12 +1450,23 @@ const referralNet = referralFeesReceived - referralFeesPaid
                 </div>
 
                 {/* Import from Google Sheets */}
-                <div style={quickActionCardStyle}>
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: colors.cardHover,
+                  borderRadius: '10px',
+                  border: `1px solid ${colors.border}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  minHeight: '100%'
+                }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FileSpreadsheet style={{ width: '16px', height: '16px', color: colors.info }} />
                     <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0 }}>Import from Google Sheets</h4>
                   </div>
-                  <p style={quickActionDescriptionStyle}>Sync transaction data from a Google Sheet</p>
+                  <p style={{ fontSize: '12px', color: text.tertiary.color, margin: 0, lineHeight: '1.4' }}>
+                    Sync transaction data from a Google Sheet
+                  </p>
                   <div style={{ marginTop: 'auto' }}>
                     <button
                       onClick={handleImportFromGoogle}
@@ -1481,12 +1503,23 @@ const referralNet = referralFeesReceived - referralFeesPaid
                 </div>
 
                 {/* Download Template */}
-                <div style={quickActionCardStyle}>
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: colors.cardHover,
+                  borderRadius: '10px',
+                  border: `1px solid ${colors.border}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  minHeight: '100%'
+                }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Download style={{ width: '16px', height: '16px', color: colors.info }} />
                     <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0 }}>Download Template</h4>
                   </div>
-                  <p style={quickActionDescriptionStyle}>Get a CSV template for proper formatting</p>
+                  <p style={{ fontSize: '12px', color: text.tertiary.color, margin: 0, lineHeight: '1.4' }}>
+                    Get a CSV template for proper formatting
+                  </p>
                   <div style={{ marginTop: 'auto' }}>
                     <button
                       onClick={handleDownloadTemplate}
@@ -1514,12 +1547,21 @@ const referralNet = referralFeesReceived - referralFeesPaid
 
                 {/* Export to CSV */}
                 {transactions.length > 0 && (
-                  <div style={quickActionCardStyle}>
+                  <div style={{
+                    padding: '16px',
+                    backgroundColor: colors.cardHover,
+                    borderRadius: '10px',
+                    border: `1px solid ${colors.border}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    minHeight: '100%'
+                  }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Download style={{ width: '16px', height: '16px', color: colors.success }} />
                       <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0 }}>Export to CSV</h4>
                     </div>
-                    <p style={quickActionDescriptionStyle}>
+                    <p style={{ fontSize: '12px', color: text.tertiary.color, margin: 0, lineHeight: '1.4' }}>
                       Export {filteredTransactions.length} filtered transaction{filteredTransactions.length !== 1 ? 's' : ''}
                     </p>
                     <div style={{ marginTop: 'auto' }}>
