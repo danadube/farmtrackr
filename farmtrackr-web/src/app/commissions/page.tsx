@@ -1383,174 +1383,168 @@ const referralNet = referralFeesReceived - referralFeesPaid
                 Import transaction data from CSV/Excel files or Google Sheets. Export includes all currently filtered transactions.
               </p>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', alignItems: 'stretch', marginBottom: '12px' }}>
                 {/* Import from File */}
-                <div style={{ padding: '16px', backgroundColor: colors.cardHover, borderRadius: '10px', border: `1px solid ${colors.border}` }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <div style={quickActionCardStyle}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Upload style={{ width: '16px', height: '16px', color: colors.success }} />
-                    <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Import from File
-                    </h4>
+                    <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0 }}>Import from File</h4>
                   </div>
-                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 12px 0', lineHeight: '1.4' }}>
-                    Upload CSV or Excel files with transaction data
-                  </p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv,.xlsx,.xls"
-                    onChange={handleImportFromFile}
-                    disabled={isImporting}
-                    style={{ display: 'none' }}
-                  />
-                  <button
-                    onClick={() => {
-                      if (!isImporting && fileInputRef.current) {
-                        fileInputRef.current.click()
-                      }
-                    }}
-                    disabled={isImporting}
-                    {...getButtonPressHandlers('importCSV')}
-                    style={getButtonPressStyle('importCSV', {
-                      width: '100%',
-                      padding: '10px 16px',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                      cursor: isImporting ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }, isImporting ? colors.text.tertiary : colors.success, colors.successHover)}
-                  >
-                    {isImporting ? (
-                      <>
-                        <RefreshCw style={{ width: '14px', height: '14px' }} />
-                        Importing...
-                      </>
-                    ) : (
-                      <>
-                        <Upload style={{ width: '14px', height: '14px' }} />
-                        Choose File
-                      </>
-                    )}
-                  </button>
+                  <p style={quickActionDescriptionStyle}>Upload CSV or Excel files with transaction data</p>
+                  <div style={{ marginTop: 'auto' }}>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv,.xlsx,.xls"
+                      onChange={handleImportFromFile}
+                      disabled={isImporting}
+                      style={{ display: 'none' }}
+                    />
+                    <button
+                      onClick={() => {
+                        if (!isImporting && fileInputRef.current) {
+                          fileInputRef.current.click()
+                        }
+                      }}
+                      disabled={isImporting}
+                      {...getButtonPressHandlers('importCSV')}
+                      style={getButtonPressStyle('importCSV', {
+                        width: '100%',
+                        padding: '12px 16px',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        cursor: isImporting ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }, isImporting ? colors.text.tertiary : colors.success, colors.successHover)}
+                    >
+                      {isImporting ? (
+                        <>
+                          <RefreshCw style={{ width: '14px', height: '14px' }} />
+                          Importing...
+                        </>
+                      ) : (
+                        <>
+                          <Upload style={{ width: '14px', height: '14px' }} />
+                          Choose File
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Import from Google Sheets */}
-                <div style={{ padding: '16px', backgroundColor: colors.cardHover, borderRadius: '10px', border: `1px solid ${colors.border}` }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <div style={quickActionCardStyle}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FileSpreadsheet style={{ width: '16px', height: '16px', color: colors.info }} />
-                    <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Import from Google Sheets
-                    </h4>
+                    <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0 }}>Import from Google Sheets</h4>
                   </div>
-                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 12px 0', lineHeight: '1.4' }}>
-                    Sync transaction data from a Google Sheet
-                  </p>
-                  <button
-                    onClick={handleImportFromGoogle}
-                    disabled={isImporting}
-                    {...getButtonPressHandlers('importGoogle')}
-                    style={getButtonPressStyle('importGoogle', {
-                      width: '100%',
-                      padding: '10px 16px',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                      cursor: isImporting ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }, isImporting ? colors.text.tertiary : colors.info, colors.infoHover || colors.info)}
-                  >
-                    {isImporting ? (
-                      <>
-                        <RefreshCw style={{ width: '14px', height: '14px' }} />
-                        Importing...
-                      </>
-                    ) : (
-                      <>
-                        <FileSpreadsheet style={{ width: '14px', height: '14px' }} />
-                        Import from Google
-                      </>
-                    )}
-                  </button>
+                  <p style={quickActionDescriptionStyle}>Sync transaction data from a Google Sheet</p>
+                  <div style={{ marginTop: 'auto' }}>
+                    <button
+                      onClick={handleImportFromGoogle}
+                      disabled={isImporting}
+                      {...getButtonPressHandlers('importGoogle')}
+                      style={getButtonPressStyle('importGoogle', {
+                        width: '100%',
+                        padding: '12px 16px',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        cursor: isImporting ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }, isImporting ? colors.text.tertiary : colors.info, colors.infoHover || colors.info)}
+                    >
+                      {isImporting ? (
+                        <>
+                          <RefreshCw style={{ width: '14px', height: '14px' }} />
+                          Importing...
+                        </>
+                      ) : (
+                        <>
+                          <FileSpreadsheet style={{ width: '14px', height: '14px' }} />
+                          Import from Google
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Download Template */}
-                <div style={{ padding: '16px', backgroundColor: colors.cardHover, borderRadius: '10px', border: `1px solid ${colors.border}` }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <div style={quickActionCardStyle}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Download style={{ width: '16px', height: '16px', color: colors.info }} />
-                    <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                      Download Template
-                    </h4>
+                    <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0 }}>Download Template</h4>
                   </div>
-                  <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 12px 0', lineHeight: '1.4' }}>
-                    Get a CSV template for proper formatting
-                  </p>
-                  <button
-                    onClick={handleDownloadTemplate}
-                    {...getButtonPressHandlers('downloadTemplate')}
-                    style={getButtonPressStyle('downloadTemplate', {
-                      width: '100%',
-                      padding: '10px 16px',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }, colors.info, colors.infoHover)}
-                  >
-                    <Download style={{ width: '14px', height: '14px' }} />
-                    Download CSV Template
-                  </button>
-                </div>
-
-                {/* Export to CSV */}
-                {transactions.length > 0 && (
-                  <div style={{ padding: '16px', backgroundColor: colors.cardHover, borderRadius: '10px', border: `1px solid ${colors.border}` }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <Download style={{ width: '16px', height: '16px', color: colors.success }} />
-                      <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                        Export to CSV
-                      </h4>
-                    </div>
-                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0 0 12px 0', lineHeight: '1.4' }}>
-                      Export {filteredTransactions.length} filtered transaction{filteredTransactions.length !== 1 ? 's' : ''}
-                    </p>
+                  <p style={quickActionDescriptionStyle}>Get a CSV template for proper formatting</p>
+                  <div style={{ marginTop: 'auto' }}>
                     <button
-                      onClick={handleExportToCSV}
-                      {...getButtonPressHandlers('exportCSV')}
-                      style={getButtonPressStyle('exportCSV', {
+                      onClick={handleDownloadTemplate}
+                      {...getButtonPressHandlers('downloadTemplate')}
+                      style={getButtonPressStyle('downloadTemplate', {
                         width: '100%',
-                        padding: '10px 16px',
+                        padding: '12px 16px',
                         color: '#ffffff',
                         border: 'none',
-                        borderRadius: '8px',
+                        borderRadius: '10px',
                         fontSize: '13px',
-                        fontWeight: '500',
+                        fontWeight: '600',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '8px'
-                      }, colors.success, colors.successHover)}
+                      }, colors.info, colors.infoHover)}
                     >
                       <Download style={{ width: '14px', height: '14px' }} />
-                      Export CSV
+                      Download CSV Template
                     </button>
+                  </div>
+                </div>
+
+                {/* Export to CSV */}
+                {transactions.length > 0 && (
+                  <div style={quickActionCardStyle}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Download style={{ width: '16px', height: '16px', color: colors.success }} />
+                      <h4 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0 }}>Export to CSV</h4>
+                    </div>
+                    <p style={quickActionDescriptionStyle}>
+                      Export {filteredTransactions.length} filtered transaction{filteredTransactions.length !== 1 ? 's' : ''}
+                    </p>
+                    <div style={{ marginTop: 'auto' }}>
+                      <button
+                        onClick={handleExportToCSV}
+                        {...getButtonPressHandlers('exportCSV')}
+                        style={getButtonPressStyle('exportCSV', {
+                          width: '100%',
+                          padding: '12px 16px',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '10px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px'
+                        }, colors.success, colors.successHover)}
+                      >
+                        <Download style={{ width: '14px', height: '14px' }} />
+                        Export CSV
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
