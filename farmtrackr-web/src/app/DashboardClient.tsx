@@ -1,3 +1,380 @@
+        {listings.length > 0 && (
+          <div style={{ marginBottom: spacing(4), display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+                gap: spacing(2),
+                flexWrap: 'wrap'
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 600,
+                    ...text.primary,
+                    margin: 0,
+                    marginBottom: spacing(0.5)
+                  }}
+                >
+                  Current Listings
+                </h2>
+                <p
+                  style={{
+                    fontSize: '14px',
+                    ...text.secondary,
+                    margin: 0
+                  }}
+                >
+                  Live snapshot of seller pipeline stages.
+                </p>
+              </div>
+              <Link
+                href="/listings"
+                style={{
+                  padding: `${spacing(1)} ${spacing(1.75)}`,
+                  borderRadius: '999px',
+                  border: `1px solid ${colors.border}`,
+                  textDecoration: 'none',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: colors.text.primary,
+                  transition: 'background-color 0.2s ease',
+                  background: 'transparent'
+                }}
+              >
+                View full pipeline
+              </Link>
+            </div>
+
+        {listings.length > 0 && (
+          <div style={{ marginBottom: spacing(4), display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+                gap: spacing(2),
+                flexWrap: 'wrap'
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 600,
+                    ...text.primary,
+                    margin: 0,
+                    marginBottom: spacing(0.5)
+                  }}
+                >
+                  Current Listings
+                </h2>
+                <p
+                  style={{
+                    fontSize: '14px',
+                    ...text.secondary,
+                    margin: 0
+                  }}
+                >
+                  Live snapshot of seller pipeline stages.
+                </p>
+              </div>
+              <Link
+                href="/listings"
+                style={{
+                  padding: `${spacing(1)} ${spacing(1.75)}`,
+                  borderRadius: '999px',
+                  border: `1px solid ${colors.border}`,
+                  textDecoration: 'none',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: colors.text.primary,
+                  transition: 'background-color 0.2s ease',
+                  background: 'transparent'
+                }}
+              >
+                View full pipeline
+              </Link>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: spacing(3)
+              }}
+            >
+              {listingColumnConfig.map((column) => {
+                const columnListings = listingsByStage[column.key]
+                return (
+                  <div
+                    key={column.key}
+                    style={{
+                      ...card,
+                      borderTop: `4px solid ${column.accent}`,
+                      padding: spacing(2),
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: spacing(1.5),
+                      minHeight: '100%'
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing(1) }}>
+                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, ...text.primary }}>{column.title}</h3>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: column.accent }}>
+                          {columnListings.length}
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '13px', ...text.secondary }}>{column.description}</p>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), flex: 1 }}>
+                      {columnListings.length === 0 ? (
+                        <div
+                          style={{
+                            padding: spacing(1.5),
+                            borderRadius: spacing(1),
+                            border: `1px dashed ${colors.border}`,
+                            color: colors.text.secondary,
+                            fontSize: '13px',
+                            textAlign: 'center'
+                          }}
+                        >
+                          Nothing here yet.
+                        </div>
+                      ) : (
+                        columnListings.map((listing) => {
+                          const stage = getActiveStageInstance(listing)
+                          const stageLabel = stage?.name ?? column.title
+                          const stageStartedAt = formatStageDate(stage?.startedAt ?? listing.currentStageStartedAt)
+                          const title = listing.title || listing.address || 'Untitled Listing'
+                          const showAddressLine =
+                            listing.address &&
+                            (!listing.title || listing.title.trim().toLowerCase() !== listing.address.trim().toLowerCase())
+                          const locationLine = [
+                            showAddressLine ? listing.address : null,
+                            listing.city,
+                            listing.state,
+                            listing.zipCode
+                          ]
+                            .filter(Boolean)
+                            .join(', ')
+
+                          return (
+                            <div
+                              key={listing.id}
+                              style={{
+                                ...cardWithLeftBorder(column.accent),
+                                padding: spacing(1.75),
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: spacing(1)
+                              }}
+                            >
+                              <div>
+                                <p
+                                  style={{
+                                    margin: 0,
+                                    fontSize: '15px',
+                                    fontWeight: 600,
+                                    ...text.primary
+                                  }}
+                                >
+                                  {title}
+                                </p>
+                                {locationLine ? (
+                                  <p
+                                    style={{
+                                      margin: 0,
+                                      fontSize: '13px',
+                                      ...text.secondary
+                                    }}
+                                  >
+                                    {locationLine}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(1) }}>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '12px', ...text.secondary }}>List Price</span>
+                                  <span style={{ fontSize: '16px', fontWeight: 700, ...text.primary }}>
+                                    {formatCurrency(listing.listPrice)}
+                                  </span>
+                                </div>
+                                <div
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: spacing(0.5),
+                                    padding: `${spacing(0.5)} ${spacing(1)}`,
+                                    borderRadius: '999px',
+                                    backgroundColor: `${column.accent}1A`,
+                                    color: column.accent,
+                                    fontSize: '12px',
+                                    fontWeight: 600
+                                  }}
+                                >
+                                  {stageLabel}
+                                  {stageStartedAt ? (
+                                    <span style={{ fontSize: '11px', color: column.accent, fontWeight: 500 }}>
+                                      • {stageStartedAt}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: spacing(3)
+              }}
+            >
+              {listingColumnConfig.map((column) => {
+                const columnListings = listingsByStage[column.key]
+                return (
+                  <div
+                    key={column.key}
+                    style={{
+                      ...card,
+                      borderTop: `4px solid ${column.accent}`,
+                      padding: spacing(2),
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: spacing(1.5),
+                      minHeight: '100%'
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing(1) }}>
+                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, ...text.primary }}>{column.title}</h3>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: column.accent }}>
+                          {columnListings.length}
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '13px', ...text.secondary }}>{column.description}</p>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), flex: 1 }}>
+                      {columnListings.length === 0 ? (
+                        <div
+                          style={{
+                            padding: spacing(1.5),
+                            borderRadius: spacing(1),
+                            border: `1px dashed ${colors.border}`,
+                            color: colors.text.secondary,
+                            fontSize: '13px',
+                            textAlign: 'center'
+                          }}
+                        >
+                          Nothing here yet.
+                        </div>
+                      ) : (
+                        columnListings.map((listing) => {
+                          const stage = getActiveStageInstance(listing)
+                          const stageLabel = stage?.name ?? column.title
+                          const stageStartedAt = formatStageDate(stage?.startedAt ?? listing.currentStageStartedAt)
+                          const title = listing.title || listing.address || 'Untitled Listing'
+                          const showAddressLine =
+                            listing.address &&
+                            (!listing.title || listing.title.trim().toLowerCase() !== listing.address.trim().toLowerCase())
+                          const locationLine = [
+                            showAddressLine ? listing.address : null,
+                            listing.city,
+                            listing.state,
+                            listing.zipCode
+                          ]
+                            .filter(Boolean)
+                            .join(', ')
+
+                          return (
+                            <div
+                              key={listing.id}
+                              style={{
+                                ...cardWithLeftBorder(column.accent),
+                                padding: spacing(1.75),
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: spacing(1)
+                              }}
+                            >
+                              <div>
+                                <p
+                                  style={{
+                                    margin: 0,
+                                    fontSize: '15px',
+                                    fontWeight: 600,
+                                    ...text.primary
+                                  }}
+                                >
+                                  {title}
+                                </p>
+                                {locationLine ? (
+                                  <p
+                                    style={{
+                                      margin: 0,
+                                      fontSize: '13px',
+                                      ...text.secondary
+                                    }}
+                                  >
+                                    {locationLine}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(1) }}>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '12px', ...text.secondary }}>List Price</span>
+                                  <span style={{ fontSize: '16px', fontWeight: 700, ...text.primary }}>
+                                    {formatCurrency(listing.listPrice)}
+                                  </span>
+                                </div>
+                                <div
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: spacing(0.5),
+                                    padding: `${spacing(0.5)} ${spacing(1)}`,
+                                    borderRadius: '999px',
+                                    backgroundColor: `${column.accent}1A`,
+                                    color: column.accent,
+                                    fontSize: '12px',
+                                    fontWeight: 600
+                                  }}
+                                >
+                                  {stageLabel}
+                                  {stageStartedAt ? (
+                                    <span style={{ fontSize: '11px', color: column.accent, fontWeight: 500 }}>
+                                      • {stageStartedAt}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
@@ -965,196 +1342,6 @@ export default function DashboardClient({ contacts, stats, listings: initialList
             </div>
           </div>
 
-        {listings.length > 0 && (
-          <div style={{ marginBottom: spacing(4) }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-end',
-                justifyContent: 'space-between',
-                gap: spacing(2),
-                marginBottom: spacing(1.5),
-                flexWrap: 'wrap'
-              }}
-            >
-              <div>
-                <h2
-                  style={{
-                    fontSize: '24px',
-                    fontWeight: 600,
-                    ...text.primary,
-                    margin: 0,
-                    marginBottom: spacing(0.5)
-                  }}
-                >
-                  Current Listings
-                </h2>
-                <p
-                  style={{
-                    fontSize: '14px',
-                    ...text.secondary,
-                    margin: 0
-                  }}
-                >
-                  Live snapshot of seller pipeline stages.
-                </p>
-              </div>
-              <Link
-                href="/listings"
-                style={{
-                  padding: `${spacing(1)} ${spacing(1.75)}`,
-                  borderRadius: '999px',
-                  border: `1px solid ${colors.border}`,
-                  textDecoration: 'none',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: colors.text.primary,
-                  transition: 'background-color 0.2s ease',
-                  background: 'transparent'
-                }}
-              >
-                View full pipeline
-              </Link>
-            </div>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                gap: spacing(3)
-              }}
-            >
-              {listingColumnConfig.map((column) => {
-                const columnListings = listingsByStage[column.key]
-                return (
-                  <div
-                    key={column.key}
-                    style={{
-                      ...card,
-                      borderTop: `4px solid ${column.accent}`,
-                      padding: spacing(2),
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: spacing(1.5),
-                      minHeight: '100%'
-                    }}
-                  >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing(1) }}>
-                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, ...text.primary }}>{column.title}</h3>
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: column.accent }}>
-                          {columnListings.length}
-                        </span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: '13px', ...text.secondary }}>{column.description}</p>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), flex: 1 }}>
-                      {columnListings.length === 0 ? (
-                        <div
-                          style={{
-                            padding: spacing(1.5),
-                            borderRadius: spacing(1),
-                            border: `1px dashed ${colors.border}`,
-                            color: colors.text.secondary,
-                            fontSize: '13px',
-                            textAlign: 'center'
-                          }}
-                        >
-                          Nothing here yet.
-                        </div>
-                      ) : (
-                        columnListings.map((listing) => {
-                          const stage = getActiveStageInstance(listing)
-                          const stageLabel = stage?.name ?? column.title
-                          const stageStartedAt = formatStageDate(stage?.startedAt ?? listing.currentStageStartedAt)
-                          const title = listing.title || listing.address || 'Untitled Listing'
-                          const showAddressLine =
-                            listing.address &&
-                            (!listing.title || listing.title.trim().toLowerCase() !== listing.address.trim().toLowerCase())
-                          const locationLine = [
-                            showAddressLine ? listing.address : null,
-                            listing.city,
-                            listing.state,
-                            listing.zipCode
-                          ]
-                            .filter(Boolean)
-                            .join(', ')
-
-                          return (
-                            <div
-                              key={listing.id}
-                              style={{
-                                ...cardWithLeftBorder(column.accent),
-                                padding: spacing(1.75),
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: spacing(1)
-                              }}
-                            >
-                              <div>
-                                <p
-                                  style={{
-                                    margin: 0,
-                                    fontSize: '15px',
-                                    fontWeight: 600,
-                                    ...text.primary
-                                  }}
-                                >
-                                  {title}
-                                </p>
-                                {locationLine ? (
-                                  <p
-                                    style={{
-                                      margin: 0,
-                                      fontSize: '13px',
-                                      ...text.secondary
-                                    }}
-                                  >
-                                    {locationLine}
-                                  </p>
-                                ) : null}
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(1) }}>
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span style={{ fontSize: '12px', ...text.secondary }}>List Price</span>
-                                  <span style={{ fontSize: '16px', fontWeight: 700, ...text.primary }}>
-                                    {formatCurrency(listing.listPrice)}
-                                  </span>
-                                </div>
-                                <div
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: spacing(0.5),
-                                    padding: `${spacing(0.5)} ${spacing(1)}`,
-                                    borderRadius: '999px',
-                                    backgroundColor: `${column.accent}1A`,
-                                    color: column.accent,
-                                    fontSize: '12px',
-                                    fontWeight: 600
-                                  }}
-                                >
-                                  {stageLabel}
-                                  {stageStartedAt ? (
-                                    <span style={{ fontSize: '11px', color: column.accent, fontWeight: 500 }}>
-                                      • {stageStartedAt}
-                                    </span>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
           {/* Overview Section */}
           <div style={{ marginBottom: spacing(4) }}>
             <h2 
@@ -1977,136 +2164,6 @@ export default function DashboardClient({ contacts, stats, listings: initialList
                   })()}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Current Listings Section */}
-          <div style={{ marginBottom: spacing(4) }}>
-            <h2 
-              style={{
-                fontSize: '24px',
-                fontWeight: '600',
-                ...text.primary,
-                lineHeight: '32px',
-                marginBottom: spacing(1.5),
-                margin: `0 0 ${spacing(1.5)} 0`
-              }}
-            >
-              Current Listings
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: spacing(2) }}>
-              {/* Placeholder Listing Card */}
-              <Link
-                href="#"
-                {...getButtonPressHandlers('listing-479-desert-holly')}
-                style={getButtonPressStyle(
-                  'listing-479-desert-holly',
-                  {
-                    padding: spacing(3),
-                    ...card,
-                    cursor: 'pointer',
-                    border: `1px solid ${colors.border}`,
-                    textDecoration: 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: spacing(2)
-                  },
-                  colors.card,
-                  colors.cardHover
-                )}
-                onMouseEnter={(e) => {
-                  if (!pressedButtons.has('listing-479-desert-holly')) {
-                    e.currentTarget.style.backgroundColor = colors.cardHover
-                    e.currentTarget.style.borderColor = colors.primary
-                    e.currentTarget.style.boxShadow = isDark 
-                      ? '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)'
-                      : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!pressedButtons.has('listing-479-desert-holly')) {
-                    e.currentTarget.style.backgroundColor = colors.card
-                    e.currentTarget.style.borderColor = colors.border
-                    e.currentTarget.style.boxShadow = card.boxShadow
-                  }
-                }}
-              >
-                {/* Header with Price and MLS */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing(2) }}>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ fontWeight: '700', ...text.primary, fontSize: '20px', margin: '0 0 4px 0' }}>
-                      $1,030,000
-                    </h3>
-                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
-                      MLS# 219125533
-                    </p>
-                  </div>
-                  <span style={{
-                    padding: '4px 10px',
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    backgroundColor: isDark ? 'rgba(104, 159, 56, 0.2)' : 'rgba(104, 159, 56, 0.1)',
-                    color: colors.success,
-                    borderRadius: '999px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
-                  }}>
-                    Active
-                  </span>
-                </div>
-
-                {/* Address */}
-                <div>
-                  <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0 0 4px 0' }}>
-                    479 Desert Holly Drive
-                  </p>
-                  <p style={{ fontSize: '14px', ...text.secondary, margin: '0' }}>
-                    Palm Desert, CA 92211
-                  </p>
-                </div>
-
-                {/* Property Details */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing(2), paddingTop: spacing(1.5), borderTop: `1px solid ${colors.border}` }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                    <Home style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
-                    <span style={{ fontSize: '13px', ...text.secondary }}>
-                      3 Bed • 4 Bath
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                    <Building2 style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
-                    <span style={{ fontSize: '13px', ...text.secondary }}>
-                      2,182 sq ft
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                    <Calendar style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
-                    <span style={{ fontSize: '13px', ...text.secondary }}>
-                      Built 1996
-                    </span>
-                  </div>
-                </div>
-
-                {/* Additional Info */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5), fontSize: '12px', ...text.tertiary }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                    <span style={{ fontWeight: '600', ...text.secondary }}>Type:</span>
-                    <span>Condominium</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                    <span style={{ fontWeight: '600', ...text.secondary }}>Subdivision:</span>
-                    <span>Indian Ridge</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                    <span style={{ fontWeight: '600', ...text.secondary }}>View:</span>
-                    <span>Golf Course</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                    <span style={{ fontWeight: '600', ...text.secondary }}>Listed:</span>
-                    <span>Feb 27, 2025</span>
-                  </div>
-                </div>
-              </Link>
             </div>
           </div>
 
