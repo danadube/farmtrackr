@@ -22,7 +22,12 @@ const LISTING_INCLUDE = Prisma.validator<Prisma.ListingInclude>()({
     orderBy: { order: 'asc' as Prisma.SortOrder },
     include: {
       tasks: {
-        orderBy: { createdAt: 'asc' as Prisma.SortOrder }
+        orderBy: { createdAt: 'asc' as Prisma.SortOrder },
+        include: {
+          document: {
+            select: { id: true, title: true, fileUrl: true }
+          }
+        }
       }
     }
   }
@@ -595,6 +600,123 @@ export async function completeListingTask(input: UpdateListingTaskInput, client:
   })
 }
 
+export type CreateListingTaskInput = {
+  listingId: string
+  stageInstanceId: string
+  name: string
+  dueDate?: string | null
+  notes?: string | null
+}
+
+export async function createListingTask(input: CreateListingTaskInput, client: PrismaClient = prisma) {
+  return client.$transaction(async (tx: TxClient) => {
+    const stageInstance = await tx.listingStageInstance.findUnique({
+      where: { id: input.stageInstanceId },
+      select: { id: true, listingId: true }
+    })
+
+    if (!stageInstance || stageInstance.listingId !== input.listingId) {
+      throw new Error('Stage instance not found for this listing')
+    }
+
+    await tx.listingTaskInstance.create({
+      data: {
+        listingId: input.listingId,
+        stageInstanceId: input.stageInstanceId,
+        name: input.name,
+        dueDate: input.dueDate ? new Date(input.dueDate) : null,
+        notes: input.notes ?? null
+      }
+    })
+
+    return tx.listing.findUniqueOrThrow({
+      where: { id: input.listingId },
+      include: LISTING_INCLUDE
+    })
+  })
+}
+
+export type UpdateListingTaskDetailsInput = {
+  listingId: string
+  taskId: string
+  name?: string
+  dueDate?: string | null
+  notes?: string | null
+}
+
+export async function updateListingTaskDetails(input: UpdateListingTaskDetailsInput, client: PrismaClient = prisma) {
+  if (
+    input.name === undefined &&
+    input.dueDate === undefined &&
+    input.notes === undefined
+  ) {
+    throw new Error('No updates provided for task')
+  }
+
+  return client.$transaction(async (tx: TxClient) => {
+    const task = await tx.listingTaskInstance.findUnique({ where: { id: input.taskId } })
+
+    if (!task) {
+      throw new Error('Task not found')
+    }
+
+    if (task.listingId !== input.listingId) {
+      throw new Error('Task does not belong to the specified listing')
+    }
+
+    await tx.listingTaskInstance.update({
+      where: { id: input.taskId },
+      data: {
+        name: input.name ?? task.name,
+        dueDate: input.dueDate !== undefined ? (input.dueDate ? new Date(input.dueDate) : null) : task.dueDate,
+        notes: input.notes !== undefined ? input.notes : task.notes
+      }
+    })
+
+    return tx.listing.findUniqueOrThrow({
+      where: { id: input.listingId },
+      include: LISTING_INCLUDE
+    })
+  })
+}
+
+export type SetListingTaskDocumentInput = {
+  listingId: string
+  taskId: string
+  documentId: string | null
+}
+
+export async function setListingTaskDocument(input: SetListingTaskDocumentInput, client: PrismaClient = prisma) {
+  return client.$transaction(async (tx: TxClient) => {
+    const task = await tx.listingTaskInstance.findUnique({ where: { id: input.taskId } })
+
+    if (!task) {
+      throw new Error('Task not found')
+    }
+
+    if (task.listingId !== input.listingId) {
+      throw new Error('Task does not belong to the specified listing')
+    }
+
+    if (input.documentId) {
+      const documentExists = await tx.document.findUnique({ where: { id: input.documentId } })
+      if (!documentExists) {
+        throw new Error('Document not found')
+      }
+    }
+
+    await tx.listingTaskInstance.update({
+      where: { id: input.taskId },
+      data: { documentId: input.documentId }
+    })
+
+    return tx.listing.findUniqueOrThrow({
+      where: { id: input.listingId },
+      include: LISTING_INCLUDE
+    })
+  })
+}
+
 export async function advanceListingStage(listingId: string, client: PrismaClient = prisma) {
   const now = new Date()
 
@@ -837,7 +959,10 @@ export function serializeListing(listing: ListingWithRelations): ListingClient {
         notes: task.notes ?? null,
         autoRepeat: task.autoRepeat,
         autoComplete: task.autoComplete,
-        triggerOn: task.triggerOn ?? null
+        triggerOn: task.triggerOn ?? null,
+        documentId: task.documentId ?? null,
+        documentTitle: task.document?.title ?? null,
+        documentUrl: task.document?.fileUrl ?? null
       }))
     }))
   }

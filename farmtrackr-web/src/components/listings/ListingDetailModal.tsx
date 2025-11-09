@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { Home, CheckSquare, ChevronDown } from 'lucide-react'
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { Home, CheckSquare, ChevronDown, Paperclip, ExternalLink, Plus, Pencil, Save, X as CloseIcon, Trash2 } from 'lucide-react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import type { ListingClient, ListingTaskClient } from '@/types/listings'
 
@@ -11,6 +11,9 @@ type ListingDetailModalProps = {
   onOpenPipeline?: () => void
   onToggleTask?: (listingId: string, task: ListingTaskClient, completed: boolean) => void
   isUpdating?: boolean
+  onAddTask?: (stageInstanceId: string, payload: { name: string; dueDate?: string | null }) => Promise<void> | void
+  onUpdateTask?: (taskId: string, updates: { name?: string; dueDate?: string | null }) => Promise<void> | void
+  onAttachDocument?: (taskId: string, file: File | null) => Promise<void> | void
 }
 
 const formatCurrency = (value: number | null | undefined) => {
@@ -111,6 +114,41 @@ export function ListingDetailModal({ listing, onClose, onOpenPipeline, onToggleT
     setOpenDocumentGroups(initial)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listing?.id])
+
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+  const [editTaskName, setEditTaskName] = useState('')
+  const [editTaskDueDate, setEditTaskDueDate] = useState('')
+  const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
+  const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null)
+  const [activeAddStageId, setActiveAddStageId] = useState<string | null>(null)
+  const [newTaskName, setNewTaskName] = useState('')
+  const [newTaskDueDate, setNewTaskDueDate] = useState('')
+  const [creatingStageId, setCreatingStageId] = useState<string | null>(null)
+  const fileInputsRef = useRef<Record<string, HTMLInputElement | null>>({})
+
+  const toDateInputValue = (value: string | null) => {
+    if (!value) return ''
+    try {
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return ''
+      return date.toISOString().split('T')[0]
+    } catch {
+      return ''
+    }
+  }
+
+  const resetEditState = () => {
+    setEditingTaskId(null)
+    setEditTaskName('')
+    setEditTaskDueDate('')
+  }
+
+  const resetNewTaskState = () => {
+    setActiveAddStageId(null)
+    setNewTaskName('')
+    setNewTaskDueDate('')
+    setCreatingStageId(null)
+  }
 
   return (
     <div
@@ -272,53 +310,425 @@ export function ListingDetailModal({ listing, onClose, onOpenPipeline, onToggleT
                       />
                     </button>
                     {isOpen && (
-                      <div style={{ padding: `${spacing(1)} ${spacing(1.25)}`, display: 'flex', flexDirection: 'column', gap: spacing(0.5), backgroundColor: colors.cardHover }}>
-                        {group.tasks.map((task) => (
-                          <label
-                            key={task.id}
+                      <div style={{ padding: `${spacing(1)} ${spacing(1.25)}`, display: 'flex', flexDirection: 'column', gap: spacing(1), backgroundColor: colors.cardHover }}>
+                        {group.tasks.map((task) => {
+                          const isEditing = editingTaskId === task.id
+                          const isSaving = savingTaskId === task.id || !!isUpdating
+                          const isUploading = uploadingTaskId === task.id
+                          const dueInputValue = isEditing ? editTaskDueDate : toDateInputValue(task.dueDate)
+
+                          return (
+                            <div
+                              key={task.id}
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: spacing(0.5),
+                                padding: `${spacing(0.5)} ${spacing(0.75)}`,
+                                borderRadius: spacing(0.5),
+                                backgroundColor: task.completed ? colors.card : 'transparent'
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'flex-start',
+                                  gap: spacing(1)
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={task.completed}
+                                  disabled={!canToggleTasks || isSaving || isUploading}
+                                  onChange={(event) => {
+                                    event.stopPropagation()
+                                    onToggleTask?.(listing.id, task, event.target.checked)
+                                  }}
+                                  onClick={(event) => event.stopPropagation()}
+                                  style={{ width: '16px', height: '16px', cursor: canToggleTasks && !isSaving && !isUploading ? 'pointer' : 'not-allowed', marginTop: spacing(0.5) }}
+                                />
+
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
+                                  {isEditing ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
+                                      <input
+                                        type="text"
+                                        value={editTaskName}
+                                        onChange={(event) => setEditTaskName(event.target.value)}
+                                        disabled={isSaving}
+                                        style={{
+                                          padding: '8px',
+                                          borderRadius: '8px',
+                                          border: `1px solid ${colors.border}`,
+                                          fontSize: '13px',
+                                          width: '100%'
+                                        }}
+                                      />
+                                      <div style={{ display: 'flex', gap: spacing(0.75), flexWrap: 'wrap' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25) }}>
+                                          <span style={{ fontSize: '12px', color: colors.text.secondary }}>Due Date</span>
+                                          <input
+                                            type="date"
+                                            value={editTaskDueDate}
+                                            onChange={(event) => setEditTaskDueDate(event.target.value)}
+                                            disabled={isSaving}
+                                            style={{
+                                              padding: '6px 8px',
+                                              borderRadius: '8px',
+                                              border: `1px solid ${colors.border}`,
+                                              fontSize: '13px'
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25) }}>
+                                      <span
+                                        style={{
+                                          fontSize: '13px',
+                                          fontWeight: 500,
+                                          color: task.completed ? colors.text.secondary : colors.text.primary
+                                        }}
+                                      >
+                                        {task.name}
+                                      </span>
+                                      <span style={{ fontSize: '12px', color: task.completed ? colors.success : colors.text.secondary }}>
+                                        {task.completed
+                                          ? `Done ${formatDate(task.completedAt)}`
+                                          : task.dueDate
+                                          ? `Due ${formatDate(task.dueDate)}`
+                                          : task.dueInDays !== null && task.dueInDays !== undefined
+                                          ? `Due in ${task.dueInDays} day${task.dueInDays === 1 ? '' : 's'}`
+                                          : 'No due date'}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div style={{ display: 'flex', gap: spacing(0.5), alignItems: 'center' }}>
+                                  {isEditing ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={async (event) => {
+                                          event.stopPropagation()
+                                          if (!onUpdateTask) {
+                                            resetEditState()
+                                            return
+                                          }
+                                          const trimmedName = editTaskName.trim()
+                                          const updates: { name?: string; dueDate?: string | null } = {}
+                                          if (trimmedName && trimmedName !== task.name) {
+                                            updates.name = trimmedName
+                                          }
+                                          if (editTaskDueDate !== toDateInputValue(task.dueDate)) {
+                                            updates.dueDate = editTaskDueDate ? editTaskDueDate : null
+                                          }
+
+                                          if (Object.keys(updates).length === 0) {
+                                            resetEditState()
+                                            return
+                                          }
+
+                                          try {
+                                            setSavingTaskId(task.id)
+                                            await onUpdateTask(task.id, updates)
+                                            resetEditState()
+                                          } catch (error) {
+                                            console.error('Failed to update task details', error)
+                                          } finally {
+                                            setSavingTaskId(null)
+                                          }
+                                        }}
+                                        disabled={isSaving || !editTaskName.trim()}
+                                        style={{
+                                          padding: '6px 10px',
+                                          borderRadius: '8px',
+                                          border: 'none',
+                                          backgroundColor: colors.primary,
+                                          color: '#ffffff',
+                                          fontSize: '12px',
+                                          fontWeight: 600,
+                                          cursor: isSaving ? 'wait' : 'pointer',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center'
+                                        }}
+                                      >
+                                        <Save style={{ width: '14px', height: '14px' }} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation()
+                                          resetEditState()
+                                        }}
+                                        disabled={isSaving}
+                                        style={{
+                                          padding: '6px 10px',
+                                          borderRadius: '8px',
+                                          border: `1px solid ${colors.border}`,
+                                          backgroundColor: 'transparent',
+                                          color: colors.text.secondary,
+                                          fontSize: '12px',
+                                          cursor: isSaving ? 'wait' : 'pointer'
+                                        }}
+                                      >
+                                        <CloseIcon style={{ width: '14px', height: '14px' }} />
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation()
+                                          setEditingTaskId(task.id)
+                                          setEditTaskName(task.name)
+                                          setEditTaskDueDate(dueInputValue)
+                                        }}
+                                        disabled={isSaving || isUploading || isUpdating}
+                                        style={{
+                                          padding: '6px 10px',
+                                          borderRadius: '8px',
+                                          border: `1px solid ${colors.border}`,
+                                          backgroundColor: 'transparent',
+                                          color: colors.text.secondary,
+                                          fontSize: '12px',
+                                          cursor: isSaving || isUploading || isUpdating ? 'not-allowed' : 'pointer'
+                                        }}
+                                      >
+                                        <Pencil style={{ width: '14px', height: '14px' }} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation()
+                                          if (!onAttachDocument) return
+                                          fileInputsRef.current[task.id]?.click()
+                                        }}
+                                        disabled={!onAttachDocument || isUploading || isUpdating}
+                                        style={{
+                                          padding: '6px 10px',
+                                          borderRadius: '8px',
+                                          border: `1px solid ${colors.border}`,
+                                          backgroundColor: 'transparent',
+                                          color: colors.text.secondary,
+                                          fontSize: '12px',
+                                          cursor: !onAttachDocument || isUploading || isUpdating ? 'not-allowed' : 'pointer'
+                                        }}
+                                      >
+                                        <Paperclip style={{ width: '14px', height: '14px' }} />
+                                      </button>
+                                      {task.documentId ? (
+                                        <button
+                                          type="button"
+                                          onClick={async (event) => {
+                                            event.stopPropagation()
+                                            if (!onAttachDocument) return
+                                            try {
+                                              setUploadingTaskId(task.id)
+                                              await onAttachDocument(task.id, null)
+                                            } catch (error) {
+                                              console.error('Failed to remove document', error)
+                                            } finally {
+                                              setUploadingTaskId(null)
+                                            }
+                                          }}
+                                          disabled={!onAttachDocument || isUploading || isUpdating}
+                                          style={{
+                                            padding: '6px 10px',
+                                            borderRadius: '8px',
+                                            border: `1px solid ${colors.border}`,
+                                            backgroundColor: 'transparent',
+                                            color: colors.text.secondary,
+                                            fontSize: '12px',
+                                            cursor: !onAttachDocument || isUploading || isUpdating ? 'not-allowed' : 'pointer'
+                                          }}
+                                        >
+                                          <Trash2 style={{ width: '14px', height: '14px' }} />
+                                        </button>
+                                      ) : null}
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25) }}>
+                                {task.documentId && task.documentTitle ? (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(0.5), fontSize: '12px', color: colors.text.secondary }}>
+                                    <ExternalLink style={{ width: '12px', height: '12px' }} />
+                                    <span>{task.documentTitle}</span>
+                                    {task.documentUrl ? (
+                                      <a
+                                        href={task.documentUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        style={{ color: colors.primary, textDecoration: 'none', fontWeight: 600 }}
+                                      >
+                                        View
+                                      </a>
+                                    ) : null}
+                                  </div>
+                                ) : (
+                                  <span style={{ fontSize: '12px', ...text.tertiary }}>No document attached</span>
+                                )}
+                                {isUploading ? (
+                                  <span style={{ fontSize: '12px', ...text.secondary }}>Uploading...</span>
+                                ) : null}
+                              </div>
+
+                              {onAttachDocument ? (
+                                <input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                                  style={{ display: 'none' }}
+                                  ref={(element) => {
+                                    fileInputsRef.current[task.id] = element
+                                  }}
+                                  onChange={async (event: ChangeEvent<HTMLInputElement>) => {
+                                    event.stopPropagation()
+                                    const file = event.target.files?.[0]
+                                    if (!file || !onAttachDocument) {
+                                      event.target.value = ''
+                                      return
+                                    }
+                                    try {
+                                      setUploadingTaskId(task.id)
+                                      await onAttachDocument(task.id, file)
+                                    } catch (error) {
+                                      console.error('Failed to attach document', error)
+                                    } finally {
+                                      setUploadingTaskId(null)
+                                      event.target.value = ''
+                                    }
+                                  }}
+                                />
+                              ) : null}
+                            </div>
+                          )
+                        })}
+
+                        {activeAddStageId === group.stageId ? (
+                          <div
                             style={{
                               display: 'flex',
-                              alignItems: 'center',
-                              gap: spacing(1),
+                              flexDirection: 'column',
+                              gap: spacing(0.75),
                               padding: `${spacing(0.5)} ${spacing(0.75)}`,
                               borderRadius: spacing(0.5),
-                              backgroundColor: task.completed ? colors.card : 'transparent',
-                              cursor: canToggleTasks ? 'pointer' : 'default'
+                              border: `1px dashed ${colors.border}`,
+                              backgroundColor: colors.card
                             }}
                           >
                             <input
-                              type="checkbox"
-                              checked={task.completed}
-                              disabled={!canToggleTasks || isUpdating}
-                              onChange={(event) => {
-                                event.stopPropagation()
-                                onToggleTask?.(listing.id, task, event.target.checked)
-                              }}
-                              onClick={(event) => event.stopPropagation()}
-                              style={{ width: '16px', height: '16px', cursor: canToggleTasks && !isUpdating ? 'pointer' : 'not-allowed' }}
+                              type="text"
+                              value={newTaskName}
+                              onChange={(event) => setNewTaskName(event.target.value)}
+                              placeholder="Task name"
+                              disabled={creatingStageId === group.stageId || !!isUpdating}
+                              style={{ padding: '8px', borderRadius: '8px', border: `1px solid ${colors.border}`, fontSize: '13px' }}
                             />
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), flex: 1 }}>
-                              <span
+                            <div style={{ display: 'flex', gap: spacing(0.75), flexWrap: 'wrap' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25) }}>
+                                <span style={{ fontSize: '12px', color: colors.text.secondary }}>Due Date</span>
+                                <input
+                                  type="date"
+                                  value={newTaskDueDate}
+                                  onChange={(event) => setNewTaskDueDate(event.target.value)}
+                                  disabled={creatingStageId === group.stageId || !!isUpdating}
+                                  style={{ padding: '6px 8px', borderRadius: '8px', border: `1px solid ${colors.border}`, fontSize: '13px' }}
+                                />
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: spacing(0.5) }}>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (!onAddTask) {
+                                    resetNewTaskState()
+                                    return
+                                  }
+                                  if (!newTaskName.trim()) return
+                                  try {
+                                    setCreatingStageId(group.stageId)
+                                    await onAddTask(group.stageId, {
+                                      name: newTaskName.trim(),
+                                      dueDate: newTaskDueDate || null
+                                    })
+                                    resetNewTaskState()
+                                  } catch (error) {
+                                    console.error('Failed to add task', error)
+                                  } finally {
+                                    setCreatingStageId(null)
+                                  }
+                                }}
+                                disabled={!newTaskName.trim() || creatingStageId === group.stageId || !!isUpdating}
                                 style={{
+                                  padding: '8px 14px',
+                                  borderRadius: '8px',
+                                  border: 'none',
+                                  backgroundColor: colors.primary,
+                                  color: '#ffffff',
                                   fontSize: '13px',
-                                  fontWeight: 500,
-                                  color: task.completed ? colors.text.secondary : colors.text.primary
+                                  fontWeight: 600,
+                                  cursor: !newTaskName.trim() || creatingStageId === group.stageId || isUpdating ? 'not-allowed' : 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: spacing(0.5)
                                 }}
                               >
-                                {task.name}
-                              </span>
-                              <span style={{ fontSize: '12px', color: task.completed ? colors.success : colors.text.secondary }}>
-                                {task.completed
-                                  ? `Done ${formatDate(task.completedAt)}`
-                                  : task.dueDate
-                                  ? `Due ${formatDate(task.dueDate)}`
-                                  : task.dueInDays !== null && task.dueInDays !== undefined
-                                  ? `Due in ${task.dueInDays} day${task.dueInDays === 1 ? '' : 's'}`
-                                  : ''}
-                              </span>
+                                <Save style={{ width: '14px', height: '14px' }} />
+                                Save Task
+                              </button>
+                              <button
+                                type="button"
+                                onClick={resetNewTaskState}
+                                disabled={creatingStageId === group.stageId}
+                                style={{
+                                  padding: '8px 14px',
+                                  borderRadius: '8px',
+                                  border: `1px solid ${colors.border}`,
+                                  backgroundColor: 'transparent',
+                                  color: colors.text.secondary,
+                                  fontSize: '13px',
+                                  fontWeight: 500,
+                                  cursor: creatingStageId === group.stageId ? 'not-allowed' : 'pointer'
+                                }}
+                              >
+                                Cancel
+                              </button>
                             </div>
-                          </label>
-                        ))}
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveAddStageId(group.stageId)
+                              setNewTaskName('')
+                              setNewTaskDueDate('')
+                            }}
+                            disabled={!!isUpdating || creatingStageId !== null || savingTaskId !== null || uploadingTaskId !== null}
+                            style={{
+                              marginTop: spacing(0.5),
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              border: `1px dashed ${colors.primary}`,
+                              backgroundColor: `${colors.primary}12`,
+                              color: colors.primary,
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: spacing(0.5),
+                              cursor: isUpdating ? 'not-allowed' : 'pointer'
+                            }}
+                          >
+                            <Plus style={{ width: '14px', height: '14px' }} />
+                            Add Task
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

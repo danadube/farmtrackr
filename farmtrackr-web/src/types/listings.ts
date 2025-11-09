@@ -17,6 +17,9 @@ export type ListingTaskClient = {
   autoRepeat: boolean
   autoComplete: boolean
   triggerOn: string | null
+  documentId: string | null
+  documentTitle: string | null
+  documentUrl: string | null
 }
 
 export type ListingStageStatusType = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'SKIPPED'

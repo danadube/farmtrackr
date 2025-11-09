@@ -378,6 +378,149 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
     }
   }
 
+  const handleAddTaskToStage = async (
+    stageInstanceId: string,
+    payload: { name: string; dueDate?: string | null }
+  ) => {
+    if (!detailListing) return
+
+    setUpdatingListingId(detailListing.id)
+    setFeedback(null)
+
+    try {
+      const response = await fetch(`/api/listings/${detailListing.id}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stageInstanceId,
+          name: payload.name,
+          dueDate: payload.dueDate ?? null
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to add task')
+      }
+
+      const updatedListing: ListingClient = await response.json()
+      updateListingInState(updatedListing)
+      setDetailListing(updatedListing)
+      setFeedback('Task added to the checklist.')
+    } catch (error) {
+      console.error('Error adding task', error)
+      setFeedback('Unable to add that task right now. Please try again.')
+      throw error instanceof Error ? error : new Error('Unable to add task')
+    } finally {
+      setUpdatingListingId(null)
+    }
+  }
+
+  const handleUpdateTaskDetails = async (
+    taskId: string,
+    updates: { name?: string; dueDate?: string | null }
+  ) => {
+    if (!detailListing) return
+    if (!updates || Object.keys(updates).length === 0) return
+
+    setUpdatingListingId(detailListing.id)
+    setFeedback(null)
+
+    try {
+      const response = await fetch(`/api/listings/${detailListing.id}/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update task details')
+      }
+
+      const updatedListing: ListingClient = await response.json()
+      updateListingInState(updatedListing)
+      setDetailListing(updatedListing)
+      setFeedback('Task details updated.')
+    } catch (error) {
+      console.error('Error updating task details', error)
+      setFeedback('Unable to save those changes right now.')
+      throw error instanceof Error ? error : new Error('Unable to update task details')
+    } finally {
+      setUpdatingListingId(null)
+    }
+  }
+
+  const handleAttachTaskDocument = async (taskId: string, file: File | null) => {
+    if (!detailListing) return
+
+    setUpdatingListingId(detailListing.id)
+    setFeedback(null)
+
+    try {
+      let documentId: string | null = null
+
+      if (file) {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const uploadResponse = await fetch('/api/uploads', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!uploadResponse.ok) {
+          const errorPayload = await uploadResponse.json().catch(() => ({}))
+          throw new Error(errorPayload.error || 'File upload failed')
+        }
+
+        const { url: fileUrl } = await uploadResponse.json()
+
+        const descriptionParts = [
+          file.name,
+          detailListing.title || detailListing.address || detailListing.pipelineName || 'Listing document'
+        ].filter(Boolean)
+
+        const documentResponse = await fetch('/api/documents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: file.name,
+            description: `Uploaded file ${descriptionParts.join(' • ')}`,
+            fileUrl
+          })
+        })
+
+        if (!documentResponse.ok) {
+          const errorPayload = await documentResponse.json().catch(() => ({}))
+          throw new Error(errorPayload.error || 'Document save failed')
+        }
+
+        const document = await documentResponse.json()
+        documentId = document.id
+      }
+
+      const response = await fetch(`/api/listings/${detailListing.id}/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentId })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update task document')
+      }
+
+      const updatedListing: ListingClient = await response.json()
+      updateListingInState(updatedListing)
+      setDetailListing(updatedListing)
+      setFeedback(file ? 'Document attached to task.' : 'Document removed from task.')
+    } catch (error) {
+      console.error('Error updating task document', error)
+      setFeedback('Unable to update the document right now.')
+      throw error instanceof Error ? error : new Error('Unable to update task document')
+    } finally {
+      setUpdatingListingId(null)
+    }
+  }
+
   const handleAdvanceStage = async (listingId: string) => {
     setUpdatingListingId(listingId)
     setFeedback(null)
@@ -1135,6 +1278,9 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
         onClose={closeDetailModal}
         onToggleTask={handleToggleTask}
         onOpenPipeline={handleOpenPipelineFromModal}
+        onAddTask={handleAddTaskToStage}
+        onUpdateTask={handleUpdateTaskDetails}
+        onAttachDocument={handleAttachTaskDocument}
         isUpdating={detailListing ? updatingListingId === detailListing.id : false}
       />
     </Sidebar>
