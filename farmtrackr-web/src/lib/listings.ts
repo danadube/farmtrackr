@@ -145,7 +145,9 @@ async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
       where: { pipelineTemplateId: template.id }
     })
 
-    for (const [index, stage] of (pipeline.stages ?? []).entries()) {
+    const stages = pipeline.stages ?? []
+    for (let index = 0; index < stages.length; index++) {
+      const stage = stages[index]
       const stageRecord = await client.listingStageTemplate.create({
         data: {
           pipelineTemplateId: template.id,
