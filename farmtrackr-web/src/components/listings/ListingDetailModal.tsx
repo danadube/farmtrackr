@@ -74,6 +74,17 @@ const EXACT_TASK_CATEGORY = new Map<string, TaskCategory>(
   ).map(([name, category]) => [normalizeTaskName(name), category])
 )
 
+const formatDate = (value: string | Date | null | undefined) => {
+  if (!value) return ''
+  const date = typeof value === 'string' ? new Date(value) : value
+  if (!date || Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })
+}
+
 const categorizeTaskName = (name: string | null | undefined): TaskCategory => {
   if (!name) return 'workflow'
   const normalized = normalizeTaskName(name)
