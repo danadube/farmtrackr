@@ -600,7 +600,9 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {filteredContacts.map((contact, index) => (
+              {filteredContacts.map((contact, index) => {
+                const tags = (contact as unknown as { tags?: string[] }).tags ?? []
+                return (
                 <Link
                   key={contact.id}
                   href={`/contacts/${contact.id}`}
@@ -649,9 +651,9 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      {contact.tags && contact.tags.length > 0 && (
+                      {tags.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'flex-end' }}>
-                          {contact.tags.slice(0, 3).map((tag, idx) => (
+                          {tags.slice(0, 3).map((tag, idx) => (
                             <span
                               key={idx}
                               style={{
@@ -667,7 +669,7 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
                               {tag}
                             </span>
                           ))}
-                          {contact.tags.length > 3 && (
+                          {tags.length > 3 && (
                             <span
                               style={{
                                 padding: '2px 8px',
@@ -678,11 +680,11 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
                                 fontWeight: '600',
                               }}
                             >
-                              +{contact.tags.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                                +{tags.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       <button
                         style={{
                           padding: '8px',
@@ -711,7 +713,7 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
                     </div>
                   </div>
                 </Link>
-              ))}
+              )})}
             </div>
           )}
         </div>
