@@ -15,7 +15,8 @@ import {
   Users,
   DollarSign,
   ExternalLink,
-  HelpCircle
+  HelpCircle,
+  DocumentText
 } from 'lucide-react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
@@ -666,7 +667,7 @@ export default function ImportExportPage() {
                   </span>
                 </div>
 
-                <div style={{ marginBottom: '24px' }}>
+                <div style={{ marginBottom: 'auto' }}>
                   <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '16px', lineHeight: '1.5' }}>
                     Import contacts from CSV or Excel files. Make sure your file has the correct column headers.
                   </p>
@@ -759,17 +760,25 @@ export default function ImportExportPage() {
                   </div>
                 )}
 
+                {/* Supported Formats */}
+                <div style={{ marginBottom: '12px' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.secondary, marginBottom: '12px' }}>
+                    Supported Formats
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FileText style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                      <span style={{ fontSize: '14px', ...text.secondary }}>CSV (.csv)</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FileSpreadsheet style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
+                      <span style={{ fontSize: '14px', ...text.secondary }}>Excel (.xlsx, .xls)</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Template Downloads */}
-                <div
-                  style={{
-                    marginTop: 'auto',
-                    paddingTop: '24px',
-                    borderTop: `1px solid ${colors.border}`,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px'
-                  }}
-                >
+                <div style={{ paddingTop: '24px', borderTop: `1px solid ${colors.border}`, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.secondary, margin: 0 }}>
                     Download Sample Files
                   </h3>
@@ -829,7 +838,7 @@ export default function ImportExportPage() {
                 </div>
 
                 {/* Supported Formats */}
-                <div style={{ marginBottom: '24px' }}>
+                <div style={{ marginBottom: '12px' }}>
                   <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.secondary, marginBottom: '12px' }}>
                     Supported Formats
                   </h3>
@@ -846,486 +855,11 @@ export default function ImportExportPage() {
                 </div>
 
                 {/* Status Message */}
-                {contactImportStatus && (
+                {contactExportStatus && (
                   <div 
                     style={{
                       padding: '16px',
                       borderRadius: '12px',
-                      backgroundColor: contactImportStatus.type === 'success' 
-                        ? (isDark ? '#064e3b' : '#f0fdf4') 
-                        : (isDark ? '#7f1d1d' : '#fef2f2'),
-                      border: `1px solid ${contactImportStatus.type === 'success' ? colors.success : colors.error}`
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: contactImportStatus.type === 'success' && (contactImportStatus.imported !== undefined || contactImportStatus.updated !== undefined) ? '12px' : '0' }}>
-                      {contactImportStatus.type === 'success' ? (
-                        <CheckCircle style={{ width: '20px', height: '20px', color: colors.success }} />
-                      ) : (
-                        <XCircle style={{ width: '20px', height: '20px', color: colors.error }} />
-                      )}
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '14px', fontWeight: '500', color: contactImportStatus.type === 'success' 
-                          ? (isDark ? '#6ee7b7' : '#15803d') 
-                          : (isDark ? '#fca5a5' : '#dc2626'), margin: '0 0 4px 0' }}>
-                          {contactImportStatus.message}
-                        </p>
-                        {contactImportStatus.fileName && (
-                          <p style={{ fontSize: '12px', color: contactImportStatus.type === 'success' 
-                            ? (isDark ? '#34d399' : '#16a34a') 
-                            : (isDark ? '#f87171' : '#ef4444'), margin: '0' }}>
-                            File: {contactImportStatus.fileName}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Detailed Import Results */}
-                    {contactImportStatus.type === 'success' && (contactImportStatus.imported !== undefined || contactImportStatus.updated !== undefined) && (
-                      <div style={{
-                        marginTop: '12px',
-                        paddingTop: '12px',
-                        borderTop: `1px solid ${isDark ? '#047857' : '#bbf7d0'}`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '13px', color: isDark ? '#6ee7b7' : '#15803d' }}>Total Processed:</span>
-                          <span style={{ fontSize: '13px', fontWeight: '600', color: isDark ? '#6ee7b7' : '#15803d' }}>
-                            {contactImportStatus.total || 0}
-                          </span>
-                        </div>
-                        {contactImportStatus.imported !== undefined && contactImportStatus.imported > 0 && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '13px', color: isDark ? '#6ee7b7' : '#15803d' }}>✓ Imported:</span>
-                            <span style={{ fontSize: '13px', fontWeight: '600', color: isDark ? '#6ee7b7' : '#15803d' }}>
-                              {contactImportStatus.imported}
-                            </span>
-                          </div>
-                        )}
-                        {contactImportStatus.updated !== undefined && contactImportStatus.updated > 0 && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '13px', color: isDark ? '#34d399' : '#16a34a' }}>↻ Updated:</span>
-                            <span style={{ fontSize: '13px', fontWeight: '600', color: isDark ? '#34d399' : '#16a34a' }}>
-                              {contactImportStatus.updated}
-                            </span>
-                          </div>
-                        )}
-                        {contactImportStatus.skipped !== undefined && contactImportStatus.skipped > 0 && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '13px', color: isDark ? '#a3a3a3' : '#737373' }}>⊘ Skipped:</span>
-                            <span style={{ fontSize: '13px', fontWeight: '600', color: isDark ? '#a3a3a3' : '#737373' }}>
-                              {contactImportStatus.skipped}
-                            </span>
-                          </div>
-                        )}
-                        {contactImportStatus.errors !== undefined && contactImportStatus.errors > 0 && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '13px', color: colors.error }}>✗ Errors:</span>
-                            <span style={{ fontSize: '13px', fontWeight: '600', color: colors.error }}>
-                              {contactImportStatus.errors}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {isContactImporting && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', backgroundColor: colors.cardHover, borderRadius: '12px' }}>
-                    <RefreshCw style={{ width: '20px', height: '20px', color: colors.success, animation: 'spin 1s linear infinite' }} />
-                    <p style={{ fontSize: '14px', color: colors.success, margin: '0' }}>
-                      Processing import...
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Export Contacts Section */}
-              <div
-                style={{
-                  padding: '32px',
-                  ...card,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '24px',
-                  height: '100%'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                  <FileDown style={{ width: '24px', height: '24px', color: colors.success }} />
-                  <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                    Export Contacts
-                  </h2>
-                  <span 
-                    title="Export your contacts with customizable filters and column selection. Available formats: CSV, Excel, JSON, PDF."
-                    style={{ display: 'inline-flex', cursor: 'help' }}
-                  >
-                    <HelpCircle 
-                      style={{ width: '18px', height: '18px', color: colors.text.tertiary }}
-                    />
-                  </span>
-                </div>
-
-                <div style={{ marginBottom: '24px' }}>
-                  <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '16px', lineHeight: '1.5' }}>
-                    Export your contacts with customizable filters and column selection.
-                  </p>
-
-                  {/* Export Filters */}
-                  <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {uniqueFarms.length > 0 && (
-                      <div>
-                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
-                          Filter by Farm
-                        </label>
-                        <select
-                          value={selectedFarm}
-                          onChange={(e) => setSelectedFarm(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            border: `1px solid ${colors.border}`,
-                            borderRadius: '10px',
-                            fontSize: '14px',
-                            backgroundColor: colors.card,
-                            color: colors.text.primary,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <option value="all">All Farms</option>
-                          {uniqueFarms.map(farm => (
-                            <option key={farm} value={farm}>{farm}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                    
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: '500', ...text.secondary, marginBottom: '8px' }}>
-                        Filter by Date Created (Optional)
-                      </label>
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
-                        <div style={{ flex: '1' }}>
-                          <label style={{ display: 'block', fontSize: '11px', ...text.tertiary, marginBottom: '4px' }}>
-                            From
-                          </label>
-                          <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '8px 12px',
-                              border: `1px solid ${colors.border}`,
-                              borderRadius: '8px',
-                              fontSize: '13px',
-                              backgroundColor: colors.card,
-                              color: colors.text.primary,
-                              boxSizing: 'border-box'
-                            }}
-                          />
-                        </div>
-                        <div style={{ flex: '1' }}>
-                          <label style={{ display: 'block', fontSize: '11px', ...text.tertiary, marginBottom: '4px' }}>
-                            To
-                          </label>
-                          <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '8px 12px',
-                              border: `1px solid ${colors.border}`,
-                              borderRadius: '8px',
-                              fontSize: '13px',
-                              backgroundColor: colors.card,
-                              color: colors.text.primary,
-                              boxSizing: 'border-box'
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Column Selector */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <label style={{ fontSize: '12px', fontWeight: '500', ...text.secondary }}>
-                        Export Columns
-                      </label>
-                      <button
-                        {...getButtonPressHandlers('columnSelector')}
-                        onClick={() => setShowColumnSelector(!showColumnSelector)}
-                        style={getButtonPressStyle('columnSelector', {
-                          padding: '4px 8px',
-                          backgroundColor: 'transparent',
-                          border: 'none',
-                          ...text.secondary,
-                          fontSize: '12px',
-                          cursor: 'pointer',
-                          textDecoration: 'underline'
-                        }, 'transparent', colors.cardHover)}
-                      >
-                        {showColumnSelector ? 'Hide' : 'Customize'}
-                      </button>
-                    </div>
-                    
-                    {showColumnSelector && (
-                      <div style={{ 
-                        padding: '12px', 
-                        backgroundColor: colors.cardHover, 
-                        borderRadius: '10px',
-                        maxHeight: '200px',
-                        overflowY: 'auto'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <button
-                            onClick={() => setSelectedColumns(availableColumns)}
-                            style={{
-                              padding: '4px 8px',
-                              fontSize: '11px',
-                              backgroundColor: colors.border,
-                              ...text.secondary,
-                              border: 'none',
-                              borderRadius: '6px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Select All
-                          </button>
-                          <button
-                            onClick={() => setSelectedColumns([])}
-                            style={{
-                              padding: '4px 8px',
-                              fontSize: '11px',
-                              backgroundColor: colors.border,
-                              ...text.secondary,
-                              border: 'none',
-                              borderRadius: '6px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Clear All
-                          </button>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                          {availableColumns.map(col => (
-                            <label key={col} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                              <input
-                                type="checkbox"
-                                checked={selectedColumns.includes(col)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedColumns([...selectedColumns, col])
-                                  } else {
-                                    setSelectedColumns(selectedColumns.filter(c => c !== col))
-                                  }
-                                }}
-                                style={{ cursor: 'pointer' }}
-                              />
-                              <span style={{ fontSize: '12px', ...text.secondary }}>{col}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {!showColumnSelector && (
-                      <p style={{ fontSize: '12px', ...text.tertiary }}>
-                        {selectedColumns.length} of {availableColumns.length} columns selected
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Export Format Buttons */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <button
-                      onClick={() => handleContactExport('csv')}
-                      disabled={isContactExporting || selectedColumns.length === 0}
-                      style={{
-                        width: '100%',
-                        padding: '16px',
-                        backgroundColor: isContactExporting || selectedColumns.length === 0 ? colors.text.tertiary : colors.success,
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: isContactExporting || selectedColumns.length === 0 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isContactExporting && selectedColumns.length > 0) {
-                          e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isContactExporting && selectedColumns.length > 0) {
-                          e.currentTarget.style.backgroundColor = colors.success
-                        }
-                      }}
-                    >
-                      {isContactExporting ? (
-                        <>
-                          <RefreshCw style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
-                          Exporting...
-                        </>
-                      ) : (
-                        <>
-                          <FileText style={{ width: '16px', height: '16px' }} />
-                          Export as CSV
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => handleContactExport('excel')}
-                      disabled={isContactExporting || selectedColumns.length === 0}
-                      style={{
-                        width: '100%',
-                        padding: '16px',
-                        backgroundColor: isContactExporting || selectedColumns.length === 0 ? colors.text.tertiary : colors.cardHover,
-                        ...text.secondary,
-                        border: `1px solid ${colors.border}`,
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: isContactExporting || selectedColumns.length === 0 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isContactExporting && selectedColumns.length > 0) {
-                          e.currentTarget.style.backgroundColor = colors.borderHover
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isContactExporting && selectedColumns.length > 0) {
-                          e.currentTarget.style.backgroundColor = colors.cardHover
-                        }
-                      }}
-                    >
-                      {isContactExporting ? (
-                        <>
-                          <RefreshCw style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
-                          Exporting...
-                        </>
-                      ) : (
-                        <>
-                          <FileSpreadsheet style={{ width: '16px', height: '16px' }} />
-                          Export as Excel
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => handleContactExport('json')}
-                      disabled={isContactExporting || selectedColumns.length === 0}
-                      style={{
-                        width: '100%',
-                        padding: '16px',
-                        backgroundColor: isContactExporting || selectedColumns.length === 0 ? colors.text.tertiary : colors.cardHover,
-                        ...text.secondary,
-                        border: `1px solid ${colors.border}`,
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: isContactExporting || selectedColumns.length === 0 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isContactExporting && selectedColumns.length > 0) {
-                          e.currentTarget.style.backgroundColor = colors.borderHover
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isContactExporting && selectedColumns.length > 0) {
-                          e.currentTarget.style.backgroundColor = colors.cardHover
-                        }
-                      }}
-                    >
-                      {isContactExporting ? (
-                        <>
-                          <RefreshCw style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
-                          Exporting...
-                        </>
-                      ) : (
-                        <>
-                          <FileText style={{ width: '16px', height: '16px' }} />
-                          Export as JSON
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => handleContactExport('pdf')}
-                      disabled={isContactExporting || selectedColumns.length === 0}
-                      style={{
-                        width: '100%',
-                        padding: '16px',
-                        backgroundColor: isContactExporting || selectedColumns.length === 0 ? colors.text.tertiary : colors.cardHover,
-                        ...text.secondary,
-                        border: `1px solid ${colors.border}`,
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: isContactExporting || selectedColumns.length === 0 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isContactExporting && selectedColumns.length > 0) {
-                          e.currentTarget.style.backgroundColor = colors.borderHover
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isContactExporting && selectedColumns.length > 0) {
-                          e.currentTarget.style.backgroundColor = colors.cardHover
-                        }
-                      }}
-                    >
-                      {isContactExporting ? (
-                        <>
-                          <RefreshCw style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
-                          Exporting...
-                        </>
-                      ) : (
-                        <>
-                          <FileText style={{ width: '16px', height: '16px' }} />
-                          Export as PDF
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Export Status Message */}
-                {contactExportStatus && (
-                  <div 
-                    style={{
-                      padding: '12px 16px',
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
                       backgroundColor: contactExportStatus.type === 'success' 
                         ? (isDark ? '#064e3b' : '#f0fdf4') 
                         : (isDark ? '#7f1d1d' : '#fef2f2'),
@@ -1344,6 +878,169 @@ export default function ImportExportPage() {
                     </p>
                   </div>
                 )}
+
+                {isContactExporting && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', backgroundColor: colors.cardHover, borderRadius: '12px' }}>
+                    <RefreshCw style={{ width: '20px', height: '20px', color: colors.success, animation: 'spin 1s linear infinite' }} />
+                    <p style={{ fontSize: '14px', color: colors.success, margin: '0' }}>
+                      Generating export...
+                    </p>
+                  </div>
+                )}
+
+                <div style={{ paddingTop: '24px', borderTop: `1px solid ${colors.border}`, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <button
+                    onClick={() => handleContactExport('csv')}
+                    disabled={isContactExporting || selectedColumns.length === 0}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      backgroundColor: isContactExporting || selectedColumns.length === 0 ? colors.text.tertiary : colors.success,
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: isContactExporting || selectedColumns.length === 0 ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isContactExporting && selectedColumns.length > 0) {
+                        e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isContactExporting && selectedColumns.length > 0) {
+                        e.currentTarget.style.backgroundColor = colors.success
+                      }
+                    }}
+                  >
+                    <FileText style={{ width: '16px', height: '16px' }} />
+                    Export as CSV
+                  </button>
+
+                  <button
+                    onClick={() => handleContactExport('excel')}
+                    disabled={isContactExporting || selectedColumns.length === 0}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      backgroundColor: colors.cardHover,
+                      ...text.secondary,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: isContactExporting || selectedColumns.length === 0 ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isContactExporting && selectedColumns.length > 0) {
+                        e.currentTarget.style.backgroundColor = colors.card
+                        e.currentTarget.style.borderColor = colors.primary
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isContactExporting && selectedColumns.length > 0) {
+                        e.currentTarget.style.backgroundColor = colors.cardHover
+                        e.currentTarget.style.borderColor = colors.border
+                      }
+                    }}
+                  >
+                    <FileSpreadsheet style={{ width: '16px', height: '16px' }} />
+                    Export as Excel
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
+                  <button
+                    onClick={() => handleContactExport('json')}
+                    disabled={isContactExporting || selectedColumns.length === 0}
+                    style={{
+                      flex: '1',
+                      padding: '12px 16px',
+                      backgroundColor: colors.cardHover,
+                      ...text.secondary,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: isContactExporting || selectedColumns.length === 0 ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isContactExporting && selectedColumns.length > 0) {
+                        e.currentTarget.style.backgroundColor = colors.card
+                        e.currentTarget.style.borderColor = colors.primary
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isContactExporting && selectedColumns.length > 0) {
+                        e.currentTarget.style.backgroundColor = colors.cardHover
+                        e.currentTarget.style.borderColor = colors.border
+                      }
+                    }}
+                  >
+                    <DocumentText style={{ width: '16px', height: '16px' }} />
+                    Export JSON
+                  </button>
+
+                  <button
+                    onClick={() => handleContactExport('pdf')}
+                    disabled={isContactExporting || selectedColumns.length === 0}
+                    style={{
+                      flex: '1',
+                      padding: '12px 16px',
+                      backgroundColor: colors.cardHover,
+                      ...text.secondary,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: isContactExporting || selectedColumns.length === 0 ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isContactExporting && selectedColumns.length > 0) {
+                        e.currentTarget.style.backgroundColor = colors.card
+                        e.currentTarget.style.borderColor = colors.primary
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isContactExporting && selectedColumns.length > 0) {
+                        e.currentTarget.style.backgroundColor = colors.cardHover
+                        e.currentTarget.style.borderColor = colors.border
+                      }
+                    }}
+                  >
+                    <Download style={{ width: '16px', height: '16px' }} />
+                    Export PDF
+                  </button>
+                </div>
+
+                <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
+                  Need more control? Visit the{' '}
+                  <Link href="/contacts" style={{ color: colors.primary, textDecoration: 'underline' }}>
+                    Contacts hub
+                  </Link>
+                  {' '}for advanced filtering.
+                </p>
               </div>
             </div>
           )}
@@ -1377,7 +1074,7 @@ export default function ImportExportPage() {
                   </span>
                 </div>
 
-                <div style={{ marginBottom: '24px' }}>
+                <div style={{ marginBottom: 'auto' }}>
                   <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '16px', lineHeight: '1.5' }}>
                     Import transaction data from CSV or Excel files. Make sure your file matches the transaction template format.
                   </p>
@@ -1518,7 +1215,7 @@ export default function ImportExportPage() {
                 </div>
 
                 {/* Supported Formats */}
-                <div style={{ marginBottom: '24px' }}>
+                <div style={{ marginBottom: '12px' }}>
                   <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.secondary, marginBottom: '12px' }}>
                     Supported Formats
                   </h3>
