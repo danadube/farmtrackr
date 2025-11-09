@@ -1,6 +1,7 @@
 'use client'
 
-import { Home, CheckSquare } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Home, CheckSquare, ChevronDown } from 'lucide-react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import type { ListingClient, ListingTaskClient } from '@/types/listings'
 
@@ -78,6 +79,38 @@ export function ListingDetailModal({ listing, onClose, onOpenPipeline, onToggleT
       uniqueDocumentTasks.push(entry)
     }
   })
+
+  const documentGroups = useMemo(() => {
+    const groups = new Map<string, { stageId: string; stageName: string; tasks: ListingTaskClient[] }>()
+    uniqueDocumentTasks.forEach(({ stageId, stageName, task }) => {
+      if (!groups.has(stageId)) {
+        groups.set(stageId, { stageId, stageName, tasks: [] })
+      }
+      groups.get(stageId)!.tasks.push(task)
+    })
+    return Array.from(groups.values()).sort((a, b) => {
+      const aStage = listing.stageInstances.find((stage) => stage.id === a.stageId)
+      const bStage = listing.stageInstances.find((stage) => stage.id === b.stageId)
+      return (aStage?.order ?? 0) - (bStage?.order ?? 0)
+    })
+  }, [uniqueDocumentTasks, listing.stageInstances])
+
+  const [openDocumentGroups, setOpenDocumentGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {}
+    documentGroups.forEach((group, index) => {
+      initial[group.stageId] = index === 0
+    })
+    return initial
+  })
+
+  useEffect(() => {
+    const initial: Record<string, boolean> = {}
+    documentGroups.forEach((group, index) => {
+      initial[group.stageId] = openDocumentGroups[group.stageId] ?? index === 0
+    })
+    setOpenDocumentGroups(initial)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listing?.id])
 
   return (
     <div
@@ -177,7 +210,7 @@ export function ListingDetailModal({ listing, onClose, onOpenPipeline, onToggleT
           </div>
         </div>
 
-        {uniqueDocumentTasks.length > 0 ? (
+        {documentGroups.length > 0 ? (
           <div
             style={{
               ...card,
@@ -195,48 +228,102 @@ export function ListingDetailModal({ listing, onClose, onOpenPipeline, onToggleT
                   Document Checklist
                 </h3>
                 <p style={{ margin: `${spacing(0.25)} 0 0 0`, fontSize: '13px', ...text.secondary }}>
-                  Track required paperwork across listing and buyer pipelines.
+                  Track paperwork requirements by stage and mark each as it’s completed.
                 </p>
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
-              {uniqueDocumentTasks.map(({ stageId, stageName, task }) => (
-                <label
-                  key={`${stageId}-${task.id}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing(1),
-                    padding: `${spacing(0.75)} ${spacing(1)}`,
-                    borderRadius: spacing(0.75),
-                    backgroundColor: task.completed ? colors.cardHover : 'transparent',
-                    cursor: canToggleTasks ? 'pointer' : 'default'
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    disabled={!canToggleTasks || isUpdating}
-                    onChange={(event) => {
-                      event.stopPropagation()
-                      onToggleTask?.(listing.id, task, event.target.checked)
-                    }}
-                    onClick={(event) => event.stopPropagation()}
-                    style={{ width: '16px', height: '16px', cursor: canToggleTasks && !isUpdating ? 'pointer' : 'not-allowed' }}
-                  />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), flex: 1 }}>
-                    <span style={{ fontSize: '14px', fontWeight: 500, ...text.primary }}>{task.name}</span>
-                    <span style={{ fontSize: '12px', ...text.secondary }}>
-                      {stageName}
-                      {task.dueDate
-                        ? ` • Due ${formatDate(task.dueDate)}`
-                        : task.dueInDays !== null && task.dueInDays !== undefined
-                        ? ` • Due in ${task.dueInDays} day${task.dueInDays === 1 ? '' : 's'}`
-                        : ''}
-                    </span>
+              {documentGroups.map((group) => {
+                const isOpen = openDocumentGroups[group.stageId] ?? false
+                return (
+                  <div key={group.stageId} style={{ border: `1px solid ${colors.border}`, borderRadius: spacing(0.75), overflow: 'hidden' }}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenDocumentGroups((prev) => ({
+                          ...prev,
+                          [group.stageId]: !isOpen
+                        }))
+                      }
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: `${spacing(1)} ${spacing(1.25)}`,
+                        backgroundColor: isOpen ? colors.cardHover : colors.card,
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: spacing(0.25) }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, ...text.primary }}>{group.stageName}</span>
+                        <span style={{ fontSize: '12px', ...text.secondary }}>
+                          {group.tasks.length} item{group.tasks.length === 1 ? '' : 's'}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          transition: 'transform 0.2s ease',
+                          transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)'
+                        }}
+                      />
+                    </button>
+                    {isOpen && (
+                      <div style={{ padding: `${spacing(1)} ${spacing(1.25)}`, display: 'flex', flexDirection: 'column', gap: spacing(0.5), backgroundColor: colors.cardHover }}>
+                        {group.tasks.map((task) => (
+                          <label
+                            key={task.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: spacing(1),
+                              padding: `${spacing(0.5)} ${spacing(0.75)}`,
+                              borderRadius: spacing(0.5),
+                              backgroundColor: task.completed ? colors.card : 'transparent',
+                              cursor: canToggleTasks ? 'pointer' : 'default'
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={task.completed}
+                              disabled={!canToggleTasks || isUpdating}
+                              onChange={(event) => {
+                                event.stopPropagation()
+                                onToggleTask?.(listing.id, task, event.target.checked)
+                              }}
+                              onClick={(event) => event.stopPropagation()}
+                              style={{ width: '16px', height: '16px', cursor: canToggleTasks && !isUpdating ? 'pointer' : 'not-allowed' }}
+                            />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), flex: 1 }}>
+                              <span
+                                style={{
+                                  fontSize: '13px',
+                                  fontWeight: 500,
+                                  color: task.completed ? colors.text.secondary : colors.text.primary
+                                }}
+                              >
+                                {task.name}
+                              </span>
+                              <span style={{ fontSize: '12px', color: task.completed ? colors.success : colors.text.secondary }}>
+                                {task.completed
+                                  ? `Done ${formatDate(task.completedAt)}`
+                                  : task.dueDate
+                                  ? `Due ${formatDate(task.dueDate)}`
+                                  : task.dueInDays !== null && task.dueInDays !== undefined
+                                  ? `Due in ${task.dueInDays} day${task.dueInDays === 1 ? '' : 's'}`
+                                  : ''}
+                              </span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </label>
-              ))}
+                )
+              })}
             </div>
           </div>
         ) : null}
