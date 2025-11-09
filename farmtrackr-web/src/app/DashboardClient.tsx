@@ -1001,21 +1001,17 @@ export default function DashboardClient({ contacts, stats, listings: initialList
               </div>
               <Link
                 href="/listings"
-                {...getButtonPressHandlers('dashboard-view-listings')}
-                style={getButtonPressStyle(
-                  'dashboard-view-listings',
-                  {
-                    padding: `${spacing(1)} ${spacing(1.75)}`,
-                    borderRadius: '999px',
-                    border: `1px solid ${colors.border}`,
-                    textDecoration: 'none',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: colors.text.primary.color
-                  },
-                  'transparent',
-                  colors.cardHover
-                )}
+                style={{
+                  padding: `${spacing(1)} ${spacing(1.75)}`,
+                  borderRadius: '999px',
+                  border: `1px solid ${colors.border}`,
+                  textDecoration: 'none',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: colors.text.primary.color,
+                  transition: 'background-color 0.2s ease',
+                  background: 'transparent'
+                }}
               >
                 View full pipeline
               </Link>
