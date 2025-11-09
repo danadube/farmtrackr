@@ -39,6 +39,7 @@ model FarmContact {
 
   // Relations
   emails EmailLog[]
+  listings Listing[] @relation("ListingSeller")
 
   @@map("farm_contacts")
 }
@@ -250,7 +251,8 @@ model ListingPipelineTemplate {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  stages ListingStageTemplate[]
+  stages   ListingStageTemplate[]
+  listings Listing[]            @relation("ListingToTemplate")
 
   @@map("listing_pipeline_templates")
 }
@@ -268,6 +270,7 @@ model ListingStageTemplate {
 
   pipelineTemplate ListingPipelineTemplate @relation(fields: [pipelineTemplateId], references: [id], onDelete: Cascade)
   tasks             ListingTaskTemplate[]
+  stageInstances    ListingStageInstance[]
 
   @@map("listing_stage_templates")
   @@index([pipelineTemplateId])
@@ -285,33 +288,34 @@ model ListingTaskTemplate {
   updatedAt        DateTime @updatedAt
 
   stageTemplate ListingStageTemplate @relation(fields: [stageTemplateId], references: [id], onDelete: Cascade)
+  taskInstances ListingTaskInstance[]
 
   @@map("listing_task_templates")
   @@index([stageTemplateId])
 }
 
 model Listing {
-  id                   String          @id @default(cuid())
-  title                String?
-  status               ListingStatus   @default(DRAFT)
-  pipelineTemplateId   String?
-  currentStageKey      String?
+  id                    String          @id @default(cuid())
+  title                 String?
+  status                ListingStatus   @default(DRAFT)
+  pipelineTemplateId    String?
+  currentStageKey       String?
   currentStageStartedAt DateTime?
-  sellerId             String?
-  buyerClientId        String?
-  address              String?
-  city                 String?
-  state                String?
-  zipCode              String?
-  listPrice            Decimal?        @db.Decimal(12, 2)
-  targetListDate       DateTime?
-  projectedCloseDate   DateTime?
-  notes                String?
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @updatedAt
+  sellerId              String?
+  buyerClientId         String?
+  address               String?
+  city                  String?
+  state                 String?
+  zipCode               String?
+  listPrice             Decimal?        @db.Decimal(12, 2)
+  targetListDate        DateTime?
+  projectedCloseDate    DateTime?
+  notes                 String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
-  pipelineTemplate ListingPipelineTemplate? @relation(fields: [pipelineTemplateId], references: [id], onDelete: SetNull)
-  seller           FarmContact?             @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  pipelineTemplate ListingPipelineTemplate? @relation("ListingToTemplate", fields: [pipelineTemplateId], references: [id], onDelete: SetNull)
+  seller           FarmContact?             @relation("ListingSeller", fields: [sellerId], references: [id], onDelete: SetNull)
   buyerClient      GeneralContact?          @relation("ListingBuyerClient", fields: [buyerClientId], references: [id], onDelete: SetNull)
   stageInstances   ListingStageInstance[]
   taskInstances    ListingTaskInstance[]
@@ -331,8 +335,8 @@ model ListingStageInstance {
   key              String?
   name             String?
   order            Int
-  status           ListingStageStatus @default(ACTIVE)
-  startedAt        DateTime           @default(now())
+  status           ListingStageStatus @default(PENDING)
+  startedAt        DateTime?
   completedAt      DateTime?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
@@ -386,6 +390,7 @@ enum ListingStatus {
 }
 
 enum ListingStageStatus {
+  PENDING
   ACTIVE
   COMPLETED
   SKIPPED
