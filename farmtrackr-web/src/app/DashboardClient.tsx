@@ -1056,7 +1056,7 @@ export default function DashboardClient({ contacts, stats, listings: initialList
                             padding: spacing(1.5),
                             borderRadius: spacing(1),
                             border: `1px dashed ${colors.border}`,
-                            color: colors.text.secondary.color,
+                            color: colors.text.secondary,
                             fontSize: '13px',
                             textAlign: 'center'
                           }}
