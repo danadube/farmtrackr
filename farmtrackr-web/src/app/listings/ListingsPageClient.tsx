@@ -158,7 +158,8 @@ const TaskList = ({
     )
   }
 
-  const completedCount = stageInstance.tasks.filter((task) => task.completed).length
+  const completedOrSkippedCount = stageInstance.tasks.filter((task) => task.completed || task.skipped).length
+  const skippedCount = stageInstance.tasks.filter((task) => task.skipped).length
   const totalCount = stageInstance.tasks.length
 
   const latestCompletionDate = stageInstance.tasks
@@ -175,7 +176,8 @@ const TaskList = ({
       }}
     >
       <div style={{ fontSize: '13px', color: colors.text.secondary }}>
-        Completed {completedCount} of {totalCount} task{totalCount === 1 ? '' : 's'}
+        Completed or skipped {completedOrSkippedCount} of {totalCount} task{totalCount === 1 ? '' : 's'}
+        {skippedCount > 0 ? ` • ${skippedCount} not required` : ''}
       </div>
       {latestCompletionDate ? (
         <div style={{ fontSize: '12px', color: colors.success }}>
@@ -305,17 +307,20 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
     setListings((prev) => prev.map((listing) => (listing.id === updated.id ? updated : listing)))
   }
 
-  const handleToggleTask = async (listingId: string, task: ListingTaskClient, completed: boolean) => {
-    setUpdatingListingId(listingId)
-    setFeedback(null)
-
-    const previous = listings.map((listing) => ({
+  const snapshotCurrentListings = () =>
+    listings.map((listing) => ({
       ...listing,
       stageInstances: listing.stageInstances.map((stage) => ({
         ...stage,
         tasks: stage.tasks.map((taskItem) => ({ ...taskItem }))
       }))
     }))
+
+  const handleToggleTask = async (listingId: string, task: ListingTaskClient, completed: boolean) => {
+    setUpdatingListingId(listingId)
+    setFeedback(null)
+
+    const previous = snapshotCurrentListings()
     setListings((prev) =>
       prev.map((listing) => {
         if (listing.id !== listingId) return listing
@@ -328,7 +333,9 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
                 ? {
                     ...t,
                     completed,
-                    completedAt: completed ? new Date().toISOString() : null
+                    completedAt: completed ? new Date().toISOString() : null,
+                    skipped: false,
+                    skippedAt: null
                   }
                 : t
             )
@@ -347,7 +354,9 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
               ? {
                   ...t,
                   completed,
-                  completedAt: completed ? new Date().toISOString() : null
+                  completedAt: completed ? new Date().toISOString() : null,
+                  skipped: false,
+                  skippedAt: null
                 }
               : t
           )
@@ -373,6 +382,80 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
       console.error('Error toggling task', error)
       setListings(previous)
       setFeedback('Something went wrong updating that task. Please try again.')
+    } finally {
+      setUpdatingListingId(null)
+    }
+  }
+
+  const handleToggleTaskSkip = async (listingId: string, task: ListingTaskClient, skipped: boolean) => {
+    setUpdatingListingId(listingId)
+    setFeedback(null)
+
+    const previous = snapshotCurrentListings()
+    const timestamp = new Date().toISOString()
+
+    setListings((prev) =>
+      prev.map((listing) => {
+        if (listing.id !== listingId) return listing
+        return {
+          ...listing,
+          stageInstances: listing.stageInstances.map((stage) => ({
+            ...stage,
+            tasks: stage.tasks.map((t) =>
+              t.id === task.id
+                ? {
+                    ...t,
+                    skipped,
+                    skippedAt: skipped ? timestamp : null,
+                    completed: skipped ? false : t.completed,
+                    completedAt: skipped ? null : t.completedAt
+                  }
+                : t
+            )
+          }))
+        }
+      })
+    )
+
+    setDetailListing((prev) => {
+      if (!prev || prev.id !== listingId) return prev
+      return {
+        ...prev,
+        stageInstances: prev.stageInstances.map((stage) => ({
+          ...stage,
+          tasks: stage.tasks.map((t) =>
+            t.id === task.id
+              ? {
+                  ...t,
+                  skipped,
+                  skippedAt: skipped ? timestamp : null,
+                  completed: skipped ? false : t.completed,
+                  completedAt: skipped ? null : t.completedAt
+                }
+              : t
+          )
+        }))
+      }
+    })
+
+    try {
+      const response = await fetch(`/api/listings/${listingId}/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skipped })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update task requirement')
+      }
+
+      const updatedListing: ListingClient = await response.json()
+      updateListingInState(updatedListing)
+      setDetailListing((prev) => (prev && prev.id === updatedListing.id ? updatedListing : prev))
+    } catch (error) {
+      console.error('Error skipping task', error)
+      setListings(previous)
+      setFeedback('Unable to update task requirement right now.')
     } finally {
       setUpdatingListingId(null)
     }
@@ -1277,6 +1360,7 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
         listing={detailListing}
         onClose={closeDetailModal}
         onToggleTask={handleToggleTask}
+        onToggleSkip={handleToggleTaskSkip}
         onOpenPipeline={handleOpenPipelineFromModal}
         onAddTask={handleAddTaskToStage}
         onUpdateTask={handleUpdateTaskDetails}

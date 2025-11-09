@@ -83,14 +83,17 @@ const SELLER_PIPELINE_TEMPLATE: PipelineTemplateDefinition = {
       tasks: [
         { name: 'Conduct pre-listing consultation', dueInDays: 1 },
         { name: 'Confirm ownership & title (Prelim report)', dueInDays: 2 },
-        { name: 'Gather property data & disclosures', dueInDays: 3 },
         { name: 'Execute Residential Listing Agreement (RLA)', dueInDays: 1 },
         { name: 'Provide Seller’s Advisory (SA)', dueInDays: 1 },
         { name: 'Obtain Agency Disclosure (AD)', dueInDays: 1 },
         { name: 'Sign Wire Fraud Advisory (WFA)', dueInDays: 1 },
-        { name: 'Complete Property Photo & Internet Advertising Agreement (PRA)', dueInDays: 1 },
-        { name: 'Input listing data into MLS', dueInDays: 2 },
-        { name: 'Order Natural Hazard Disclosure (NHD)', dueInDays: 2 }
+        { name: 'Prepare Seller’s Estimated Net Sheet', dueInDays: 2 },
+        { name: 'Collect MLS Exclusion (SELM) if applicable', dueInDays: 2 },
+        { name: 'Gather property data & disclosures', dueInDays: 3 },
+        { name: 'Schedule professional photography and videography', dueInDays: 4 },
+        { name: 'Order Cubi Casa floorplan for MLS', dueInDays: 4 },
+        { name: 'Order Natural Hazard Disclosure (NHD)', dueInDays: 2 },
+        { name: 'Input listing data into MLS', dueInDays: 5 }
       ]
     },
     {
@@ -100,10 +103,15 @@ const SELLER_PIPELINE_TEMPLATE: PipelineTemplateDefinition = {
       durationDays: 21,
       trigger: 'listingPublished',
       tasks: [
-        { name: 'Complete TDS and SPQ', dueInDays: 2 },
+        { name: 'Complete Transfer Disclosure Statement (TDS)', dueInDays: 2 },
+        { name: 'Complete Seller Property Questionnaire (SPQ)', dueInDays: 2 },
         { name: 'Provide additional disclosures (MCA, ESD, FLD, FHDS, WCMD, AVID)', dueInDays: 5 },
-        { name: 'Coordinate optional inspections (home, pest, roof)', dueInDays: 7 },
+        { name: 'Assemble disclosure packet for buyers', dueInDays: 5 },
+        { name: 'Design listing brochure and flyer', dueInDays: 3 },
+        { name: 'Publish property website & MLS remarks', dueInDays: 2 },
+        { name: 'Plan open house schedule', dueInDays: 4 },
         { name: 'Launch marketing campaign (MLS, photos, flyers, open houses)', dueInDays: 1 },
+        { name: 'Coordinate optional inspections (home, pest, roof)', dueInDays: 7 },
         { name: 'Review offers received', dueInDays: 3, autoRepeat: true },
         { name: 'Negotiate and accept offer', triggerOn: 'offerAccepted' }
       ]
@@ -115,13 +123,18 @@ const SELLER_PIPELINE_TEMPLATE: PipelineTemplateDefinition = {
       durationDays: 30,
       trigger: 'escrowOpened',
       tasks: [
+        { name: 'Upload fully executed purchase agreement (RPA)', dueInDays: 1 },
+        { name: 'Log counter offer signatures', dueInDays: 1 },
         { name: 'Verify EMD deposit with escrow', dueInDays: 3 },
         { name: 'Provide all disclosures to buyer', dueInDays: 5 },
+        { name: 'Deliver escrow instructions', dueInDays: 5 },
         { name: 'Coordinate buyer inspections', dueInDays: 10 },
         { name: 'Respond to Request for Repairs (RFR/SCO)', dueInDays: 5 },
         { name: 'Monitor appraisal and loan progress', dueInDays: 7, autoRepeat: true },
+        { name: 'Collect signed contingency removal forms', dueInDays: 17 },
         { name: 'Track contingency removals (CR)', dueInDays: 17 },
         { name: 'Prepare closing documents', dueInDays: 28 },
+        { name: 'Confirm closing disclosure / settlement statement (HUD/CD)', dueInDays: 28 },
         { name: 'Verify final walkthrough (VP)', dueInDays: 29 },
         { name: 'Confirm closing and fund disbursement', triggerOn: 'closingConfirmed' },
         { name: 'Send post-closing package to seller', dueInDays: 31 }
@@ -366,6 +379,91 @@ async function setStageActive(tx: TxClient, stageInstanceId: string, now: Date) 
   }
 }
 
+async function reconcileStageAfterTaskChange(tx: TxClient, listingId: string, stageInstanceId: string, now: Date) {
+  const stageInstance = await tx.listingStageInstance.findUnique({
+    where: { id: stageInstanceId },
+    include: {
+      tasks: true,
+      listing: {
+        include: {
+          stageInstances: {
+            orderBy: { order: 'asc' }
+          }
+        }
+      }
+    }
+  })
+
+  if (!stageInstance) {
+    return
+  }
+
+  const allTasksSatisfied = stageInstance.tasks.every((task) => task.completed || task.skipped)
+
+  if (allTasksSatisfied) {
+    if (stageInstance.status !== 'COMPLETED') {
+      await tx.listingStageInstance.update({
+        where: { id: stageInstanceId },
+        data: {
+          status: 'COMPLETED',
+          completedAt: now
+        }
+      })
+
+      const nextStage = stageInstance.listing.stageInstances
+        .filter((stage) => stage.order > stageInstance.order)
+        .sort((a, b) => a.order - b.order)
+        .find((stage) => stage.status !== 'COMPLETED')
+
+      if (nextStage) {
+        await setStageActive(tx, nextStage.id, now)
+        await tx.listing.update({
+          where: { id: listingId },
+          data: {
+            currentStageKey: nextStage.key ?? null,
+            currentStageStartedAt: now,
+            status: deriveStatusForStage(nextStage.key)
+          }
+        })
+      } else {
+        await tx.listing.update({
+          where: { id: listingId },
+          data: {
+            currentStageKey: null,
+            currentStageStartedAt: null,
+            status: 'CLOSED'
+          }
+        })
+      }
+    }
+  } else if (stageInstance.status === 'COMPLETED') {
+    const activeStartedAt = stageInstance.startedAt ?? now
+    await setStageActive(tx, stageInstanceId, activeStartedAt)
+
+    const futureStages = stageInstance.listing.stageInstances
+      .filter((stage) => stage.order > stageInstance.order && stage.status !== 'COMPLETED')
+
+    for (const future of futureStages) {
+      await tx.listingStageInstance.update({
+        where: { id: future.id },
+        data: {
+          status: 'PENDING',
+          startedAt: null
+        }
+      })
+    }
+
+    await tx.listing.update({
+      where: { id: listingId },
+      data: {
+        currentStageKey: stageInstance.key ?? null,
+        currentStageStartedAt: activeStartedAt,
+        status: deriveStatusForStage(stageInstance.key)
+      }
+    })
+  }
+}
+
 export async function getListingPipelineTemplates(client: PrismaClient = prisma) {
   return client.listingPipelineTemplate.findMany({
     orderBy: { name: 'asc' },
@@ -503,94 +601,55 @@ export async function completeListingTask(input: UpdateListingTaskInput, client:
       data: {
         completed: input.completed,
         completedAt: input.completed ? now : null,
+        skipped: false,
+        skippedAt: null,
         notes: input.notes !== undefined ? input.notes : existingTask.notes
       }
     })
 
     if (updatedTask.stageInstanceId) {
-      const stageInstance = await tx.listingStageInstance.findUnique({
-        where: { id: updatedTask.stageInstanceId },
-        include: {
-          tasks: true,
-          listing: {
-            include: {
-              stageInstances: {
-                orderBy: { order: 'asc' }
-              }
-            }
-          }
-        }
-      })
+      await reconcileStageAfterTaskChange(tx, input.listingId, updatedTask.stageInstanceId, now)
+    }
 
-      if (stageInstance) {
-        if (!input.completed && stageInstance.status === 'COMPLETED') {
-          const activeStartedAt = stageInstance.startedAt ?? now
-          await setStageActive(tx, stageInstance.id, activeStartedAt)
+    return tx.listing.findUniqueOrThrow({
+      where: { id: input.listingId },
+      include: LISTING_INCLUDE
+    })
+  })
+}
 
-          const futureStages = stageInstance.listing.stageInstances.filter(
-            (stage) => stage.order > stageInstance.order && stage.status !== 'COMPLETED'
-          )
+export type SkipListingTaskInput = {
+  listingId: string
+  taskId: string
+  skipped: boolean
+}
 
-          for (const future of futureStages) {
-            await tx.listingStageInstance.update({
-              where: { id: future.id },
-              data: {
-                status: 'PENDING',
-                startedAt: null
-              }
-            })
-          }
+export async function skipListingTask(input: SkipListingTaskInput, client: PrismaClient = prisma) {
+  const now = new Date()
 
-          await tx.listing.update({
-            where: { id: input.listingId },
-            data: {
-              currentStageKey: stageInstance.key ?? null,
-              currentStageStartedAt: activeStartedAt,
-              status: deriveStatusForStage(stageInstance.key)
-            }
-          })
-        } else if (input.completed && stageInstance.status === 'ACTIVE') {
-          const allCompleted = stageInstance.tasks.every((taskItem) =>
-            taskItem.id === updatedTask.id ? input.completed : taskItem.completed
-          )
+  return client.$transaction(async (tx: TxClient) => {
+    const existingTask = await tx.listingTaskInstance.findUnique({ where: { id: input.taskId } })
 
-          if (allCompleted) {
-            await tx.listingStageInstance.update({
-              where: { id: stageInstance.id },
-              data: {
-                status: 'COMPLETED',
-                completedAt: now
-              }
-            })
+    if (!existingTask) {
+      throw new Error('Task not found')
+    }
 
-            const nextStage = stageInstance.listing.stageInstances
-              .filter((stage) => stage.order > stageInstance.order)
-              .sort((a, b) => a.order - b.order)
-              .find((stage) => stage.status !== 'COMPLETED')
+    if (existingTask.listingId !== input.listingId) {
+      throw new Error('Task does not belong to the specified listing')
+    }
 
-            if (nextStage) {
-              await setStageActive(tx, nextStage.id, now)
-              await tx.listing.update({
-                where: { id: input.listingId },
-                data: {
-                  currentStageKey: nextStage.key ?? null,
-                  currentStageStartedAt: now,
-                  status: deriveStatusForStage(nextStage.key)
-                }
-              })
-            } else {
-              await tx.listing.update({
-                where: { id: input.listingId },
-                data: {
-                  currentStageKey: null,
-                  currentStageStartedAt: null,
-                  status: 'CLOSED'
-                }
-              })
-            }
-          }
-        }
+    const updatedTask = await tx.listingTaskInstance.update({
+      where: { id: input.taskId },
+      data: {
+        skipped: input.skipped,
+        skippedAt: input.skipped ? now : null,
+        completed: input.skipped ? false : existingTask.completed,
+        completedAt: input.skipped ? null : existingTask.completedAt
       }
+    })
+
+    if (updatedTask.stageInstanceId) {
+      await reconcileStageAfterTaskChange(tx, input.listingId, updatedTask.stageInstanceId, now)
     }
 
     return tx.listing.findUniqueOrThrow({
@@ -956,6 +1015,8 @@ export function serializeListing(listing: ListingWithRelations): ListingClient {
         dueDate: iso(task.dueDate),
         completed: task.completed,
         completedAt: iso(task.completedAt),
+        skipped: task.skipped,
+        skippedAt: iso(task.skippedAt),
         notes: task.notes ?? null,
         autoRepeat: task.autoRepeat,
         autoComplete: task.autoComplete,

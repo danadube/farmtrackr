@@ -363,6 +363,8 @@ model ListingTaskInstance {
   dueInDays       Int?
   completed       Boolean  @default(false)
   completedAt     DateTime?
+  skipped         Boolean  @default(false)
+  skippedAt       DateTime?
   notes           String?
   autoRepeat      Boolean  @default(false)
   autoComplete    Boolean  @default(false)
@@ -380,9 +382,10 @@ model ListingTaskInstance {
   @@index([listingId])
   @@index([stageInstanceId])
   @@index([taskTemplateId])
-  @@index([documentId])
   @@index([completed])
   @@index([dueDate])
+  @@index([documentId])
+  @@index([skipped])
 }
 
 enum ListingStatus {

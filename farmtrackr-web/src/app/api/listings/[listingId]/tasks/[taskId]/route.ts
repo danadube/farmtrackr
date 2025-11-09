@@ -3,7 +3,8 @@ import {
   completeListingTask,
   serializeListing,
   updateListingTaskDetails,
-  setListingTaskDocument
+  setListingTaskDocument,
+  skipListingTask
 } from '@/lib/listings'
 
 type RouteContext = {
@@ -24,6 +25,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         taskId,
         completed: body.completed,
         notes: body.notes
+      })
+      return NextResponse.json(serializeListing(listing))
+    }
+
+    if (body && typeof body.skipped === 'boolean') {
+      const listing = await skipListingTask({
+        listingId,
+        taskId,
+        skipped: body.skipped
       })
       return NextResponse.json(serializeListing(listing))
     }

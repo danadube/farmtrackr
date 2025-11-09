@@ -13,6 +13,8 @@ export type ListingTaskClient = {
   dueDate: string | null
   completed: boolean
   completedAt: string | null
+  skipped: boolean
+  skippedAt: string | null
   notes: string | null
   autoRepeat: boolean
   autoComplete: boolean
