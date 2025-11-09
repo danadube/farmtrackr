@@ -1540,7 +1540,7 @@ const referralNet = referralFeesReceived - referralFeesPaid
                       }, colors.info, colors.infoHover)}
                     >
                       <Download style={{ width: '14px', height: '14px' }} />
-                      Download CSV Template
+                      CSV Template
                     </button>
                   </div>
                 </div>

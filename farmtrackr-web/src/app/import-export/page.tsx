@@ -808,7 +808,7 @@ export default function ImportExportPage() {
                       )}
                     >
                       <Download style={{ width: '14px', height: '14px' }} />
-                      Download CSV
+                      CSV
                     </button>
                     <button
                       {...getButtonPressHandlers('template-excel')}
@@ -832,7 +832,7 @@ export default function ImportExportPage() {
                       )}
                     >
                       <FileSpreadsheet style={{ width: '14px', height: '14px' }} />
-                      Download Excel
+                      Excel
                     </button>
                   </div>
                 </div>
@@ -1210,7 +1210,7 @@ export default function ImportExportPage() {
                     }}
                   >
                     <Download style={{ width: '16px', height: '16px' }} />
-                    Download CSV
+                    CSV
                   </button>
                 </div>
 
