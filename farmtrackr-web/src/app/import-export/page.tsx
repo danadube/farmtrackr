@@ -16,7 +16,7 @@ import {
   DollarSign,
   ExternalLink,
   HelpCircle,
-  DocumentText
+  FileJson
 } from 'lucide-react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
@@ -993,7 +993,7 @@ export default function ImportExportPage() {
                       }
                     }}
                   >
-                    <DocumentText style={{ width: '16px', height: '16px' }} />
+                    <FileJson style={{ width: '16px', height: '16px' }} />
                     Export JSON
                   </button>
 
