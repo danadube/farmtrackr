@@ -245,13 +245,32 @@ async function ensureSeedListings(client: PrismaClient = prisma) {
   }
 
   for (const seed of DASHBOARD_SEED_LISTINGS) {
-    await client.listing.deleteMany({
+    const existing = await client.listing.findFirst({
       where: {
         address: seed.address,
         city: seed.city,
         state: seed.state
+      },
+      include: {
+        stageInstances: true
       }
     })
+
+    if (existing) {
+      // Ensure the listing is attached to the seller pipeline for filtering, but don't overwrite progress.
+      if (existing.pipelineTemplateId !== pipelineTemplateId) {
+        await client.listing.update({
+          where: { id: existing.id },
+          data: {
+            pipelineTemplateId,
+            title: existing.title ?? seed.title,
+            listPrice: seed.listPrice ? new Prisma.Decimal(seed.listPrice) : existing.listPrice,
+            notes: existing.notes ?? seed.notes ?? null
+          }
+        })
+      }
+      continue
+    }
 
     const created = await createListingFromTemplate(
       {

@@ -226,9 +226,17 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
   const { colors, card, cardWithLeftBorder, headerCard, headerDivider, background } = theme
 
   const [listings, setListings] = useState<ListingClient[]>(initialListings)
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string>(
-    pipelineTemplates[0]?.id ?? initialListings[0]?.pipelineTemplateId ?? ''
-  )
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string>(() => {
+    const preferred =
+      pipelineTemplates.find((template) => template.type === 'listing') ??
+      pipelineTemplates.find((template) => template.name.toLowerCase().includes('listing'))
+    return (
+      preferred?.id ??
+      pipelineTemplates[0]?.id ??
+      initialListings[0]?.pipelineTemplateId ??
+      ''
+    )
+  })
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [updatingListingId, setUpdatingListingId] = useState<string | null>(null)
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({})
