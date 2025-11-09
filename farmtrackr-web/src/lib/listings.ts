@@ -115,7 +115,7 @@ const SELLER_PIPELINE_TEMPLATE: PipelineTemplateDefinition = {
         { name: 'Seller Property Questionnaire (SPQ)', dueInDays: 3 },
         { name: 'Exempt Seller Disclosure (if built pre-1960)', dueInDays: 4 },
         { name: 'Lead-Based Paint Disclosure (pre-1978)', dueInDays: 4 },
-        { name: \"Megan's Law Database Notice\", dueInDays: 4 },
+        { name: 'Megan\'s Law Database Notice', dueInDays: 4 },
         { name: 'Military Ordnance Disclosure (if applicable)', dueInDays: 4 },
         { name: 'Water-Conserving Plumbing Fixtures Disclosure', dueInDays: 5 },
         { name: 'Smoke/Carbon Monoxide Detector Compliance', dueInDays: 5 },
