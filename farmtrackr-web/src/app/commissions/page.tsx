@@ -110,6 +110,7 @@ export default function CommissionsPage() {
   const [isImporting, setIsImporting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [viewingTransaction, setViewingTransaction] = useState<Transaction | null>(null)
+  const [collapsedTransactions, setCollapsedTransactions] = useState<Record<string, boolean>>({})
   const [transactionDetailTab, setTransactionDetailTab] = useState<'details' | 'emails'>('details')
   
   // Filters and search
@@ -923,14 +924,14 @@ const referralNet = referralFeesReceived - referralFeesPaid
                     style={{
                       width: '48px',
                       height: '48px',
-                      backgroundColor: colors.iconBg,
+                      backgroundColor: 'rgba(255, 255, 255, 0.22)',
                       borderRadius: '12px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}
                   >
-                    <DollarSign style={{ width: '24px', height: '24px', color: colors.primary }} />
+                    <DollarSign style={{ width: '24px', height: '24px', color: '#ffffff' }} />
                   </div>
                   <div>
                     <h1 
@@ -1974,6 +1975,7 @@ const referralNet = referralFeesReceived - referralFeesPaid
                 {filteredTransactions.map((transaction) => {
                   const calc = getCommissionForTransaction(transaction)
                   const nci = parseFloat(calc.nci) || 0
+                  const isCollapsed = collapsedTransactions[transaction.id] ?? true
                   return (
                     <div
                       key={transaction.id}
@@ -2027,35 +2029,36 @@ const referralNet = referralFeesReceived - referralFeesPaid
                               })()}
                             </span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', ...text.secondary, flexWrap: 'wrap' }}>
-                            {(() => {
-                              // Check both closedDate (frontend) and closingDate (database) for compatibility
-                              const closedDate = transaction.closedDate || (transaction as any).closingDate
-                              if (!closedDate) return null
-                              try {
-                                const date = new Date(closedDate)
-                                if (isNaN(date.getTime())) return null
-                                return (
-                                  <span style={{ fontWeight: '600', color: colors.text.primary }}>
-                                    📅 {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                  </span>
-                                )
-                              } catch {
-                                return null
-                              }
-                            })()}
-                            {(() => {
-                              const closedDate = transaction.closedDate || (transaction as any).closingDate
-                              return closedDate && transaction.city ? <span>•</span> : null
-                            })()}
-                            {transaction.city && (
-                              <span>{transaction.city}</span>
-                            )}
-                            {transaction.city && formatCurrency(transaction.closedPrice) && <span>•</span>}
-                            {formatCurrency(transaction.closedPrice) && (
-                              <span>${formatCurrency(transaction.closedPrice)}</span>
-                            )}
-                          </div>
+                          {!isCollapsed && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', ...text.secondary, flexWrap: 'wrap' }}>
+                              {(() => {
+                                const closedDate = transaction.closedDate || (transaction as any).closingDate
+                                if (!closedDate) return null
+                                try {
+                                  const date = new Date(closedDate)
+                                  if (isNaN(date.getTime())) return null
+                                  return (
+                                    <span style={{ fontWeight: '600', color: colors.text.primary }}>
+                                      📅 {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </span>
+                                  )
+                                } catch {
+                                  return null
+                                }
+                              })()}
+                              {(() => {
+                                const closedDate = transaction.closedDate || (transaction as any).closingDate
+                                return closedDate && transaction.city ? <span>•</span> : null
+                              })()}
+                              {transaction.city && (
+                                <span>{transaction.city}</span>
+                              )}
+                              {transaction.city && formatCurrency(transaction.closedPrice) && <span>•</span>}
+                              {formatCurrency(transaction.closedPrice) && (
+                                <span>${formatCurrency(transaction.closedPrice)}</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div style={{ minWidth: '120px', textAlign: 'right', padding: '12px', borderRadius: '8px', backgroundColor: colors.successLight, border: `2px solid ${colors.success}` }}>
                           <p style={{ fontSize: '12px', fontWeight: '600', ...text.tertiary, margin: '0 0 4px 0', textTransform: 'uppercase' }}>NCI</p>
@@ -2064,6 +2067,39 @@ const referralNet = referralFeesReceived - referralFeesPaid
                           </p>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setCollapsedTransactions((prev) => ({
+                                ...prev,
+                                [transaction.id]: !isCollapsed
+                              }))
+                            }}
+                            style={{
+                              padding: '8px 12px',
+                              backgroundColor: colors.cardHover,
+                              border: `1px solid ${colors.border}`,
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = colors.primary + '20'
+                              e.currentTarget.style.borderColor = colors.primary
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = colors.cardHover
+                              e.currentTarget.style.borderColor = colors.border
+                            }}
+                            title={isCollapsed ? 'Show details' : 'Hide details'}
+                          >
+                            {isCollapsed ? 'Show details' : 'Hide details'}
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()

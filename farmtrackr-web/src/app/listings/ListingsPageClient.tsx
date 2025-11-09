@@ -377,6 +377,24 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
         }
       })
     )
+    setDetailListing((prev) => {
+      if (!prev || prev.id !== listingId) return prev
+      return {
+        ...prev,
+        stageInstances: prev.stageInstances.map((stage) => ({
+          ...stage,
+          tasks: stage.tasks.map((t) =>
+            t.id === task.id
+              ? {
+                  ...t,
+                  completed,
+                  completedAt: completed ? new Date().toISOString() : null
+                }
+              : t
+          )
+        }))
+      }
+    })
 
     try {
       const response = await fetch(`/api/listings/${listingId}/tasks/${task.id}`, {
@@ -391,6 +409,7 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
 
       const updatedListing: ListingClient = await response.json()
       updateListingInState(updatedListing)
+      setDetailListing((prev) => (prev && prev.id === updatedListing.id ? updatedListing : prev))
     } catch (error) {
       console.error('Error toggling task', error)
       setListings(previous)
@@ -467,6 +486,11 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
   }
 
   const closeDetailModal = () => setDetailListing(null)
+  const handleOpenPipelineFromModal = () => {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/listings'
+    }
+  }
 
   const handleCreateListing = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -1150,7 +1174,13 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
         </div>
       </div>
       {renderModal()}
-      <ListingDetailModal listing={detailListing} onClose={closeDetailModal} />
+      <ListingDetailModal
+        listing={detailListing}
+        onClose={closeDetailModal}
+        onToggleTask={handleToggleTask}
+        onOpenPipeline={handleOpenPipelineFromModal}
+        isUpdating={detailListing ? updatingListingId === detailListing.id : false}
+      />
     </Sidebar>
   )
 }

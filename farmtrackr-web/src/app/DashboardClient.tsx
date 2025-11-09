@@ -969,206 +969,6 @@ export default function DashboardClient({ contacts, stats, listings: initialList
             </div>
           </div>
 
-        {listings.length > 0 && (
-          <div style={{ marginBottom: spacing(4) }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-end',
-                justifyContent: 'space-between',
-                gap: spacing(2),
-                marginBottom: spacing(1.5),
-                flexWrap: 'wrap'
-              }}
-            >
-              <div>
-                <h2
-                  style={{
-                    fontSize: '24px',
-                    fontWeight: 600,
-                    ...text.primary,
-                    margin: 0,
-                    marginBottom: spacing(0.5)
-                  }}
-                >
-                  Current Listings
-                </h2>
-                <p
-                  style={{
-                    fontSize: '14px',
-                    ...text.secondary,
-                    margin: 0
-                  }}
-                >
-                  Live snapshot of seller pipeline stages.
-                </p>
-              </div>
-              <Link
-                href="/listings"
-                style={{
-                  padding: `${spacing(1)} ${spacing(1.75)}`,
-                  borderRadius: '999px',
-                  border: `1px solid ${colors.border}`,
-                  textDecoration: 'none',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: colors.text.primary,
-                  background: 'transparent',
-                  transition: 'background-color 0.2s ease'
-                }}
-              >
-                View full pipeline
-              </Link>
-            </div>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                gap: spacing(3)
-              }}
-            >
-              {listingColumnConfig.map((column) => {
-                const columnListings = listingsByStage[column.key]
-                return (
-                  <div
-                    key={column.key}
-                    style={{
-                      ...card,
-                      borderTop: `4px solid ${column.accent}`,
-                      padding: spacing(2),
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: spacing(1.5),
-                      minHeight: '100%'
-                    }}
-                  >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing(1) }}>
-                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, ...text.primary }}>{column.title}</h3>
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: column.accent }}>
-                          {columnListings.length}
-                        </span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: '13px', ...text.secondary }}>{column.description}</p>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), flex: 1 }}>
-                      {columnListings.length === 0 ? (
-                        <div
-                          style={{
-                            padding: spacing(1.5),
-                            borderRadius: spacing(1),
-                            border: `1px dashed ${colors.border}`,
-                            color: colors.text.secondary,
-                            fontSize: '13px',
-                            textAlign: 'center'
-                          }}
-                        >
-                          Nothing here yet.
-                        </div>
-                      ) : (
-                        columnListings.map((listing) => {
-                          const stage = getActiveStageInstance(listing)
-                          const stageLabel = stage?.name ?? column.title
-                          const stageStartedAt = formatStageDate(stage?.startedAt ?? listing.currentStageStartedAt)
-                          const title = listing.title || listing.address || 'Untitled Listing'
-                          const showAddressLine =
-                            listing.address &&
-                            (!listing.title || listing.title.trim().toLowerCase() !== listing.address.trim().toLowerCase())
-                          const locationLine = [
-                            showAddressLine ? listing.address : null,
-                            listing.city,
-                            listing.state,
-                            listing.zipCode
-                          ]
-                            .filter(Boolean)
-                            .join(', ')
-
-                          return (
-                            <div
-                              key={listing.id}
-                              onClick={() => setDetailListing(listing)}
-                              onKeyDown={(event) => {
-                                if (event.key === 'Enter' || event.key === ' ') {
-                                  event.preventDefault()
-                                  setDetailListing(listing)
-                                }
-                              }}
-                              role="button"
-                              tabIndex={0}
-                              style={{
-                                ...cardWithLeftBorder(column.accent),
-                                padding: spacing(1.75),
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: spacing(1),
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <div>
-                                <p
-                                  style={{
-                                    margin: 0,
-                                    fontSize: '15px',
-                                    fontWeight: 600,
-                                    ...text.primary
-                                  }}
-                                >
-                                  {title}
-                                </p>
-                                {locationLine ? (
-                                  <p
-                                    style={{
-                                      margin: 0,
-                                      fontSize: '13px',
-                                      ...text.secondary
-                                    }}
-                                  >
-                                    {locationLine}
-                                  </p>
-                                ) : null}
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(1) }}>
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span style={{ fontSize: '12px', ...text.secondary }}>List Price</span>
-                                  <span style={{ fontSize: '16px', fontWeight: 700, ...text.primary }}>
-                                    {formatCurrency(listing.listPrice)}
-                                  </span>
-                                </div>
-                                <div
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: spacing(0.5),
-                                    padding: `${spacing(0.5)} ${spacing(1)}`,
-                                    borderRadius: '999px',
-                                    backgroundColor: `${column.accent}1A`,
-                                    color: column.accent,
-                                    fontSize: '12px',
-                                    fontWeight: 600
-                                  }}
-                                >
-                                  {stageLabel}
-                                  {stageStartedAt ? (
-                                    <span style={{ fontSize: '11px', color: column.accent, fontWeight: 500 }}>
-                                      • {stageStartedAt}
-                                    </span>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
           {/* Overview Section */}
           <div style={{ marginBottom: spacing(4) }}>
             <h2 
@@ -1993,6 +1793,206 @@ export default function DashboardClient({ contacts, stats, listings: initialList
               </div>
             </div>
           </div>
+
+        {listings.length > 0 && (
+          <div style={{ marginBottom: spacing(4) }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+                gap: spacing(2),
+                marginBottom: spacing(1.5),
+                flexWrap: 'wrap'
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 600,
+                    ...text.primary,
+                    margin: 0,
+                    marginBottom: spacing(0.5)
+                  }}
+                >
+                  Current Listings
+                </h2>
+                <p
+                  style={{
+                    fontSize: '14px',
+                    ...text.secondary,
+                    margin: 0
+                  }}
+                >
+                  Live snapshot of seller pipeline stages.
+                </p>
+              </div>
+              <Link
+                href="/listings"
+                style={{
+                  padding: `${spacing(1)} ${spacing(1.75)}`,
+                  borderRadius: '999px',
+                  border: `1px solid ${colors.border}`,
+                  textDecoration: 'none',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: colors.text.primary,
+                  background: 'transparent',
+                  transition: 'background-color 0.2s ease'
+                }}
+              >
+                View full pipeline
+              </Link>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: spacing(3)
+              }}
+            >
+              {listingColumnConfig.map((column) => {
+                const columnListings = listingsByStage[column.key]
+                return (
+                  <div
+                    key={column.key}
+                    style={{
+                      ...card,
+                      borderTop: `4px solid ${column.accent}`,
+                      padding: spacing(2),
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: spacing(1.5),
+                      minHeight: '100%'
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing(1) }}>
+                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, ...text.primary }}>{column.title}</h3>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: column.accent }}>
+                          {columnListings.length}
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '13px', ...text.secondary }}>{column.description}</p>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), flex: 1 }}>
+                      {columnListings.length === 0 ? (
+                        <div
+                          style={{
+                            padding: spacing(1.5),
+                            borderRadius: spacing(1),
+                            border: `1px dashed ${colors.border}`,
+                            color: colors.text.secondary,
+                            fontSize: '13px',
+                            textAlign: 'center'
+                          }}
+                        >
+                          Nothing here yet.
+                        </div>
+                      ) : (
+                        columnListings.map((listing) => {
+                          const stage = getActiveStageInstance(listing)
+                          const stageLabel = stage?.name ?? column.title
+                          const stageStartedAt = formatStageDate(stage?.startedAt ?? listing.currentStageStartedAt)
+                          const title = listing.title || listing.address || 'Untitled Listing'
+                          const showAddressLine =
+                            listing.address &&
+                            (!listing.title || listing.title.trim().toLowerCase() !== listing.address.trim().toLowerCase())
+                          const locationLine = [
+                            showAddressLine ? listing.address : null,
+                            listing.city,
+                            listing.state,
+                            listing.zipCode
+                          ]
+                            .filter(Boolean)
+                            .join(', ')
+
+                          return (
+                            <div
+                              key={listing.id}
+                              onClick={() => setDetailListing(listing)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault()
+                                  setDetailListing(listing)
+                                }
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              style={{
+                                ...cardWithLeftBorder(column.accent),
+                                padding: spacing(1.75),
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: spacing(1),
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <div>
+                                <p
+                                  style={{
+                                    margin: 0,
+                                    fontSize: '15px',
+                                    fontWeight: 600,
+                                    ...text.primary
+                                  }}
+                                >
+                                  {title}
+                                </p>
+                                {locationLine ? (
+                                  <p
+                                    style={{
+                                      margin: 0,
+                                      fontSize: '13px',
+                                      ...text.secondary
+                                    }}
+                                  >
+                                    {locationLine}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(1) }}>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '12px', ...text.secondary }}>List Price</span>
+                                  <span style={{ fontSize: '16px', fontWeight: 700, ...text.primary }}>
+                                    {formatCurrency(listing.listPrice)}
+                                  </span>
+                                </div>
+                                <div
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: spacing(0.5),
+                                    padding: `${spacing(0.5)} ${spacing(1)}`,
+                                    borderRadius: '999px',
+                                    backgroundColor: `${column.accent}1A`,
+                                    color: column.accent,
+                                    fontSize: '12px',
+                                    fontWeight: 600
+                                  }}
+                                >
+                                  {stageLabel}
+                                  {stageStartedAt ? (
+                                    <span style={{ fontSize: '11px', color: column.accent, fontWeight: 500 }}>
+                                      • {stageStartedAt}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
           {/* Recent Activity */}
           <div style={{ marginBottom: spacing(4) }}>

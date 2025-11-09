@@ -1,13 +1,15 @@
 'use client'
 
-import { Home } from 'lucide-react'
+import { Home, CheckSquare } from 'lucide-react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
-import type { ListingClient } from '@/types/listings'
+import type { ListingClient, ListingTaskClient } from '@/types/listings'
 
 type ListingDetailModalProps = {
   listing: ListingClient | null
   onClose: () => void
   onOpenPipeline?: () => void
+  onToggleTask?: (listingId: string, task: ListingTaskClient, completed: boolean) => void
+  isUpdating?: boolean
 }
 
 const formatCurrency = (value: number | null | undefined) => {
@@ -44,7 +46,7 @@ const stageAccent = (status: string, colors: ReturnType<typeof useThemeStyles>['
   }
 }
 
-export function ListingDetailModal({ listing, onClose, onOpenPipeline }: ListingDetailModalProps) {
+export function ListingDetailModal({ listing, onClose, onOpenPipeline, onToggleTask, isUpdating }: ListingDetailModalProps) {
   const { colors, card, cardWithLeftBorder, text, spacing } = useThemeStyles()
 
   if (!listing) return null
@@ -54,6 +56,28 @@ export function ListingDetailModal({ listing, onClose, onOpenPipeline }: Listing
     listing.stageInstances.find((stage) => stage.status === 'ACTIVE') ||
     listing.stageInstances.find((stage) => stage.status === 'PENDING') ||
     listing.stageInstances[0]
+  const canToggleTasks = Boolean(onToggleTask)
+  const documentTasks = listing.stageInstances.flatMap((stage) => {
+    const stageName = stage.name?.toLowerCase() || ''
+    const isDocumentStage =
+      stageName.includes('document') ||
+      stageName.includes('paperwork') ||
+      stageName.includes('contract') ||
+      stageName.includes('checklist') ||
+      stage.tasks.some((task) => (task.name || '').toLowerCase().includes('document'))
+    if (!isDocumentStage) {
+      return []
+    }
+    return stage.tasks.map((task) => ({ stageId: stage.id, stageName: stage.name || 'Stage', task }))
+  })
+  const uniqueDocumentTasks: Array<{ stageId: string; stageName: string; task: ListingTaskClient }> = []
+  const seenDocumentTaskIds = new Set<string>()
+  documentTasks.forEach((entry) => {
+    if (!seenDocumentTaskIds.has(entry.task.id)) {
+      seenDocumentTaskIds.add(entry.task.id)
+      uniqueDocumentTasks.push(entry)
+    }
+  })
 
   return (
     <div
@@ -153,6 +177,70 @@ export function ListingDetailModal({ listing, onClose, onOpenPipeline }: Listing
           </div>
         </div>
 
+        {uniqueDocumentTasks.length > 0 ? (
+          <div
+            style={{
+              ...card,
+              border: `1px solid ${colors.border}`,
+              padding: spacing(2),
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing(1.5)
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+              <CheckSquare style={{ width: '18px', height: '18px', color: colors.primary }} />
+              <div>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, ...text.primary }}>
+                  Document Checklist
+                </h3>
+                <p style={{ margin: `${spacing(0.25)} 0 0 0`, fontSize: '13px', ...text.secondary }}>
+                  Track required paperwork across listing and buyer pipelines.
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
+              {uniqueDocumentTasks.map(({ stageId, stageName, task }) => (
+                <label
+                  key={`${stageId}-${task.id}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(1),
+                    padding: `${spacing(0.75)} ${spacing(1)}`,
+                    borderRadius: spacing(0.75),
+                    backgroundColor: task.completed ? colors.cardHover : 'transparent',
+                    cursor: canToggleTasks ? 'pointer' : 'default'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={task.completed}
+                    disabled={!canToggleTasks || isUpdating}
+                    onChange={(event) => {
+                      event.stopPropagation()
+                      onToggleTask?.(listing.id, task, event.target.checked)
+                    }}
+                    onClick={(event) => event.stopPropagation()}
+                    style={{ width: '16px', height: '16px', cursor: canToggleTasks && !isUpdating ? 'pointer' : 'not-allowed' }}
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), flex: 1 }}>
+                    <span style={{ fontSize: '14px', fontWeight: 500, ...text.primary }}>{task.name}</span>
+                    <span style={{ fontSize: '12px', ...text.secondary }}>
+                      {stageName}
+                      {task.dueDate
+                        ? ` • Due ${formatDate(task.dueDate)}`
+                        : task.dueInDays !== null && task.dueInDays !== undefined
+                        ? ` • Due in ${task.dueInDays} day${task.dueInDays === 1 ? '' : 's'}`
+                        : ''}
+                    </span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
           {listing.stageInstances.map((stage) => {
             const accent = stageAccent(stage.status, colors)
@@ -196,22 +284,52 @@ export function ListingDetailModal({ listing, onClose, onOpenPipeline }: Listing
                         key={task.id}
                         style={{
                           display: 'flex',
-                          justifyContent: 'space-between',
                           alignItems: 'center',
-                          fontSize: '13px',
-                          color: task.completed ? colors.text.secondary : colors.text.primary
+                          justifyContent: 'space-between',
+                          gap: spacing(1)
                         }}
                       >
-                        <span>{task.name}</span>
-                        <span style={{ fontSize: '12px', color: task.completed ? colors.success : colors.text.secondary }}>
-                          {task.completed
-                            ? `Done ${formatDate(task.completedAt)}`
-                            : task.dueDate
-                            ? `Due ${formatDate(task.dueDate)}`
-                            : task.dueInDays !== null && task.dueInDays !== undefined
-                            ? `Due in ${task.dueInDays} day${task.dueInDays === 1 ? '' : 's'}`
-                            : ''}
-                        </span>
+                        <label
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: spacing(1),
+                            flex: 1,
+                            cursor: canToggleTasks ? 'pointer' : 'default'
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={task.completed}
+                            disabled={!canToggleTasks || isUpdating}
+                            onChange={(event) => {
+                              event.stopPropagation()
+                              onToggleTask?.(listing.id, task, event.target.checked)
+                            }}
+                            onClick={(event) => event.stopPropagation()}
+                            style={{ width: '16px', height: '16px', cursor: canToggleTasks && !isUpdating ? 'pointer' : 'not-allowed' }}
+                          />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), flex: 1 }}>
+                            <span
+                              style={{
+                                fontSize: '14px',
+                                color: task.completed ? colors.text.secondary : colors.text.primary,
+                                fontWeight: 500
+                              }}
+                            >
+                              {task.name}
+                            </span>
+                            <span style={{ fontSize: '12px', color: task.completed ? colors.success : colors.text.secondary }}>
+                              {task.completed
+                                ? `Done ${formatDate(task.completedAt)}`
+                                : task.dueDate
+                                ? `Due ${formatDate(task.dueDate)}`
+                                : task.dueInDays !== null && task.dueInDays !== undefined
+                                ? `Due in ${task.dueInDays} day${task.dueInDays === 1 ? '' : 's'}`
+                                : ''}
+                            </span>
+                          </div>
+                        </label>
                       </li>
                     ))}
                   </ul>

@@ -760,71 +760,70 @@ export default function ImportExportPage() {
                 )}
 
                 {/* Template Downloads */}
-                <div style={{ marginBottom: '24px' }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.secondary, marginBottom: '12px' }}>
-                    Download Template
+                <div
+                  style={{
+                    marginTop: 'auto',
+                    paddingTop: '24px',
+                    borderTop: `1px solid ${colors.border}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}
+                >
+                  <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.secondary, margin: 0 }}>
+                    Download Sample Files
                   </h3>
-                  <p style={{ fontSize: '12px', ...text.tertiary, marginBottom: '12px' }}>
-                    Use our template files to ensure proper formatting:
+                  <p style={{ fontSize: '12px', ...text.tertiary, margin: 0 }}>
+                    Use these samples to ensure your headers and columns match our expected format.
                   </p>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <button
                       {...getButtonPressHandlers('template-csv')}
                       onClick={() => handleDownloadTemplate('contacts', 'csv')}
-                      style={getButtonPressStyle('template-csv', {
-                        padding: '8px 12px',
-                        backgroundColor: colors.cardHover,
-                        border: `1px solid ${colors.border}`,
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        ...text.secondary,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }, colors.cardHover, colors.borderHover)}
-                      onMouseEnter={(e) => {
-                        if (!pressedButtons.has('template-csv')) {
-                          e.currentTarget.style.backgroundColor = colors.borderHover
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!pressedButtons.has('template-csv')) {
-                          e.currentTarget.style.backgroundColor = colors.cardHover
-                        }
-                      }}
+                      style={getButtonPressStyle(
+                        'template-csv',
+                        {
+                          padding: '10px 14px',
+                          backgroundColor: colors.surface,
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: '10px',
+                          fontSize: '13px',
+                          ...text.secondary,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        },
+                        colors.cardHover,
+                        colors.borderHover
+                      )}
                     >
                       <Download style={{ width: '14px', height: '14px' }} />
-                      CSV Template
+                      Download CSV
                     </button>
                     <button
                       {...getButtonPressHandlers('template-excel')}
                       onClick={() => handleDownloadTemplate('contacts', 'excel')}
-                      style={getButtonPressStyle('template-excel', {
-                        padding: '8px 12px',
-                        backgroundColor: colors.cardHover,
-                        border: `1px solid ${colors.border}`,
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        ...text.secondary,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }, colors.cardHover, colors.borderHover)}
-                      onMouseEnter={(e) => {
-                        if (!pressedButtons.has('template-excel')) {
-                          e.currentTarget.style.backgroundColor = colors.borderHover
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!pressedButtons.has('template-excel')) {
-                          e.currentTarget.style.backgroundColor = colors.cardHover
-                        }
-                      }}
+                      style={getButtonPressStyle(
+                        'template-excel',
+                        {
+                          padding: '10px 14px',
+                          backgroundColor: colors.surface,
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: '10px',
+                          fontSize: '13px',
+                          ...text.secondary,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        },
+                        colors.cardHover,
+                        colors.borderHover
+                      )}
                     >
-                      <Download style={{ width: '14px', height: '14px' }} />
-                      Excel Template
+                      <FileSpreadsheet style={{ width: '14px', height: '14px' }} />
+                      Download Excel
                     </button>
                   </div>
                 </div>
@@ -1353,7 +1352,16 @@ export default function ImportExportPage() {
           {activeTab === 'transactions' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
               {/* Import Transactions Section */}
-              <div style={{ padding: '32px', ...card }}>
+              <div
+                style={{
+                  padding: '32px',
+                  ...card,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '24px',
+                  height: '100%'
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
                   <FileUp style={{ width: '24px', height: '24px', color: colors.success }} />
                   <h2 style={{ fontSize: '20px', fontWeight: '600', ...text.primary, margin: '0' }}>
