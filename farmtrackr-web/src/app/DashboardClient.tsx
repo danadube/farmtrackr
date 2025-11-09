@@ -1008,7 +1008,7 @@ export default function DashboardClient({ contacts, stats, listings: initialList
                   textDecoration: 'none',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: colors.text.primary.color,
+                  color: colors.text.primary,
                   transition: 'background-color 0.2s ease',
                   background: 'transparent'
                 }}
