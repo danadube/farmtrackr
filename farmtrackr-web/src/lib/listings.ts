@@ -63,7 +63,9 @@ function deriveStatusForStage(stageKey?: string | null): ListingStatus {
   return 'ACTIVE'
 }
 
-async function setStageActive(tx: PrismaClient, stageInstanceId: string, now: Date) {
+type TxClient = Prisma.TransactionClient
+
+async function setStageActive(tx: TxClient, stageInstanceId: string, now: Date) {
   await tx.listingStageInstance.update({
     where: { id: stageInstanceId },
     data: {
@@ -134,7 +136,7 @@ export async function createListingFromTemplate(input: CreateListingInput, clien
   const initialStageKey = sortedStages[0]?.key ?? null
   const initialStatus = deriveStatusForStage(initialStageKey)
 
-  const result = await client.$transaction(async (tx) => {
+  const result = await client.$transaction(async (tx: TxClient) => {
     const listing = await tx.listing.create({
       data: {
         title: input.title ?? template.name,
@@ -230,7 +232,7 @@ export type UpdateListingTaskInput = {
 export async function completeListingTask(input: UpdateListingTaskInput, client: PrismaClient = prisma) {
   const now = new Date()
 
-  return client.$transaction(async (tx) => {
+  return client.$transaction(async (tx: TxClient) => {
     const existingTask = await tx.listingTaskInstance.findUnique({
       where: { id: input.taskId }
     })
@@ -348,7 +350,7 @@ export async function completeListingTask(input: UpdateListingTaskInput, client:
 export async function advanceListingStage(listingId: string, client: PrismaClient = prisma) {
   const now = new Date()
 
-  return client.$transaction(async (tx) => {
+  return client.$transaction(async (tx: TxClient) => {
     const listing = await tx.listing.findUnique({
       where: { id: listingId },
       include: {
