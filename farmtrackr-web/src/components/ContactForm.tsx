@@ -45,7 +45,8 @@ export default function ContactForm({ initialData, contactId, isEditing = false,
       siteState: '',
       siteZipCode: '',
       website: '',
-      notes: ''
+      notes: '',
+      tags: []
     }
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -55,6 +56,17 @@ export default function ContactForm({ initialData, contactId, isEditing = false,
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editingHtml, setEditingHtml] = useState<string>('')
   const [availableFarms, setAvailableFarms] = useState<string[]>([])
+  const [tagsInput, setTagsInput] = useState<string>(() => (initialData?.tags ?? []).join(', '))
+
+  useEffect(() => {
+    if (initialData && variant === 'general') {
+      setTagsInput((initialData.tags ?? []).join(', '))
+      setFormData((prev) => ({
+        ...prev,
+        tags: initialData.tags ?? []
+      }))
+    }
+  }, [initialData, variant])
 
   // Fetch unique farms from existing contacts
   useEffect(() => {
@@ -102,6 +114,15 @@ export default function ContactForm({ initialData, contactId, isEditing = false,
     }
   }
 
+  const handleTagsChange = (value: string) => {
+    setTagsInput(value)
+    const tags = value
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+    setFormData((prev) => ({ ...prev, tags }))
+  }
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
     
@@ -134,11 +155,15 @@ export default function ContactForm({ initialData, contactId, isEditing = false,
     setIsSubmitting(true)
     
     try {
-      const url = isEditing ? `/api/contacts/${contactId}` : '/api/contacts'
+      const baseUrl = isFarmVariant ? '/api/contacts' : '/api/google-contacts'
+      const url = isEditing ? `${baseUrl}/${contactId}` : baseUrl
       const method = isEditing ? 'PUT' : 'POST'
 
       // Migrate legacy single-note HTML to structured array on save
       const payload = { ...formData }
+      if (!isFarmVariant) {
+        payload.tags = Array.isArray(formData.tags) ? formData.tags : []
+      }
       if (payload.notes && typeof payload.notes === 'string') {
         let isArray = false
         try {
@@ -164,7 +189,8 @@ export default function ContactForm({ initialData, contactId, isEditing = false,
       })
 
       if (response.ok) {
-        router.push('/contacts')
+        const redirectPath = isFarmVariant ? '/contacts' : '/contacts?view=google'
+        router.push(redirectPath)
       } else {
         const errorData = await response.json()
         console.error('Error saving contact:', errorData)
@@ -435,6 +461,32 @@ export default function ContactForm({ initialData, contactId, isEditing = false,
                           </option>
                         ))}
                       </select>
+                    </div>
+                  )}
+                  {!isFarmVariant && (
+                    <div style={{ gridColumn: 'span 2', boxSizing: 'border-box' }}>
+                      <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', ...text.secondary, marginBottom: '6px' }}>
+                        Tags (comma separated)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. buyer, seller, investor"
+                        value={tagsInput}
+                        onChange={(e) => handleTagsChange(e.target.value)}
+                        style={getInputStyle(false)}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = colors.success
+                          e.target.style.outline = 'none'
+                          e.target.style.boxShadow = `0 0 0 3px ${colors.success}20`
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = colors.border
+                          e.target.style.boxShadow = 'none'
+                        }}
+                      />
+                      <p style={{ fontSize: '12px', ...text.tertiary, marginTop: '6px' }}>
+                        Separate multiple tags with commas.
+                      </p>
                     </div>
                   )}
                 </div>

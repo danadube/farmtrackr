@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
+import { useRouter } from 'next/navigation'
 
 interface GeneralContact {
   id: string
@@ -75,6 +76,7 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
   const { colors, isDark, card, headerTint, headerDivider, background, text } = useThemeStyles()
   const { getButtonPressHandlers, getButtonPressStyle, pressedButtons } = useButtonPress()
   const secondaryColor = (text.secondary as { color?: string }).color ?? colors.text.secondary
+  const router = useRouter()
 
   const [isImporting, setIsImporting] = useState(false)
   const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({
@@ -1030,6 +1032,37 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                 />
               </div>
             )}
+            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                type="button"
+                {...getButtonPressHandlers('edit-google-contact')}
+                onClick={() => {
+                  setShowContactModal(false)
+                  router.push(`/contacts/${selectedContact.id}/edit?variant=general&view=google`)
+                }}
+                style={getButtonPressStyle(
+                  'edit-google-contact',
+                  {
+                    padding: '12px 20px',
+                    backgroundColor: colors.primary,
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                  },
+                  colors.primary,
+                  colors.primaryHover
+                )}
+              >
+                <Edit style={{ width: '16px', height: '16px' }} />
+                Edit Contact
+              </button>
+            </div>
           </div>
         </div>
       )}

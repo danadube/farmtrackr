@@ -25,6 +25,7 @@ export interface ContactFormData {
   siteZipCode?: string
   website?: string
   notes?: string
+  tags?: string[]
 }
 
 export interface ImportTemplate {

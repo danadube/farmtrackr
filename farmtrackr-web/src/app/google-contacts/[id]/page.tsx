@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { 
-  ArrowLeft, 
+import {
+  ArrowLeft,
   User,
+  Edit
 } from 'lucide-react'
 import Link from 'next/link'
 import { Sidebar } from '@/components/Sidebar'
@@ -265,6 +266,31 @@ export default function GoogleContactDetailPage() {
                     </div>
                   </div>
                 </div>
+                <Link
+                  href={`/contacts/${contact.id}/edit?variant=general&view=google`}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: colors.success,
+                    color: '#ffffff',
+                    borderRadius: '10px',
+                    textDecoration: 'none',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? '#059669' : '#15803d'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.success
+                  }}
+                >
+                  <Edit style={{ width: '16px', height: '16px' }} />
+                  Edit Contact
+                </Link>
               </div>
               <div style={headerDivider} />
             </div>

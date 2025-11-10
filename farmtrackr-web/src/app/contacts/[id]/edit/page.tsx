@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import ContactForm from '@/components/ContactForm'
 import { ContactFormData } from '@/types'
@@ -10,6 +10,9 @@ import { useThemeStyles } from '@/hooks/useThemeStyles'
 export default function EditContactPage() {
   const params = useParams()
   const contactId = params?.id as string
+  const searchParams = useSearchParams()
+  const variantParam = searchParams.get('variant') === 'general' ? 'general' : 'farm'
+  const isGeneralVariant = variantParam === 'general'
   const { colors, background, text } = useThemeStyles()
   const [initialData, setInitialData] = useState<ContactFormData | undefined>(undefined)
   const [loading, setLoading] = useState(true)
@@ -17,7 +20,9 @@ export default function EditContactPage() {
   useEffect(() => {
     async function fetchContact() {
       try {
-        const response = await fetch(`/api/contacts/${contactId}`)
+        const response = await fetch(
+          `${isGeneralVariant ? '/api/google-contacts' : '/api/contacts'}/${contactId}`
+        )
         if (response.ok) {
           const data = await response.json()
           // Convert to ContactFormData format
@@ -43,6 +48,8 @@ export default function EditContactPage() {
             siteState: data.siteState || '',
             siteZipCode: data.siteZipCode,
             notes: data.notes || '',
+            website: data.website || '',
+            tags: isGeneralVariant ? data.tags || [] : [],
           })
         }
       } catch (error) {
@@ -53,7 +60,7 @@ export default function EditContactPage() {
     }
     
     fetchContact()
-  }, [contactId])
+  }, [contactId, isGeneralVariant])
 
   if (loading) {
     return (
@@ -109,5 +116,12 @@ export default function EditContactPage() {
     )
   }
 
-  return <ContactForm initialData={initialData} contactId={contactId} isEditing={true} />
+  return (
+    <ContactForm
+      initialData={initialData}
+      contactId={contactId}
+      isEditing={true}
+      variant={variantParam as 'farm' | 'general'}
+    />
+  )
 }
