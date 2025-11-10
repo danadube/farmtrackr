@@ -286,84 +286,73 @@ async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
       if (existing) {
         const existingStages = await tx.listingStageTemplate.findMany({
           where: { pipelineTemplateId: template.id },
-          orderBy: { sequence: 'asc' },
-          include: {
-            tasks: {
-              orderBy: { createdAt: 'asc' }
-            }
-          }
+          orderBy: { sequence: 'asc' }
         })
 
         const templateStages = SELLER_PIPELINE_TEMPLATE.stages
-        const structureMatches =
-          existingStages.length === templateStages.length &&
-          existingStages.every((stage, index) => {
-            const templateStage = templateStages[index]
-            if (!templateStage) return false
-            if (stage.key !== templateStage.key) return false
-            if (stage.tasks.length !== templateStage.tasks.length) return false
-            for (let taskIndex = 0; taskIndex < templateStage.tasks.length; taskIndex++) {
-              if (stage.tasks[taskIndex]?.name !== templateStage.tasks[taskIndex]?.name) {
-                return false
-              }
-            }
-            return true
-          })
-
-        if (structureMatches) {
-          for (let index = 0; index < templateStages.length; index++) {
-            const templateStage = templateStages[index]
-            const stageRecord = existingStages[index]
-            if (!templateStage || !stageRecord) continue
-
-            await tx.listingStageTemplate.update({
-              where: { id: stageRecord.id },
-              data: {
-                name: templateStage.name,
-                sequence: templateStage.order ?? index + 1,
-                durationDays: templateStage.durationDays ?? null,
-                trigger: templateStage.trigger ?? null
-              }
-            })
-
-            const templateTasks = templateStage.tasks
-            const stageTasks = stageRecord.tasks
-
-            for (let taskIndex = 0; taskIndex < templateTasks.length; taskIndex++) {
-              const templateTask = templateTasks[taskIndex]
-              const taskRecord = stageTasks[taskIndex]
-              if (!templateTask || !taskRecord) continue
-
-              await tx.listingTaskTemplate.update({
-                where: { id: taskRecord.id },
+        
+        // CRITICAL: Only rebuild if template has NO stages at all
+        // If stages exist, preserve them - never delete/recreate to avoid breaking existing listings
+        if (existingStages.length > 0) {
+          // Template has stages - just ensure they have the right keys
+          // Update names if needed, but don't delete/recreate
+          const templateStageKeys = new Set(templateStages.map(s => s.key))
+          const existingStageKeys = new Set(existingStages.map(s => s.key).filter(Boolean))
+          
+          // Check if we need to add any missing stages (but don't delete existing ones)
+          for (const templateStage of templateStages) {
+            if (!existingStageKeys.has(templateStage.key)) {
+              // Add missing stage
+              const stageRecord = await tx.listingStageTemplate.create({
                 data: {
-                  name: templateTask.name,
-                  dueInDays: templateTask.dueInDays ?? null,
-                  autoRepeat: templateTask.autoRepeat ?? false,
-                  autoComplete: templateTask.autoComplete ?? false,
-                  triggerOn: templateTask.triggerOn ?? null
+                  pipelineTemplateId: template.id,
+                  key: templateStage.key,
+                  name: templateStage.name,
+                  sequence: templateStage.order ?? templateStages.indexOf(templateStage) + 1,
+                  durationDays: templateStage.durationDays ?? null,
+                  trigger: templateStage.trigger ?? null
                 }
               })
+              
+              // Add tasks for the new stage
+              if (templateStage.tasks.length > 0) {
+                await tx.listingTaskTemplate.createMany({
+                  data: templateStage.tasks.map((task) => ({
+                    stageTemplateId: stageRecord.id,
+                    name: task.name,
+                    dueInDays: task.dueInDays ?? null,
+                    autoRepeat: task.autoRepeat ?? false,
+                    autoComplete: task.autoComplete ?? false,
+                    triggerOn: task.triggerOn ?? null
+                  }))
+                })
+              }
+            } else {
+              // Update existing stage metadata
+              const existingStage = existingStages.find(s => s.key === templateStage.key)
+              if (existingStage) {
+                await tx.listingStageTemplate.update({
+                  where: { id: existingStage.id },
+                  data: {
+                    name: templateStage.name,
+                    sequence: templateStage.order ?? templateStages.indexOf(templateStage) + 1,
+                    durationDays: templateStage.durationDays ?? null,
+                    trigger: templateStage.trigger ?? null
+                  }
+                })
+              }
             }
           }
-
+          
+          // Template exists and has stages - return without rebuilding
           return template.id
         }
       }
-
-      await tx.listingTaskTemplate.deleteMany({
-        where: {
-          stageTemplate: {
-            pipelineTemplateId: template.id
-          }
-        }
-      })
-
-      await tx.listingStageTemplate.deleteMany({
-        where: { pipelineTemplateId: template.id }
-      })
-
+      
+      // Only create stages if template is brand new (no stages exist)
+      // This only happens on first setup
       const stages = SELLER_PIPELINE_TEMPLATE.stages
+      
       for (let index = 0; index < stages.length; index++) {
         const stage = stages[index]
         const stageRecord = await tx.listingStageTemplate.create({
@@ -426,7 +415,7 @@ async function ensureSeedListings(client: PrismaClient = prisma) {
     })
 
     if (existing) {
-      // Ensure the listing is attached to the seller pipeline for filtering, but don't overwrite progress.
+      // Only update pipeline template if it's different (doesn't affect stage position)
       if (existing.pipelineTemplateId !== pipelineTemplateId) {
         await client.listing.update({
           where: { id: existing.id },
@@ -439,18 +428,42 @@ async function ensureSeedListings(client: PrismaClient = prisma) {
         })
       }
 
-      // Only rebuild stages if listing has NO stage instances at all
-      // If stages exist, don't touch them - the listing may have been manually moved
-      if (existing.stageInstances.length === 0) {
-        // Listing has no stages - rebuild from template and initialize to target stage
-        await rebuildListingStagesFromTemplate(existing.id, pipelineTemplateId, client)
-        try {
-          await moveListingToStage(existing.id, seed.targetStage, client)
-        } catch (error) {
-          console.warn(`Could not initialize listing ${existing.id} to stage ${seed.targetStage}:`, error)
+      // CRITICAL: If listing has ANY stage instances, never modify them
+      // This preserves manually moved listings and prevents resetting on refresh
+      if (existing.stageInstances.length > 0) {
+        // Only fix orphaned stages (NULL stageTemplateId) by re-linking them
+        // But NEVER move or reset the listing's current stage
+        const hasOrphanedStages = existing.stageInstances.some((stage) => stage.stageTemplateId === null)
+        if (hasOrphanedStages) {
+          // Re-link orphaned stages to templates by matching stage keys
+          const stageTemplates = await client.listingStageTemplate.findMany({
+            where: { pipelineTemplateId },
+            select: { id: true, key: true }
+          })
+          
+          const keyToTemplateId = new Map(stageTemplates.map((st) => [st.key, st.id]))
+          
+          for (const stageInstance of existing.stageInstances) {
+            if (stageInstance.stageTemplateId === null && stageInstance.key) {
+              const templateId = keyToTemplateId.get(stageInstance.key)
+              if (templateId) {
+                await client.listingStageInstance.update({
+                  where: { id: stageInstance.id },
+                  data: { stageTemplateId: templateId }
+                })
+              }
+            }
+          }
         }
+        // Preserve the listing's current stage - don't modify it at all
+        continue
       }
-      // If listing already has stages, don't modify them - preserve current position
+
+      // Only initialize stages if listing has NO stage instances at all
+      // This only happens for brand new listings that were just created
+      if (existing.stageInstances.length === 0) {
+        await rebuildListingStagesFromTemplate(existing.id, pipelineTemplateId, client, seed.targetStage)
+      }
       continue
     }
 
@@ -508,7 +521,8 @@ function addDays(base: Date, days: number | null | undefined) {
 async function rebuildListingStagesFromTemplate(
   listingId: string,
   pipelineTemplateId: string,
-  client: PrismaClient = prisma
+  client: PrismaClient = prisma,
+  preserveStageKey?: string | null
 ) {
   const template = await client.listingPipelineTemplate.findUnique({
     where: { id: pipelineTemplateId },
@@ -519,13 +533,23 @@ async function rebuildListingStagesFromTemplate(
     return
   }
 
+  // Get current listing state to preserve stage if requested
+  const listing = await client.listing.findUnique({
+    where: { id: listingId },
+    select: { currentStageKey: true }
+  })
+
+  // Use preserved key if provided, otherwise try to preserve existing currentStageKey
+  const stageKeyToPreserve = preserveStageKey ?? listing?.currentStageKey ?? null
+
   const now = new Date()
   const sortedStages = [...template.stages].sort((a, b) => a.sequence - b.sequence)
 
   await client.listingTaskInstance.deleteMany({ where: { listingId } })
   await client.listingStageInstance.deleteMany({ where: { listingId } })
 
-  let firstStageInstance: { id: string; key: string | null } | null = null
+  const stageKeyToInstance = new Map<string, { id: string; key: string | null; order: number }>()
+  let firstStageInstance: { id: string; key: string | null; order: number } | null = null
 
   for (const stage of sortedStages) {
     const stageInstance = await client.listingStageInstance.create({
@@ -540,8 +564,13 @@ async function rebuildListingStagesFromTemplate(
       }
     })
 
+    const instanceData = { id: stageInstance.id, key: stage.key ?? null, order: stage.sequence }
+    if (stage.key) {
+      stageKeyToInstance.set(stage.key, instanceData)
+    }
+
     if (!firstStageInstance) {
-      firstStageInstance = { id: stageInstance.id, key: stage.key ?? null }
+      firstStageInstance = instanceData
     }
 
     if (stage.tasks.length > 0) {
@@ -563,18 +592,60 @@ async function rebuildListingStagesFromTemplate(
     }
   }
 
-  if (firstStageInstance) {
-    await client.listingStageInstance.update({
-      where: { id: firstStageInstance.id },
-      data: {
-        status: 'ACTIVE',
-        startedAt: now,
-        completedAt: null
-      }
-    })
+  // Determine which stage should be active
+  let targetStageInstance: { id: string; key: string | null; order: number } | null = null
+  
+  if (stageKeyToPreserve) {
+    // Try to preserve the existing stage
+    targetStageInstance = stageKeyToInstance.get(stageKeyToPreserve) ?? null
+  }
+  
+  // Fall back to first stage if preserved stage doesn't exist
+  if (!targetStageInstance) {
+    targetStageInstance = firstStageInstance
+  }
 
+  if (targetStageInstance) {
+    // Set target stage to ACTIVE and complete all earlier stages
+    for (const stage of sortedStages) {
+      const instance = stageKeyToInstance.get(stage.key ?? '')
+      if (!instance) continue
+
+      if (instance.id === targetStageInstance.id) {
+        await client.listingStageInstance.update({
+          where: { id: instance.id },
+          data: {
+            status: 'ACTIVE',
+            startedAt: now,
+            completedAt: null
+          }
+        })
+      } else if (instance.order < targetStageInstance.order) {
+        // Complete stages before the target
+        await client.listingStageInstance.update({
+          where: { id: instance.id },
+          data: {
+            status: 'COMPLETED',
+            startedAt: instance.id === firstStageInstance?.id ? now : null,
+            completedAt: now
+          }
+        })
+      } else {
+        // Keep later stages as PENDING
+        await client.listingStageInstance.update({
+          where: { id: instance.id },
+          data: {
+            status: 'PENDING',
+            startedAt: null,
+            completedAt: null
+          }
+        })
+      }
+    }
+
+    // Set due dates for active stage tasks
     const tasks = await client.listingTaskInstance.findMany({
-      where: { stageInstanceId: firstStageInstance.id }
+      where: { stageInstanceId: targetStageInstance.id }
     })
 
     for (const task of tasks) {
@@ -589,9 +660,9 @@ async function rebuildListingStagesFromTemplate(
     await client.listing.update({
       where: { id: listingId },
       data: {
-        currentStageKey: firstStageInstance.key,
+        currentStageKey: targetStageInstance.key,
         currentStageStartedAt: now,
-        status: deriveStatusForStage(firstStageInstance.key ?? undefined)
+        status: deriveStatusForStage(targetStageInstance.key ?? undefined)
       }
     })
   } else {
