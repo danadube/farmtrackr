@@ -209,10 +209,6 @@ const SELLER_PIPELINE_TEMPLATE: PipelineTemplateDefinition = {
   ]
 }
 
-const STAGE_KEY_TO_INDEX = new Map<string, number>(
-  SELLER_PIPELINE_TEMPLATE.stages.map((stage, index) => [stage.key, index])
-)
-
 const DASHBOARD_SEED_LISTINGS: Array<{
   title: string
   address: string
@@ -262,67 +258,6 @@ const DASHBOARD_SEED_LISTINGS: Array<{
     notes: 'PGA West fifth-floor condominium with double fairway views and fully remodeled interiors.'
   }
 ]
-
-async function moveListingToStage(listingId: string, targetStageKey: string, client: PrismaClient = prisma) {
-  const listing = await client.listing.findUnique({
-    where: { id: listingId },
-    include: {
-      stageInstances: {
-        orderBy: { order: 'asc' }
-      }
-    }
-  })
-
-  if (!listing) {
-    return
-  }
-
-  const targetIndex = STAGE_KEY_TO_INDEX.get(targetStageKey) ?? 0
-  const now = new Date()
-
-  for (const stageInstance of listing.stageInstances) {
-    const stageKey = stageInstance.key ?? ''
-    const stageIndex = STAGE_KEY_TO_INDEX.get(stageKey) ?? 0
-
-    if (stageIndex < targetIndex) {
-      await client.listingStageInstance.update({
-        where: { id: stageInstance.id },
-        data: {
-          status: 'COMPLETED',
-          startedAt: stageInstance.startedAt ?? now,
-          completedAt: stageInstance.completedAt ?? now
-        }
-      })
-    } else if (stageIndex === targetIndex) {
-      await client.listingStageInstance.update({
-        where: { id: stageInstance.id },
-        data: {
-          status: 'ACTIVE',
-          startedAt: stageInstance.startedAt ?? now,
-          completedAt: null
-        }
-      })
-    } else {
-      await client.listingStageInstance.update({
-        where: { id: stageInstance.id },
-        data: {
-          status: 'PENDING',
-          startedAt: null,
-          completedAt: null
-        }
-      })
-    }
-  }
-
-  await client.listing.update({
-    where: { id: listingId },
-    data: {
-      currentStageKey: targetStageKey,
-      currentStageStartedAt: now,
-      status: deriveStatusForStage(targetStageKey)
-    }
-  })
-}
 
 async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
   const pipelineId = await client.$transaction(
