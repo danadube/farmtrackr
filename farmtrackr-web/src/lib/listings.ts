@@ -378,7 +378,7 @@ async function ensureSeedListings(client: PrismaClient = prisma) {
       client
     )
 
-    const stageOrder: Record<DashboardSeedListing['targetStage'], number> = {
+    const stageOrder: Record<(typeof DASHBOARD_SEED_LISTINGS)[number]['targetStage'], number> = {
       pre_listing_intake: 0,
       listing_agreement_execution: 1,
       disclosure_period: 2,
