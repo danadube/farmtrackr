@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getGoogleAccessToken } from '@/lib/googleTokenHelper'
 import { getAuthenticatedCalendarClient } from '@/lib/googleAuth'
 
+export const dynamic = 'force-dynamic'
+
 type CalendarListEntry = {
   id: string
   summary: string

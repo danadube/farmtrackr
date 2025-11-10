@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * API Route: Fetch Emails from Gmail
  * GET /api/gmail/fetch?query=...&maxResults=25

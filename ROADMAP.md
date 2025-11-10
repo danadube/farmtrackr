@@ -5,9 +5,9 @@
 This roadmap outlines the development plan to bring the web application to feature parity with the Swift app, with special attention to the label printing functionality that had implementation challenges.
 
 **Last Updated:** November 2, 2025  
-**Current Version:** v0.6.0 (Commission Tracking Module) - ✅ COMPLETE  
-**Previous Version:** v0.5.0 (Google Contacts Integration) - ✅ COMPLETE  
-**Next Priority:** v0.7.0 (UI/UX Enhancements & Polish)
+**Current Version:** v0.7.0 (UI/UX Enhancements & Polish) - ✅ COMPLETE  
+**Previous Version:** v0.6.0 (Commission Tracking Module) - ✅ COMPLETE  
+**Next Priority:** v0.8.0 (Email & Communication Integration)
 
 ---
 
@@ -637,104 +637,327 @@ See `docs/planning/COMMISSION_INTEGRATION.md` for complete integration plan.
   - Enhanced button press states
 
 #### Dashboard Redesign
-- [ ] **Welcome Page Dashboard Improvements**
-  - Combine total contacts and validation issues into one card
-  - Double the active farms card size for more space for farm names
-  - Better visual hierarchy and information architecture
-  - Improved layout and spacing
+- [x] **Welcome Page Dashboard Improvements** ✅ COMPLETE
+  - [x] Combined stats card (Google Contacts, Farm Contacts, Active Farms) ✅
+  - [x] 3-column grid layout with proper spacing ✅
+  - [x] Calendar card with full calendar view ✅
+  - [x] Tasks & Reminders card ✅
+  - [x] Better visual hierarchy and information architecture ✅
+  - [x] Improved layout with persistent colored sidebars ✅
+  - [x] Tightened spacing throughout cards ✅
 
 #### Active Farms Card
-- [ ] **Elegant Chip Overflow Handling**
-  - Scrollable chip container for many farms
-  - Better layout for active farms card
-  - Overflow handling when many farms are active
-  - Responsive chip display
+- [x] **Elegant Chip Overflow Handling** ✅ COMPLETE
+  - [x] Separate Farms card with chip display ✅
+  - [x] Better layout for active farms card ✅
+  - [x] Responsive chip display ✅
+  - Note: Scrollable overflow can be added if needed for many farms
 
 #### Dashboard Quick Actions Redesign
-- [ ] **Quick Actions Card Layout** (Welcome Dashboard)
-  - Change from vertical centered layout to horizontal layout
-  - Icon on left, text left-justified to icon
-  - Streamlined action card design
-  - Consistent icon and text alignment across all quick action cards
-  - More compact and efficient use of space
-- [ ] **Additional Quick Actions** (Suggestions)
-  - Add New Transaction (commissions)
-  - View Commissions
-  - Google Contacts sync
-  - Data Quality page
-  - Settings/Preferences
-  - Recent activity/notifications
+- [x] **Quick Actions Card Layout** ✅ COMPLETE
+  - [x] Horizontal layout with icon on left, text left-justified ✅
+  - [x] Streamlined action card design ✅
+  - [x] Consistent icon and text alignment ✅
+  - [x] More compact and efficient use of space ✅
+- [x] **Additional Quick Actions** ✅ COMPLETE
+  - [x] Add New Transaction (commissions) ✅
+  - [x] View Commissions ✅
+  - [x] Google Contacts sync ✅
+  - [x] Data Quality page ✅
+  - [x] Settings/Preferences ✅
+  - [x] Import & Export ✅
+  - [x] Print Labels ✅
+  - [x] Documents ✅
+  - [x] Google Sheets ✅
   
 #### Sidebar Enhancements
-- [ ] **Future Features Section**
-  - Add "Coming Soon" or "Future Features" tab in sidebar
-  - Display planned features and roadmap items
-  - Feature preview and timeline
+- [x] **Future Features Section** ✅ COMPLETE
+  - [x] Add "Coming Soon" tab in sidebar ✅
+  - [x] Create Future Features page with roadmap items ✅
+  - [x] Feature preview with version numbers ✅
+  - [x] Styled feature cards with icons ✅
 
 #### Print Labels Enhancements
-- [ ] **Additional Print Locations**
-  - Add print labels option in Farm Contacts tab
-  - Print labels from Google Contacts chips
-  - Quick access to label printing from multiple locations
-  - Consistent print experience across pages
+- [x] **Additional Print Locations** ✅ COMPLETE
+  - [x] Add print labels option in Farm Contacts tab header ✅
+  - [x] Add print labels button to Google Contacts page header ✅
+  - [x] Quick access to label printing from multiple locations ✅
+  - [x] Consistent styling across both pages ✅
 
 
 ---
 
-### **v0.8.0 - Email & Communication Integration**
-**Focus:** Full email client integration (Gmail priority)
+### **v0.8.0 - Google Integration Suite**
+**Focus:** Complete Google ecosystem integration (Gmail, Calendar, Drive) - Google-first approach
 
-#### Gmail Integration (Priority)
+**Status:** 📋 Planned - Implementation strategy defined
+
+---
+
+#### **📋 Implementation Strategy Overview**
+
+**Recommended Approach:** Focus on Google ecosystem first, then add Outlook support later (v0.9.0+)
+
+**Why Google-First:**
+- Already in Google ecosystem (Sheets, Apps Script)
+- Full send/receive capability for Gmail
+- Native threading and search
+- Free for Google Workspace accounts
+- Simpler setup (no Azure registration needed)
+- Most real estate agents use Gmail/Google Workspace
+- Unified OAuth flow for all Google services
+- Consistent API patterns across Gmail, Calendar, Drive
+
+**Architecture:**
+```
+CRM UI
+    ↓
+Google Services Layer
+    ↓
+    ├─→ Gmail API (Email)
+    ├─→ Calendar API (Calendar)
+    └─→ Drive API (Documents)
+```
+
+**Outlook Integration:** Deferred to v0.9.0+ after Google integrations are complete
+
+---
+
+#### **Phase 1: Gmail Integration** - PRIORITY
+
+##### **A. Backend Setup**
 - [ ] **Gmail API Setup**
-  - Gmail API authentication
-  - OAuth 2.0 with Gmail scope
+  - Gmail API authentication via Google Apps Script
+  - OAuth 2.0 with Gmail scope (built-in)
   - Token management and refresh
-- [ ] **Full Email Client - Gmail**
-  - **Send Emails**
-    - Email composer within FarmTrackr
-    - Rich text email editor
-    - Attachments support
-    - Email templates
-    - Quick send from contact records
-  - **Receive Emails**
-    - Fetch and display emails from Gmail
-    - Inbox view with threading
-    - Conversation view
-    - Email search and filtering
-    - Unread count badges
-  - **Email Management**
-    - Mark as read/unread
-    - Archive, delete, label emails
-    - Email threading and conversation view
-    - Link emails to contacts and transactions
+  - Create `emails.gs` file in Apps Script
+  - Email service layer functions:
+    - `sendEmailFromCRM(transactionId, to, subject, body)`
+    - `getRecentEmails(query, maxResults)`
+    - `logEmailToTransaction(transactionId, emailData)`
+- [ ] **Data Structure Setup**
+  - Create `Email_Log` sheet with columns:
+    - Transaction ID
+    - Direction (sent/received)
+    - Contact Email
+    - Subject
+    - Date/Time
+    - Body Preview (first 200 chars)
+    - Full Body (hidden column)
+    - Attachments JSON
+    - Thread ID
+    - Saved By
+
+##### **B. Frontend UI**
+- [ ] **Email Panel in Transaction View**
+  - Add "Emails" tab to transaction detail view
+  - Email list view (filterable, searchable)
+  - Email detail viewer
+  - Email compose modal
+- [ ] **Email Composer**
+  - To/From fields
+  - Subject field
+  - Rich text editor (HTML)
+  - Attach files support
+  - "Save to Transaction" checkbox (auto-checked)
+  - Quick send from contact records
+- [ ] **Email List View**
+  - Inbox view with threading
+  - Conversation view
+  - Email search and filtering
+  - Unread count badges
+  - Filter by: All, From/To Client, Internal
+- [ ] **Email Management**
+  - Mark as read/unread
+  - Archive, delete, label emails
+  - Email threading and conversation view
+  - Link emails to contacts and transactions
+
+##### **C. Core Features**
 - [ ] **Email Templates**
-  - Template library
+  - Template library (offer letter, showing confirmation, etc.)
   - Custom email templates
-  - Template variables and personalization (contact name, farm, etc.)
+  - Template variables and personalization:
+    - Contact name
+    - Farm name
+    - Transaction address
+    - Property details
   - Quick send from contact records
 - [ ] **Email History & Tracking**
   - Email history linked to contacts
   - Email history linked to transactions
   - Sent email tracking
   - Email thread view by contact
+  - Auto-detect client emails (link to contact records)
+- [ ] **Smart Features**
+  - Auto-suggest transactions when composing
+  - Scheduled sends (future enhancement)
+  - Attachment handling (save to Google Drive, link to transaction)
+  - Email threading (group conversations)
+  - Quick replies / canned responses
 
-#### Outlook Integration (Future - v0.8.1)
-- [ ] **Outlook Email Integration**
-  - Outlook email API integration
-  - Connect Outlook accounts
-  - Full email client (send/receive)
-  - Similar features to Gmail integration
-- [ ] **Outlook Calendar Sync**
-  - Two-way calendar synchronization
-  - Event creation from FarmTrackr
-  - Calendar events linked to contacts/transactions
-- [ ] **Outlook People/Contacts Sync**
-  - Import/export Outlook contacts
-  - Bidirectional contact sync
-  - Conflict resolution
-- [ ] **Unified Outlook Experience**
-  - Single sign-on for Outlook services
-  - Centralized Outlook integration management
+---
+
+#### **Phase 2: Google Calendar Integration** - After Gmail Backend Setup
+
+- [ ] **Google Calendar API Setup**
+  - Enable Google Calendar API in Apps Script
+  - OAuth 2.0 with calendar scope (extend existing Gmail OAuth)
+  - Calendar service layer functions:
+    - `createCalendarEvent(contactId, title, startTime, endTime, location)`
+    - `getCalendarEvents(query, timeMin, timeMax)`
+    - `updateCalendarEvent(eventId, updates)`
+    - `deleteCalendarEvent(eventId)`
+    - `syncCalendarEventsToCRM(contactId)`
+- [ ] **Calendar Event Creation**
+  - Create calendar events from meetings/showings/appointments
+  - Link events to contacts and transactions
+  - Auto-sync calendar events to CRM activities
+  - Two-way sync (CRM → Calendar, Calendar → CRM)
+- [ ] **Calendar UI Integration**
+  - Calendar view in dashboard (enhance existing calendar card)
+  - Create event from contact/transaction pages
+  - View calendar events linked to contacts
+  - Calendar event reminders and notifications
+- [ ] **Event Management**
+  - Edit/delete calendar events from CRM
+  - Event details viewer (time, location, attendees, description)
+  - Recurring events support
+  - Event reminders and follow-ups
+
+---
+
+#### **Phase 3: Google Drive Integration** - Complete Google Ecosystem
+
+- [ ] **Google Drive API Setup**
+  - Enable Google Drive API in Apps Script
+  - OAuth 2.0 with Drive scope (extend existing Google OAuth)
+  - Drive service layer functions:
+    - `listDriveFiles(folderId, query)`
+    - `getDriveFile(fileId)`
+    - `createDriveFile(name, content, mimeType)`
+    - `updateDriveFile(fileId, content)`
+    - `deleteDriveFile(fileId)`
+    - `getDriveFileLink(fileId)`
+- [ ] **Drive UI Integration**
+  - Drive file browser in documents section
+  - View/list Drive files from CRM
+  - Link Drive documents to contacts/transactions
+  - Direct file links (open in Drive)
+  - File preview for common formats (PDF, images, etc.)
+- [ ] **Document Management**
+  - Create documents in Drive from CRM
+  - Upload files to Drive
+  - Organize files in Drive folders
+  - Search Drive files
+  - File metadata display (size, modified date, owner)
+
+---
+
+#### **Phase 4: Outlook Integration** - DEFERRED TO v0.9.0+
+
+**Status:** Will be implemented after all Google integrations are complete and stable
+
+**Approach:** Will follow similar patterns as Google integrations but use Microsoft Graph API
+- Outlook Email Integration
+- Outlook Calendar Sync
+- Outlook People/Contacts Sync
+- Universal abstraction layer for multi-provider support
+
+---
+
+#### **📊 Provider Comparison**
+
+| Feature | Gmail API | Outlook (Graph API) | Winner |
+|---------|-----------|---------------------|--------|
+| **Setup Complexity** | ⭐⭐⭐⭐⭐ Simple | ⭐⭐⭐ Moderate | Gmail |
+| **Authentication** | Built-in (Apps Script) | OAuth 2.0 (manual) | Gmail |
+| **Free Tier** | Unlimited (Workspace) | Unlimited (personal) | Tie |
+| **Email Search** | Advanced Gmail queries | OData filters | Gmail |
+| **Threading** | Native support | Conversation IDs | Gmail |
+| **Attachments** | Easy handling | Base64 encoding needed | Gmail |
+| **Read Receipts** | No | Yes | Outlook |
+| **Scheduling** | No (3rd party needed) | Yes (with Graph) | Outlook |
+| **Corporate Adoption** | Startups, tech | Enterprise, corporate | Outlook |
+| **API Stability** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Gmail |
+
+---
+
+#### **💾 Data Structure Examples**
+
+**Email_Log Sheet:**
+```
+| ID | Transaction | Direction | Contact | Subject | Date | Body | Attachments | Thread ID | Provider |
+|----|-------------|-----------|---------|---------|------|------|-------------|-----------|----------|
+| EM-001 | TXN-123 | sent | buyer@x.com | Offer | 11/4 | ... | offer.pdf | THR-A1 | gmail |
+| EM-002 | TXN-123 | received | buyer@x.com | Re: Offer | 11/4 | ... | - | THR-A1 | gmail |
+```
+
+**Email_Config Sheet:**
+```
+| User Email | Provider | Access Token | Refresh Token | Token Expiry | Default From |
+|------------|----------|--------------|---------------|--------------|--------------|
+| janice@glaab.com | gmail | [encrypted] | [encrypted] | 2025-12-01 | janice@glaab.com |
+| dana@glaab.com | outlook | [encrypted] | [encrypted] | 2025-12-01 | dana@glaab.com |
+```
+
+**Transaction Master Sheet (add columns):**
+```
+| ... | Last Email Date | Email Count | Last Email Subject | Provider |
+|-----|-----------------|-------------|--------------------|----------|
+| ... | 11/4/2025 | 12 | Re: Offer | gmail |
+```
+
+---
+
+#### **✅ Implementation Order**
+
+**Recommended Path: Gmail First (Option A)**
+
+1. Set up Gmail API backend functions
+2. Build CRM email UI (compose, view, list)
+3. Add transaction linking and email log
+4. Test with real transactions
+5. Add templates and quick actions
+6. Mobile optimization and notifications
+7. Add abstraction layer (if needed)
+8. Add Outlook support (only if requested)
+
+**Alternative Path: Universal from Day 1 (Option B)**
+
+1. Build abstraction layer
+2. Implement Gmail connector
+3. Implement Outlook connector
+4. Test both providers
+5. Polish and optimize
+
+**Recommendation:** Start with Option A (Gmail First) because:
+- 80% of real estate agents use Gmail
+- Faster time to production
+- Less complexity upfront
+- Easy to add Outlook later (architecture supports it)
+
+---
+
+#### **🎯 Additional Features (Future Enhancements)**
+
+- [ ] **Email Templates Library**
+  - Pre-built templates for common scenarios
+  - Template variables and personalization
+  - Template categories (offers, showings, follow-ups)
+- [ ] **Email Analytics**
+  - Email open tracking (requires third-party service)
+  - Click tracking
+  - Response time metrics
+- [ ] **Bulk Email Features**
+  - Email campaigns
+  - Drip campaigns
+  - Email automation
+- [ ] **Third-Party Email Service Integration** (Optional)
+  - SendGrid/Mailgun for branded sending
+  - Advanced tracking and analytics
+  - Marketing email capabilities
+  - Monthly cost: ~$15-30/month
 
 
 ---
@@ -1293,12 +1516,12 @@ This roadmap should be reviewed and updated:
 
 **Immediate Tasks:**
 - ✅ Button click animations (partially done - commissions page has it)
-- Dashboard redesign (combine cards, expand active farms)
-- Active farms card elegant overflow handling
-- Dashboard Quick Actions: icon on left, text left-justified (horizontal layout)
-- Add suggested quick actions (Add Transaction, View Commissions, Data Quality, Google Contacts, etc.)
-- Future features section in sidebar
-- Print labels in Farm Contacts tab and Google Contacts chips
+- ✅ Dashboard redesign (combine cards, expand active farms) - COMPLETE
+- ✅ Active farms card elegant overflow handling - COMPLETE
+- ✅ Dashboard Quick Actions: icon on left, text left-justified (horizontal layout) - COMPLETE
+- ✅ Add suggested quick actions (Add Transaction, View Commissions, Data Quality, Google Contacts, etc.) - COMPLETE
+- ✅ Future features section in sidebar - COMPLETE
+- ✅ Print labels in Farm Contacts tab and Google Contacts chips - COMPLETE
 
 **Estimated Time:** 1-2 weeks
 

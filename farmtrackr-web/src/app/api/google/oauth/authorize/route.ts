@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getGoogleAuthUrl } from '@/lib/googleAuth'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Initiate Google OAuth flow
  * GET /api/google/oauth/authorize

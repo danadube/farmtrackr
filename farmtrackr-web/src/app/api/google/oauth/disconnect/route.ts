@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Disconnect Google OAuth (clear tokens)
  * POST /api/google/oauth/disconnect

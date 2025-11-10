@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getTokensFromCode } from '@/lib/googleAuth'
 import { cookies } from 'next/headers'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Handle Google OAuth callback
  * GET /api/google/oauth/callback?code=...
