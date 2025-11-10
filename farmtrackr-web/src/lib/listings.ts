@@ -267,15 +267,6 @@ async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
         select: { id: true }
       })
 
-      if (existing) {
-        const stageCount = await tx.listingStageTemplate.count({
-          where: { pipelineTemplateId: existing.id }
-        })
-        if (stageCount === SELLER_PIPELINE_TEMPLATE.stages.length) {
-          return existing.id
-        }
-      }
-
       const template = existing
         ? await tx.listingPipelineTemplate.update({
             where: { id: existing.id },
@@ -291,6 +282,74 @@ async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
               type: SELLER_PIPELINE_TEMPLATE.type
             }
           })
+
+      if (existing) {
+        const existingStages = await tx.listingStageTemplate.findMany({
+          where: { pipelineTemplateId: template.id },
+          orderBy: { sequence: 'asc' },
+          include: {
+            tasks: {
+              orderBy: { createdAt: 'asc' }
+            }
+          }
+        })
+
+        const templateStages = SELLER_PIPELINE_TEMPLATE.stages
+        const structureMatches =
+          existingStages.length === templateStages.length &&
+          existingStages.every((stage, index) => {
+            const templateStage = templateStages[index]
+            if (!templateStage) return false
+            if (stage.key !== templateStage.key) return false
+            if (stage.tasks.length !== templateStage.tasks.length) return false
+            for (let taskIndex = 0; taskIndex < templateStage.tasks.length; taskIndex++) {
+              if (stage.tasks[taskIndex]?.name !== templateStage.tasks[taskIndex]?.name) {
+                return false
+              }
+            }
+            return true
+          })
+
+        if (structureMatches) {
+          for (let index = 0; index < templateStages.length; index++) {
+            const templateStage = templateStages[index]
+            const stageRecord = existingStages[index]
+            if (!templateStage || !stageRecord) continue
+
+            await tx.listingStageTemplate.update({
+              where: { id: stageRecord.id },
+              data: {
+                name: templateStage.name,
+                sequence: templateStage.order ?? index + 1,
+                durationDays: templateStage.durationDays ?? null,
+                trigger: templateStage.trigger ?? null
+              }
+            })
+
+            const templateTasks = templateStage.tasks
+            const stageTasks = stageRecord.tasks
+
+            for (let taskIndex = 0; taskIndex < templateTasks.length; taskIndex++) {
+              const templateTask = templateTasks[taskIndex]
+              const taskRecord = stageTasks[taskIndex]
+              if (!templateTask || !taskRecord) continue
+
+              await tx.listingTaskTemplate.update({
+                where: { id: taskRecord.id },
+                data: {
+                  name: templateTask.name,
+                  dueInDays: templateTask.dueInDays ?? null,
+                  autoRepeat: templateTask.autoRepeat ?? false,
+                  autoComplete: templateTask.autoComplete ?? false,
+                  triggerOn: templateTask.triggerOn ?? null
+                }
+              })
+            }
+          }
+
+          return template.id
+        }
+      }
 
       await tx.listingTaskTemplate.deleteMany({
         where: {
@@ -379,7 +438,22 @@ async function ensureSeedListings(client: PrismaClient = prisma) {
           }
         })
       }
-      await moveListingToStage(existing.id, seed.targetStage, client)
+
+      const hasTargetStage = existing.stageInstances.some((stage) => stage.key === seed.targetStage)
+      if (!hasTargetStage) {
+        await rebuildListingStagesFromTemplate(existing.id, pipelineTemplateId, client)
+      }
+
+      try {
+        await moveListingToStage(existing.id, seed.targetStage, client)
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('Target stage not found')) {
+          await rebuildListingStagesFromTemplate(existing.id, pipelineTemplateId, client)
+          await moveListingToStage(existing.id, seed.targetStage, client)
+        } else {
+          throw error
+        }
+      }
       continue
     }
 
@@ -397,7 +471,16 @@ async function ensureSeedListings(client: PrismaClient = prisma) {
       client
     )
 
-    await moveListingToStage(created.id, seed.targetStage, client)
+    try {
+      await moveListingToStage(created.id, seed.targetStage, client)
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Target stage not found')) {
+        await rebuildListingStagesFromTemplate(created.id, pipelineTemplateId, client)
+        await moveListingToStage(created.id, seed.targetStage, client)
+      } else {
+        throw error
+      }
+    }
   }
 }
 
@@ -423,6 +506,107 @@ function addDays(base: Date, days: number | null | undefined) {
   const result = new Date(base)
   result.setDate(result.getDate() + days)
   return result
+}
+
+async function rebuildListingStagesFromTemplate(
+  listingId: string,
+  pipelineTemplateId: string,
+  client: PrismaClient = prisma
+) {
+  const template = await client.listingPipelineTemplate.findUnique({
+    where: { id: pipelineTemplateId },
+    include: PIPELINE_INCLUDE
+  })
+
+  if (!template) {
+    return
+  }
+
+  const now = new Date()
+  const sortedStages = [...template.stages].sort((a, b) => a.sequence - b.sequence)
+
+  await client.listingTaskInstance.deleteMany({ where: { listingId } })
+  await client.listingStageInstance.deleteMany({ where: { listingId } })
+
+  let firstStageInstance: { id: string; key: string | null } | null = null
+
+  for (const stage of sortedStages) {
+    const stageInstance = await client.listingStageInstance.create({
+      data: {
+        listingId,
+        stageTemplateId: stage.id,
+        key: stage.key,
+        name: stage.name,
+        order: stage.sequence,
+        status: 'PENDING',
+        startedAt: null
+      }
+    })
+
+    if (!firstStageInstance) {
+      firstStageInstance = { id: stageInstance.id, key: stage.key ?? null }
+    }
+
+    if (stage.tasks.length > 0) {
+      for (const task of stage.tasks) {
+        await client.listingTaskInstance.create({
+          data: {
+            listingId,
+            stageInstanceId: stageInstance.id,
+            taskTemplateId: task.id,
+            name: task.name,
+            dueInDays: task.dueInDays ?? null,
+            dueDate: null,
+            autoRepeat: task.autoRepeat ?? false,
+            autoComplete: task.autoComplete ?? false,
+            triggerOn: task.triggerOn ?? null
+          }
+        })
+      }
+    }
+  }
+
+  if (firstStageInstance) {
+    await client.listingStageInstance.update({
+      where: { id: firstStageInstance.id },
+      data: {
+        status: 'ACTIVE',
+        startedAt: now,
+        completedAt: null
+      }
+    })
+
+    const tasks = await client.listingTaskInstance.findMany({
+      where: { stageInstanceId: firstStageInstance.id }
+    })
+
+    for (const task of tasks) {
+      if (task.dueDate === null && task.dueInDays !== null) {
+        await client.listingTaskInstance.update({
+          where: { id: task.id },
+          data: { dueDate: addDays(now, task.dueInDays) ?? null }
+        })
+      }
+    }
+
+    await client.listing.update({
+      where: { id: listingId },
+      data: {
+        currentStageKey: firstStageInstance.key,
+        currentStageStartedAt: now,
+        status: deriveStatusForStage(firstStageInstance.key ?? undefined)
+      }
+    })
+  } else {
+    await client.listing.update({
+      where: { id: listingId },
+      data: {
+        currentStageKey: null,
+        currentStageStartedAt: null,
+        status: 'CLOSED'
+      }
+    })
+  }
 }
 
 function toDecimal(value: number | undefined) {
