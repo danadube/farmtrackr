@@ -234,7 +234,7 @@ const DASHBOARD_SEED_LISTINGS: Array<{
     state: 'CA',
     zipCode: '92210',
     listPrice: 569000,
-    targetStage: 'active_marketing',
+    targetStage: 'pre_listing_intake',
     notes: 'Mountain Cove single-family retreat with vaulted ceilings, dual patios, and turnkey furnishings.'
   },
   {
@@ -244,7 +244,7 @@ const DASHBOARD_SEED_LISTINGS: Array<{
     state: 'CA',
     zipCode: '92211',
     listPrice: 930000,
-    targetStage: 'escrow_contingencies',
+    targetStage: 'pre_listing_intake',
     notes: 'Indian Ridge Country Club condo on the 7th fairway with retractable awnings and full-time amenities.'
   },
   {
@@ -254,7 +254,7 @@ const DASHBOARD_SEED_LISTINGS: Array<{
     state: 'CA',
     zipCode: '92253',
     listPrice: 439000,
-    targetStage: 'listing_agreement_execution',
+    targetStage: 'pre_listing_intake',
     notes: 'PGA West fifth-floor condominium with double fairway views and fully remodeled interiors.'
   }
 ]
