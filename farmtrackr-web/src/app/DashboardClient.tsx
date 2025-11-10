@@ -252,6 +252,8 @@ export default function DashboardClient({ contacts, stats, listings: initialList
     location: '',
     description: '',
   })
+  const [calendars, setCalendars] = useState<Array<{ id: string; summary: string; primary?: boolean }>>([])
+  const [selectedCalendars, setSelectedCalendars] = useState<string[]>([])
   const calendarInitializedRef = useRef(false)
   const calendarRangeKeyRef = useRef<string | null>(null)
 
@@ -307,6 +309,58 @@ export default function DashboardClient({ contacts, stats, listings: initialList
     }
   ]
 
+  const loadCalendars = async () => {
+    try {
+      const response = await fetch('/api/google/calendar/list')
+      if (!response.ok) {
+        if (response.status === 401) {
+          setCalendarRequiresAuth(true)
+        }
+        return
+      }
+
+      const data = await response.json()
+      const calendarList: Array<{ id: string; summary: string; primary?: boolean }> = data.calendars || []
+      setCalendars(calendarList)
+
+      if (calendarList.length === 0) {
+        setSelectedCalendars([])
+        return
+      }
+
+      // Load selected calendars from localStorage (same key as calendar page)
+      let storedSelection: string[] = []
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('calendar.selectedCalendars')
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (Array.isArray(parsed)) {
+              storedSelection = parsed.filter((id) => typeof id === 'string')
+            }
+          }
+        } catch (error) {
+          console.error('Failed to restore calendar selection:', error)
+        }
+      }
+
+      // Validate stored selection against available calendars
+      const validSelection = storedSelection.filter((id) =>
+        calendarList.some((calendar) => calendar.id === id)
+      )
+
+      // Default to primary calendar if no valid selection
+      const nextSelection =
+        validSelection.length > 0
+          ? validSelection
+          : [calendarList.find((calendar) => calendar.primary)?.id || calendarList[0].id]
+
+      setSelectedCalendars(nextSelection)
+    } catch (error) {
+      console.error('Failed to load calendar list:', error)
+    }
+  }
+
   const loadCalendarAppointments = async (referenceDate: Date, force = false) => {
     const rangeKey = buildCalendarRangeKey(referenceDate)
     if (!force && calendarRangeKeyRef.current === rangeKey) {
@@ -321,6 +375,9 @@ export default function DashboardClient({ contacts, stats, listings: initialList
     setCalendarRequiresAuth(false)
 
     try {
+      // Use selected calendars, or default to primary if none selected
+      const calendarsToFetch = selectedCalendars.length > 0 ? selectedCalendars : ['primary']
+
       const today = new Date()
       const monthStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1)
       const monthEnd = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0)
@@ -331,31 +388,46 @@ export default function DashboardClient({ contacts, stats, listings: initialList
       const timeMin = new Date(Math.min(monthStart.getTime(), todayStart.getTime()) - 7 * DAY_MS).toISOString()
       const timeMax = new Date(Math.max(monthEnd.getTime(), todayEnd.getTime()) + 30 * DAY_MS).toISOString()
 
-      const params = new URLSearchParams({
-        timeMin,
-        timeMax,
-        maxResults: '250',
-      })
+      // Fetch events from all selected calendars
+      const results = await Promise.all(
+        calendarsToFetch.map(async (calendarId) => {
+          const params = new URLSearchParams({
+            calendarId,
+            timeMin,
+            timeMax,
+            maxResults: '250',
+          })
 
-      const response = await fetch(`/api/google/calendar/events?${params.toString()}`)
-      if (!response.ok) {
-        if (response.status === 401) {
-          setCalendarRequiresAuth(true)
-        } else {
-          const { error } = await response.json()
-          setCalendarError(error || 'Unable to load calendar events.')
+          const response = await fetch(`/api/google/calendar/events?${params.toString()}`)
+          return { calendarId, response }
+        })
+      )
+
+      // Aggregate events from all calendars
+      const aggregatedEvents: Array<{ id: string; title: string; date: Date; time?: string; color?: string }> = []
+      
+      for (const { calendarId, response } of results) {
+        if (!response.ok) {
+          if (response.status === 401) {
+            setCalendarRequiresAuth(true)
+          } else {
+            const { error } = await response.json()
+            setCalendarError(error || 'Unable to load calendar events.')
+          }
+          continue
         }
-        setCalendarAppointments([])
-        return
+
+        const data = await response.json()
+        const mapped = (data.events || [])
+          .map((event: any, index: number) => mapEventToAppointment(event, index))
+          .filter((event: any) => !!event)
+
+        aggregatedEvents.push(...mapped)
       }
 
-      const data = await response.json()
-      const mapped = (data.events || [])
-        .map((event: any, index: number) => mapEventToAppointment(event, index))
-        .filter((event: any) => !!event)
-        .sort((a: { date: Date }, b: { date: Date }) => a.date.getTime() - b.date.getTime())
-
-      setCalendarAppointments(mapped)
+      // Sort all events by date
+      aggregatedEvents.sort((a: { date: Date }, b: { date: Date }) => a.date.getTime() - b.date.getTime())
+      setCalendarAppointments(aggregatedEvents)
     } catch (error) {
       console.error('Error loading calendar events:', error)
       setCalendarError(error instanceof Error ? error.message : 'Unexpected error loading calendar events.')
@@ -454,8 +526,11 @@ export default function DashboardClient({ contacts, stats, listings: initialList
     updateDateTime()
     const dateTimeInterval = setInterval(updateDateTime, 60000) // Update every minute
 
-    loadCalendarAppointments(new Date(), true)
-    calendarInitializedRef.current = true
+    // Load calendars first, then load appointments
+    loadCalendars().then(() => {
+      loadCalendarAppointments(new Date(), true)
+      calendarInitializedRef.current = true
+    })
     
     // Fetch Google Contacts count
     const fetchGoogleContactsCount = async () => {
@@ -803,7 +878,7 @@ export default function DashboardClient({ contacts, stats, listings: initialList
   useEffect(() => {
     if (!calendarInitializedRef.current) return
     loadCalendarAppointments(calendarDate)
-  }, [calendarDate])
+  }, [calendarDate, selectedCalendars])
 
   const computeCounts = () => {
     const allIssues = validateAllContacts(contacts)
