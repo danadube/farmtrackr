@@ -165,7 +165,7 @@ const SELLER_PIPELINE_TEMPLATE: PipelineTemplateDefinition = {
       durationDays: 21,
       trigger: 'escrowOpened',
       tasks: [
-        { name: \"Buyer's Inspection Advisory\", dueInDays: 2 },
+        { name: 'Buyer\'s Inspection Advisory', dueInDays: 2 },
         { name: 'Request for Repair', dueInDays: 7 },
         { name: 'Response to Request for Repair', dueInDays: 9 },
         { name: 'Verification of Property Condition (VP)', dueInDays: 12 },
