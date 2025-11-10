@@ -67,6 +67,60 @@ const getActiveStageInstance = (listing: ListingClient) => {
   )
 }
 
+// Get the stage key for a listing using the same logic as the listings page
+const getListingStageKey = (listing: ListingClient): string | null => {
+  // First, try to find ACTIVE stage with a key
+  const activeStage = listing.stageInstances.find((stage) => stage.status === 'ACTIVE' && stage.key)
+  if (activeStage?.key) return activeStage.key
+
+  // Then, try PENDING stage with a key
+  const pendingStage = listing.stageInstances.find((stage) => stage.status === 'PENDING' && stage.key)
+  if (pendingStage?.key) return pendingStage.key
+
+  // Then, try COMPLETED stage with a key (most recent)
+  const completedStage = [...listing.stageInstances]
+    .reverse()
+    .find((stage) => stage.status === 'COMPLETED' && stage.key)
+  if (completedStage?.key) return completedStage.key
+
+  // Fallback to currentStageKey from listing
+  return listing.currentStageKey
+}
+
+// Map stage keys to dashboard categories (intake, marketing, escrow)
+const getDashboardCategoryForStageKey = (stageKey: string | null): 'intake' | 'marketing' | 'escrow' => {
+  if (!stageKey) return 'intake'
+
+  const key = stageKey.toLowerCase()
+
+  // Escrow stages
+  if (
+    key.includes('escrow') ||
+    key.includes('close') ||
+    key === 'offer_acceptance_escrow' ||
+    key === 'escrow_contingencies' ||
+    key === 'close_preparation' ||
+    key === 'close_of_escrow'
+  ) {
+    return 'escrow'
+  }
+
+  // Marketing stages
+  if (
+    key.includes('marketing') ||
+    key.includes('offer') ||
+    key.includes('listing_agreement') ||
+    key === 'listing_agreement_execution' ||
+    key === 'disclosure_period' ||
+    key === 'active_marketing'
+  ) {
+    return 'marketing'
+  }
+
+  // Everything else is intake (pre_listing_intake, etc.)
+  return 'intake'
+}
+
 const formatStageDate = (value: string | null | undefined) => {
   if (!value) return null
   try {
@@ -268,21 +322,10 @@ export default function DashboardClient({ contacts, stats, listings: initialList
     }
 
     listings.forEach((listing) => {
-      const stage = getActiveStageInstance(listing)
-      const key = (stage?.key ?? listing.currentStageKey ?? 'pre_listing_intake') || ''
-      const normalized = key.toLowerCase()
-
-      if (normalized.includes('escrow') || normalized.includes('close')) {
-        groups.escrow.push(listing)
-      } else if (
-        normalized.includes('marketing') ||
-        normalized.includes('offer') ||
-        normalized.includes('listing_agreement')
-      ) {
-        groups.marketing.push(listing)
-      } else {
-        groups.intake.push(listing)
-      }
+      // Use the same stage detection logic as the listings page
+      const stageKey = getListingStageKey(listing)
+      const category = getDashboardCategoryForStageKey(stageKey)
+      groups[category].push(listing)
     })
 
     return groups

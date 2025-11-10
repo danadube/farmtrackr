@@ -439,21 +439,18 @@ async function ensureSeedListings(client: PrismaClient = prisma) {
         })
       }
 
-      const hasTargetStage = existing.stageInstances.some((stage) => stage.key === seed.targetStage)
-      if (!hasTargetStage) {
+      // Only rebuild stages if listing has NO stage instances at all
+      // If stages exist, don't touch them - the listing may have been manually moved
+      if (existing.stageInstances.length === 0) {
+        // Listing has no stages - rebuild from template and initialize to target stage
         await rebuildListingStagesFromTemplate(existing.id, pipelineTemplateId, client)
-      }
-
-      try {
-        await moveListingToStage(existing.id, seed.targetStage, client)
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('Target stage not found')) {
-          await rebuildListingStagesFromTemplate(existing.id, pipelineTemplateId, client)
+        try {
           await moveListingToStage(existing.id, seed.targetStage, client)
-        } else {
-          throw error
+        } catch (error) {
+          console.warn(`Could not initialize listing ${existing.id} to stage ${seed.targetStage}:`, error)
         }
       }
+      // If listing already has stages, don't modify them - preserve current position
       continue
     }
 
