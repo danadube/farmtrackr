@@ -219,8 +219,12 @@ const DASHBOARD_SEED_LISTINGS: Array<{
   targetStage:
     | 'pre_listing_intake'
     | 'listing_agreement_execution'
+    | 'disclosure_period'
     | 'active_marketing'
+    | 'offer_acceptance_escrow'
     | 'escrow_contingencies'
+    | 'close_preparation'
+    | 'close_of_escrow'
   notes?: string
 }> = [
   {
@@ -374,10 +378,19 @@ async function ensureSeedListings(client: PrismaClient = prisma) {
       client
     )
 
-    if (seed.targetStage === 'active_listing') {
-      await advanceListingStage(created.id, client)
-    } else if (seed.targetStage === 'escrow') {
-      await advanceListingStage(created.id, client)
+    const stageOrder: Record<DashboardSeedListing['targetStage'], number> = {
+      pre_listing_intake: 0,
+      listing_agreement_execution: 1,
+      disclosure_period: 2,
+      active_marketing: 3,
+      offer_acceptance_escrow: 4,
+      escrow_contingencies: 5,
+      close_preparation: 6,
+      close_of_escrow: 7
+    }
+
+    const advancesNeeded = stageOrder[seed.targetStage] ?? 0
+    for (let index = 0; index < advancesNeeded; index += 1) {
       await advanceListingStage(created.id, client)
     }
   }
