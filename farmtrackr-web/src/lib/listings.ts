@@ -260,69 +260,87 @@ const DASHBOARD_SEED_LISTINGS: Array<{
 ]
 
 async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
-  const existing = await client.listingPipelineTemplate.findFirst({
-    where: { name: SELLER_PIPELINE_TEMPLATE.name },
-    select: { id: true }
-  })
-
-  if (existing) {
-    const stageCount = await client.listingStageTemplate.count({
-      where: { pipelineTemplateId: existing.id }
-    })
-    if (stageCount === SELLER_PIPELINE_TEMPLATE.stages.length) {
-      return existing.id
-    }
-  }
-
-  const template = existing
-    ? await client.listingPipelineTemplate.update({
-        where: { id: existing.id },
-        data: {
-          description: SELLER_PIPELINE_TEMPLATE.description ?? null,
-          type: SELLER_PIPELINE_TEMPLATE.type
-        }
-      })
-    : await client.listingPipelineTemplate.create({
-        data: {
-          name: SELLER_PIPELINE_TEMPLATE.name,
-          description: SELLER_PIPELINE_TEMPLATE.description ?? null,
-          type: SELLER_PIPELINE_TEMPLATE.type
-        }
+  const pipelineId = await client.$transaction(
+    async (tx) => {
+      const existing = await tx.listingPipelineTemplate.findFirst({
+        where: { name: SELLER_PIPELINE_TEMPLATE.name },
+        select: { id: true }
       })
 
-  await client.listingStageTemplate.deleteMany({
-    where: { pipelineTemplateId: template.id }
-  })
-
-  const stages = SELLER_PIPELINE_TEMPLATE.stages
-  for (let index = 0; index < stages.length; index++) {
-    const stage = stages[index]
-    const stageRecord = await client.listingStageTemplate.create({
-      data: {
-        pipelineTemplateId: template.id,
-        key: stage.key,
-        name: stage.name,
-        sequence: stage.order ?? index + 1,
-        durationDays: stage.durationDays ?? null,
-        trigger: stage.trigger ?? null
+      if (existing) {
+        const stageCount = await tx.listingStageTemplate.count({
+          where: { pipelineTemplateId: existing.id }
+        })
+        if (stageCount === SELLER_PIPELINE_TEMPLATE.stages.length) {
+          return existing.id
+        }
       }
-    })
 
-    if (stage.tasks.length) {
-      await client.listingTaskTemplate.createMany({
-        data: stage.tasks.map((task) => ({
-          stageTemplateId: stageRecord.id,
-          name: task.name,
-          dueInDays: task.dueInDays ?? null,
-          autoRepeat: task.autoRepeat ?? false,
-          autoComplete: task.autoComplete ?? false,
-          triggerOn: task.triggerOn ?? null
-        }))
+      const template = existing
+        ? await tx.listingPipelineTemplate.update({
+            where: { id: existing.id },
+            data: {
+              description: SELLER_PIPELINE_TEMPLATE.description ?? null,
+              type: SELLER_PIPELINE_TEMPLATE.type
+            }
+          })
+        : await tx.listingPipelineTemplate.create({
+            data: {
+              name: SELLER_PIPELINE_TEMPLATE.name,
+              description: SELLER_PIPELINE_TEMPLATE.description ?? null,
+              type: SELLER_PIPELINE_TEMPLATE.type
+            }
+          })
+
+      await tx.listingTaskTemplate.deleteMany({
+        where: {
+          stageTemplate: {
+            pipelineTemplateId: template.id
+          }
+        }
       })
-    }
-  }
 
-  return template.id
+      await tx.listingStageTemplate.deleteMany({
+        where: { pipelineTemplateId: template.id }
+      })
+
+      const stages = SELLER_PIPELINE_TEMPLATE.stages
+      for (let index = 0; index < stages.length; index++) {
+        const stage = stages[index]
+        const stageRecord = await tx.listingStageTemplate.create({
+          data: {
+            pipelineTemplateId: template.id,
+            key: stage.key,
+            name: stage.name,
+            sequence: stage.order ?? index + 1,
+            durationDays: stage.durationDays ?? null,
+            trigger: stage.trigger ?? null
+          }
+        })
+
+        if (stage.tasks.length) {
+          await tx.listingTaskTemplate.createMany({
+            data: stage.tasks.map((task) => ({
+              stageTemplateId: stageRecord.id,
+              name: task.name,
+              dueInDays: task.dueInDays ?? null,
+              autoRepeat: task.autoRepeat ?? false,
+              autoComplete: task.autoComplete ?? false,
+              triggerOn: task.triggerOn ?? null
+            }))
+          })
+        }
+      }
+
+      return template.id
+    },
+    {
+      maxWait: 10_000,
+      timeout: 30_000
+    }
+  )
+
+  return pipelineId
 }
 
 async function ensureSeedListings(client: PrismaClient = prisma) {
