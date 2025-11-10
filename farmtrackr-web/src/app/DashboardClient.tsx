@@ -254,8 +254,8 @@ export default function DashboardClient({ contacts, stats, listings: initialList
   })
   const [calendars, setCalendars] = useState<Array<{ id: string; summary: string; primary?: boolean }>>([])
   const [selectedCalendars, setSelectedCalendars] = useState<string[]>([])
-  const calendarInitializedRef = useRef(false)
   const calendarRangeKeyRef = useRef<string | null>(null)
+  const calendarsLoadedRef = useRef(false)
 
   const listings = initialListings
   const [detailListing, setDetailListing] = useState<ListingClient | null>(null)
@@ -309,6 +309,13 @@ export default function DashboardClient({ contacts, stats, listings: initialList
     }
   ]
 
+  const arraysEqual = (a: string[], b: string[]) => {
+    if (a.length !== b.length) return false
+    const sortedA = [...a].sort()
+    const sortedB = [...b].sort()
+    return sortedA.every((value, index) => value === sortedB[index])
+  }
+
   const loadCalendars = async () => {
     try {
       const response = await fetch('/api/google/calendar/list')
@@ -355,7 +362,13 @@ export default function DashboardClient({ contacts, stats, listings: initialList
           ? validSelection
           : [calendarList.find((calendar) => calendar.primary)?.id || calendarList[0].id]
 
-      setSelectedCalendars(nextSelection)
+      // Only update if selection has changed (prevents unnecessary re-renders)
+      setSelectedCalendars((prev) => {
+        if (arraysEqual(prev, nextSelection)) {
+          return prev
+        }
+        return nextSelection
+      })
     } catch (error) {
       console.error('Failed to load calendar list:', error)
     }
@@ -375,8 +388,15 @@ export default function DashboardClient({ contacts, stats, listings: initialList
     setCalendarRequiresAuth(false)
 
     try {
-      // Use selected calendars, or default to primary if none selected
+      // Use selected calendars from state
       const calendarsToFetch = selectedCalendars.length > 0 ? selectedCalendars : ['primary']
+      
+      // Don't fetch if no calendars selected
+      if (calendarsToFetch.length === 0) {
+        setCalendarAppointments([])
+        setIsCalendarLoading(false)
+        return
+      }
 
       const today = new Date()
       const monthStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1)
@@ -526,10 +546,9 @@ export default function DashboardClient({ contacts, stats, listings: initialList
     updateDateTime()
     const dateTimeInterval = setInterval(updateDateTime, 60000) // Update every minute
 
-    // Load calendars first, then load appointments
+    // Load calendars - the useEffect will automatically fetch events when selectedCalendars is set
     loadCalendars().then(() => {
-      loadCalendarAppointments(new Date(), true)
-      calendarInitializedRef.current = true
+      calendarsLoadedRef.current = true
     })
     
     // Fetch Google Contacts count
@@ -876,9 +895,32 @@ export default function DashboardClient({ contacts, stats, listings: initialList
   }, [mounted, contacts])
 
   useEffect(() => {
-    if (!calendarInitializedRef.current) return
+    // Always try to fetch events - loadCalendarAppointments will fall back to 'primary' if no calendars selected
+    // Only fetch after calendars have been loaded at least once (to avoid duplicate initial fetches)
+    if (!calendarsLoadedRef.current && calendars.length === 0) {
+      return
+    }
+    
+    // Fetch events when calendar date or selected calendars change
     loadCalendarAppointments(calendarDate)
-  }, [calendarDate, selectedCalendars])
+  }, [calendarDate, selectedCalendars, calendars.length])
+
+  // Reload calendars when component becomes visible (in case user changed selection on calendar page)
+  useEffect(() => {
+    if (!mounted || !calendarsLoadedRef.current) return
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Reload calendars to check for selection changes
+        loadCalendars()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [mounted])
 
   const computeCounts = () => {
     const allIssues = validateAllContacts(contacts)
