@@ -117,12 +117,7 @@ export function Sidebar({ children }: SidebarProps) {
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/calendar', label: 'Calendar', icon: CalendarIcon },
         { href: '/listings', label: 'Listings', icon: Home },
-        {
-          href: '/commissions',
-          label: 'Commissions',
-          icon: Briefcase,
-          iconColor: resolvedTheme === 'dark' ? '#f97316' : '#d97706'
-        },
+        { href: '/commissions', label: 'Commissions', icon: Briefcase },
         { href: '/contacts', label: 'Contacts', icon: Users },
         { href: '/tasks', label: 'Tasks', icon: CheckCircle2 },
       ],
@@ -133,7 +128,7 @@ export function Sidebar({ children }: SidebarProps) {
       defaultOpen: true,
       items: [
         { href: '/emails', label: 'Emails', icon: Mail },
-        { href: '/emails/templates', label: 'Email Templates', icon: FileText, iconColor: resolvedTheme === 'dark' ? '#facc15' : '#ca8a04' },
+        { href: '/emails/templates', label: 'Email Templates', icon: FileText },
       ],
     },
     {
