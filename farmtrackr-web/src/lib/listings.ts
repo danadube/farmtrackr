@@ -738,6 +738,13 @@ async function reconcileStageAfterTaskChange(tx: TxClient, listingId: string, st
     return
   }
 
+  // Get current listing state to preserve stage if reconciliation fails
+  const currentListing = await tx.listing.findUnique({
+    where: { id: listingId },
+    select: { currentStageKey: true }
+  })
+  const preserveStageKey = currentListing?.currentStageKey
+
   const allTasksSatisfied = stageInstance.tasks.every((task) => task.completed || task.skipped)
 
   if (allTasksSatisfied) {
@@ -750,33 +757,82 @@ async function reconcileStageAfterTaskChange(tx: TxClient, listingId: string, st
         }
       })
 
-      const nextStage = stageInstance.listing.stageInstances
-        .filter((stage) => stage.order > stageInstance.order)
-        .sort((a, b) => a.order - b.order)
-        .find((stage) => stage.status !== 'COMPLETED')
+      // Find the next stage that should be activated
+      const sortedStages = stageInstance.listing.stageInstances.sort((a, b) => a.order - b.order)
+      const nextStage = sortedStages
+        .filter((stage) => stage.order > stageInstance.order && stage.status !== 'COMPLETED')
+        .find((stage) => stage.key !== null)
 
-      if (nextStage) {
+      if (nextStage && nextStage.key) {
+        // Activate the next stage
         await setStageActive(tx, nextStage.id, now)
         await tx.listing.update({
           where: { id: listingId },
           data: {
-            currentStageKey: nextStage.key ?? null,
+            currentStageKey: nextStage.key,
             currentStageStartedAt: now,
             status: deriveStatusForStage(nextStage.key)
           }
         })
       } else {
-        await tx.listing.update({
-          where: { id: listingId },
-          data: {
-            currentStageKey: null,
-            currentStageStartedAt: null,
-            status: 'CLOSED'
+        // No next stage found - preserve the current stage or find the most appropriate stage
+        // CRITICAL: Never set currentStageKey to null unless all stages are truly completed
+        // and even then, keep the last stage key for reference
+        
+        const allStagesCompleted = sortedStages.every((stage) => stage.status === 'COMPLETED')
+        
+        if (allStagesCompleted) {
+          // All stages are completed - listing is closed, but keep the last stage key
+          const lastStage = sortedStages[sortedStages.length - 1]
+          await tx.listing.update({
+            where: { id: listingId },
+            data: {
+              currentStageKey: lastStage?.key ?? preserveStageKey ?? sortedStages[0]?.key ?? null,
+              currentStageStartedAt: null,
+              status: 'CLOSED'
+            }
+          })
+        } else {
+          // Stages exist but next stage isn't ready yet
+          // Preserve the current stage key - don't change it
+          // The completed stage should remain visible until the next stage is manually activated
+          if (preserveStageKey) {
+            // Verify the preserved stage exists
+            const preservedStage = sortedStages.find((s) => s.key === preserveStageKey)
+            if (preservedStage) {
+              // Keep the current stage - it's completed but that's fine
+              await tx.listing.update({
+                where: { id: listingId },
+                data: {
+                  currentStageKey: preserveStageKey,
+                  status: deriveStatusForStage(preserveStageKey)
+                }
+              })
+            } else {
+              // Preserved stage doesn't exist - use the just-completed stage
+              await tx.listing.update({
+                where: { id: listingId },
+                data: {
+                  currentStageKey: stageInstance.key ?? preserveStageKey ?? sortedStages[0]?.key ?? null,
+                  status: deriveStatusForStage(stageInstance.key)
+                }
+              })
+            }
+          } else {
+            // No preserve stage key - use the just-completed stage
+            await tx.listing.update({
+              where: { id: listingId },
+              data: {
+                currentStageKey: stageInstance.key ?? sortedStages[0]?.key ?? null,
+                status: deriveStatusForStage(stageInstance.key)
+              }
+            })
           }
-        })
+        }
       }
     }
   } else if (stageInstance.status === 'COMPLETED') {
+    // Tasks were uncompleted - reactivate this stage
     const activeStartedAt = stageInstance.startedAt ?? now
     await setStageActive(tx, stageInstanceId, activeStartedAt)
 
@@ -793,14 +849,17 @@ async function reconcileStageAfterTaskChange(tx: TxClient, listingId: string, st
       })
     }
 
-    await tx.listing.update({
-      where: { id: listingId },
-      data: {
-        currentStageKey: stageInstance.key ?? null,
-        currentStageStartedAt: activeStartedAt,
-        status: deriveStatusForStage(stageInstance.key)
-      }
-    })
+    // Ensure the listing's currentStageKey matches this reactivated stage
+    if (stageInstance.key) {
+      await tx.listing.update({
+        where: { id: listingId },
+        data: {
+          currentStageKey: stageInstance.key,
+          currentStageStartedAt: activeStartedAt,
+          status: deriveStatusForStage(stageInstance.key)
+        }
+      })
+    }
   }
 }
 
