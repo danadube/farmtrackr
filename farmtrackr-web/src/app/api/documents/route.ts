@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/documents → list documents with optional search and type filter
 export async function GET(request: NextRequest) {
   try {
@@ -27,7 +29,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(docs)
   } catch (error) {
     console.error('Documents GET error:', error)
-    return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to fetch documents',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 
@@ -35,6 +40,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log('Creating document:', body)
     const { title, description, type, content, fileUrl, contactId } = body
 
     if (!title || typeof title !== 'string') {
@@ -52,10 +58,14 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    console.log('Document created successfully:', created.id)
     return NextResponse.json(created, { status: 201 })
   } catch (error) {
     console.error('Documents POST error:', error)
-    return NextResponse.json({ error: 'Failed to create document' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to create document',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 

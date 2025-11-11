@@ -7,6 +7,8 @@ import {
   skipListingTask
 } from '@/lib/listings'
 
+export const dynamic = 'force-dynamic'
+
 type RouteContext = {
   params: {
     listingId: string
@@ -18,6 +20,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
     const { listingId, taskId } = params
     const body = await request.json()
+    console.log('Task update request:', { listingId, taskId, body: Object.keys(body) })
 
     if (body && typeof body.completed === 'boolean') {
       const listing = await completeListingTask({
@@ -53,18 +56,23 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     }
 
     if (body && 'documentId' in body) {
+      console.log('Setting document on task:', { listingId, taskId, documentId: body.documentId })
       const listing = await setListingTaskDocument({
         listingId,
         taskId,
         documentId: body.documentId ?? null
       })
+      console.log('Document set successfully on task')
       return NextResponse.json(serializeListing(listing))
     }
 
     return NextResponse.json({ error: 'Unsupported task update payload' }, { status: 400 })
   } catch (error) {
     console.error('Error updating listing task:', error)
-    return NextResponse.json({ error: 'Failed to update task' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to update task',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 

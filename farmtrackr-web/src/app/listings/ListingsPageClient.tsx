@@ -533,7 +533,10 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
   }
 
   const handleAttachTaskDocument = async (taskId: string, file: File | null) => {
-    if (!detailListing) return
+    if (!detailListing) {
+      console.error('No detail listing available for document attachment')
+      return
+    }
 
     setUpdatingListingId(detailListing.id)
     setFeedback(null)
@@ -542,6 +545,7 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
       let documentId: string | null = null
 
       if (file) {
+        console.log('Starting file upload:', file.name, file.size, file.type)
         const formData = new FormData()
         formData.append('file', file)
 
@@ -552,16 +556,25 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
 
         if (!uploadResponse.ok) {
           const errorPayload = await uploadResponse.json().catch(() => ({}))
-          throw new Error(errorPayload.error || 'File upload failed')
+          console.error('Upload failed:', uploadResponse.status, errorPayload)
+          throw new Error(errorPayload.error || `File upload failed: ${uploadResponse.status}`)
         }
 
-        const { url: fileUrl } = await uploadResponse.json()
+        const uploadData = await uploadResponse.json()
+        console.log('Upload successful:', uploadData)
+        const fileUrl = uploadData.url
+
+        if (!fileUrl) {
+          console.error('No URL returned from upload:', uploadData)
+          throw new Error('Upload succeeded but no URL returned')
+        }
 
         const descriptionParts = [
           file.name,
           detailListing.title || detailListing.address || detailListing.pipelineName || 'Listing document'
         ].filter(Boolean)
 
+        console.log('Creating document record:', file.name, fileUrl)
         const documentResponse = await fetch('/api/documents', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -574,13 +587,21 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
 
         if (!documentResponse.ok) {
           const errorPayload = await documentResponse.json().catch(() => ({}))
-          throw new Error(errorPayload.error || 'Document save failed')
+          console.error('Document creation failed:', documentResponse.status, errorPayload)
+          throw new Error(errorPayload.error || `Document save failed: ${documentResponse.status}`)
         }
 
         const document = await documentResponse.json()
+        console.log('Document created:', document)
         documentId = document.id
+
+        if (!documentId) {
+          console.error('No document ID returned:', document)
+          throw new Error('Document created but no ID returned')
+        }
       }
 
+      console.log('Attaching document to task:', taskId, documentId)
       const response = await fetch(`/api/listings/${detailListing.id}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -588,16 +609,20 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update task document')
+        const errorPayload = await response.json().catch(() => ({}))
+        console.error('Task update failed:', response.status, errorPayload)
+        throw new Error(errorPayload.error || `Failed to update task document: ${response.status}`)
       }
 
       const updatedListing: ListingClient = await response.json()
+      console.log('Task updated successfully:', updatedListing)
       updateListingInState(updatedListing)
       setDetailListing(updatedListing)
       setFeedback(file ? 'Document attached to task.' : 'Document removed from task.')
     } catch (error) {
-      console.error('Error updating task document', error)
-      setFeedback('Unable to update the document right now.')
+      console.error('Error updating task document:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      setFeedback(`Unable to update the document: ${errorMessage}`)
       throw error instanceof Error ? error : new Error('Unable to update task document')
     } finally {
       setUpdatingListingId(null)

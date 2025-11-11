@@ -688,11 +688,17 @@ export function ListingDetailModal({
               }
               try {
                 setUploadingTaskId(task.id)
+                console.log('Modal: Starting document upload for task', task.id, file.name)
                 await onAttachDocument(task.id, file)
+                console.log('Modal: Document upload completed successfully')
               } catch (error) {
-                console.error('Failed to attach document', error)
+                console.error('Modal: Failed to attach document', error)
+                // Error feedback is handled by the parent component via setFeedback
+                // Re-throw to ensure parent can handle it
+                throw error
               } finally {
                 setUploadingTaskId(null)
+                // Clear the input so the same file can be selected again
                 event.target.value = ''
               }
             }}
