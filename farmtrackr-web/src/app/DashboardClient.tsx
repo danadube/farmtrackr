@@ -69,22 +69,31 @@ const getActiveStageInstance = (listing: ListingClient) => {
 
 // Get the stage key for a listing using the same logic as the listings page
 const getListingStageKey = (listing: ListingClient): string | null => {
-  // First, try to find ACTIVE stage with a key
+  // CRITICAL: Use currentStageKey as the source of truth first
+  // This prevents listings from jumping back to intake when stages are completed
+  if (listing.currentStageKey) {
+    // Verify the stage exists in the listing's stage instances
+    const stageExists = listing.stageInstances.some((stage) => stage.key === listing.currentStageKey)
+    if (stageExists) {
+      return listing.currentStageKey
+    }
+  }
+
+  // Fallback: Find the active stage
   const activeStage = listing.stageInstances.find((stage) => stage.status === 'ACTIVE' && stage.key)
   if (activeStage?.key) return activeStage.key
 
-  // Then, try PENDING stage with a key
+  // Fallback: Find the first pending stage
   const pendingStage = listing.stageInstances.find((stage) => stage.status === 'PENDING' && stage.key)
   if (pendingStage?.key) return pendingStage.key
 
-  // Then, try COMPLETED stage with a key (most recent)
+  // Fallback: Find the most recently completed stage
   const completedStage = [...listing.stageInstances]
     .reverse()
     .find((stage) => stage.status === 'COMPLETED' && stage.key)
   if (completedStage?.key) return completedStage.key
 
-  // Fallback to currentStageKey from listing
-  return listing.currentStageKey
+  return null
 }
 
 // Map stage keys to dashboard categories (intake, marketing, escrow)

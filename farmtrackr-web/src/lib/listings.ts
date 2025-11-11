@@ -775,10 +775,7 @@ async function reconcileStageAfterTaskChange(tx: TxClient, listingId: string, st
           }
         })
       } else {
-        // No next stage found - preserve the current stage or find the most appropriate stage
-        // CRITICAL: Never set currentStageKey to null unless all stages are truly completed
-        // and even then, keep the last stage key for reference
-        
+        // No next stage found - check if all stages are completed
         const allStagesCompleted = sortedStages.every((stage) => stage.status === 'COMPLETED')
         
         if (allStagesCompleted) {
@@ -793,40 +790,39 @@ async function reconcileStageAfterTaskChange(tx: TxClient, listingId: string, st
             }
           })
         } else {
-          // Stages exist but next stage isn't ready yet
-          // Preserve the current stage key - don't change it
-          // The completed stage should remain visible until the next stage is manually activated
-          if (preserveStageKey) {
-            // Verify the preserved stage exists
-            const preservedStage = sortedStages.find((s) => s.key === preserveStageKey)
-            if (preservedStage) {
-              // Keep the current stage - it's completed but that's fine
-              await tx.listing.update({
-                where: { id: listingId },
-                data: {
-                  currentStageKey: preserveStageKey,
-                  status: deriveStatusForStage(preserveStageKey)
-                }
-              })
-            } else {
-              // Preserved stage doesn't exist - use the just-completed stage
-              await tx.listing.update({
-                where: { id: listingId },
-                data: {
-                  currentStageKey: stageInstance.key ?? preserveStageKey ?? sortedStages[0]?.key ?? null,
-                  status: deriveStatusForStage(stageInstance.key)
-                }
-              })
-            }
-          } else {
-            // No preserve stage key - use the just-completed stage
+          // CRITICAL: Stages exist but next stage isn't ready yet
+          // We need to find the first PENDING stage after this completed one and activate it
+          // OR keep the completed stage active if no next stage exists
+          const nextPendingStage = sortedStages
+            .filter((stage) => stage.order > stageInstance.order && stage.status === 'PENDING')
+            .find((stage) => stage.key !== null)
+          
+          if (nextPendingStage && nextPendingStage.key) {
+            // Activate the next pending stage
+            await setStageActive(tx, nextPendingStage.id, now)
             await tx.listing.update({
               where: { id: listingId },
               data: {
-                currentStageKey: stageInstance.key ?? sortedStages[0]?.key ?? null,
+                currentStageKey: nextPendingStage.key,
+                currentStageStartedAt: now,
+                status: deriveStatusForStage(nextPendingStage.key)
+              }
+            })
+          } else {
+            // No next stage exists or is ready - keep the completed stage as the current stage
+            // This prevents the listing from jumping back to intake
+            // The stage is completed, but it's still the current stage until manually moved
+            await tx.listing.update({
+              where: { id: listingId },
+              data: {
+                currentStageKey: stageInstance.key ?? preserveStageKey ?? sortedStages[0]?.key ?? null,
                 status: deriveStatusForStage(stageInstance.key)
               }
             })
+            
+            // IMPORTANT: Don't change the stage instance status - it's already COMPLETED
+            // The listing's currentStageKey will point to this completed stage
+            // The UI will show it in the correct column based on currentStageKey
           }
         }
       }

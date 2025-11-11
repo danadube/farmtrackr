@@ -68,19 +68,32 @@ const formatDate = (value: string | null) => {
 }
 
 const getListingColumnKey = (listing: ListingClient, pipeline: PipelineTemplateClient | null) => {
+  // CRITICAL: Use currentStageKey as the source of truth first
+  // This prevents listings from jumping back to intake when stages are completed
+  if (listing.currentStageKey) {
+    // Verify the stage exists in the listing's stage instances
+    const stageExists = listing.stageInstances.some((stage) => stage.key === listing.currentStageKey)
+    if (stageExists) {
+      return listing.currentStageKey
+    }
+  }
+
+  // Fallback: Find the active stage
   const activeStage = listing.stageInstances.find((stage) => stage.status === 'ACTIVE' && stage.key)
   if (activeStage?.key) return activeStage.key
 
+  // Fallback: Find the next pending stage
   const nextStage = listing.stageInstances.find((stage) => stage.status === 'PENDING' && stage.key)
   if (nextStage?.key) return nextStage.key
 
+  // Fallback: Find the most recently completed stage
   const completedStage = [...listing.stageInstances]
     .reverse()
     .find((stage) => stage.status === 'COMPLETED' && stage.key)
   if (completedStage?.key) return completedStage.key
 
-  const pipelineStageKeys = pipeline?.stages?.map((stage) => stage.key) ?? []
-  return pipelineStageKeys[pipelineStageKeys.length - 1] ?? null
+  // Last resort: Return null (will be shown in closed column)
+  return null
 }
 
 const getStageInstanceForListing = (listing: ListingClient, stageKey: string | null) => {
