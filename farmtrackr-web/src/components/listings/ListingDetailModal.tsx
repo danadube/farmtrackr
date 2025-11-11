@@ -214,10 +214,22 @@ export function ListingDetailModal({
   if (!listing) return null
 
   const locationLine = [listing.address, listing.city, listing.state, listing.zipCode].filter(Boolean).join(', ')
-  const activeStage =
-    listing.stageInstances.find((stage) => stage.status === 'ACTIVE') ||
-    listing.stageInstances.find((stage) => stage.status === 'PENDING') ||
-    listing.stageInstances[0]
+  
+  // Safely get active stage with null checks to prevent errors during render
+  const activeStage = useMemo(() => {
+    if (!listing?.stageInstances?.length) return null
+    try {
+      return (
+        listing.stageInstances.find((stage) => stage?.status === 'ACTIVE') ||
+        listing.stageInstances.find((stage) => stage?.status === 'PENDING') ||
+        listing.stageInstances[0] ||
+        null
+      )
+    } catch {
+      return null
+    }
+  }, [listing?.id, listing?.stageInstances?.length])
+  
   const canToggleTasks = Boolean(onToggleTask)
   
   type StageGroup = {
@@ -229,41 +241,51 @@ export function ListingDetailModal({
   }
 
   // Group tasks by stage (chronological order)
-  const stageGroups = useMemo(() => {
-    const stages: StageGroup[] = listing.stageInstances
-      .map((stage) => ({
-        stageId: stage.id,
-        stageName: stage.name || 'Stage',
-        stageStatus: stage.status as 'ACTIVE' | 'PENDING' | 'COMPLETED',
-        order: stage.order ?? 0,
-        tasks: stage.tasks
-          .map((task) => ({
-            ...task,
-            category: categorizeTaskName(task.name)
-          }))
-          .sort((a, b) => {
-            // Sort by due date first (earliest first, then tasks without due dates)
-            const aDueDate = a.dueDate ? new Date(a.dueDate).getTime() : Infinity
-            const bDueDate = b.dueDate ? new Date(b.dueDate).getTime() : Infinity
-            
-            if (aDueDate !== bDueDate) {
-              return aDueDate - bDueDate
-            }
-            
-            // Then by completion status (incomplete first)
-            if (a.completed !== b.completed) {
-              return a.completed ? 1 : -1
-            }
-            
-            // Finally by name
-            return a.name.localeCompare(b.name)
-          })
-      }))
-      .sort((a, b) => a.order - b.order)
-      .filter((stage) => stage.tasks.length > 0) // Only show stages with tasks
-
-    return stages
-  }, [listing.stageInstances])
+  // Compute directly without memoization to avoid dependency issues
+  // The key prop ensures component remounts when listing changes
+  let stageGroups: StageGroup[] = []
+  if (listing?.stageInstances?.length) {
+    try {
+      stageGroups = listing.stageInstances
+        .map((stage) => ({
+          stageId: stage.id,
+          stageName: stage.name || 'Stage',
+          stageStatus: stage.status as 'ACTIVE' | 'PENDING' | 'COMPLETED',
+          order: stage.order ?? 0,
+          tasks: (stage.tasks || [])
+            .map((task) => ({
+              ...task,
+              category: categorizeTaskName(task.name)
+            }))
+            .sort((a, b) => {
+              // Sort by due date first (earliest first, then tasks without due dates)
+              try {
+                const aDueDate = a.dueDate ? new Date(a.dueDate).getTime() : Infinity
+                const bDueDate = b.dueDate ? new Date(b.dueDate).getTime() : Infinity
+                
+                if (aDueDate !== bDueDate) {
+                  return aDueDate - bDueDate
+                }
+              } catch {
+                // Invalid date, ignore
+              }
+              
+              // Then by completion status (incomplete first)
+              if (a.completed !== b.completed) {
+                return a.completed ? 1 : -1
+              }
+              
+              // Finally by name
+              return (a.name || '').localeCompare(b.name || '')
+            })
+        }))
+        .sort((a, b) => a.order - b.order)
+        .filter((stage) => stage.tasks.length > 0) // Only show stages with tasks
+    } catch (error) {
+      console.error('Error computing stage groups:', error)
+      stageGroups = []
+    }
+  }
 
   // Initialize openStages state based on current listing
   // State is reset when listing prop changes (component should remount or parent should handle)
