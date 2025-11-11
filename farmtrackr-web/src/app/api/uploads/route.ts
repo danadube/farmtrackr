@@ -35,11 +35,24 @@ export async function POST(request: NextRequest) {
       vercelEnv: process.env.VERCEL_ENV
     })
     
-    // Upload to Vercel Blob
-    // On Vercel, the token should be automatically available
-    // If not, you need to enable Vercel Blob in your project settings
-    const blob = await put(file.name, file, {
+    // Generate a unique pathname to prevent collisions
+    // Format: uploads/YYYY-MM-DD/filename-timestamp.extension
+    const timestamp = Date.now()
+    const fileExtension = file.name.split('.').pop() || 'bin'
+    const baseName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9]/g, '-').substring(0, 50) // Limit length
+    const dateStr = new Date().toISOString().split('T')[0]
+    const pathname = `uploads/${dateStr}/${baseName}-${timestamp}.${fileExtension}`
+    
+    console.log('Upload API: Generated pathname', pathname)
+    console.log('Upload API: File object type', file.constructor.name, 'size:', file.size, 'type:', file.type)
+    
+    // Upload to Vercel Blob using the put function
+    // The File object from FormData is passed directly to put()
+    // On Vercel, BLOB_READ_WRITE_TOKEN is automatically available when Blob storage is enabled
+    // Example: const { url } = await put('filename.txt', file, { access: 'public' })
+    const blob = await put(pathname, file, {
       access: 'public',
+      addRandomSuffix: false, // We're already using timestamps for uniqueness
     })
 
     console.log('Upload API: Upload successful', { url: blob.url, pathname: blob.pathname })
