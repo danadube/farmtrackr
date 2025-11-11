@@ -180,17 +180,6 @@ const formatCurrency = (value: number | null | undefined) => {
   }).format(Number(value))
 }
 
-const stageAccent = (status: string, colors: ReturnType<typeof useThemeStyles>['colors']) => {
-  switch (status) {
-    case 'COMPLETED':
-      return colors.success
-    case 'ACTIVE':
-      return colors.primary
-    default:
-      return colors.warning
-  }
-}
-
 const categorizeTaskName = (name: string | null | undefined): TaskCategory => {
   if (!name) return 'workflow'
   const metadata = getTaskMetadata(name)
@@ -222,7 +211,7 @@ export function ListingDetailModal({
   onUpdateTask,
   onAttachDocument
 }: ListingDetailModalProps) {
-  const { colors, card, cardWithLeftBorder, text, spacing } = useThemeStyles()
+  const { colors, card, text, spacing } = useThemeStyles()
 
   if (!listing) return null
 
@@ -1063,123 +1052,7 @@ export function ListingDetailModal({
           groups: workflowGroups
         })}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
-          {listing.stageInstances.map((stage) => {
-            const accent = stageAccent(stage.status, colors)
-            return (
-              <div
-                key={stage.id}
-                style={{
-                  ...cardWithLeftBorder(accent),
-                  padding: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: spacing(1)
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <strong style={{ fontSize: '15px', ...text.primary }}>{stage.name || 'Stage'}</strong>
-                    <div style={{ fontSize: '12px', ...text.secondary, marginTop: '4px' }}>
-                      {stage.status === 'COMPLETED'
-                        ? `Completed ${formatDate(stage.completedAt)}`
-                        : stage.status === 'ACTIVE'
-                        ? `Started ${formatDate(stage.startedAt) || 'recently'}`
-                        : 'Pending'}
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: accent
-                    }}
-                  >
-                    {stage.status.replace('_', ' ')}
-                  </span>
-                </div>
-
-                {stage.tasks.length > 0 ? (
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: spacing(0.75) }}>
-                    {stage.tasks.map((task) => (
-                      <li
-                        key={task.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: spacing(1)
-                        }}
-                      >
-                        <label
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: spacing(1),
-                            flex: 1,
-                            cursor: canToggleTasks ? 'pointer' : 'default'
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={task.completed}
-                            disabled={!canToggleTasks || isUpdating || task.skipped}
-                            onChange={(event) => {
-                              event.stopPropagation()
-                              onToggleTask?.(listing.id, task, event.target.checked)
-                            }}
-                            onClick={(event) => event.stopPropagation()}
-                            style={{
-                              width: '16px',
-                              height: '16px',
-                              cursor: canToggleTasks && !isUpdating && !task.skipped ? 'pointer' : 'not-allowed'
-                            }}
-                          />
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), flex: 1 }}>
-                            <span
-                              style={{
-                                fontSize: '14px',
-                                color: task.skipped
-                                  ? colors.text.secondary
-                                  : task.completed
-                                  ? colors.text.secondary
-                                  : colors.text.primary,
-                                fontWeight: 500,
-                                textDecoration: task.skipped ? 'line-through' : 'none'
-                              }}
-                            >
-                              {task.name}
-                            </span>
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                color: task.skipped ? colors.warning : task.completed ? colors.success : colors.text.secondary
-                              }}
-                            >
-                              {task.skipped
-                                ? 'Marked not required'
-                                : task.completed
-                                ? `Done ${formatDate(task.completedAt)}`
-                                : task.dueDate
-                                ? `Due ${formatDate(task.dueDate)}`
-                                : task.dueInDays !== null && task.dueInDays !== undefined
-                                ? `Due in ${task.dueInDays} day${task.dueInDays === 1 ? '' : 's'}`
-                                : ''}
-                            </span>
-                          </div>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p style={{ fontSize: '13px', ...text.secondary, margin: 0 }}>No tasks for this stage.</p>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: spacing(1) }}>
           <button
             type="button"
             onClick={onClose}
