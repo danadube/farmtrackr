@@ -29,8 +29,15 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Upload API: Uploading to Vercel Blob...')
-    // Upload to Vercel Blob; access is managed by Vercel automatically in production
-    // In development, requires BLOB_READ_WRITE_TOKEN environment variable
+    console.log('Upload API: Environment check', { 
+      hasToken: !!process.env.BLOB_READ_WRITE_TOKEN,
+      nodeEnv: process.env.NODE_ENV,
+      vercelEnv: process.env.VERCEL_ENV
+    })
+    
+    // Upload to Vercel Blob
+    // On Vercel, the token should be automatically available
+    // If not, you need to enable Vercel Blob in your project settings
     const blob = await put(file.name, file, {
       access: 'public',
     })
@@ -50,13 +57,39 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Upload API: Blob upload error:', error)
+    console.error('Upload API: Error details', {
+      message: error?.message,
+      code: error?.code,
+      status: error?.status,
+      stack: error?.stack
+    })
+    
     const errorMessage = error?.message || 'Failed to upload file'
-    const isAuthError = errorMessage.includes('token') || errorMessage.includes('authentication') || errorMessage.includes('authorization')
+    const errorCode = error?.code || ''
+    const errorStatus = error?.status || 0
+    
+    // Check for various authentication/configuration errors
+    const isAuthError = 
+      errorMessage.toLowerCase().includes('token') ||
+      errorMessage.toLowerCase().includes('authentication') ||
+      errorMessage.toLowerCase().includes('authorization') ||
+      errorMessage.toLowerCase().includes('unauthorized') ||
+      errorMessage.toLowerCase().includes('forbidden') ||
+      errorCode === 'UNAUTHORIZED' ||
+      errorStatus === 401 ||
+      errorStatus === 403
+    
+    if (isAuthError) {
+      return NextResponse.json({ 
+        error: 'File upload service is not configured. Please enable Vercel Blob Storage in your Vercel project settings. Go to your project → Settings → Storage → Blob, and enable it.',
+        code: 'BLOB_NOT_CONFIGURED',
+        hint: 'On Vercel, Blob storage should work automatically. If you see this error, check that Vercel Blob is enabled in your project settings.'
+      }, { status: 500 })
+    }
     
     return NextResponse.json({ 
-      error: isAuthError 
-        ? 'Upload service not configured. Please check BLOB_READ_WRITE_TOKEN environment variable.'
-        : errorMessage,
+      error: errorMessage,
+      code: errorCode || 'UPLOAD_FAILED',
       details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
     }, { status: 500 })
   }
