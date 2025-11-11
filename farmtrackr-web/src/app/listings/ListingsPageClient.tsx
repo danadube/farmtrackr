@@ -694,14 +694,26 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
       })
 
       if (!response.ok) {
-        throw new Error('Failed to move listing')
+        // Try to read error details from response
+        let errorMessage = 'Failed to move listing'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorData.error || errorData.details || errorMessage
+          console.error('Move listing error:', errorData)
+        } catch {
+          // If we can't parse the error, use the default message
+          console.error('Move listing failed with status:', response.status)
+        }
+        throw new Error(errorMessage)
       }
 
       const updatedListing: ListingClient = await response.json()
       updateListingInState(updatedListing)
+      setFeedback('Listing moved successfully.')
     } catch (error) {
       console.error('Error moving listing', error)
-      setFeedback('Unable to move that listing. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      setFeedback(`Unable to move the listing: ${errorMessage}`)
     } finally {
       setUpdatingListingId(null)
       setDraggingListingId(null)
