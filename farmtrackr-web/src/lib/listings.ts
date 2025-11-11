@@ -696,26 +696,47 @@ function deriveStatusForStage(stageKey?: string | null): ListingStatus {
 type TxClient = Prisma.TransactionClient
 
 async function setStageActive(tx: TxClient, stageInstanceId: string, now: Date) {
-  await tx.listingStageInstance.update({
-    where: { id: stageInstanceId },
-    data: {
-      status: 'ACTIVE',
-      startedAt: now,
-      completedAt: null
-    }
-  })
+  try {
+    // Verify stage exists before updating
+    const stage = await tx.listingStageInstance.findUnique({
+      where: { id: stageInstanceId }
+    })
 
-  const tasks = await tx.listingTaskInstance.findMany({
-    where: { stageInstanceId }
-  })
-
-  for (const task of tasks) {
-    if (task.dueDate === null && task.dueInDays !== null) {
-      await tx.listingTaskInstance.update({
-        where: { id: task.id },
-        data: { dueDate: addDays(now, task.dueInDays) }
-      })
+    if (!stage) {
+      throw new Error(`Stage instance not found: ${stageInstanceId}`)
     }
+
+    await tx.listingStageInstance.update({
+      where: { id: stageInstanceId },
+      data: {
+        status: 'ACTIVE',
+        startedAt: now,
+        completedAt: null
+      }
+    })
+
+    const tasks = await tx.listingTaskInstance.findMany({
+      where: { stageInstanceId }
+    })
+
+    // Update due dates for tasks that don't have them
+    for (const task of tasks) {
+      if (task.dueDate === null && task.dueInDays !== null && task.dueInDays !== undefined) {
+        const dueDate = addDays(now, task.dueInDays)
+        if (dueDate) {
+          await tx.listingTaskInstance.update({
+            where: { id: task.id },
+            data: { dueDate }
+          })
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in setStageActive:', {
+      stageInstanceId,
+      error: error instanceof Error ? error.message : String(error)
+    })
+    throw error
   }
 }
 
@@ -1176,6 +1197,8 @@ export async function advanceListingStage(listingId: string, client: PrismaClien
 
   try {
     return await client.$transaction(async (tx: TxClient) => {
+      console.log('Advancing stage for listing:', listingId)
+
       const listing = await tx.listing.findUnique({
         where: { id: listingId },
         include: {
@@ -1194,6 +1217,8 @@ export async function advanceListingStage(listingId: string, client: PrismaClien
         throw new Error(`Listing has no stage instances: ${listingId}`)
       }
 
+      console.log('Listing stages:', listing.stageInstances.map((s) => `${s.name} (${s.status}, order: ${s.order})`).join(', '))
+
       const activeStage = listing.stageInstances.find((stage) => stage.status === 'ACTIVE')
 
       if (!activeStage) {
@@ -1201,36 +1226,58 @@ export async function advanceListingStage(listingId: string, client: PrismaClien
         throw new Error(`No active stage to advance. Listing stages: ${stageStatuses || 'none'}`)
       }
 
+      console.log('Active stage:', activeStage.name, activeStage.id, 'order:', activeStage.order)
+
       // Complete all incomplete tasks in the active stage
-      await tx.listingTaskInstance.updateMany({
+      const tasksUpdated = await tx.listingTaskInstance.updateMany({
         where: { stageInstanceId: activeStage.id, completed: false },
         data: { completed: true, completedAt: now }
       })
+      console.log('Completed tasks:', tasksUpdated.count)
 
       // Mark the active stage as completed
       await tx.listingStageInstance.update({
         where: { id: activeStage.id },
         data: { status: 'COMPLETED', completedAt: now }
       })
+      console.log('Marked stage as completed:', activeStage.id)
 
       // Find the next stage that should be activated
+      // Filter for stages that come after the active stage and are not already completed
       const nextStage = listing.stageInstances
-        .filter((stage) => stage.order > activeStage.order && stage.status !== 'COMPLETED')
+        .filter((stage) => {
+          const isAfterActive = stage.order > activeStage.order
+          const isNotCompleted = stage.status !== 'COMPLETED'
+          return isAfterActive && isNotCompleted
+        })
         .sort((a, b) => a.order - b.order)[0]
 
+      console.log('Next stage:', nextStage ? `${nextStage.name} (${nextStage.id}, order: ${nextStage.order})` : 'none')
+
       if (nextStage) {
+        // Verify the stage exists and has valid data
+        if (!nextStage.id) {
+          throw new Error(`Next stage has no ID: ${nextStage.name}`)
+        }
+
         // Activate the next stage
+        console.log('Activating next stage:', nextStage.id)
         await setStageActive(tx, nextStage.id, now)
+
+        const newStatus = deriveStatusForStage(nextStage.key)
+        console.log('Updating listing with new stage:', nextStage.key, 'status:', newStatus)
+
         await tx.listing.update({
           where: { id: listingId },
           data: {
             currentStageKey: nextStage.key ?? null,
             currentStageStartedAt: now,
-            status: deriveStatusForStage(nextStage.key)
+            status: newStatus
           }
         })
       } else {
         // No next stage - mark listing as closed
+        console.log('No next stage found, closing listing')
         await tx.listing.update({
           where: { id: listingId },
           data: {
@@ -1242,18 +1289,26 @@ export async function advanceListingStage(listingId: string, client: PrismaClien
       }
 
       // Return the updated listing with all relations
+      console.log('Fetching updated listing with relations')
       const result = await tx.listing.findUniqueOrThrow({
         where: { id: listingId },
         include: LISTING_INCLUDE
       })
+      console.log('Successfully advanced stage for listing:', listingId)
       return result
     })
   } catch (error) {
     console.error('Error in advanceListingStage:', {
       listingId,
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      errorName: error instanceof Error ? error.constructor.name : typeof error
     })
+    
+    // Re-throw with more context
+    if (error instanceof Error) {
+      throw new Error(`Failed to advance listing stage: ${error.message}`)
+    }
     throw error
   }
 }
