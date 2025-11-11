@@ -1174,68 +1174,88 @@ export async function setListingTaskDocument(input: SetListingTaskDocumentInput,
 export async function advanceListingStage(listingId: string, client: PrismaClient = prisma) {
   const now = new Date()
 
-  return client.$transaction(async (tx: TxClient) => {
-    const listing = await tx.listing.findUnique({
-      where: { id: listingId },
-      include: {
-        stageInstances: {
-          orderBy: { order: 'asc' },
-          include: { tasks: true }
+  try {
+    return await client.$transaction(async (tx: TxClient) => {
+      const listing = await tx.listing.findUnique({
+        where: { id: listingId },
+        include: {
+          stageInstances: {
+            orderBy: { order: 'asc' },
+            include: { tasks: true }
+          }
         }
+      })
+
+      if (!listing) {
+        throw new Error(`Listing not found: ${listingId}`)
       }
-    })
 
-    if (!listing) {
-      throw new Error('Listing not found')
-    }
+      if (!listing.stageInstances || listing.stageInstances.length === 0) {
+        throw new Error(`Listing has no stage instances: ${listingId}`)
+      }
 
-    const activeStage = listing.stageInstances.find((stage) => stage.status === 'ACTIVE')
+      const activeStage = listing.stageInstances.find((stage) => stage.status === 'ACTIVE')
 
-    if (!activeStage) {
-      throw new Error('No active stage to advance')
-    }
+      if (!activeStage) {
+        const stageStatuses = listing.stageInstances.map((s) => `${s.name} (${s.status})`).join(', ')
+        throw new Error(`No active stage to advance. Listing stages: ${stageStatuses || 'none'}`)
+      }
 
-    await tx.listingTaskInstance.updateMany({
-      where: { stageInstanceId: activeStage.id, completed: false },
-      data: { completed: true, completedAt: now }
-    })
-
-    await tx.listingStageInstance.update({
-      where: { id: activeStage.id },
-      data: { status: 'COMPLETED', completedAt: now }
-    })
-
-    const nextStage = listing.stageInstances
-      .filter((stage) => stage.order > activeStage.order)
-      .sort((a, b) => a.order - b.order)
-      .find((stage) => stage.status !== 'COMPLETED')
-
-    if (nextStage) {
-      await setStageActive(tx, nextStage.id, now)
-      await tx.listing.update({
-        where: { id: listingId },
-        data: {
-          currentStageKey: nextStage.key ?? null,
-          currentStageStartedAt: now,
-          status: deriveStatusForStage(nextStage.key)
-        }
+      // Complete all incomplete tasks in the active stage
+      await tx.listingTaskInstance.updateMany({
+        where: { stageInstanceId: activeStage.id, completed: false },
+        data: { completed: true, completedAt: now }
       })
-    } else {
-      await tx.listing.update({
-        where: { id: listingId },
-        data: {
-          currentStageKey: null,
-          currentStageStartedAt: null,
-          status: 'CLOSED'
-        }
-      })
-    }
 
-    return tx.listing.findUniqueOrThrow({
-      where: { id: listingId },
-      include: LISTING_INCLUDE
+      // Mark the active stage as completed
+      await tx.listingStageInstance.update({
+        where: { id: activeStage.id },
+        data: { status: 'COMPLETED', completedAt: now }
+      })
+
+      // Find the next stage that should be activated
+      const nextStage = listing.stageInstances
+        .filter((stage) => stage.order > activeStage.order && stage.status !== 'COMPLETED')
+        .sort((a, b) => a.order - b.order)[0]
+
+      if (nextStage) {
+        // Activate the next stage
+        await setStageActive(tx, nextStage.id, now)
+        await tx.listing.update({
+          where: { id: listingId },
+          data: {
+            currentStageKey: nextStage.key ?? null,
+            currentStageStartedAt: now,
+            status: deriveStatusForStage(nextStage.key)
+          }
+        })
+      } else {
+        // No next stage - mark listing as closed
+        await tx.listing.update({
+          where: { id: listingId },
+          data: {
+            currentStageKey: activeStage.key ?? null, // Keep the last stage key for reference
+            currentStageStartedAt: null,
+            status: 'CLOSED'
+          }
+        })
+      }
+
+      // Return the updated listing with all relations
+      const result = await tx.listing.findUniqueOrThrow({
+        where: { id: listingId },
+        include: LISTING_INCLUDE
+      })
+      return result
     })
-  })
+  } catch (error) {
+    console.error('Error in advanceListingStage:', {
+      listingId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    })
+    throw error
+  }
 }
 
 export async function moveListingToStage(
@@ -1245,59 +1265,29 @@ export async function moveListingToStage(
 ) {
   const now = new Date()
 
-  return client.$transaction(async (tx: TxClient) => {
-    const listing = await tx.listing.findUnique({
-      where: { id: listingId },
-      include: {
-        stageInstances: {
-          orderBy: { order: 'asc' },
-          include: { tasks: true }
-        }
-      }
-    })
-
-    if (!listing) {
-      throw new Error('Listing not found')
-    }
-
-    if (targetStageKey === null) {
-      for (const stage of listing.stageInstances) {
-        await tx.listingStageInstance.update({
-          where: { id: stage.id },
-          data: {
-            status: 'COMPLETED',
-            startedAt: stage.startedAt ?? now,
-            completedAt: stage.completedAt ?? now
-          }
-        })
-      }
-
-      await tx.listing.update({
+  try {
+    return await client.$transaction(async (tx: TxClient) => {
+      const listing = await tx.listing.findUnique({
         where: { id: listingId },
-        data: {
-          currentStageKey: null,
-          currentStageStartedAt: null,
-          status: 'CLOSED'
+        include: {
+          stageInstances: {
+            orderBy: { order: 'asc' },
+            include: { tasks: true }
+          }
         }
       })
-    } else {
-      const targetStage = listing.stageInstances.find((stage) => stage.key === targetStageKey)
 
-      if (!targetStage) {
-        throw new Error('Target stage not found for listing')
+      if (!listing) {
+        throw new Error(`Listing not found: ${listingId}`)
       }
 
-      if (targetStage.status === 'ACTIVE' && listing.currentStageKey === targetStage.key) {
-        return tx.listing.findUniqueOrThrow({
-          where: { id: listingId },
-          include: LISTING_INCLUDE
-        })
+      if (!listing.stageInstances || listing.stageInstances.length === 0) {
+        throw new Error(`Listing has no stage instances: ${listingId}`)
       }
 
-      for (const stage of listing.stageInstances) {
-        if (stage.id === targetStage.id) {
-          await setStageActive(tx, stage.id, now)
-        } else if (stage.order < targetStage.order) {
+      if (targetStageKey === null) {
+        // Close all stages and mark listing as closed
+        for (const stage of listing.stageInstances) {
           await tx.listingStageInstance.update({
             where: { id: stage.id },
             data: {
@@ -1306,37 +1296,95 @@ export async function moveListingToStage(
               completedAt: stage.completedAt ?? now
             }
           })
-        } else {
-          await tx.listingStageInstance.update({
-            where: { id: stage.id },
-            data: {
-              status: 'PENDING',
-              startedAt: null,
-              completedAt: null
-            }
-          })
-          await tx.listingTaskInstance.updateMany({
-            where: { stageInstanceId: stage.id },
-            data: { completed: false, completedAt: null }
-          })
         }
+
+        await tx.listing.update({
+          where: { id: listingId },
+          data: {
+            currentStageKey: null,
+            currentStageStartedAt: null,
+            status: 'CLOSED'
+          }
+        })
+      } else {
+        const targetStage = listing.stageInstances.find((stage) => stage.key === targetStageKey)
+
+        if (!targetStage) {
+          const availableStageKeys = listing.stageInstances
+            .map((s) => s.key)
+            .filter((k): k is string => k !== null)
+          throw new Error(
+            `Target stage not found for listing. Target: ${targetStageKey}, Available: ${availableStageKeys.join(', ') || 'none'}`
+          )
+        }
+
+        // If already at target stage, just return the listing
+        if (targetStage.status === 'ACTIVE' && listing.currentStageKey === targetStage.key) {
+          const result = await tx.listing.findUniqueOrThrow({
+            where: { id: listingId },
+            include: LISTING_INCLUDE
+          })
+          return result
+        }
+
+        // Update all stages based on target
+        for (const stage of listing.stageInstances) {
+          if (stage.id === targetStage.id) {
+            await setStageActive(tx, stage.id, now)
+          } else if (stage.order < targetStage.order) {
+            // Mark previous stages as completed
+            await tx.listingStageInstance.update({
+              where: { id: stage.id },
+              data: {
+                status: 'COMPLETED',
+                startedAt: stage.startedAt ?? now,
+                completedAt: stage.completedAt ?? now
+              }
+            })
+          } else {
+            // Mark future stages as pending and reset their tasks
+            await tx.listingStageInstance.update({
+              where: { id: stage.id },
+              data: {
+                status: 'PENDING',
+                startedAt: null,
+                completedAt: null
+              }
+            })
+            await tx.listingTaskInstance.updateMany({
+              where: { stageInstanceId: stage.id },
+              data: { completed: false, completedAt: null }
+            })
+          }
+        }
+
+        // Update listing with new current stage
+        await tx.listing.update({
+          where: { id: listingId },
+          data: {
+            currentStageKey: targetStage.key ?? null,
+            currentStageStartedAt: now,
+            status: deriveStatusForStage(targetStage.key)
+          }
+        })
       }
 
-      await tx.listing.update({
+      // Return the updated listing with all relations
+      const result = await tx.listing.findUniqueOrThrow({
         where: { id: listingId },
-        data: {
-          currentStageKey: targetStage.key ?? null,
-          currentStageStartedAt: now,
-          status: deriveStatusForStage(targetStage.key)
-        }
+        include: LISTING_INCLUDE
       })
-    }
-
-    return tx.listing.findUniqueOrThrow({
-      where: { id: listingId },
-      include: LISTING_INCLUDE
+      return result
     })
-  })
+  } catch (error) {
+    console.error('Error in moveListingToStage:', {
+      listingId,
+      targetStageKey,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    })
+    throw error
+  }
 }
 
 const iso = (value: Date | string | null | undefined) => {
