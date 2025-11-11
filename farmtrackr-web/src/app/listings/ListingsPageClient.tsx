@@ -1395,6 +1395,7 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
       </div>
       {renderModal()}
       <ListingDetailModal
+        key={detailListing?.id || 'no-listing'}
         listing={detailListing}
         onClose={closeDetailModal}
         onToggleTask={handleToggleTask}

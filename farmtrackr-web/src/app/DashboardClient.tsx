@@ -2303,6 +2303,7 @@ export default function DashboardClient({ contacts, stats, listings: initialList
     </Sidebar>
 
     <ListingDetailModal
+      key={detailListing?.id || 'no-listing'}
       listing={detailListing}
       onClose={() => setDetailListing(null)}
       onOpenPipeline={() => router.push('/listings')}
