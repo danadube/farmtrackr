@@ -1,6 +1,6 @@
 'use client'
 
-import { ChangeEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Home,
   CheckSquare,
@@ -12,9 +12,7 @@ import {
   Save,
   X as CloseIcon,
   Trash2,
-  CircleSlash2,
-  Megaphone,
-  ClipboardList
+  CircleSlash2
 } from 'lucide-react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import type { ListingClient, ListingTaskClient } from '@/types/listings'
@@ -221,70 +219,70 @@ export function ListingDetailModal({
     listing.stageInstances.find((stage) => stage.status === 'PENDING') ||
     listing.stageInstances[0]
   const canToggleTasks = Boolean(onToggleTask)
-  type ChecklistGroup = { stageId: string; stageName: string; order: number; tasks: ListingTaskClient[] }
+  
+  type StageGroup = {
+    stageId: string
+    stageName: string
+    stageStatus: 'ACTIVE' | 'PENDING' | 'COMPLETED'
+    order: number
+    tasks: Array<ListingTaskClient & { category: TaskCategory }>
+  }
 
-  const { documentGroups, marketingGroups, workflowGroups } = useMemo(() => {
-    const documentMap = new Map<string, ChecklistGroup>()
-    const marketingMap = new Map<string, ChecklistGroup>()
-    const workflowMap = new Map<string, ChecklistGroup>()
+  // Group tasks by stage (chronological order)
+  const stageGroups = useMemo(() => {
+    const stages: StageGroup[] = listing.stageInstances
+      .map((stage) => ({
+        stageId: stage.id,
+        stageName: stage.name || 'Stage',
+        stageStatus: stage.status as 'ACTIVE' | 'PENDING' | 'COMPLETED',
+        order: stage.order ?? 0,
+        tasks: stage.tasks
+          .map((task) => ({
+            ...task,
+            category: categorizeTaskName(task.name)
+          }))
+          .sort((a, b) => {
+            // Sort by due date first (earliest first, then tasks without due dates)
+            const aDueDate = a.dueDate ? new Date(a.dueDate).getTime() : Infinity
+            const bDueDate = b.dueDate ? new Date(b.dueDate).getTime() : Infinity
+            
+            if (aDueDate !== bDueDate) {
+              return aDueDate - bDueDate
+            }
+            
+            // Then by completion status (incomplete first)
+            if (a.completed !== b.completed) {
+              return a.completed ? 1 : -1
+            }
+            
+            // Finally by name
+            return a.name.localeCompare(b.name)
+          })
+      }))
+      .sort((a, b) => a.order - b.order)
+      .filter((stage) => stage.tasks.length > 0) // Only show stages with tasks
 
-    listing.stageInstances.forEach((stage) => {
-      const stageId = stage.id
-      const stageName = stage.name || 'Stage'
-      const order = stage.order ?? 0
-
-      stage.tasks.forEach((task) => {
-        const category = categorizeTaskName(task.name)
-        const targetMap =
-          category === 'document' ? documentMap : category === 'marketing' ? marketingMap : workflowMap
-
-        if (!targetMap.has(stageId)) {
-          targetMap.set(stageId, { stageId, stageName, order, tasks: [] })
-        }
-
-        targetMap.get(stageId)!.tasks.push(task)
-      })
-    })
-
-    const sortGroups = (map: Map<string, ChecklistGroup>) =>
-      Array.from(map.values())
-        .map((group) => ({
-          ...group,
-          tasks: [...group.tasks]
-        }))
-        .sort((a, b) => {
-          if (a.order !== b.order) {
-            return a.order - b.order
-          }
-          return a.stageName.localeCompare(b.stageName)
-        })
-
-    return {
-      documentGroups: sortGroups(documentMap),
-      marketingGroups: sortGroups(marketingMap),
-      workflowGroups: sortGroups(workflowMap)
-    }
+    return stages
   }, [listing.stageInstances])
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  const [openStages, setOpenStages] = useState<Record<string, boolean>>({})
 
+  // Initialize stage collapse state: active stage expanded, completed stages collapsed
   useEffect(() => {
-    setOpenGroups((prev) => {
+    setOpenStages((prev) => {
       const next: Record<string, boolean> = {}
-      const register = (categoryKey: 'document' | 'marketing' | 'workflow', groups: ChecklistGroup[]) => {
-        groups.forEach((group, index) => {
-          const key = `${categoryKey}:${group.stageId}`
-          next[key] = prev[key] ?? index === 0
-        })
-      }
-
-      register('document', documentGroups)
-      register('marketing', marketingGroups)
-      register('workflow', workflowGroups)
-
+      stageGroups.forEach((stage) => {
+        const key = stage.stageId
+        // If already set, preserve it; otherwise, expand if active, collapse if completed
+        if (key in prev) {
+          next[key] = prev[key]
+        } else {
+          next[key] = stage.stageStatus === 'ACTIVE' || stage.stageStatus === 'PENDING'
+        }
+      })
       return next
     })
-  }, [documentGroups, marketingGroups, workflowGroups])
+  }, [stageGroups])
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [editTaskName, setEditTaskName] = useState('')
@@ -321,7 +319,7 @@ export function ListingDetailModal({
     setCreatingStageId(null)
   }
 
-  const renderTaskRow = (task: ListingTaskClient, stageId: string) => {
+  const renderTaskRow = (task: ListingTaskClient & { category: TaskCategory }, stageId: string) => {
     const isEditing = editingTaskId === task.id
     const isSaving = savingTaskId === task.id || !!isUpdating
     const isUploading = uploadingTaskId === task.id
@@ -331,6 +329,7 @@ export function ListingDetailModal({
     const partyLabel = metadata?.party ?? '—'
     const formLabel = metadata?.form ?? '—'
     const notesLabel = metadata?.notes ?? ''
+    const category = task.category
 
     const statusLabel = isSkipped
       ? 'Marked not required'
@@ -349,6 +348,14 @@ export function ListingDetailModal({
       : task.completed
       ? colors.success
       : colors.text.secondary
+
+    // Category badge colors
+    const categoryColors = {
+      document: { bg: `${colors.primary}22`, text: colors.primary, label: 'Document' },
+      marketing: { bg: `${colors.warning}22`, text: colors.warning, label: 'Marketing' },
+      workflow: { bg: `${colors.text.secondary}22`, text: colors.text.secondary, label: 'Workflow' }
+    }
+    const categoryStyle = categoryColors[category] || categoryColors.workflow
 
     return (
       <div
@@ -418,16 +425,32 @@ export function ListingDetailModal({
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25) }}>
-                <span
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: task.completed ? colors.text.secondary : colors.text.primary,
-                    textDecoration: isSkipped ? 'line-through' : 'none'
-                  }}
-                >
-                  {task.name}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(0.5), flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      color: task.completed ? colors.text.secondary : colors.text.primary,
+                      textDecoration: isSkipped ? 'line-through' : 'none'
+                    }}
+                  >
+                    {task.name}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      backgroundColor: categoryStyle.bg,
+                      color: categoryStyle.text,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}
+                  >
+                    {categoryStyle.label}
+                  </span>
+                </div>
                 <span style={{ fontSize: '12px', color: statusColor }}>{statusLabel}</span>
               </div>
             )}
@@ -827,110 +850,92 @@ export function ListingDetailModal({
     )
   }
 
-  const renderedAddFormStages = new Set<string>()
-
-  const renderChecklistSection = (
-    sectionKey: 'document' | 'marketing' | 'workflow',
-    {
-      title,
-      description,
-      icon,
-      groups
-    }: {
-      title: string
-      description: string
-      icon: ReactNode
-      groups: ChecklistGroup[]
-    }
-  ) => {
-    if (!groups.length) {
-      return null
-    }
+  const renderStageSection = (stage: StageGroup) => {
+    const isOpen = openStages[stage.stageId] ?? false
+    const completedCount = stage.tasks.filter((t) => t.completed).length
+    const totalCount = stage.tasks.length
+    const statusColor =
+      stage.stageStatus === 'COMPLETED'
+        ? colors.success
+        : stage.stageStatus === 'ACTIVE'
+        ? colors.primary
+        : colors.text.secondary
 
     return (
       <div
+        key={stage.stageId}
         style={{
           ...card,
           border: `1px solid ${colors.border}`,
-          padding: spacing(2),
-          display: 'flex',
-          flexDirection: 'column',
-          gap: spacing(1.5)
+          borderRadius: spacing(0.75),
+          overflow: 'hidden'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-          {icon}
-          <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, ...text.primary }}>{title}</h3>
-            <p style={{ margin: `${spacing(0.25)} 0 0 0`, fontSize: '13px', ...text.secondary }}>{description}</p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
-          {groups.map((group) => {
-            const groupKey = `${sectionKey}:${group.stageId}`
-            const isOpen = openGroups[groupKey] ?? false
-            const allowAddTask = onAddTask && !renderedAddFormStages.has(group.stageId)
-            if (allowAddTask) {
-              renderedAddFormStages.add(group.stageId)
-            }
-
-            return (
-              <div
-                key={groupKey}
-                style={{ border: `1px solid ${colors.border}`, borderRadius: spacing(0.75), overflow: 'hidden' }}
+        <button
+          type="button"
+          onClick={() =>
+            setOpenStages((prev) => ({
+              ...prev,
+              [stage.stageId]: !isOpen
+            }))
+          }
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: `${spacing(1.25)} ${spacing(1.5)}`,
+            backgroundColor: isOpen ? colors.cardHover : colors.card,
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: spacing(0.25), flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing(0.75), flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '15px', fontWeight: 600, ...text.primary }}>{stage.stageName}</span>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  backgroundColor: `${statusColor}22`,
+                  color: statusColor,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}
               >
-                <button
-                  type="button"
-                  onClick={() =>
-                    setOpenGroups((prev) => ({
-                      ...prev,
-                      [groupKey]: !isOpen
-                    }))
-                  }
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: `${spacing(1)} ${spacing(1.25)}`,
-                    backgroundColor: isOpen ? colors.cardHover : colors.card,
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: spacing(0.25) }}>
-                    <span style={{ fontSize: '14px', fontWeight: 600, ...text.primary }}>{group.stageName}</span>
-                    <span style={{ fontSize: '12px', ...text.secondary }}>
-                      {group.tasks.length} item{group.tasks.length === 1 ? '' : 's'}
-                    </span>
-                  </div>
-                  <ChevronDown
-                    style={{
-                      width: '16px',
-                      height: '16px',
-                      transition: 'transform 0.2s ease',
-                      transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)'
-                    }}
-                  />
-                </button>
-                {isOpen ? (
-                  <div
-                    style={{
-                      padding: `${spacing(1)} ${spacing(1.25)}`,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: spacing(1),
-                      backgroundColor: colors.cardHover
-                    }}
-                  >
-                    {group.tasks.map((task) => renderTaskRow(task, group.stageId))}
-                    {allowAddTask ? renderAddTaskControls(group.stageId) : null}
-                  </div>
-                ) : null}
-              </div>
-            )
-          })}
-        </div>
+                {stage.stageStatus === 'COMPLETED' ? 'Completed' : stage.stageStatus === 'ACTIVE' ? 'Active' : 'Pending'}
+              </span>
+            </div>
+            <span style={{ fontSize: '12px', ...text.secondary }}>
+              {completedCount} of {totalCount} tasks completed
+            </span>
+          </div>
+          <ChevronDown
+            style={{
+              width: '18px',
+              height: '18px',
+              color: colors.text.secondary,
+              transition: 'transform 0.2s ease',
+              transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)'
+            }}
+          />
+        </button>
+        {isOpen ? (
+          <div
+            style={{
+              padding: `${spacing(1.25)} ${spacing(1.5)}`,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing(1),
+              backgroundColor: colors.cardHover
+            }}
+          >
+            {stage.tasks.map((task) => renderTaskRow(task, stage.stageId))}
+            {onAddTask ? renderAddTaskControls(stage.stageId) : null}
+          </div>
+        ) : null}
       </div>
     )
   }
@@ -1033,24 +1038,42 @@ export function ListingDetailModal({
           </div>
         </div>
 
-        {renderChecklistSection('document', {
-          title: 'Document Checklist',
-          description: 'Track paperwork requirements by stage and mark each as completed or not required.',
-          icon: <CheckSquare style={{ width: '18px', height: '18px', color: colors.primary }} />,
-          groups: documentGroups
-        })}
-        {renderChecklistSection('marketing', {
-          title: 'Marketing Checklist',
-          description: 'Manage marketing deliverables, media, and launch tasks.',
-          icon: <Megaphone style={{ width: '18px', height: '18px', color: colors.warning }} />,
-          groups: marketingGroups
-        })}
-        {renderChecklistSection('workflow', {
-          title: 'Workflow Tasks',
-          description: 'Operational and follow-up items supporting this listing.',
-          icon: <ClipboardList style={{ width: '18px', height: '18px', color: colors.text.secondary }} />,
-          groups: workflowGroups
-        })}
+        <div
+          style={{
+            ...card,
+            border: `1px solid ${colors.border}`,
+            padding: spacing(2),
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing(1.5)
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+            <CheckSquare style={{ width: '18px', height: '18px', color: colors.primary }} />
+            <div>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, ...text.primary }}>Listing Tasks</h3>
+              <p style={{ margin: `${spacing(0.25)} 0 0 0`, fontSize: '13px', ...text.secondary }}>
+                All tasks organized by stage in chronological order. Tasks are sorted by due date within each stage.
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
+            {stageGroups.length > 0 ? (
+              stageGroups.map((stage) => renderStageSection(stage))
+            ) : (
+              <div
+                style={{
+                  padding: spacing(2),
+                  textAlign: 'center',
+                  color: colors.text.secondary,
+                  fontSize: '14px'
+                }}
+              >
+                No tasks available for this listing.
+              </div>
+            )}
+          </div>
+        </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: spacing(1) }}>
           <button
