@@ -1219,11 +1219,91 @@ export async function advanceListingStage(listingId: string, client: PrismaClien
 
       console.log('Listing stages:', listing.stageInstances.map((s) => `${s.name} (${s.status}, order: ${s.order})`).join(', '))
 
-      const activeStage = listing.stageInstances.find((stage) => stage.status === 'ACTIVE')
+      let activeStage = listing.stageInstances.find((stage) => stage.status === 'ACTIVE')
+
+      // If no active stage, try to find the first pending stage after the last completed stage
+      if (!activeStage) {
+        console.log('No active stage found, looking for next pending stage')
+        
+        // Find the last completed stage
+        const completedStages = listing.stageInstances
+          .filter((stage) => stage.status === 'COMPLETED')
+          .sort((a, b) => b.order - a.order) // Sort descending to get the last one
+        
+        const lastCompletedStage = completedStages[0]
+        
+        if (lastCompletedStage) {
+          console.log('Last completed stage:', lastCompletedStage.name, 'order:', lastCompletedStage.order)
+          
+          // Find the next pending stage after the last completed stage
+          const nextPendingStage = listing.stageInstances
+            .filter((stage) => {
+              return stage.order > lastCompletedStage.order && stage.status === 'PENDING'
+            })
+            .sort((a, b) => a.order - b.order)[0]
+          
+          if (nextPendingStage) {
+            console.log('Found next pending stage:', nextPendingStage.name, 'activating it')
+            // Activate the next pending stage
+            await setStageActive(tx, nextPendingStage.id, now)
+            await tx.listing.update({
+              where: { id: listingId },
+              data: {
+                currentStageKey: nextPendingStage.key ?? null,
+                currentStageStartedAt: now,
+                status: deriveStatusForStage(nextPendingStage.key)
+              }
+            })
+            // Now we have an active stage to work with
+            activeStage = nextPendingStage
+          } else {
+            // All stages are completed - listing is already done
+            console.log('All stages are completed, listing is closed')
+            const lastStage = listing.stageInstances.sort((a, b) => b.order - a.order)[0]
+            await tx.listing.update({
+              where: { id: listingId },
+              data: {
+                currentStageKey: lastStage?.key ?? null,
+                currentStageStartedAt: null,
+                status: 'CLOSED'
+              }
+            })
+            // Return the updated listing - nothing to advance
+            const result = await tx.listing.findUniqueOrThrow({
+              where: { id: listingId },
+              include: LISTING_INCLUDE
+            })
+            return result
+          }
+        } else {
+          // No completed stages either - find the first pending stage
+          const firstPendingStage = listing.stageInstances
+            .filter((stage) => stage.status === 'PENDING')
+            .sort((a, b) => a.order - b.order)[0]
+          
+          if (firstPendingStage) {
+            console.log('No completed stages, activating first pending stage:', firstPendingStage.name)
+            await setStageActive(tx, firstPendingStage.id, now)
+            await tx.listing.update({
+              where: { id: listingId },
+              data: {
+                currentStageKey: firstPendingStage.key ?? null,
+                currentStageStartedAt: now,
+                status: deriveStatusForStage(firstPendingStage.key)
+              }
+            })
+            activeStage = firstPendingStage
+          } else {
+            // No pending stages either - all stages might be in an unexpected state
+            const stageStatuses = listing.stageInstances.map((s) => `${s.name} (${s.status})`).join(', ')
+            throw new Error(`No active, pending, or completed stages found. Listing stages: ${stageStatuses || 'none'}`)
+          }
+        }
+      }
 
       if (!activeStage) {
         const stageStatuses = listing.stageInstances.map((s) => `${s.name} (${s.status})`).join(', ')
-        throw new Error(`No active stage to advance. Listing stages: ${stageStatuses || 'none'}`)
+        throw new Error(`Unable to determine active stage. Listing stages: ${stageStatuses || 'none'}`)
       }
 
       console.log('Active stage:', activeStage.name, activeStage.id, 'order:', activeStage.order)
