@@ -649,14 +649,25 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
     try {
       const response = await fetch(`/api/listings/${listingId}/advance`, { method: 'POST' })
       if (!response.ok) {
-        throw new Error('Failed to advance stage')
+        // Try to read error details from response
+        let errorMessage = 'Failed to advance stage'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorData.error || errorMessage
+          console.error('Advance stage error:', errorData)
+        } catch {
+          // If we can't parse the error, use the default message
+          console.error('Advance stage failed with status:', response.status)
+        }
+        throw new Error(errorMessage)
       }
       const updatedListing: ListingClient = await response.json()
       updateListingInState(updatedListing)
       setFeedback('Stage advanced successfully.')
     } catch (error) {
       console.error('Error advancing stage', error)
-      setFeedback('Unable to advance the stage right now. Please retry.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      setFeedback(`Unable to advance the stage: ${errorMessage}`)
     } finally {
       setUpdatingListingId(null)
     }
