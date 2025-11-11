@@ -265,24 +265,64 @@ export function ListingDetailModal({
     return stages
   }, [listing.stageInstances])
 
-  const [openStages, setOpenStages] = useState<Record<string, boolean>>({})
-
-  // Initialize stage collapse state: active stage expanded, completed stages collapsed
-  useEffect(() => {
-    setOpenStages((prev) => {
-      const next: Record<string, boolean> = {}
-      stageGroups.forEach((stage) => {
-        const key = stage.stageId
-        // If already set, preserve it; otherwise, expand if active, collapse if completed
-        if (key in prev) {
-          next[key] = prev[key]
-        } else {
-          next[key] = stage.stageStatus === 'ACTIVE' || stage.stageStatus === 'PENDING'
-        }
-      })
-      return next
+  // Initialize openStages state based on listing's stage instances
+  const [openStages, setOpenStages] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {}
+    listing.stageInstances.forEach((stage) => {
+      initial[stage.id] = stage.status === 'ACTIVE' || stage.status === 'PENDING'
     })
-  }, [stageGroups])
+    return initial
+  })
+
+  // Use a ref to track the listing ID and prevent unnecessary updates
+  const listingIdRef = useRef(listing.id)
+  const prevStagesRef = useRef(
+    listing.stageInstances.map((s) => `${s.id}:${s.status}`).sort().join('|')
+  )
+
+  // Update openStages when listing changes or stage instances change
+  useEffect(() => {
+    // Create a signature of current stages
+    const currentStagesSig = listing.stageInstances
+      .map((s) => `${s.id}:${s.status}`)
+      .sort()
+      .join('|')
+
+    // Only update if listing ID changed or stages actually changed
+    if (listingIdRef.current !== listing.id || prevStagesRef.current !== currentStagesSig) {
+      listingIdRef.current = listing.id
+      prevStagesRef.current = currentStagesSig
+
+      const currentStages = listing.stageInstances
+      const currentStageIds = new Set(currentStages.map((s) => s.id))
+
+      // Update openStages, preserving user toggles
+      setOpenStages((prev) => {
+        const next: Record<string, boolean> = { ...prev }
+        let hasChanges = false
+
+        // Add new stages with default open/closed state
+        currentStages.forEach((stage) => {
+          const key = stage.id
+          if (!(key in prev)) {
+            next[key] = stage.status === 'ACTIVE' || stage.status === 'PENDING'
+            hasChanges = true
+          }
+        })
+
+        // Remove stages that no longer exist
+        Object.keys(next).forEach((key) => {
+          if (!currentStageIds.has(key)) {
+            delete next[key]
+            hasChanges = true
+          }
+        })
+
+        return hasChanges ? next : prev
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listing.id, listing.stageInstances.length]) // Only depend on listing ID and count
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [editTaskName, setEditTaskName] = useState('')
