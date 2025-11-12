@@ -836,6 +836,33 @@ export default function CalendarPage() {
 
           {/* Calendar Content */}
           <div style={{ ...card, padding: spacing(2.5), minHeight: '600px', display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
+            {view === 'month' && (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+                  gap: '4px',
+                  marginBottom: spacing(1),
+                }}
+              >
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((dayName) => (
+                  <div
+                    key={dayName}
+                    style={{
+                      padding: spacing(1),
+                      textAlign: 'center',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: text.secondary.color,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    {dayName}
+                  </div>
+                ))}
+              </div>
+            )}
             <div
               style={{
                 ...gridTemplateForView(view),
@@ -1087,8 +1114,10 @@ function parseEventDate(dateInput: ApiCalendarEvent['start'] | ApiCalendarEvent[
     return new Date(dateInput.dateTime)
   }
   if (dateInput?.date) {
-    // All-day events
-    return new Date(dateInput.date)
+    // All-day events - parse as local date to avoid timezone offset issues
+    // Format: "YYYY-MM-DD"
+    const [year, month, day] = dateInput.date.split('-').map(Number)
+    return new Date(year, month - 1, day)
   }
   return null
 }
