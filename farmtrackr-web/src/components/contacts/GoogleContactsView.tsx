@@ -381,60 +381,6 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
           <div style={{ marginBottom: '24px' }}>{viewSwitcher}</div>
         )}
 
-        <div
-          style={{
-            marginBottom: '24px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '16px',
-          }}
-        >
-          <div style={{ padding: '20px', ...card }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                  Total Contacts
-                </p>
-                <p style={{ fontSize: '28px', fontWeight: '700', ...text.primary, margin: '0' }}>{contacts.length}</p>
-              </div>
-              <Contact style={{ width: '32px', height: '32px', color: colors.primary, opacity: 0.6 }} />
-            </div>
-          </div>
-          <div style={{ padding: '20px', ...card }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                  Last Synced
-                </p>
-                <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                  {lastSyncedAt || 'Not synced yet'}
-                </p>
-              </div>
-              <RefreshCw style={{ width: '24px', height: '24px', color: colors.info, opacity: 0.6 }} />
-            </div>
-          </div>
-          <div style={{ padding: '20px', ...card }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <p style={{ fontSize: '14px', ...text.secondary, marginBottom: '4px', margin: '0 0 4px 0' }}>
-                  Connection
-                </p>
-                <p style={{ fontSize: '16px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                  {googleConnectionStatus === 'connected'
-                    ? 'Connected'
-                    : googleConnectionStatus === 'checking'
-                    ? 'Checking...'
-                    : 'Not connected'}
-                </p>
-              </div>
-              {googleConnectionStatus === 'connected' ? (
-                <CheckCircle style={{ width: '24px', height: '24px', color: colors.success }} />
-              ) : (
-                <AlertCircle style={{ width: '24px', height: '24px', color: colors.error }} />
-              )}
-            </div>
-          </div>
-        </div>
 
         <div style={{ marginBottom: '24px' }}>
           <div style={{ padding: '20px', ...card }}>
@@ -448,45 +394,45 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                 marginBottom: '16px',
               }}
             >
-              <div style={{ position: 'relative', minWidth: '200px', maxWidth: '400px', width: '100%' }}>
-                <Search
-                  style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: '16px',
-                    height: '16px',
-                    color: colors.text.tertiary,
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Search Google contacts..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 12px 12px 40px',
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    backgroundColor: colors.card,
-                    color: colors.text.primary,
-                    transition: 'border-color 0.2s ease',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = colors.primary
-                    e.target.style.outline = 'none'
-                    e.target.style.boxShadow = `0 0 0 3px ${colors.primary}20`
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = colors.border
-                    e.target.style.boxShadow = 'none'
-                  }}
-                />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', minWidth: '200px', maxWidth: '400px', flex: 1 }}>
+                  <Search
+                    style={{
+                      position: 'absolute',
+                      left: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: '16px',
+                      height: '16px',
+                      color: colors.text.tertiary,
+                    }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search Google contacts..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 12px 12px 40px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      backgroundColor: colors.card,
+                      color: colors.text.primary,
+                      transition: 'border-color 0.2s ease',
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = colors.primary
+                      e.target.style.outline = 'none'
+                      e.target.style.boxShadow = `0 0 0 3px ${colors.primary}20`
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = colors.border
+                      e.target.style.boxShadow = 'none'
+                    }}
+                  />
+                </div>
                 <select
                   value={selectedTag}
                   onChange={(e) => setSelectedTag(e.target.value)}
@@ -546,6 +492,27 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                     Clear Filters
                   </button>
                 )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', ...text.secondary }}>
+                  <RefreshCw style={{ width: '16px', height: '16px', color: colors.info, opacity: 0.7 }} />
+                  <span>Last synced: {lastSyncedAt || 'Never'}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', ...text.secondary }}>
+                  {googleConnectionStatus === 'connected' ? (
+                    <>
+                      <CheckCircle style={{ width: '16px', height: '16px', color: colors.success }} />
+                      <span>Connected</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle style={{ width: '16px', height: '16px', color: colors.error }} />
+                      <span>
+                        {googleConnectionStatus === 'checking' ? 'Checking...' : 'Not connected'}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
