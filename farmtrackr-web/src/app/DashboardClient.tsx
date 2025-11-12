@@ -615,7 +615,8 @@ export default function DashboardClient({ contacts, stats, listings: initialList
         if (!documentResponse.ok) {
           const errorPayload = await documentResponse.json().catch(() => ({}))
           console.error('Document creation failed:', documentResponse.status, errorPayload)
-          throw new Error(errorPayload.error || `Document save failed: ${documentResponse.status}`)
+          const errorMessage = errorPayload.error || errorPayload.message || errorPayload.details || `Document save failed: ${documentResponse.status}`
+          throw new Error(errorMessage)
         }
 
         const document = await documentResponse.json()

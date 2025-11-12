@@ -47,9 +47,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
+    // Make title unique by appending timestamp if a document with the same title exists
+    let uniqueTitle = title
+    const existingDoc = await prisma.document.findUnique({
+      where: { title: uniqueTitle }
+    })
+
+    if (existingDoc) {
+      // Append timestamp to make it unique
+      const timestamp = Date.now()
+      const extIndex = title.lastIndexOf('.')
+      if (extIndex > 0) {
+        const nameWithoutExt = title.substring(0, extIndex)
+        const ext = title.substring(extIndex)
+        uniqueTitle = `${nameWithoutExt}-${timestamp}${ext}`
+      } else {
+        uniqueTitle = `${title}-${timestamp}`
+      }
+      console.log('Title already exists, using unique title:', uniqueTitle)
+    }
+
     const created = await prisma.document.create({
       data: {
-        title,
+        title: uniqueTitle,
         description: description || null,
         type: type || null,
         content: content || null,
@@ -62,10 +82,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(created, { status: 201 })
   } catch (error) {
     console.error('Documents POST error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const isUniqueError = errorMessage.includes('Unique constraint') || errorMessage.includes('unique constraint')
+    
     return NextResponse.json({ 
-      error: 'Failed to create document',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+      error: isUniqueError ? 'A document with this name already exists' : 'Failed to create document',
+      message: errorMessage,
+      details: errorMessage
+    }, { status: isUniqueError ? 409 : 500 })
   }
 }
 
