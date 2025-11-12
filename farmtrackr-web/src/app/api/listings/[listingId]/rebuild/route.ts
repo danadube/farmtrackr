@@ -46,18 +46,28 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     const updatedListing = await prisma.listing.findUniqueOrThrow({
       where: { id: listingId },
       include: {
+        pipelineTemplate: {
+          select: { id: true, name: true, type: true }
+        },
+        seller: {
+          select: { id: true, firstName: true, lastName: true, organizationName: true, email1: true, phoneNumber1: true }
+        },
+        buyerClient: {
+          select: { id: true, firstName: true, lastName: true, organizationName: true, email1: true, phoneNumber1: true }
+        },
         stageInstances: {
           orderBy: { order: 'asc' },
           include: {
             tasks: {
               orderBy: { createdAt: 'asc' },
               include: {
-                document: true
+                document: {
+                  select: { id: true, title: true, fileUrl: true }
+                }
               }
             }
           }
-        },
-        pipelineTemplate: true
+        }
       }
     })
 
