@@ -1444,9 +1444,18 @@ function gridTemplateForView(view: CalendarView) {
     }
   }
 
+  if (view === 'week') {
+    return {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+      gap: spacing(1),
+    }
+  }
+
+  // Day view
   return {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gridTemplateColumns: '1fr',
   }
 }
 
