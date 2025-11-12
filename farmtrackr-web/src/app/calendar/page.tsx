@@ -1449,7 +1449,7 @@ function gridTemplateForView(view: CalendarView) {
     return {
       display: 'grid',
       gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-      gap: spacing(1),
+      gap: '8px',
     }
   }
 
