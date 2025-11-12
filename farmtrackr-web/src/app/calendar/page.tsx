@@ -1410,6 +1410,8 @@ type RenderCalendarGridParams = {
   colors: ReturnType<typeof useThemeStyles>['colors']
   text: ReturnType<typeof useThemeStyles>['text']
   spacing: ReturnType<typeof useThemeStyles>['spacing']
+  setSelectedEvent: (event: NormalizedEvent | null) => void
+  setIsEventModalOpen: (open: boolean) => void
 }
 
 function renderCalendarGrid({
@@ -1424,6 +1426,8 @@ function renderCalendarGrid({
   colors,
   text,
   spacing,
+  setSelectedEvent,
+  setIsEventModalOpen,
 }: RenderCalendarGridParams) {
   if (view === 'month') {
     const today = new Date()
