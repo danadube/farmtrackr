@@ -315,13 +315,16 @@ export function ListingDetailModal({
     }
   }
 
-  // Initialize openStages state based on current listing
-  // State is reset when listing prop changes (component should remount or parent should handle)
+  // Initialize openStages state - only open the active stage, close all others
   const [openStages, setOpenStages] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {}
     if (listing?.stageInstances) {
+      // Find the active stage
+      const activeStage = listing.stageInstances.find((stage) => stage.status === 'ACTIVE')
+      
+      // Only open the active stage, close all others
       listing.stageInstances.forEach((stage) => {
-        initial[stage.id] = stage.status === 'ACTIVE' || stage.status === 'PENDING'
+        initial[stage.id] = stage.id === activeStage?.id
       })
     }
     return initial
