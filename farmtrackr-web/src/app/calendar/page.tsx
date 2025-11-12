@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, RefreshCw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, RefreshCw, X, MapPin } from 'lucide-react'
 
 type CalendarView = 'month' | 'week' | 'day'
 
@@ -1093,6 +1093,183 @@ export default function CalendarPage() {
                 {isSavingEvent && <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />}
                 Save Event
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEventModalOpen && selectedEvent && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: spacing(2),
+            zIndex: 1000,
+          }}
+          onClick={() => {
+            setIsEventModalOpen(false)
+            setSelectedEvent(null)
+          }}
+        >
+          <div
+            style={{
+              ...card,
+              width: '100%',
+              maxWidth: '520px',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              padding: spacing(3),
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing(2),
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing(2) }}>
+              <div style={{ flex: 1 }}>
+                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: text.primary.color }}>
+                  {selectedEvent.title}
+                </h2>
+                {selectedEvent.calendarName && (
+                  <p style={{ margin: `${spacing(0.5)} 0 0 0`, fontSize: '13px', color: text.secondary.color }}>
+                    {selectedEvent.calendarName}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                {...getButtonPressHandlers('calendar-event-close')}
+                onClick={() => {
+                  setIsEventModalOpen(false)
+                  setSelectedEvent(null)
+                }}
+                style={getButtonPressStyle(
+                  'calendar-event-close',
+                  {
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: spacing(0.5),
+                    padding: spacing(0.5),
+                    cursor: 'pointer',
+                    color: text.tertiary.color,
+                  },
+                  'transparent',
+                  colors.cardHover
+                )}
+              >
+                <X style={{ width: '20px', height: '20px' }} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                <CalendarIcon style={{ width: '16px', height: '16px', color: text.tertiary.color, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color }}>
+                    {selectedEvent.isAllDay
+                      ? 'All Day'
+                      : `${selectedEvent.start.toLocaleDateString(undefined, {
+                          weekday: 'long',
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })} at ${selectedEvent.startLabel} – ${selectedEvent.endLabel}`}
+                  </p>
+                  {!selectedEvent.isAllDay &&
+                    selectedEvent.end.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) !==
+                      selectedEvent.start.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) && (
+                      <p style={{ margin: `${spacing(0.25)} 0 0 0`, fontSize: '12px', color: text.secondary.color }}>
+                        Ends {selectedEvent.end.toLocaleDateString(undefined, {
+                          weekday: 'long',
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })} at {selectedEvent.endLabel}
+                      </p>
+                    )}
+                </div>
+              </div>
+
+              {selectedEvent.location && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing(1) }}>
+                  <MapPin style={{ width: '16px', height: '16px', color: text.tertiary.color, flexShrink: 0, marginTop: '2px' }} />
+                  <p style={{ margin: 0, fontSize: '14px', color: text.primary.color }}>{selectedEvent.location}</p>
+                </div>
+              )}
+
+              {selectedEvent.description && (
+                <div>
+                  <p style={{ margin: `0 0 ${spacing(0.5)} 0`, fontSize: '12px', fontWeight: 600, color: text.tertiary.color, textTransform: 'uppercase' }}>
+                    Description
+                  </p>
+                  <p style={{ margin: 0, fontSize: '14px', color: text.primary.color, whiteSpace: 'pre-wrap' }}>
+                    {selectedEvent.description}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing(1), paddingTop: spacing(1), borderTop: `1px solid ${colors.border}` }}>
+              <button
+                type="button"
+                {...getButtonPressHandlers('calendar-event-cancel')}
+                onClick={() => {
+                  setIsEventModalOpen(false)
+                  setSelectedEvent(null)
+                }}
+                style={getButtonPressStyle(
+                  'calendar-event-cancel',
+                  {
+                    padding: `${spacing(1)} ${spacing(2)}`,
+                    borderRadius: spacing(0.75),
+                    border: `1px solid ${colors.border}`,
+                    backgroundColor: colors.surface,
+                    color: text.secondary.color,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                  },
+                  colors.surface,
+                  colors.cardHover
+                )}
+              >
+                Close
+              </button>
+              {selectedEvent.htmlLink && (
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('calendar-event-open-google')}
+                  onClick={() => {
+                    window.open(selectedEvent.htmlLink, '_blank', 'noopener,noreferrer')
+                  }}
+                  style={getButtonPressStyle(
+                    'calendar-event-open-google',
+                    {
+                      padding: `${spacing(1)} ${spacing(2.5)}`,
+                      borderRadius: spacing(0.75),
+                      border: 'none',
+                      backgroundColor: colors.primary,
+                      color: '#ffffff',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(0.75),
+                    },
+                    colors.primary,
+                    colors.primaryHover
+                  )}
+                >
+                  <CalendarIcon style={{ width: '16px', height: '16px' }} />
+                  Open in Google Calendar
+                </button>
+              )}
             </div>
           </div>
         </div>
