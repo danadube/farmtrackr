@@ -897,6 +897,8 @@ export default function CalendarPage() {
                 colors,
                 text,
                 spacing,
+                setSelectedEvent,
+                setIsEventModalOpen,
               })}
             </div>
 
