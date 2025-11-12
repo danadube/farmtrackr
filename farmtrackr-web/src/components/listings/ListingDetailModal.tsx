@@ -630,19 +630,21 @@ export function ListingDetailModal({
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation()
-                    if (!onAttachDocument || isSkipped) return
+                    if (!onAttachDocument) return
                     fileInputsRef.current[task.id]?.click()
                   }}
-                  disabled={!onAttachDocument || isUploading || isUpdating || isSkipped}
+                  disabled={!onAttachDocument || isUploading || isUpdating}
                   style={{
                     padding: '6px 10px',
                     borderRadius: '8px',
                     border: `1px solid ${colors.border}`,
                     backgroundColor: 'transparent',
-                    color: colors.text.secondary,
+                    color: !onAttachDocument || isUploading || isUpdating ? colors.text.tertiary : colors.text.secondary,
                     fontSize: '12px',
-                    cursor: !onAttachDocument || isUploading || isUpdating || isSkipped ? 'not-allowed' : 'pointer'
+                    cursor: !onAttachDocument || isUploading || isUpdating ? 'not-allowed' : 'pointer',
+                    opacity: !onAttachDocument || isUploading || isUpdating ? 0.5 : 1
                   }}
+                  title={!onAttachDocument ? 'Document attachment not available' : isUploading ? 'Uploading...' : isUpdating ? 'Updating...' : 'Attach document'}
                 >
                   <Paperclip style={{ width: '14px', height: '14px' }} />
                 </button>
