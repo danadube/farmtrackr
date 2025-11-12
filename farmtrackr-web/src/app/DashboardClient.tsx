@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { FarmContact, Stats } from '@/types'
-import type { ListingClient } from '@/types/listings'
+import type { ListingClient, ListingTaskClient } from '@/types/listings'
 import {
   Users,
   Building2,
@@ -320,8 +320,341 @@ export default function DashboardClient({ contacts, stats, listings: initialList
   const calendarRangeKeyRef = useRef<string | null>(null)
   const calendarsLoadedRef = useRef(false)
 
-  const listings = initialListings
+  const [listings, setListings] = useState<ListingClient[]>(initialListings)
   const [detailListing, setDetailListing] = useState<ListingClient | null>(null)
+  const [updatingListingId, setUpdatingListingId] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<string | null>(null)
+
+  // Update listings when initialListings changes
+  useEffect(() => {
+    setListings(initialListings)
+  }, [initialListings])
+
+  const updateListingInState = (updated: ListingClient) => {
+    setListings((prev) => prev.map((listing) => (listing.id === updated.id ? updated : listing)))
+  }
+
+  const snapshotCurrentListings = () =>
+    listings.map((listing) => ({
+      ...listing,
+      stageInstances: listing.stageInstances.map((stage) => ({
+        ...stage,
+        tasks: stage.tasks.map((taskItem) => ({ ...taskItem }))
+      }))
+    }))
+
+  const handleToggleTask = async (listingId: string, task: ListingTaskClient, completed: boolean) => {
+    setUpdatingListingId(listingId)
+    setFeedback(null)
+
+    const previous = snapshotCurrentListings()
+    setListings((prev) =>
+      prev.map((listing) => {
+        if (listing.id !== listingId) return listing
+        return {
+          ...listing,
+          stageInstances: listing.stageInstances.map((stage) => ({
+            ...stage,
+            tasks: stage.tasks.map((t) =>
+              t.id === task.id
+                ? {
+                    ...t,
+                    completed,
+                    completedAt: completed ? new Date().toISOString() : null,
+                    skipped: false,
+                    skippedAt: null
+                  }
+                : t
+            )
+          }))
+        }
+      })
+    )
+    setDetailListing((prev) => {
+      if (!prev || prev.id !== listingId) return prev
+      return {
+        ...prev,
+        stageInstances: prev.stageInstances.map((stage) => ({
+          ...stage,
+          tasks: stage.tasks.map((t) =>
+            t.id === task.id
+              ? {
+                  ...t,
+                  completed,
+                  completedAt: completed ? new Date().toISOString() : null,
+                  skipped: false,
+                  skippedAt: null
+                }
+              : t
+          )
+        }))
+      }
+    })
+
+    try {
+      const response = await fetch(`/api/listings/${listingId}/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update task')
+      }
+
+      const updatedListing: ListingClient = await response.json()
+      updateListingInState(updatedListing)
+      setDetailListing((prev) => (prev && prev.id === updatedListing.id ? updatedListing : prev))
+    } catch (error) {
+      console.error('Error toggling task', error)
+      setListings(previous)
+      setFeedback('Something went wrong updating that task. Please try again.')
+    } finally {
+      setUpdatingListingId(null)
+    }
+  }
+
+  const handleToggleTaskSkip = async (listingId: string, task: ListingTaskClient, skipped: boolean) => {
+    setUpdatingListingId(listingId)
+    setFeedback(null)
+
+    const previous = snapshotCurrentListings()
+    const timestamp = new Date().toISOString()
+
+    setListings((prev) =>
+      prev.map((listing) => {
+        if (listing.id !== listingId) return listing
+        return {
+          ...listing,
+          stageInstances: listing.stageInstances.map((stage) => ({
+            ...stage,
+            tasks: stage.tasks.map((t) =>
+              t.id === task.id
+                ? {
+                    ...t,
+                    skipped,
+                    skippedAt: skipped ? timestamp : null,
+                    completed: skipped ? false : t.completed,
+                    completedAt: skipped ? null : t.completedAt
+                  }
+                : t
+            )
+          }))
+        }
+      })
+    )
+
+    setDetailListing((prev) => {
+      if (!prev || prev.id !== listingId) return prev
+      return {
+        ...prev,
+        stageInstances: prev.stageInstances.map((stage) => ({
+          ...stage,
+          tasks: stage.tasks.map((t) =>
+            t.id === task.id
+              ? {
+                  ...t,
+                  skipped,
+                  skippedAt: skipped ? timestamp : null,
+                  completed: skipped ? false : t.completed,
+                  completedAt: skipped ? null : t.completedAt
+                }
+              : t
+          )
+        }))
+      }
+    })
+
+    try {
+      const response = await fetch(`/api/listings/${listingId}/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skipped })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update task requirement')
+      }
+
+      const updatedListing: ListingClient = await response.json()
+      updateListingInState(updatedListing)
+      setDetailListing((prev) => (prev && prev.id === updatedListing.id ? updatedListing : prev))
+    } catch (error) {
+      console.error('Error skipping task', error)
+      setListings(previous)
+      setFeedback('Unable to update task requirement right now.')
+    } finally {
+      setUpdatingListingId(null)
+    }
+  }
+
+  const handleAddTaskToStage = async (
+    stageInstanceId: string,
+    payload: { name: string; dueDate?: string | null }
+  ) => {
+    if (!detailListing) return
+
+    setUpdatingListingId(detailListing.id)
+    setFeedback(null)
+
+    try {
+      const response = await fetch(`/api/listings/${detailListing.id}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stageInstanceId,
+          name: payload.name,
+          dueDate: payload.dueDate ?? null
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to add task')
+      }
+
+      const updatedListing: ListingClient = await response.json()
+      updateListingInState(updatedListing)
+      setDetailListing(updatedListing)
+      setFeedback('Task added to the checklist.')
+    } catch (error) {
+      console.error('Error adding task', error)
+      setFeedback('Unable to add that task right now. Please try again.')
+      throw error instanceof Error ? error : new Error('Unable to add task')
+    } finally {
+      setUpdatingListingId(null)
+    }
+  }
+
+  const handleUpdateTaskDetails = async (
+    taskId: string,
+    updates: { name?: string; dueDate?: string | null }
+  ) => {
+    if (!detailListing) return
+    if (!updates || Object.keys(updates).length === 0) return
+
+    setUpdatingListingId(detailListing.id)
+    setFeedback(null)
+
+    try {
+      const response = await fetch(`/api/listings/${detailListing.id}/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update task details')
+      }
+
+      const updatedListing: ListingClient = await response.json()
+      updateListingInState(updatedListing)
+      setDetailListing(updatedListing)
+      setFeedback('Task details updated.')
+    } catch (error) {
+      console.error('Error updating task details', error)
+      setFeedback('Unable to save those changes right now.')
+      throw error instanceof Error ? error : new Error('Unable to update task details')
+    } finally {
+      setUpdatingListingId(null)
+    }
+  }
+
+  const handleAttachTaskDocument = async (taskId: string, file: File | null) => {
+    if (!detailListing) {
+      console.error('No detail listing available for document attachment')
+      return
+    }
+
+    setUpdatingListingId(detailListing.id)
+    setFeedback(null)
+
+    try {
+      let documentId: string | null = null
+
+      if (file) {
+        console.log('Starting file upload:', file.name, file.size, file.type)
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const uploadResponse = await fetch('/api/uploads', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!uploadResponse.ok) {
+          const errorPayload = await uploadResponse.json().catch(() => ({}))
+          console.error('Upload failed:', uploadResponse.status, errorPayload)
+          throw new Error(errorPayload.error || `File upload failed: ${uploadResponse.status}`)
+        }
+
+        const uploadData = await uploadResponse.json()
+        console.log('Upload successful:', uploadData)
+        const fileUrl = uploadData.url
+
+        if (!fileUrl) {
+          console.error('No URL returned from upload:', uploadData)
+          throw new Error('Upload succeeded but no URL returned')
+        }
+
+        const descriptionParts = [
+          file.name,
+          detailListing.title || detailListing.address || detailListing.pipelineName || 'Listing document'
+        ].filter(Boolean)
+
+        console.log('Creating document record:', file.name, fileUrl)
+        const documentResponse = await fetch('/api/documents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: file.name,
+            description: `Uploaded file ${descriptionParts.join(' • ')}`,
+            fileUrl
+          })
+        })
+
+        if (!documentResponse.ok) {
+          const errorPayload = await documentResponse.json().catch(() => ({}))
+          console.error('Document creation failed:', documentResponse.status, errorPayload)
+          throw new Error(errorPayload.error || `Document save failed: ${documentResponse.status}`)
+        }
+
+        const document = await documentResponse.json()
+        console.log('Document created:', document)
+        documentId = document.id
+
+        if (!documentId) {
+          console.error('No document ID returned:', document)
+          throw new Error('Document created but no ID returned')
+        }
+      }
+
+      console.log('Attaching document to task:', taskId, documentId)
+      const response = await fetch(`/api/listings/${detailListing.id}/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentId })
+      })
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => ({}))
+        console.error('Task update failed:', response.status, errorPayload)
+        throw new Error(errorPayload.error || `Failed to update task document: ${response.status}`)
+      }
+
+      const updatedListing: ListingClient = await response.json()
+      console.log('Task updated successfully:', updatedListing)
+      updateListingInState(updatedListing)
+      setDetailListing(updatedListing)
+      setFeedback(file ? 'Document attached to task.' : 'Document removed from task.')
+    } catch (error) {
+      console.error('Error updating task document:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      setFeedback(`Unable to update the document: ${errorMessage}`)
+      throw error instanceof Error ? error : new Error('Unable to update task document')
+    } finally {
+      setUpdatingListingId(null)
+    }
+  }
 
   const listingsByStage = useMemo(() => {
     const groups: Record<'intake' | 'marketing' | 'escrow', ListingClient[]> = {
@@ -2307,6 +2640,12 @@ export default function DashboardClient({ contacts, stats, listings: initialList
       listing={detailListing}
       onClose={() => setDetailListing(null)}
       onOpenPipeline={() => router.push('/listings')}
+      onToggleTask={handleToggleTask}
+      onToggleSkip={handleToggleTaskSkip}
+      onAddTask={handleAddTaskToStage}
+      onUpdateTask={handleUpdateTaskDetails}
+      onAttachDocument={handleAttachTaskDocument}
+      isUpdating={detailListing ? updatingListingId === detailListing.id : false}
     />
 
     {showQuickEventModal && (

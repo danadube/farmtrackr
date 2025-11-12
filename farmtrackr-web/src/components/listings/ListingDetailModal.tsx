@@ -369,7 +369,7 @@ export function ListingDetailModal({
 
   const renderTaskRow = (task: ListingTaskClient & { category: TaskCategory }, stageId: string) => {
     const isEditing = editingTaskId === task.id
-    const isSaving = savingTaskId === task.id || !!isUpdating
+    const isSaving = savingTaskId === task.id
     const isUploading = uploadingTaskId === task.id
     const isSkipped = task.skipped
     const dueInputValue = isEditing ? editTaskDueDate : toDateInputValue(task.dueDate)
@@ -422,7 +422,7 @@ export function ListingDetailModal({
           <input
             type="checkbox"
             checked={task.completed}
-            disabled={!canToggleTasks || isSaving || isUploading || isSkipped}
+            disabled={!canToggleTasks || isSaving || isUploading || isSkipped || !!isUpdating}
             onChange={(event) => {
               event.stopPropagation()
               onToggleTask?.(listing.id, task, event.target.checked)
@@ -432,7 +432,7 @@ export function ListingDetailModal({
             style={{
               width: '16px',
               height: '16px',
-              cursor: canToggleTasks && !isSaving && !isUploading && !isSkipped ? 'pointer' : 'not-allowed',
+              cursor: canToggleTasks && !isSaving && !isUploading && !isSkipped && !isUpdating ? 'pointer' : 'not-allowed',
               marginTop: spacing(0.5)
             }}
           />
