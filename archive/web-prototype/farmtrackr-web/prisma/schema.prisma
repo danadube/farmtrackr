@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model FarmContact {
+  id                String   @id @default(cuid())
+  firstName         String?
+  lastName          String?
+  mailingAddress    String?
+  city              String?
+  state             String?
+  zipCode           Int?
+  email1            String?
+  email2            String?
+  phoneNumber1      String?
+  phoneNumber2      String?
+  phoneNumber3      String?
+  phoneNumber4      String?
+  phoneNumber5      String?
+  phoneNumber6      String?
+  siteMailingAddress String?
+  siteCity          String?
+  siteState         String?
+  siteZipCode       Int?
+  notes             String?
+  farm              String?
+  dateCreated       DateTime @default(now())
+  dateModified      DateTime @updatedAt
+
+  @@map("farm_contacts")
+}
+
+model ImportTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  fieldMappings Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("import_templates")
+}
+
+model LabelTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  template    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("label_templates")
+}

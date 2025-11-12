@@ -70,7 +70,6 @@ export function Sidebar({ children }: SidebarProps) {
   const [isMounted, setIsMounted] = useState(false)
   const { getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const router = useRouter()
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({})
   const [showQuickCreate, setShowQuickCreate] = useState(false)
   
   // Ensure we read theme from DOM on mount (set by inline script)
@@ -108,13 +107,19 @@ export function Sidebar({ children }: SidebarProps) {
     return () => window.removeEventListener('resize', checkIsDesktop)
   }, [])
 
+  // Dashboard as standalone item (not in a section)
+  const dashboardItem: SidebarItem = {
+    href: '/',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+  }
+
   const sections: SidebarSection[] = [
     {
       id: 'workspace',
       title: 'Workspace',
       defaultOpen: true,
       items: [
-        { href: '/', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/calendar', label: 'Calendar', icon: CalendarIcon },
         { href: '/listings', label: 'Listings', icon: Home },
         { href: '/commissions', label: 'Commissions', icon: Briefcase },
@@ -214,26 +219,39 @@ export function Sidebar({ children }: SidebarProps) {
     router.push(href)
   }
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
+  // Initialize openSections with defaults immediately
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    if (typeof window === 'undefined') {
+      const defaults: Record<string, boolean> = {}
+      sections.forEach((section) => {
+        defaults[section.id] = section.defaultOpen ?? true
+      })
+      return defaults
+    }
+    
     try {
       const stored = localStorage.getItem('sidebar.sectionState')
       if (stored) {
         const parsed = JSON.parse(stored)
         if (parsed && typeof parsed === 'object') {
-          setOpenSections(parsed)
-          return
+          // Merge with defaults to ensure all sections have a value
+          const defaults: Record<string, boolean> = {}
+          sections.forEach((section) => {
+            defaults[section.id] = section.defaultOpen ?? true
+          })
+          return { ...defaults, ...parsed }
         }
       }
     } catch (error) {
       console.error('Failed to load sidebar section state:', error)
     }
+    
     const defaults: Record<string, boolean> = {}
     sections.forEach((section) => {
       defaults[section.id] = section.defaultOpen ?? true
     })
-    setOpenSections(defaults)
-  }, [])
+    return defaults
+  })
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -428,6 +446,94 @@ export function Sidebar({ children }: SidebarProps) {
             <Plus style={{ width: '16px', height: '16px' }} />
             New
           </button>
+
+          {/* Dashboard as standalone item */}
+          {(() => {
+            const Icon = dashboardItem.icon
+            const active = isActive(dashboardItem.href, dashboardItem.exactMatch, dashboardItem.hash)
+            const iconColor = dashboardItem.iconColor || colors.primary
+            const iconBgColor = resolvedTheme === 'dark'
+              ? 'rgba(255, 255, 255, 0.06)'
+              : 'rgba(15, 23, 42, 0.04)'
+
+            const dashboardContent = (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '10px 14px 10px 20px',
+                  marginLeft: '4px',
+                  borderRadius: '10px',
+                  backgroundColor: active
+                    ? (resolvedTheme === 'dark'
+                        ? 'rgba(104, 159, 56, 0.22)'
+                        : 'rgba(104, 159, 56, 0.12)')
+                    : 'transparent',
+                  color: active ? colors.primary : colors.text.secondary,
+                  fontWeight: active ? 600 : 500,
+                  fontSize: '13px',
+                  borderLeft: active ? `4px solid ${colors.primary}` : '4px solid transparent',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease, border-color 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.backgroundColor = resolvedTheme === 'dark'
+                      ? 'rgba(255,255,255,0.06)'
+                      : 'rgba(15,23,42,0.04)'
+                    e.currentTarget.style.borderLeftColor = 'rgba(104, 159, 56, 0.4)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.borderLeftColor = 'transparent'
+                  }
+                }}
+              >
+                <div
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    backgroundColor: iconBgColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      color: iconColor,
+                    }}
+                  />
+                </div>
+                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {dashboardItem.label}
+                </span>
+              </div>
+            )
+
+            return (
+              <Link
+                key="dashboard"
+                href={dashboardItem.href}
+                prefetch={false}
+                style={{ textDecoration: 'none' }}
+                onClick={() => {
+                  if (!isDesktop) {
+                    setIsMobileOpen(false)
+                  }
+                }}
+              >
+                {dashboardContent}
+              </Link>
+            )
+          })()}
 
           {sections.map((section) => {
             const open = openSections[section.id] ?? section.defaultOpen ?? true

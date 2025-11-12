@@ -518,7 +518,7 @@ function addDays(base: Date, days: number | null | undefined) {
   return result
 }
 
-async function rebuildListingStagesFromTemplate(
+export async function rebuildListingStagesFromTemplate(
   listingId: string,
   pipelineTemplateId: string,
   client: PrismaClient = prisma,
