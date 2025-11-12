@@ -1315,7 +1315,7 @@ function renderCalendarGrid({
                   padding: `${spacing(0.5)} ${spacing(0.75)}`,
                 }}
               >
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: event.calendarColor || colors.primary }} />
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: event.calendarColor || colors.primary, flexShrink: 0 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), minWidth: 0 }}>
                   <span style={{ fontSize: '11px', fontWeight: 600, color: text.primary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {event.title}
