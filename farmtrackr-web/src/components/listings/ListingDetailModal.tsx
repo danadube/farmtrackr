@@ -12,7 +12,8 @@ import {
   Save,
   X as CloseIcon,
   Trash2,
-  CircleSlash2
+  CircleSlash2,
+  RefreshCw
 } from 'lucide-react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import type { ListingClient, ListingTaskClient } from '@/types/listings'
@@ -231,6 +232,33 @@ export function ListingDetailModal({
   }, [listing?.id, listing?.stageInstances?.length])
   
   const canToggleTasks = Boolean(onToggleTask)
+
+  const handleRebuildStages = async () => {
+    if (!listing?.id || isRebuilding) return
+
+    setIsRebuilding(true)
+    setRebuildError(null)
+
+    try {
+      const response = await fetch(`/api/listings/${listing.id}/rebuild`, {
+        method: 'POST'
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || errorData.error || 'Failed to rebuild stages')
+      }
+
+      const updatedListing = await response.json()
+      
+      // Reload the page to show the updated listing
+      window.location.reload()
+    } catch (error) {
+      console.error('Error rebuilding stages:', error)
+      setRebuildError(error instanceof Error ? error.message : 'Failed to rebuild stages')
+      setIsRebuilding(false)
+    }
+  }
   
   type StageGroup = {
     stageId: string
@@ -309,6 +337,8 @@ export function ListingDetailModal({
   const [newTaskDueDate, setNewTaskDueDate] = useState('')
   const [creatingStageId, setCreatingStageId] = useState<string | null>(null)
   const fileInputsRef = useRef<Record<string, HTMLInputElement | null>>({})
+  const [isRebuilding, setIsRebuilding] = useState(false)
+  const [rebuildError, setRebuildError] = useState<string | null>(null)
 
   const toDateInputValue = (value: string | null) => {
     if (!value) return ''
@@ -956,19 +986,26 @@ export function ListingDetailModal({
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1200,
-        padding: '24px'
-      }}
-      onClick={onClose}
-    >
+    <>
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.45)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1200,
+          padding: '24px'
+        }}
+        onClick={onClose}
+      >
       <div
         style={{
           ...card,
@@ -1063,15 +1100,61 @@ export function ListingDetailModal({
             gap: spacing(1.5)
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-            <CheckSquare style={{ width: '18px', height: '18px', color: colors.primary }} />
-            <div>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, ...text.primary }}>Listing Tasks</h3>
-              <p style={{ margin: `${spacing(0.25)} 0 0 0`, fontSize: '13px', ...text.secondary }}>
-                All tasks organized by stage in chronological order. Tasks are sorted by due date within each stage.
-              </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(1) }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1), flex: 1 }}>
+              <CheckSquare style={{ width: '18px', height: '18px', color: colors.primary }} />
+              <div>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, ...text.primary }}>Listing Tasks</h3>
+                <p style={{ margin: `${spacing(0.25)} 0 0 0`, fontSize: '13px', ...text.secondary }}>
+                  All tasks organized by stage in chronological order. Tasks are sorted by due date within each stage.
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={handleRebuildStages}
+              disabled={isRebuilding || !!isUpdating}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: `1px solid ${colors.border}`,
+                backgroundColor: isRebuilding ? colors.cardHover : 'transparent',
+                color: colors.text.secondary,
+                fontSize: '12px',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: spacing(0.5),
+                cursor: isRebuilding || isUpdating ? 'not-allowed' : 'pointer',
+                opacity: isRebuilding || isUpdating ? 0.6 : 1,
+                transition: 'all 0.2s ease'
+              }}
+              title="Rebuild all stages from template (fixes missing stages)"
+            >
+              <RefreshCw 
+                style={{ 
+                  width: '14px', 
+                  height: '14px',
+                  animation: isRebuilding ? 'spin 1s linear infinite' : 'none'
+                }} 
+              />
+              {isRebuilding ? 'Rebuilding...' : 'Rebuild Stages'}
+            </button>
           </div>
+          {rebuildError && (
+            <div
+              style={{
+                padding: spacing(1),
+                borderRadius: '6px',
+                backgroundColor: `${colors.error || '#ef4444'}22`,
+                border: `1px solid ${colors.error || '#ef4444'}`,
+                color: colors.error || '#ef4444',
+                fontSize: '12px'
+              }}
+            >
+              {rebuildError}
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
             {stageGroups.length > 0 ? (
               stageGroups.map((stage) => renderStageSection(stage))
@@ -1129,6 +1212,7 @@ export function ListingDetailModal({
         </div>
       </div>
     </div>
+    </>
   )
 }
 
