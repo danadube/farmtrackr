@@ -259,7 +259,7 @@ const DASHBOARD_SEED_LISTINGS: Array<{
   }
 ]
 
-async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
+export async function ensureListingPipelineTemplate(client: PrismaClient = prisma) {
   const pipelineId = await client.$transaction(
     async (tx) => {
       const existing = await tx.listingPipelineTemplate.findFirst({
