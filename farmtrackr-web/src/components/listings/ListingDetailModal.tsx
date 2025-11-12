@@ -1110,36 +1110,93 @@ export function ListingDetailModal({
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleRebuildStages}
-              disabled={isRebuilding || !!isUpdating}
-              style={{
-                padding: '8px 14px',
-                borderRadius: '8px',
-                border: `1px solid ${colors.border}`,
-                backgroundColor: isRebuilding ? colors.cardHover : 'transparent',
-                color: colors.text.secondary,
-                fontSize: '12px',
-                fontWeight: 600,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: spacing(0.5),
-                cursor: isRebuilding || isUpdating ? 'not-allowed' : 'pointer',
-                opacity: isRebuilding || isUpdating ? 0.6 : 1,
-                transition: 'all 0.2s ease'
-              }}
-              title="Rebuild all stages from template (fixes missing stages)"
-            >
-              <RefreshCw 
-                style={{ 
-                  width: '14px', 
-                  height: '14px',
-                  animation: isRebuilding ? 'spin 1s linear infinite' : 'none'
-                }} 
-              />
-              {isRebuilding ? 'Rebuilding...' : 'Rebuild Stages'}
-            </button>
+            <div style={{ display: 'flex', gap: spacing(0.5) }}>
+              <button
+                type="button"
+                onClick={handleRebuildStages}
+                disabled={isRebuilding || !!isUpdating}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: `1px solid ${colors.border}`,
+                  backgroundColor: isRebuilding ? colors.cardHover : 'transparent',
+                  color: colors.text.secondary,
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: spacing(0.5),
+                  cursor: isRebuilding || isUpdating ? 'not-allowed' : 'pointer',
+                  opacity: isRebuilding || isUpdating ? 0.6 : 1,
+                  transition: 'all 0.2s ease'
+                }}
+                title="Rebuild all stages from template (fixes missing stages)"
+              >
+                <RefreshCw 
+                  style={{ 
+                    width: '14px', 
+                    height: '14px',
+                    animation: isRebuilding ? 'spin 1s linear infinite' : 'none'
+                  }} 
+                />
+                {isRebuilding ? 'Rebuilding...' : 'Rebuild Stages'}
+              </button>
+              {listing?.address?.includes('Desert Holly') && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!listing?.id || isRebuilding) return
+                    if (!confirm('This will completely delete and recreate Desert Holly. Continue?')) return
+
+                    setIsRebuilding(true)
+                    setRebuildError(null)
+
+                    try {
+                      const response = await fetch('/api/listings/reseed-desert-holly', {
+                        method: 'POST'
+                      })
+
+                      if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}))
+                        throw new Error(errorData.message || errorData.error || 'Failed to reseed listing')
+                      }
+
+                      const data = await response.json()
+                      if (data.success) {
+                        alert('Desert Holly has been deleted and recreated!')
+                        window.location.reload()
+                      } else {
+                        throw new Error(data.message || 'Failed to reseed')
+                      }
+                    } catch (error) {
+                      console.error('Error reseeding Desert Holly:', error)
+                      setRebuildError(error instanceof Error ? error.message : 'Failed to reseed listing')
+                      setIsRebuilding(false)
+                    }
+                  }}
+                  disabled={isRebuilding || !!isUpdating}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    border: `1px solid ${colors.error || '#ef4444'}`,
+                    backgroundColor: 'transparent',
+                    color: colors.error || '#ef4444',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: spacing(0.5),
+                    cursor: isRebuilding || isUpdating ? 'not-allowed' : 'pointer',
+                    opacity: isRebuilding || isUpdating ? 0.6 : 1,
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="Delete and recreate Desert Holly listing (fixes corrupted listings)"
+                >
+                  <Trash2 style={{ width: '14px', height: '14px' }} />
+                  {isRebuilding ? 'Reseeding...' : 'Delete & Recreate'}
+                </button>
+              )}
+            </div>
           </div>
           {rebuildError && (
             <div
