@@ -658,10 +658,11 @@ export default function CalendarPage() {
                               />
                               <span
                                 style={{
-                                  width: '10px',
-                                  height: '10px',
+                                  width: '12px',
+                                  height: '12px',
                                   borderRadius: '50%',
                                   backgroundColor: calendar.backgroundColor || '#2563eb',
+                                  flexShrink: 0,
                                 }}
                               />
                               <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
