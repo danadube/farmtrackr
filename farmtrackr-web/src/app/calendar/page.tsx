@@ -89,6 +89,8 @@ export default function CalendarPage() {
   const [calendars, setCalendars] = useState<GoogleCalendar[]>([])
   const [selectedCalendars, setSelectedCalendars] = useState<string[]>([])
   const [showCalendarPicker, setShowCalendarPicker] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<NormalizedEvent | null>(null)
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false)
 
   useEffect(() => {
     let storedSelection: string[] | undefined
@@ -795,9 +797,8 @@ export default function CalendarPage() {
                   <div
                     key={event.id}
                     onClick={() => {
-                      if (event.htmlLink) {
-                        window.open(event.htmlLink, '_blank', 'noopener,noreferrer')
-                      }
+                      setSelectedEvent(event)
+                      setIsEventModalOpen(true)
                     }}
                     style={{
                       padding: spacing(1.25),
@@ -1320,9 +1321,8 @@ function renderCalendarGrid({
                 key={event.id}
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (event.htmlLink) {
-                    window.open(event.htmlLink, '_blank', 'noopener,noreferrer')
-                  }
+                  setSelectedEvent(event)
+                  setIsEventModalOpen(true)
                 }}
                 style={{
                   display: 'flex',
@@ -1433,9 +1433,8 @@ function renderCalendarGrid({
                 key={event.id}
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (event.htmlLink) {
-                    window.open(event.htmlLink, '_blank', 'noopener,noreferrer')
-                  }
+                  setSelectedEvent(event)
+                  setIsEventModalOpen(true)
                 }}
                 style={{
                   borderRadius: spacing(0.75),
