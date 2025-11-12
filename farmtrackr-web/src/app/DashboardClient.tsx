@@ -188,7 +188,10 @@ function parseCalendarDate(dateInput?: { date?: string | null; dateTime?: string
     return new Date(dateInput.dateTime)
   }
   if (dateInput.date) {
-    return new Date(dateInput.date)
+    // All-day events - parse as local date to avoid timezone offset issues
+    // Format: "YYYY-MM-DD"
+    const [year, month, day] = dateInput.date.split('-').map(Number)
+    return new Date(year, month - 1, day)
   }
   return null
 }

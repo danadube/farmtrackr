@@ -794,6 +794,11 @@ export default function CalendarPage() {
                 {selectedDateEvents.map((event) => (
                   <div
                     key={event.id}
+                    onClick={() => {
+                      if (event.htmlLink) {
+                        window.open(event.htmlLink, '_blank', 'noopener,noreferrer')
+                      }
+                    }}
                     style={{
                       padding: spacing(1.25),
                       borderRadius: spacing(1),
@@ -802,6 +807,18 @@ export default function CalendarPage() {
                       flexDirection: 'column',
                       gap: spacing(0.5),
                       borderLeft: `4px solid ${event.calendarColor || colors.primary}`,
+                      cursor: event.htmlLink ? 'pointer' : 'default',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (event.htmlLink) {
+                        e.currentTarget.style.backgroundColor = colors.borderHover || colors.card
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (event.htmlLink) {
+                        e.currentTarget.style.backgroundColor = colors.cardHover
+                      }
                     }}
                   >
                     <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -821,14 +838,9 @@ export default function CalendarPage() {
                       </p>
                     )}
                     {event.htmlLink && (
-                      <a
-                        href={event.htmlLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ marginTop: spacing(0.5), fontSize: '12px', fontWeight: 500, color: colors.primary, textDecoration: 'none' }}
-                      >
-                        Open in Google Calendar
-                      </a>
+                      <span style={{ marginTop: spacing(0.5), fontSize: '12px', fontWeight: 500, color: colors.primary }}>
+                        Click to open in Google Calendar →
+                      </span>
                     )}
                   </div>
                 ))}
@@ -1306,6 +1318,12 @@ function renderCalendarGrid({
             {dayEvents.slice(0, 3).map((event) => (
               <div
                 key={event.id}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (event.htmlLink) {
+                    window.open(event.htmlLink, '_blank', 'noopener,noreferrer')
+                  }
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -1313,6 +1331,18 @@ function renderCalendarGrid({
                   borderRadius: spacing(0.5),
                   backgroundColor: colors.cardHover,
                   padding: `${spacing(0.5)} ${spacing(0.75)}`,
+                  cursor: event.htmlLink ? 'pointer' : 'default',
+                  transition: 'background-color 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (event.htmlLink) {
+                    e.currentTarget.style.backgroundColor = colors.borderHover || colors.card
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (event.htmlLink) {
+                    e.currentTarget.style.backgroundColor = colors.cardHover
+                  }
                 }}
               >
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: event.calendarColor || colors.primary, flexShrink: 0 }} />
@@ -1401,6 +1431,12 @@ function renderCalendarGrid({
             dayEvents.map((event) => (
               <div
                 key={event.id}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (event.htmlLink) {
+                    window.open(event.htmlLink, '_blank', 'noopener,noreferrer')
+                  }
+                }}
                 style={{
                   borderRadius: spacing(0.75),
                   backgroundColor: colors.cardHover,
@@ -1409,6 +1445,18 @@ function renderCalendarGrid({
                   flexDirection: 'column',
                   gap: spacing(0.5),
                   borderLeft: `4px solid ${event.calendarColor || colors.primary}`,
+                  cursor: event.htmlLink ? 'pointer' : 'default',
+                  transition: 'background-color 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (event.htmlLink) {
+                    e.currentTarget.style.backgroundColor = colors.borderHover || colors.card
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (event.htmlLink) {
+                    e.currentTarget.style.backgroundColor = colors.cardHover
+                  }
                 }}
               >
                 <span style={{ fontSize: '13px', fontWeight: 600, color: text.primary.color }}>
