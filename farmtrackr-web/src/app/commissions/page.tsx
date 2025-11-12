@@ -857,7 +857,7 @@ const referralNet = referralFeesReceived - referralFeesPaid
                 margin: '0 auto 16px'
               }}
             />
-            <p style={{ ...text.secondary }}>Loading commissions...</p>
+            <p style={{ ...text.secondary }}>Loading transactions...</p>
           </div>
         </div>
       </Sidebar>
@@ -942,7 +942,7 @@ const referralNet = referralFeesReceived - referralFeesPaid
                         margin: '0 0 4px 0'
                       }}
                     >
-                      Commissions
+                      Closed Transactions
                     </h1>
                     <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '16px', margin: '0' }}>
                       Track your real estate transactions and commissions
@@ -1974,7 +1974,7 @@ const referralNet = referralFeesReceived - referralFeesPaid
                   No transactions yet
                 </h3>
                 <p style={{ ...text.secondary, marginBottom: '24px' }}>
-                  Start tracking your commissions by adding your first transaction.
+                  Start tracking your closed transactions by adding your first transaction.
                 </p>
                 <button
                   onClick={() => {

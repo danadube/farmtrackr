@@ -122,7 +122,7 @@ export function Sidebar({ children }: SidebarProps) {
       items: [
         { href: '/calendar', label: 'Calendar', icon: CalendarIcon },
         { href: '/listings', label: 'Listings', icon: Home },
-        { href: '/commissions', label: 'Commissions', icon: Briefcase },
+        { href: '/commissions', label: 'Closed Transactions', icon: Briefcase },
         { href: '/contacts', label: 'Contacts', icon: Users },
         { href: '/tasks', label: 'Tasks', icon: CheckCircle2 },
       ],

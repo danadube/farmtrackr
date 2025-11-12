@@ -482,6 +482,7 @@ export default function CalendarPage() {
                       borderRadius: spacing(0.75),
                       border: `1px solid ${colors.border}`,
                       backgroundColor: colors.surface,
+                      color: text.primary.color,
                       fontSize: '13px',
                       cursor: 'pointer',
                     },
