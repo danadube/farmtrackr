@@ -89,6 +89,8 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
   const [googleConnectionStatus, setGoogleConnectionStatus] = useState<'connected' | 'not-connected' | 'checking'>(
     'checking'
   )
+  const [googleAccountEmail, setGoogleAccountEmail] = useState<string>('')
+  const [googleAccountName, setGoogleAccountName] = useState<string>('')
   const [contacts, setContacts] = useState<GeneralContact[]>([])
   const [isLoadingContacts, setIsLoadingContacts] = useState(false)
   const [selectedContact, setSelectedContact] = useState<GeneralContact | null>(null)
@@ -99,17 +101,40 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   useEffect(() => {
+    let previousEmail = googleAccountEmail
+    let wasConnected = googleConnectionStatus === 'connected'
+
     const checkConnection = async () => {
       try {
         const res = await fetch('/api/google/oauth/status')
         if (res.ok) {
           const data = await res.json()
-          setGoogleConnectionStatus(data.connected ? 'connected' : 'not-connected')
+          const isNowConnected = data.connected
+          const newEmail = data.userEmail || ''
+          
+          setGoogleConnectionStatus(isNowConnected ? 'connected' : 'not-connected')
+          setGoogleAccountEmail(newEmail)
+          setGoogleAccountName(data.userName || '')
+          
+          // If account changed (different email) or just connected, reload contacts
+          if (isNowConnected && (previousEmail !== newEmail || !wasConnected)) {
+            // Reload contacts when account changes or connects
+            loadContacts()
+            loadStats()
+            previousEmail = newEmail
+            wasConnected = true
+          }
         } else {
           setGoogleConnectionStatus('not-connected')
+          setGoogleAccountEmail('')
+          setGoogleAccountName('')
+          wasConnected = false
         }
       } catch (_) {
         setGoogleConnectionStatus('not-connected')
+        setGoogleAccountEmail('')
+        setGoogleAccountName('')
+        wasConnected = false
       }
     }
 
@@ -142,6 +167,10 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
     checkConnection()
     loadStats()
     loadContacts()
+    
+    // Check connection status periodically
+    const intervalId = setInterval(checkConnection, 5000)
+    return () => clearInterval(intervalId)
   }, [])
 
   const uniqueTags = useMemo(() => Array.from(new Set(contacts.flatMap((c) => c.tags || []))).sort(), [contacts])
@@ -225,21 +254,26 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
           type: 'success',
           message: `Successfully imported ${result.imported || 0} contacts, updated ${result.updated || 0}, skipped ${result.skipped || 0}`,
         })
-        try {
-          const [statsRes, contactsRes] = await Promise.all([
-            fetch('/api/google-contacts/stats'),
-            fetch('/api/google-contacts'),
-          ])
-          if (statsRes.ok) {
-            const stats = await statsRes.json()
-            setTotalContacts(stats.totalContacts || 0)
-            setLastSyncedAt(stats.lastSyncedAt ? new Date(stats.lastSyncedAt).toLocaleString() : '')
+        // Reload contacts and stats after a short delay to ensure database is updated
+        setTimeout(async () => {
+          try {
+            const [statsRes, contactsRes] = await Promise.all([
+              fetch('/api/google-contacts/stats'),
+              fetch('/api/google-contacts'),
+            ])
+            if (statsRes.ok) {
+              const stats = await statsRes.json()
+              setTotalContacts(stats.totalContacts || 0)
+              setLastSyncedAt(stats.lastSyncedAt ? new Date(stats.lastSyncedAt).toLocaleString() : '')
+            }
+            if (contactsRes.ok) {
+              const contactsData = await contactsRes.json()
+              setContacts(contactsData || [])
+            }
+          } catch (error) {
+            console.error('Failed to reload contacts after import:', error)
           }
-          if (contactsRes.ok) {
-            const contactsData = await contactsRes.json()
-            setContacts(contactsData || [])
-          }
-        } catch (_) {}
+        }, 500)
       } else {
         setImportStatus({
           type: 'error',
@@ -502,7 +536,9 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
                   {googleConnectionStatus === 'connected' ? (
                     <>
                       <CheckCircle style={{ width: '16px', height: '16px', color: colors.success }} />
-                      <span>Connected</span>
+                      <span>
+                        {googleAccountEmail ? `Connected as ${googleAccountEmail}` : 'Connected'}
+                      </span>
                     </>
                   ) : (
                     <>

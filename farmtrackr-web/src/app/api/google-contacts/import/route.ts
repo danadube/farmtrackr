@@ -116,15 +116,11 @@ export async function POST(request: NextRequest) {
           })
         }
 
-        // Find existing contact by Google Contacts ID or by name/email
+        // Find existing contact by Google Contacts ID only
+        // This ensures contacts from different Google accounts don't get mixed up
         const existing = await prisma.generalContact.findFirst({
           where: {
-            OR: [
-              { googleContactsId: googleContactsId },
-              email1 ? {
-                email1: email1
-              } : undefined
-            ].filter(Boolean)
+            googleContactsId: googleContactsId
           }
         })
 

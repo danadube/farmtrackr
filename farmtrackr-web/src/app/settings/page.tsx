@@ -27,6 +27,8 @@ export default function SettingsPage() {
   const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
   const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'data' | 'appearance' | 'google' | 'about'>('general')
   const [googleStatus, setGoogleStatus] = useState<{
+    userEmail?: string | null
+    userName?: string | null
     connected: boolean
     hasAccessToken: boolean
     hasRefreshToken: boolean
@@ -758,7 +760,9 @@ export default function SettingsPage() {
                         ) : googleStatus.connected ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <CheckCircle style={{ width: '18px', height: '18px', color: colors.success }} />
-                            <span style={{ fontSize: '13px', color: colors.success, fontWeight: '500' }}>Connected</span>
+                            <span style={{ fontSize: '13px', color: colors.success, fontWeight: '500' }}>
+                              {googleStatus.userEmail ? `Connected as ${googleStatus.userEmail}` : 'Connected'}
+                            </span>
                           </div>
                         ) : (
                           <span style={{ fontSize: '13px', ...text.secondary }}>Not Connected</span>
