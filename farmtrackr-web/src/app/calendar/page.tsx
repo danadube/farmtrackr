@@ -990,140 +990,10 @@ export default function CalendarPage() {
           }}
         >
           {/* Page Header */}
-          <div style={{ ...headerCard, padding: spacing(3), display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing(2) }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
-                <div
-                  style={{
-                    width: spacing(5),
-                    height: spacing(5),
-                    borderRadius: spacing(1.5),
-                    backgroundColor: 'rgba(255,255,255,0.22)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#ffffff',
-                  }}
-                >
-                  <CalendarIcon style={{ width: '22px', height: '22px' }} />
-                </div>
-                <div>
-                  <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: '#ffffff' }}>Calendar</h1>
-                  <p style={{ margin: `${spacing(0.5)} 0 0 0`, fontSize: '14px', color: 'rgba(255,255,255,0.85)' }}>
-                    Stay on top of showings, closings, and follow-ups synced with Google Calendar.
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: spacing(1) }}>
-                <button
-                  type="button"
-                  {...getButtonPressHandlers('calendar-refresh')}
-                  onClick={() => fetchEvents(true)}
-                  disabled={isRefreshing}
-                  style={getButtonPressStyle(
-                    'calendar-refresh',
-                    {
-                      padding: `${spacing(1.5)} ${spacing(2)}`,
-                      borderRadius: spacing(1),
-                      border: `1px solid ${colors.border}`,
-                      backgroundColor: colors.surface,
-                      cursor: isRefreshing ? 'wait' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: spacing(1),
-                      fontSize: '14px',
-                      color: text.secondary.color,
-                    },
-                    colors.surface,
-                    colors.cardHover
-                  )}
-                >
-                  <RefreshCw
-                    style={{
-                      width: '16px',
-                      height: '16px',
-                      animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
-                    }}
-                  />
-                  Refresh
-                </button>
-                <button
-                  type="button"
-                  {...getButtonPressHandlers('calendar-sync')}
-                  onClick={handleSyncFromGoogle}
-                  disabled={isSyncing || selectedCalendars.length === 0}
-                  style={getButtonPressStyle(
-                    'calendar-sync',
-                    {
-                      padding: `${spacing(1.5)} ${spacing(2)}`,
-                      borderRadius: spacing(1),
-                      border: `1px solid ${colors.border}`,
-                      backgroundColor: colors.surface,
-                      cursor: isSyncing ? 'wait' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: spacing(1),
-                      fontSize: '14px',
-                      color: text.secondary.color,
-                      opacity: selectedCalendars.length === 0 ? 0.5 : 1,
-                    },
-                    colors.surface,
-                    colors.cardHover
-                  )}
-                  title="Sync events from Google Calendar to database"
-                >
-                  <RefreshCw
-                    style={{
-                      width: '16px',
-                      height: '16px',
-                      animation: isSyncing ? 'spin 1s linear infinite' : 'none',
-                    }}
-                  />
-                  Sync from Google
-                </button>
-                {syncStatus && (
-                  <span style={{ 
-                    fontSize: '12px', 
-                    color: text.secondary.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: `${spacing(1)} ${spacing(2)}`,
-                  }}>
-                    {syncStatus}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  {...getButtonPressHandlers('calendar-new-event')}
-                  onClick={handleOpenCreateModal}
-                  style={getButtonPressStyle(
-                    'calendar-new-event',
-                    {
-                      padding: `${spacing(1.5)} ${spacing(2.5)}`,
-                      borderRadius: spacing(1),
-                      border: 'none',
-                      backgroundColor: colors.primary,
-                      color: '#fff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: spacing(1),
-                      fontSize: '14px',
-                      fontWeight: 600,
-                    },
-                    colors.primary,
-                    colors.primaryHover
-                  )}
-                >
-                  <Plus style={{ width: '16px', height: '16px' }} />
-                  New Event
-                </button>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(2), flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+          <div style={{ ...headerCard, padding: spacing(2.5), display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing(2) }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
+              <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#ffffff' }}>Calendar</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(0.5) }}>
                 <button
                   type="button"
                   {...getButtonPressHandlers('calendar-today')}
@@ -1131,104 +1001,103 @@ export default function CalendarPage() {
                   style={getButtonPressStyle(
                     'calendar-today',
                     {
-                      padding: `${spacing(1)} ${spacing(2)}`,
+                      padding: `${spacing(0.75)} ${spacing(1.5)}`,
                       borderRadius: spacing(0.75),
-                      border: `1px solid ${colors.border}`,
-                      backgroundColor: colors.surface,
-                      color: text.primary.color,
+                      border: `1px solid rgba(255,255,255,0.2)`,
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      color: '#ffffff',
                       fontSize: '13px',
                       cursor: 'pointer',
                     },
-                    colors.surface,
-                    colors.cardHover
+                    'rgba(255,255,255,0.1)',
+                    'rgba(255,255,255,0.2)'
                   )}
                 >
                   Today
                 </button>
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(0.5) }}>
-                  <button
-                    type="button"
-                    {...getButtonPressHandlers('calendar-prev')}
-                    onClick={handlePrev}
-                    style={getButtonPressStyle(
-                      'calendar-prev',
-                      {
-                        width: spacing(4),
-                        height: spacing(4),
-                        borderRadius: spacing(0.75),
-                        border: `1px solid ${colors.border}`,
-                        backgroundColor: colors.surface,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                      },
-                      colors.surface,
-                      colors.cardHover
-                    )}
-                  >
-                    <ChevronLeft style={{ width: '18px', height: '18px', color: text.secondary.color }} />
-                  </button>
-                  <button
-                    type="button"
-                    {...getButtonPressHandlers('calendar-next')}
-                    onClick={handleNext}
-                    style={getButtonPressStyle(
-                      'calendar-next',
-                      {
-                        width: spacing(4),
-                        height: spacing(4),
-                        borderRadius: spacing(0.75),
-                        border: `1px solid ${colors.border}`,
-                        backgroundColor: colors.surface,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                      },
-                      colors.surface,
-                      colors.cardHover
-                    )}
-                  >
-                    <ChevronRight style={{ width: '18px', height: '18px', color: text.secondary.color }} />
-                  </button>
-                </div>
-                <p style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: text.primary.color }}>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('calendar-prev')}
+                  onClick={handlePrev}
+                  style={getButtonPressStyle(
+                    'calendar-prev',
+                    {
+                      width: spacing(3.5),
+                      height: spacing(3.5),
+                      borderRadius: spacing(0.75),
+                      border: `1px solid rgba(255,255,255,0.2)`,
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                    },
+                    'rgba(255,255,255,0.1)',
+                    'rgba(255,255,255,0.2)'
+                  )}
+                >
+                  <ChevronLeft style={{ width: '16px', height: '16px', color: '#ffffff' }} />
+                </button>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('calendar-next')}
+                  onClick={handleNext}
+                  style={getButtonPressStyle(
+                    'calendar-next',
+                    {
+                      width: spacing(3.5),
+                      height: spacing(3.5),
+                      borderRadius: spacing(0.75),
+                      border: `1px solid rgba(255,255,255,0.2)`,
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                    },
+                    'rgba(255,255,255,0.1)',
+                    'rgba(255,255,255,0.2)'
+                  )}
+                >
+                  <ChevronRight style={{ width: '16px', height: '16px', color: '#ffffff' }} />
+                </button>
+                <p style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#ffffff', paddingLeft: spacing(1) }}>
                   {formatViewHeader(currentDate, view)}
                 </p>
               </div>
+            </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1), flexWrap: 'wrap' }}>
-                <div style={{ position: 'relative' }}>
-                  <button
-                    type="button"
-                    id="calendar-picker-toggle"
-                    {...getButtonPressHandlers('calendar-picker-toggle')}
-                    onClick={() => setShowCalendarPicker((prev) => !prev)}
-                    style={getButtonPressStyle(
-                      'calendar-picker-toggle',
-                      {
-                        padding: `${spacing(1)} ${spacing(2)}`,
-                        borderRadius: spacing(0.75),
-                        border: `1px solid ${colors.border}`,
-                        backgroundColor: colors.surface,
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: spacing(1),
-                        color: text.secondary.color,
-                      },
-                      colors.surface,
-                      colors.cardHover
-                    )}
-                  >
-                    Calendars
-                    <span style={{ fontSize: '12px', color: text.tertiary.color }}>
-                      {selectedCalendars.length === 0 ? 'None' : `${selectedCalendars.length} selected`}
-                    </span>
-                  </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  id="calendar-picker-toggle"
+                  {...getButtonPressHandlers('calendar-picker-toggle')}
+                  onClick={() => setShowCalendarPicker((prev) => !prev)}
+                  style={getButtonPressStyle(
+                    'calendar-picker-toggle',
+                    {
+                      padding: `${spacing(0.75)} ${spacing(1.5)}`,
+                      borderRadius: spacing(0.75),
+                      border: `1px solid rgba(255,255,255,0.2)`,
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1),
+                      color: '#ffffff',
+                    },
+                    'rgba(255,255,255,0.1)',
+                    'rgba(255,255,255,0.2)'
+                  )}
+                >
+                  <CalendarIcon style={{ width: '16px', height: '16px' }} />
+                  <span style={{ fontSize: '12px' }}>
+                    {selectedCalendars.length === 0 ? 'None' : `${selectedCalendars.length}`}
+                  </span>
+                </button>
                   {showCalendarPicker && (
                     <div
                       id="calendar-picker-popover"
@@ -1499,7 +1368,7 @@ export default function CalendarPage() {
                   )}
                 </div>
 
-                <div style={{ display: 'flex', gap: spacing(0.5), backgroundColor: colors.surface, borderRadius: spacing(0.75), border: `1px solid ${colors.border}`, padding: spacing(0.5) }}>
+                <div style={{ display: 'flex', gap: spacing(0.5), backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: spacing(0.75), border: `1px solid rgba(255,255,255,0.2)`, padding: spacing(0.5) }}>
                   {(['month', 'week', 'day'] as CalendarView[]).map((option) => (
                     <button
                       key={option}
@@ -1512,24 +1381,49 @@ export default function CalendarPage() {
                           padding: `${spacing(0.75)} ${spacing(1.5)}`,
                           borderRadius: spacing(0.5),
                           border: 'none',
-                          backgroundColor: view === option ? colors.primary : 'transparent',
-                          color: view === option ? '#fff' : text.secondary.color,
+                          backgroundColor: view === option ? 'rgba(255,255,255,0.25)' : 'transparent',
+                          color: '#ffffff',
                           fontSize: '13px',
                           fontWeight: view === option ? 600 : 500,
                           cursor: 'pointer',
                           textTransform: 'capitalize',
                         },
-                        view === option ? colors.primary : 'transparent',
-                        view === option ? colors.primaryHover : colors.cardHover
+                        view === option ? 'rgba(255,255,255,0.25)' : 'transparent',
+                        view === option ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)'
                       )}
                     >
                       {option}
                     </button>
                   ))}
                 </div>
+
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('calendar-new-event')}
+                  onClick={handleOpenCreateModal}
+                  style={getButtonPressStyle(
+                    'calendar-new-event',
+                    {
+                      padding: `${spacing(0.75)} ${spacing(1.5)}`,
+                      borderRadius: spacing(0.75),
+                      border: 'none',
+                      backgroundColor: '#ffffff',
+                      color: colors.primary,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(0.75),
+                      fontSize: '13px',
+                      fontWeight: 600,
+                    },
+                    '#ffffff',
+                    'rgba(255,255,255,0.9)'
+                  )}
+                >
+                  <Plus style={{ width: '16px', height: '16px' }} />
+                  New Event
+                </button>
               </div>
-            </div>
-            <div style={{ ...headerDivider, marginTop: spacing(1) }} />
           </div>
 
           {/* Alerts */}
