@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { syncGoogleCalendarsToDB, createCRMCalendar } from '@/lib/calendarHelpers'
+import { syncGoogleCalendarsToDB, createCRMCalendar, getAccessibleCalendars } from '@/lib/calendarHelpers'
 import { getGoogleAccessToken } from '@/lib/googleTokenHelper'
 
 export const dynamic = 'force-dynamic'
@@ -8,11 +8,13 @@ export const dynamic = 'force-dynamic'
 /**
  * GET /api/calendar
  * List all calendars (Google + CRM)
+ * Includes owned calendars and calendars shared with the user
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const syncGoogle = searchParams.get('syncGoogle') === 'true'
+    const userId = searchParams.get('userId') // Optional: filter by user
 
     // Optionally sync Google calendars to DB
     if (syncGoogle) {
@@ -24,12 +26,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get all calendars from database
+    // If userId is provided, get accessible calendars (owned + shared)
+    if (userId) {
+      const calendars = await getAccessibleCalendars(userId)
+      return NextResponse.json({
+        success: true,
+        calendars,
+      })
+    }
+
+    // Otherwise, get all visible calendars (for admin/backward compatibility)
     const calendars = await prisma.calendar.findMany({
       where: {
         isVisible: true,
       },
       include: {
+        sharedWith: true,
         _count: {
           select: { events: true },
         },

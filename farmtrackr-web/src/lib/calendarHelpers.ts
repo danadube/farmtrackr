@@ -440,3 +440,84 @@ export async function getEventsFromDB(
   })
 }
 
+/**
+ * Check if a user has permission to access a calendar
+ * @param calendarId - Calendar ID
+ * @param userId - User ID to check
+ * @param requiredRole - Required role ('viewer', 'editor', 'owner')
+ * @returns Promise<boolean>
+ */
+export async function checkCalendarPermission(
+  calendarId: string,
+  userId: string,
+  requiredRole: 'viewer' | 'editor' | 'owner' = 'viewer'
+) {
+  const calendar = await prisma.calendar.findUnique({
+    where: { id: calendarId },
+    include: {
+      sharedWith: true,
+    },
+  })
+
+  if (!calendar) {
+    return false
+  }
+
+  // Check if user is the owner
+  if (calendar.ownerId === userId) {
+    return true // Owner has all permissions
+  }
+
+  // Check if user has a share
+  const share = calendar.sharedWith.find((s) => s.userId === userId)
+  if (!share) {
+    return false
+  }
+
+  // Check role hierarchy
+  const roleHierarchy = { viewer: 1, editor: 2, owner: 3 }
+  const requiredLevel = roleHierarchy[requiredRole]
+  const userLevel = roleHierarchy[share.role as keyof typeof roleHierarchy] || 0
+
+  return userLevel >= requiredLevel
+}
+
+/**
+ * Get all calendars accessible by a user (owned + shared)
+ * @param userId - User ID
+ * @returns Promise<Calendar[]>
+ */
+export async function getAccessibleCalendars(userId: string) {
+  const calendars = await prisma.calendar.findMany({
+    where: {
+      OR: [
+        { ownerId: userId },
+        {
+          sharedWith: {
+            some: {
+              userId,
+            },
+          },
+        },
+      ],
+      isVisible: true,
+    },
+    include: {
+      sharedWith: {
+        where: {
+          userId,
+        },
+      },
+      _count: {
+        select: { events: true },
+      },
+    },
+    orderBy: [
+      { isPrimary: 'desc' },
+      { name: 'asc' },
+    ],
+  })
+
+  return calendars
+}
+

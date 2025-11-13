@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, RefreshCw, X, MapPin, Edit } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, RefreshCw, X, MapPin, Edit, Share2, UserPlus } from 'lucide-react'
 import { generateRRULE, type RecurrenceRule } from '@/lib/recurringEvents'
 
 type CalendarView = 'month' | 'week' | 'day'
@@ -138,6 +138,11 @@ export default function CalendarPage() {
   const [newCalendarName, setNewCalendarName] = useState('')
   const [newCalendarColor, setNewCalendarColor] = useState('#4285f4')
   const [isSavingCalendar, setIsSavingCalendar] = useState(false)
+  const [sharingCalendar, setSharingCalendar] = useState<{ id: string; name: string } | null>(null)
+  const [calendarShares, setCalendarShares] = useState<Array<{ id: string; userId: string; role: string }>>([])
+  const [newShareUserId, setNewShareUserId] = useState('')
+  const [newShareRole, setNewShareRole] = useState<'viewer' | 'editor' | 'owner'>('viewer')
+  const [isLoadingShares, setIsLoadingShares] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<NormalizedEvent | null>(null)
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
   const [isEditingEvent, setIsEditingEvent] = useState(false)
@@ -1339,6 +1344,39 @@ export default function CalendarPage() {
                                 <div style={{ display: 'flex', gap: spacing(0.5) }}>
                                   <button
                                     type="button"
+                                    onClick={async (e) => {
+                                      e.stopPropagation()
+                                      setSharingCalendar({
+                                        id: calendar.id,
+                                        name: calendar.summary || calendar.name || '',
+                                      })
+                                      setIsLoadingShares(true)
+                                      try {
+                                        const response = await fetch(`/api/calendar/${calendar.id}/share`)
+                                        if (response.ok) {
+                                          const data = await response.json()
+                                          setCalendarShares(data.shares || [])
+                                        }
+                                      } catch (error) {
+                                        console.error('Failed to load shares:', error)
+                                      } finally {
+                                        setIsLoadingShares(false)
+                                      }
+                                    }}
+                                    style={{
+                                      padding: spacing(0.5),
+                                      border: 'none',
+                                      background: 'transparent',
+                                      color: text.secondary.color,
+                                      cursor: 'pointer',
+                                      fontSize: '12px',
+                                    }}
+                                    title="Share calendar"
+                                  >
+                                    <Share2 style={{ width: '14px', height: '14px' }} />
+                                  </button>
+                                  <button
+                                    type="button"
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       setEditingCalendar({
@@ -1368,7 +1406,7 @@ export default function CalendarPage() {
                                       e.stopPropagation()
                                       if (confirm(`Delete calendar "${calendar.summary || calendar.name}"? This will also delete all events in this calendar.`)) {
                                         try {
-                                          const response = await fetch(`/api/calendar?id=${calendar.id}`, {
+                                          const response = await fetch(`/api/calendar/${calendar.id}?userId=current`, {
                                             method: 'DELETE',
                                           })
                                           if (response.ok) {
