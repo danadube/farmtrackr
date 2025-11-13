@@ -1468,202 +1468,6 @@ export default function CalendarPage() {
             </div>
           )}
 
-          {/* Day Details */}
-          <div style={{ ...card, padding: spacing(2.5), display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(1) }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: text.primary.color }}>
-                  {formatDateHeading(selectedDate)}
-                </h2>
-                <p style={{ margin: `${spacing(0.5)} 0 0 0`, fontSize: '12px', color: text.tertiary.color }}>
-                  {selectedDateEvents.length} event{selectedDateEvents.length === 1 ? '' : 's'}
-                </p>
-              </div>
-              <button
-                type="button"
-                {...getButtonPressHandlers('calendar-add-selected')}
-                onClick={handleOpenCreateModal}
-                style={getButtonPressStyle(
-                  'calendar-add-selected',
-                  {
-                    padding: `${spacing(0.75)} ${spacing(1.5)}`,
-                    borderRadius: spacing(0.75),
-                    border: `1px solid ${colors.border}`,
-                    backgroundColor: colors.surface,
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                  },
-                  colors.surface,
-                  colors.cardHover
-                )}
-              >
-                Add Event
-              </button>
-            </div>
-
-            {selectedDateEvents.length === 0 ? (
-              <p style={{ margin: 0, fontSize: '13px', color: text.tertiary.color }}>No events on this day.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
-                {selectedDateEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    onClick={async () => {
-                      setSelectedEvent(event)
-                      setIsEventModalOpen(true)
-                      
-                      // Load linked entity details
-                      if (event.crmContactId) {
-                        try {
-                          const contactResponse = await fetch(`/api/contacts/${event.crmContactId}`)
-                          if (contactResponse.ok) {
-                            const contact = await contactResponse.json()
-                            setLinkedContact({
-                              id: contact.id,
-                              name: contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact',
-                            })
-                          }
-                        } catch (error) {
-                          console.error('Failed to load linked contact:', error)
-                        }
-                      } else {
-                        setLinkedContact(null)
-                      }
-                      
-                      if (event.crmDealId) {
-                        try {
-                          const listingResponse = await fetch(`/api/listings/${event.crmDealId}`)
-                          if (listingResponse.ok) {
-                            const listingData = await listingResponse.json()
-                            const listing = listingData.listing || listingData
-                            setLinkedListing({
-                              id: listing.id,
-                              title: listing.title || 'Untitled Listing',
-                            })
-                          }
-                        } catch (error) {
-                          console.error('Failed to load linked listing:', error)
-                        }
-                      } else {
-                        setLinkedListing(null)
-                      }
-                      
-                      // Load linked task
-                      if (event.crmTaskId) {
-                        // First try to find in loaded tasks
-                        const task = tasks.find((t) => t.id === event.crmTaskId)
-                        if (task) {
-                          setLinkedTask(task)
-                        } else {
-                          // If not found, try to fetch from listings
-                          try {
-                            const listingsResponse = await fetch('/api/listings')
-                            if (listingsResponse.ok) {
-                              const listingsData = await listingsResponse.json()
-                              const listings = listingsData.listings || listingsData
-                              for (const listing of listings) {
-                                if (listing.stageInstances) {
-                                  for (const stage of listing.stageInstances) {
-                                    if (stage.tasks) {
-                                      const foundTask = stage.tasks.find((t: any) => t.id === event.crmTaskId)
-                                      if (foundTask) {
-                                        setLinkedTask({
-                                          id: foundTask.id,
-                                          name: foundTask.name,
-                                          listingId: listing.id,
-                                          listingTitle: listing.title || 'Untitled Listing',
-                                        })
-                                        break
-                                      }
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          } catch (error) {
-                            console.error('Failed to load linked task:', error)
-                          }
-                        }
-                      } else {
-                        setLinkedTask(null)
-                      }
-                      
-                      // Load attendees
-                      if (event.id && !event.id.includes('_')) {
-                        // Only load for non-instance events (instances share the same attendees)
-                        try {
-                          const eventResponse = await fetch(`/api/events/${event.id}`)
-                          if (eventResponse.ok) {
-                            const eventData = await eventResponse.json()
-                            if (eventData.event?.attendees) {
-                              setEventAttendees(eventData.event.attendees.map((a: any) => ({
-                                email: a.email,
-                                displayName: a.displayName,
-                                responseStatus: a.responseStatus,
-                                isOrganizer: a.isOrganizer,
-                              })))
-                            } else {
-                              setEventAttendees([])
-                            }
-                          }
-                        } catch (error) {
-                          console.error('Failed to load attendees:', error)
-                          setEventAttendees([])
-                        }
-                      } else {
-                        setEventAttendees([])
-                      }
-                    }}
-                    style={{
-                      padding: spacing(1.25),
-                      borderRadius: spacing(1),
-                      backgroundColor: colors.cardHover,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: spacing(0.5),
-                      borderLeft: `4px solid ${event.calendarColor || colors.primary}`,
-                      cursor: event.htmlLink ? 'pointer' : 'default',
-                      transition: 'background-color 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (event.htmlLink) {
-                        e.currentTarget.style.backgroundColor = colors.borderHover || colors.card
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (event.htmlLink) {
-                        e.currentTarget.style.backgroundColor = colors.cardHover
-                      }
-                    }}
-                  >
-                    <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {event.title}
-                    </p>
-                    <p style={{ margin: 0, fontSize: '12px', color: text.secondary.color }}>
-                      {event.isAllDay ? 'All day' : `${event.startLabel} – ${event.endLabel}`}
-                    </p>
-                    {event.location && (
-                      <p style={{ margin: 0, fontSize: '12px', color: text.secondary.color }}>
-                        {event.location}
-                      </p>
-                    )}
-                    {event.description && (
-                      <p style={{ margin: 0, fontSize: '12px', color: text.tertiary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {event.description}
-                      </p>
-                    )}
-                    {event.htmlLink && (
-                      <span style={{ marginTop: spacing(0.5), fontSize: '12px', fontWeight: 500, color: colors.primary }}>
-                        Click to open in Google Calendar →
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Main Calendar Layout with Mini Calendar Sidebar */}
           <div style={{ display: 'flex', gap: spacing(2), alignItems: 'flex-start' }}>
             {/* Mini Calendar Sidebar */}
@@ -1911,6 +1715,197 @@ export default function CalendarPage() {
                 >
                   Go to Today
                 </button>
+              </div>
+
+              {/* Day Details - Event Card */}
+              <div style={{ marginTop: spacing(2), paddingTop: spacing(2), borderTop: `1px solid ${colors.border}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(1.5), gap: spacing(1) }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color }}>
+                      {formatDateHeading(selectedDate)}
+                    </h3>
+                    <p style={{ margin: `${spacing(0.25)} 0 0 0`, fontSize: '11px', color: text.tertiary.color }}>
+                      {selectedDateEvents.length} event{selectedDateEvents.length === 1 ? '' : 's'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    {...getButtonPressHandlers('calendar-add-selected')}
+                    onClick={handleOpenCreateModal}
+                    style={getButtonPressStyle(
+                      'calendar-add-selected',
+                      {
+                        padding: `${spacing(0.5)} ${spacing(1)}`,
+                        borderRadius: spacing(0.5),
+                        border: `1px solid ${colors.border}`,
+                        backgroundColor: colors.surface,
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                      },
+                      colors.surface,
+                      colors.cardHover
+                    )}
+                  >
+                    Add Event
+                  </button>
+                </div>
+
+                {selectedDateEvents.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: '12px', color: text.tertiary.color }}>No events on this day.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
+                    {selectedDateEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        onClick={async () => {
+                          setSelectedEvent(event)
+                          setIsEventModalOpen(true)
+                          
+                          // Load linked entity details
+                          if (event.crmContactId) {
+                            try {
+                              const contactResponse = await fetch(`/api/contacts/${event.crmContactId}`)
+                              if (contactResponse.ok) {
+                                const contact = await contactResponse.json()
+                                setLinkedContact({
+                                  id: contact.id,
+                                  name: contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact',
+                                })
+                              }
+                            } catch (error) {
+                              console.error('Failed to load linked contact:', error)
+                            }
+                          } else {
+                            setLinkedContact(null)
+                          }
+                          
+                          if (event.crmDealId) {
+                            try {
+                              const listingResponse = await fetch(`/api/listings/${event.crmDealId}`)
+                              if (listingResponse.ok) {
+                                const listingData = await listingResponse.json()
+                                const listing = listingData.listing || listingData
+                                setLinkedListing({
+                                  id: listing.id,
+                                  title: listing.title || 'Untitled Listing',
+                                })
+                              }
+                            } catch (error) {
+                              console.error('Failed to load linked listing:', error)
+                            }
+                          } else {
+                            setLinkedListing(null)
+                          }
+                          
+                          // Load linked task
+                          if (event.crmTaskId) {
+                            // First try to find in loaded tasks
+                            const task = tasks.find((t) => t.id === event.crmTaskId)
+                            if (task) {
+                              setLinkedTask(task)
+                            } else {
+                              // If not found, try to fetch from listings
+                              try {
+                                const listingsResponse = await fetch('/api/listings')
+                                if (listingsResponse.ok) {
+                                  const listingsData = await listingsResponse.json()
+                                  const listings = listingsData.listings || listingsData
+                                  for (const listing of listings) {
+                                    if (listing.stageInstances) {
+                                      for (const stage of listing.stageInstances) {
+                                        if (stage.tasks) {
+                                          const foundTask = stage.tasks.find((t: any) => t.id === event.crmTaskId)
+                                          if (foundTask) {
+                                            setLinkedTask({
+                                              id: foundTask.id,
+                                              name: foundTask.name,
+                                              listingId: listing.id,
+                                              listingTitle: listing.title || 'Untitled Listing',
+                                            })
+                                            break
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              } catch (error) {
+                                console.error('Failed to load linked task:', error)
+                              }
+                            }
+                          } else {
+                            setLinkedTask(null)
+                          }
+                          
+                          // Load attendees
+                          if (event.id && !event.id.includes('_')) {
+                            // Only load for non-instance events (instances share the same attendees)
+                            try {
+                              const eventResponse = await fetch(`/api/events/${event.id}`)
+                              if (eventResponse.ok) {
+                                const eventData = await eventResponse.json()
+                                if (eventData.event?.attendees) {
+                                  setEventAttendees(eventData.event.attendees.map((a: any) => ({
+                                    email: a.email,
+                                    displayName: a.displayName,
+                                    responseStatus: a.responseStatus,
+                                    isOrganizer: a.isOrganizer,
+                                  })))
+                                } else {
+                                  setEventAttendees([])
+                                }
+                              }
+                            } catch (error) {
+                              console.error('Failed to load attendees:', error)
+                              setEventAttendees([])
+                            }
+                          } else {
+                            setEventAttendees([])
+                          }
+                        }}
+                        style={{
+                          padding: spacing(1),
+                          borderRadius: spacing(0.75),
+                          backgroundColor: colors.cardHover,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: spacing(0.25),
+                          borderLeft: `3px solid ${event.calendarColor || colors.primary}`,
+                          cursor: event.htmlLink ? 'pointer' : 'default',
+                          transition: 'background-color 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (event.htmlLink) {
+                            e.currentTarget.style.backgroundColor = colors.borderHover || colors.card
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (event.htmlLink) {
+                            e.currentTarget.style.backgroundColor = colors.cardHover
+                          }
+                        }}
+                      >
+                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: text.primary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {event.title}
+                        </p>
+                        <p style={{ margin: 0, fontSize: '11px', color: text.secondary.color }}>
+                          {event.isAllDay ? 'All day' : `${event.startLabel} – ${event.endLabel}`}
+                        </p>
+                        {event.location && (
+                          <p style={{ margin: 0, fontSize: '11px', color: text.secondary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {event.location}
+                          </p>
+                        )}
+                        {event.htmlLink && (
+                          <span style={{ marginTop: spacing(0.25), fontSize: '11px', fontWeight: 500, color: colors.primary }}>
+                            Open in Google →
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
