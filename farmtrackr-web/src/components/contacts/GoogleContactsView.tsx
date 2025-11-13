@@ -311,13 +311,11 @@ export function GoogleContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode 
       `}</style>
       <div
         style={{
-          maxWidth: '1200px',
-          marginLeft: 'auto',
-          marginRight: 'auto',
           paddingLeft: '48px',
           paddingRight: '48px',
           paddingTop: '32px',
           paddingBottom: '32px',
+          boxSizing: 'border-box',
         }}
       >
         <div style={{ marginBottom: '32px' }}>

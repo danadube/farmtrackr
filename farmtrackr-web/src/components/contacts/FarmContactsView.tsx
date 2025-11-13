@@ -152,13 +152,11 @@ export function FarmContactsView({ viewSwitcher }: { viewSwitcher?: ReactNode })
     >
       <div
         style={{
-          maxWidth: '1200px',
-          marginLeft: 'auto',
-          marginRight: 'auto',
           paddingLeft: '48px',
           paddingRight: '48px',
           paddingTop: '32px',
           paddingBottom: '32px',
+          boxSizing: 'border-box',
         }}
       >
         {loading ? (
