@@ -978,10 +978,10 @@ export default function CalendarPage() {
   return (
     <>
     <Sidebar>
-      <div style={{ minHeight: '100vh', backgroundColor: colors.background, width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ minHeight: '100vh', backgroundColor: colors.background }}>
         <div
           style={{
-            width: '100%',
+            maxWidth: '100%',
             padding: '32px 48px 64px 48px',
             display: 'flex',
             flexDirection: 'column',
