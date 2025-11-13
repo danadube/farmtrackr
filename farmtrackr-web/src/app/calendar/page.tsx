@@ -1743,8 +1743,258 @@ export default function CalendarPage() {
             )}
           </div>
 
-          {/* Calendar Content */}
-          <div style={{ ...card, padding: spacing(2.5), minHeight: '600px', display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
+          {/* Main Calendar Layout with Mini Calendar Sidebar */}
+          <div style={{ display: 'flex', gap: spacing(2), alignItems: 'flex-start' }}>
+            {/* Mini Calendar Sidebar */}
+            <div style={{ ...card, padding: spacing(2), width: '280px', flexShrink: 0, position: 'sticky', top: spacing(2) }}>
+              <div style={{ marginBottom: spacing(2) }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(1.5) }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newDate = new Date(currentDate)
+                      newDate.setMonth(newDate.getMonth() - 1)
+                      setCurrentDate(newDate)
+                    }}
+                    style={{
+                      padding: spacing(0.5),
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      color: text.secondary.color,
+                      borderRadius: spacing(0.5),
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
+                  >
+                    <ChevronLeft style={{ width: '18px', height: '18px' }} />
+                  </button>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: text.primary.color }}>
+                    {currentDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newDate = new Date(currentDate)
+                      newDate.setMonth(newDate.getMonth() + 1)
+                      setCurrentDate(newDate)
+                    }}
+                    style={{
+                      padding: spacing(0.5),
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      color: text.secondary.color,
+                      borderRadius: spacing(0.5),
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
+                  >
+                    <ChevronRight style={{ width: '18px', height: '18px' }} />
+                  </button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: spacing(1) }}>
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        textAlign: 'center',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: text.tertiary.color,
+                        padding: spacing(0.5),
+                      }}
+                    >
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+                  {(() => {
+                    const year = currentDate.getFullYear()
+                    const month = currentDate.getMonth()
+                    const firstDay = new Date(year, month, 1)
+                    const lastDay = new Date(year, month + 1, 0)
+                    const firstDayOfWeek = firstDay.getDay()
+                    const daysInMonth = lastDay.getDate()
+                    const today = new Date()
+                    const cells: JSX.Element[] = []
+                    
+                    // Previous month days
+                    for (let i = 0; i < firstDayOfWeek; i++) {
+                      const date = new Date(year, month, 1 - i)
+                      cells.push(
+                        <button
+                          key={`prev-${i}`}
+                          type="button"
+                          onClick={() => {
+                            setCurrentDate(date)
+                            setSelectedDate(date)
+                            setView('month')
+                          }}
+                          style={{
+                            aspectRatio: '1',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            color: text.tertiary.color,
+                            borderRadius: spacing(0.5),
+                            padding: spacing(0.5),
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = colors.cardHover
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }}
+                        >
+                          {date.getDate()}
+                        </button>
+                      )
+                    }
+                    
+                    // Current month days
+                    for (let day = 1; day <= daysInMonth; day++) {
+                      const date = new Date(year, month, day)
+                      const isToday = date.toDateString() === today.toDateString()
+                      const isSelected = date.toDateString() === selectedDate.toDateString()
+                      const hasEvents = events.some((e) => {
+                        const eventDate = new Date(e.start)
+                        return eventDate.toDateString() === date.toDateString()
+                      })
+                      
+                      cells.push(
+                        <button
+                          key={`day-${day}`}
+                          type="button"
+                          onClick={() => {
+                            setCurrentDate(date)
+                            setSelectedDate(date)
+                            setView('month')
+                          }}
+                          style={{
+                            aspectRatio: '1',
+                            border: 'none',
+                            background: isSelected ? colors.primary : isToday ? colors.primaryLight || 'rgba(104, 159, 56, 0.15)' : 'transparent',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: isToday ? 700 : isSelected ? 600 : 400,
+                            color: isSelected ? '#ffffff' : isToday ? colors.primary : text.primary.color,
+                            borderRadius: spacing(0.5),
+                            padding: spacing(0.5),
+                            position: 'relative',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected && !isToday) {
+                              e.currentTarget.style.backgroundColor = colors.cardHover
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected && !isToday) {
+                              e.currentTarget.style.backgroundColor = 'transparent'
+                            }
+                          }}
+                        >
+                          {day}
+                          {hasEvents && (
+                            <span
+                              style={{
+                                position: 'absolute',
+                                bottom: '2px',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                width: '4px',
+                                height: '4px',
+                                borderRadius: '50%',
+                                backgroundColor: isSelected ? '#ffffff' : colors.primary,
+                              }}
+                            />
+                          )}
+                        </button>
+                      )
+                    }
+                    
+                    // Next month days
+                    const totalCells = 42
+                    const remainingCells = totalCells - cells.length
+                    for (let i = 1; i <= remainingCells; i++) {
+                      const date = new Date(year, month + 1, i)
+                      cells.push(
+                        <button
+                          key={`next-${i}`}
+                          type="button"
+                          onClick={() => {
+                            setCurrentDate(date)
+                            setSelectedDate(date)
+                            setView('month')
+                          }}
+                          style={{
+                            aspectRatio: '1',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            color: text.tertiary.color,
+                            borderRadius: spacing(0.5),
+                            padding: spacing(0.5),
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = colors.cardHover
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }}
+                        >
+                          {date.getDate()}
+                        </button>
+                      )
+                    }
+                    
+                    return cells
+                  })()}
+                </div>
+              </div>
+              
+              {/* Quick Actions */}
+              <div style={{ marginTop: spacing(2), paddingTop: spacing(2), borderTop: `1px solid ${colors.border}` }}>
+                <button
+                  type="button"
+                  onClick={handleToday}
+                  style={{
+                    width: '100%',
+                    padding: `${spacing(0.75)} ${spacing(1.5)}`,
+                    borderRadius: spacing(0.75),
+                    border: `1px solid ${colors.border}`,
+                    backgroundColor: colors.surface,
+                    color: text.primary.color,
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    marginBottom: spacing(1),
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.cardHover
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.surface
+                  }}
+                >
+                  Go to Today
+                </button>
+              </div>
+            </div>
+
+            {/* Main Calendar Content */}
+            <div style={{ ...card, padding: spacing(2.5), minHeight: '600px', display: 'flex', flexDirection: 'column', gap: spacing(2), flex: 1 }}>
             {view === 'month' && (
               <div
                 style={{
