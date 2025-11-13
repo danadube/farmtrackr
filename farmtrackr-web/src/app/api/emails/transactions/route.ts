@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * API Route: Get Active Transactions for Email Module
  * GET /api/emails/transactions
