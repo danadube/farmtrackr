@@ -1981,7 +1981,7 @@ export default function CalendarPage() {
       </div>
     </Sidebar>
 
-      {isCreateModalOpen && (
+    {isCreateModalOpen && (
         <div
           style={{
             position: 'fixed',
