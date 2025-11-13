@@ -62,6 +62,9 @@ type CreateEventState = {
   calendarId: string
   isAllDay: boolean
   syncToGoogle: boolean // Whether to sync to Google Calendar
+  crmContactId: string // Link to contact (FarmContact or GeneralContact)
+  crmDealId: string // Link to listing/deal
+  crmTaskId: string // Link to task
 }
 
 const INITIAL_CREATE_EVENT_STATE: CreateEventState = {
@@ -75,6 +78,9 @@ const INITIAL_CREATE_EVENT_STATE: CreateEventState = {
   calendarId: 'primary',
   isAllDay: false,
   syncToGoogle: true, // Default to syncing to Google
+  crmContactId: '',
+  crmDealId: '',
+  crmTaskId: '',
 }
 
 export default function CalendarPage() {
@@ -477,6 +483,9 @@ export default function CalendarPage() {
       calendarId: selectedEvent.calendarId || 'primary',
       isAllDay: selectedEvent.isAllDay,
       syncToGoogle: true, // Default to syncing when editing (can be changed)
+      crmContactId: '', // Will be populated from event data if available
+      crmDealId: '', // Will be populated from event data if available
+      crmTaskId: '', // Will be populated from event data if available
     })
     setEditingEventId(selectedEvent.id)
     setIsEditingEvent(true)
@@ -691,6 +700,9 @@ export default function CalendarPage() {
           end: endDate.toISOString(),
           allDay: createForm.isAllDay,
           syncToGoogle: createForm.syncToGoogle, // Use form value
+          crmContactId: createForm.crmContactId || undefined,
+          crmDealId: createForm.crmDealId || undefined,
+          crmTaskId: createForm.crmTaskId || undefined,
         }),
       })
 
