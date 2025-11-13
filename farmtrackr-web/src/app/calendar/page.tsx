@@ -476,6 +476,7 @@ export default function CalendarPage() {
       description: selectedEvent.description || '',
       calendarId: selectedEvent.calendarId || 'primary',
       isAllDay: selectedEvent.isAllDay,
+      syncToGoogle: true, // Default to syncing when editing (can be changed)
     })
     setEditingEventId(selectedEvent.id)
     setIsEditingEvent(true)
