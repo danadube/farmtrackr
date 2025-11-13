@@ -57,6 +57,14 @@ type NormalizedEvent = {
   linkedListing?: { id: string; title: string }
 }
 
+type AttendeeInput = {
+  email: string
+  displayName?: string
+  responseStatus?: 'needsAction' | 'declined' | 'tentative' | 'accepted'
+  isOrganizer?: boolean
+  isOptional?: boolean
+}
+
 type CreateEventState = {
   title: string
   startDate: string
@@ -71,6 +79,7 @@ type CreateEventState = {
   crmContactId: string // Link to contact (FarmContact or GeneralContact)
   crmDealId: string // Link to listing/deal
   crmTaskId: string // Link to task
+  attendees: AttendeeInput[] // Event attendees
   isRecurring: boolean // Whether this is a recurring event
   recurrenceFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | ''
   recurrenceInterval: number // e.g., every 2 weeks = 2
@@ -93,6 +102,7 @@ const INITIAL_CREATE_EVENT_STATE: CreateEventState = {
   crmContactId: '',
   crmDealId: '',
   crmTaskId: '',
+  attendees: [],
   isRecurring: false,
   recurrenceFrequency: '',
   recurrenceInterval: 1,
@@ -128,9 +138,11 @@ export default function CalendarPage() {
   const [contacts, setContacts] = useState<Array<{ id: string; name: string }>>([])
   const [listings, setListings] = useState<Array<{ id: string; title: string }>>([])
   const [tasks, setTasks] = useState<Array<{ id: string; name: string; listingId: string; listingTitle: string }>>([])
+  const [googleContacts, setGoogleContacts] = useState<Array<{ id: string; email1?: string; email2?: string; firstName?: string; lastName?: string; organizationName?: string }>>([])
   const [linkedContact, setLinkedContact] = useState<{ id: string; name: string } | null>(null)
   const [linkedListing, setLinkedListing] = useState<{ id: string; title: string } | null>(null)
   const [linkedTask, setLinkedTask] = useState<{ id: string; name: string; listingId: string; listingTitle: string } | null>(null)
+  const [eventAttendees, setEventAttendees] = useState<Array<{ email: string; displayName?: string; responseStatus?: string; isOrganizer?: boolean }>>([])
 
   useEffect(() => {
     let storedSelection: string[] | undefined
@@ -154,6 +166,7 @@ export default function CalendarPage() {
     loadContacts()
     loadListings()
     loadTasks()
+    loadGoogleContacts()
   }, [])
 
   const loadContacts = async () => {
@@ -223,6 +236,18 @@ export default function CalendarPage() {
       }
     } catch (error) {
       console.error('Failed to load tasks:', error)
+    }
+  }
+
+  const loadGoogleContacts = async () => {
+    try {
+      const response = await fetch('/api/google-contacts')
+      if (response.ok) {
+        const contacts = await response.json()
+        setGoogleContacts(contacts)
+      }
+    } catch (error) {
+      console.error('Failed to load Google Contacts:', error)
     }
   }
   useEffect(() => {
@@ -583,6 +608,12 @@ export default function CalendarPage() {
       crmContactId: selectedEvent.crmContactId || '',
       crmDealId: selectedEvent.crmDealId || '',
       crmTaskId: selectedEvent.crmTaskId || '',
+      attendees: eventAttendees.map((a) => ({
+        email: a.email,
+        displayName: a.displayName,
+        responseStatus: (a.responseStatus as any) || 'needsAction',
+        isOrganizer: a.isOrganizer || false,
+      })),
       isRecurring: false, // Will be populated from event data if available
       recurrenceFrequency: '',
       recurrenceInterval: 1,
@@ -821,6 +852,7 @@ export default function CalendarPage() {
           crmContactId: createForm.crmContactId || undefined,
           crmDealId: createForm.crmDealId || undefined,
           crmTaskId: createForm.crmTaskId || undefined,
+          attendees: createForm.attendees.length > 0 ? createForm.attendees : undefined,
           isRecurring: createForm.isRecurring,
           recurrenceRule: recurrenceRule,
           rrule: rruleString,
@@ -1420,6 +1452,32 @@ export default function CalendarPage() {
                       } else {
                         setLinkedTask(null)
                       }
+                      
+                      // Load attendees
+                      if (event.id && !event.id.includes('_')) {
+                        // Only load for non-instance events (instances share the same attendees)
+                        try {
+                          const eventResponse = await fetch(`/api/events/${event.id}`)
+                          if (eventResponse.ok) {
+                            const eventData = await eventResponse.json()
+                            if (eventData.event?.attendees) {
+                              setEventAttendees(eventData.event.attendees.map((a: any) => ({
+                                email: a.email,
+                                displayName: a.displayName,
+                                responseStatus: a.responseStatus,
+                                isOrganizer: a.isOrganizer,
+                              })))
+                            } else {
+                              setEventAttendees([])
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Failed to load attendees:', error)
+                          setEventAttendees([])
+                        }
+                      } else {
+                        setEventAttendees([])
+                      }
                     }}
                     style={{
                       padding: spacing(1.25),
@@ -1795,6 +1853,130 @@ export default function CalendarPage() {
                       </option>
                     ))}
                   </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                  Attendees
+                </div>
+                
+                {createForm.attendees.map((attendee, index) => (
+                  <div key={index} style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
+                      <input
+                        type="email"
+                        value={attendee.email}
+                        onChange={(e) => {
+                          const newAttendees = [...createForm.attendees]
+                          newAttendees[index] = { ...newAttendees[index], email: e.target.value }
+                          setCreateForm((prev) => ({ ...prev, attendees: newAttendees }))
+                        }}
+                        placeholder="email@example.com"
+                        style={{ ...inputStyle(colors, text, spacing), fontSize: '13px' }}
+                      />
+                      {attendee.displayName && (
+                        <input
+                          type="text"
+                          value={attendee.displayName}
+                          onChange={(e) => {
+                            const newAttendees = [...createForm.attendees]
+                            newAttendees[index] = { ...newAttendees[index], displayName: e.target.value }
+                            setCreateForm((prev) => ({ ...prev, attendees: newAttendees }))
+                          }}
+                          placeholder="Display name (optional)"
+                          style={{ ...inputStyle(colors, text, spacing), fontSize: '12px' }}
+                        />
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCreateForm((prev) => ({
+                          ...prev,
+                          attendees: prev.attendees.filter((_, i) => i !== index),
+                        }))
+                      }}
+                      style={{
+                        padding: spacing(0.75),
+                        backgroundColor: colors.error || '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: spacing(0.5),
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: '32px',
+                        height: '32px',
+                      }}
+                      {...getButtonPressHandlers(`remove-attendee-${index}`)}
+                    >
+                      <X style={{ width: '16px', height: '16px' }} />
+                    </button>
+                  </div>
+                ))}
+                
+                <div style={{ display: 'flex', gap: spacing(1) }}>
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const contactId = e.target.value
+                      if (contactId) {
+                        const contact = googleContacts.find((c) => c.id === contactId)
+                        if (contact) {
+                          const email = contact.email1 || contact.email2
+                          const name = contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || undefined
+                          if (email) {
+                            setCreateForm((prev) => ({
+                              ...prev,
+                              attendees: [...prev.attendees, { email, displayName: name }],
+                            }))
+                          }
+                        }
+                        e.target.value = ''
+                      }
+                    }}
+                    style={{ ...inputStyle(colors, text, spacing), flex: 1, fontSize: '13px' }}
+                  >
+                    <option value="">Add from Google Contacts...</option>
+                    {googleContacts
+                      .filter((c) => c.email1 || c.email2)
+                      .map((contact) => {
+                        const email = contact.email1 || contact.email2
+                        const name = contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || email
+                        return (
+                          <option key={contact.id} value={contact.id}>
+                            {name} ({email})
+                          </option>
+                        )
+                      })}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateForm((prev) => ({
+                        ...prev,
+                        attendees: [...prev.attendees, { email: '', displayName: undefined }],
+                      }))
+                    }}
+                    style={{
+                      padding: `0 ${spacing(1.5)}`,
+                      backgroundColor: colors.primary,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: spacing(0.5),
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      whiteSpace: 'nowrap',
+                    }}
+                    {...getButtonPressHandlers('add-attendee')}
+                  >
+                    <Plus style={{ width: '16px', height: '16px', marginRight: spacing(0.5) }} />
+                    Add
+                  </button>
                 </div>
               </div>
 
@@ -2374,6 +2556,33 @@ export default function CalendarPage() {
                       <p style={{ margin: 0, fontSize: '14px', color: text.primary.color, whiteSpace: 'pre-wrap' }}>
                         {selectedEvent.description}
                       </p>
+                    </div>
+                  )}
+
+                  {eventAttendees.length > 0 && (
+                    <div style={{ padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
+                      <p style={{ margin: `0 0 ${spacing(1)} 0`, fontSize: '12px', fontWeight: 600, color: text.tertiary.color, textTransform: 'uppercase' }}>
+                        Attendees ({eventAttendees.length})
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.75) }}>
+                        {eventAttendees.map((attendee, index) => (
+                          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: spacing(1), fontSize: '14px' }}>
+                            <span style={{ color: text.primary.color, fontWeight: attendee.isOrganizer ? 600 : 400 }}>
+                              {attendee.displayName || attendee.email}
+                            </span>
+                            {attendee.isOrganizer && (
+                              <span style={{ fontSize: '11px', color: text.tertiary.color, textTransform: 'uppercase' }}>
+                                Organizer
+                              </span>
+                            )}
+                            {attendee.responseStatus && attendee.responseStatus !== 'needsAction' && (
+                              <span style={{ fontSize: '11px', color: text.secondary.color, textTransform: 'capitalize' }}>
+                                ({attendee.responseStatus})
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
