@@ -14,11 +14,17 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     // Check database connection
-    if (!process.env.DATABASE_URL && !process.env.POSTGRES_PRISMA_URL) {
+    const hasDatabaseUrl = 
+      process.env.DATABASE_URL || 
+      process.env.POSTGRES_PRISMA_PRISMA_DATABASE_URL ||
+      process.env.POSTGRES_PRISMA_POSTGRES_URL ||
+      process.env.POSTGRES_PRISMA_URL
+    
+    if (!hasDatabaseUrl) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Database not configured. Please set DATABASE_URL or POSTGRES_PRISMA_URL environment variable in Vercel. See DATABASE_SETUP_QUICK_FIX.md for instructions.',
+          error: 'Database not configured. Please set DATABASE_URL or one of the POSTGRES_PRISMA_* environment variables in Vercel. See DATABASE_SETUP_QUICK_FIX.md for instructions.',
         },
         { status: 500 }
       )
