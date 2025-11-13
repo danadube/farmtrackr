@@ -12,6 +12,17 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: NextRequest) {
   try {
+    // Check database connection
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Database not configured. Please set DATABASE_URL environment variable.',
+        },
+        { status: 500 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const calendarIds = searchParams.get('calendarIds')?.split(',') || []
     const timeMin = searchParams.get('timeMin')
@@ -98,6 +109,18 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching events:', error)
+    
+    // Check if it's a database connection error
+    if (error instanceof Error && error.message.includes("Can't reach database server")) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Database connection failed. Please check your DATABASE_URL environment variable and ensure the database server is running.',
+        },
+        { status: 503 }
+      )
+    }
+    
     return NextResponse.json(
       {
         success: false,
