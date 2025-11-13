@@ -210,6 +210,15 @@ export default function CalendarPage() {
 
   const loadCalendars = async (initialSelection?: string[]) => {
     try {
+      // Sync Google calendars to DB first
+      try {
+        await fetch('/api/calendar?syncGoogle=true')
+      } catch (error) {
+        console.error('Failed to sync calendars to DB:', error)
+        // Continue even if sync fails
+      }
+
+      // Get calendars from Google API (for display)
       const response = await fetch('/api/google/calendar/list')
       if (!response.ok) {
         if (response.status === 401) {
@@ -382,7 +391,34 @@ export default function CalendarPage() {
         end = { dateTime: endDateTime.toISOString() }
       }
 
-      const response = await fetch('/api/google/calendar/events', {
+      // Calculate actual start/end dates for DB
+      const startDate = createForm.isAllDay
+        ? new Date(createForm.startDate + 'T00:00:00')
+        : createDateTime(createForm.startDate, createForm.startTime)
+      const endDate = createForm.isAllDay
+        ? new Date(createForm.endDate + 'T00:00:00')
+        : createDateTime(createForm.endDate, createForm.endTime)
+
+      // Find event in DB by Google event ID if needed
+      // For now, try to update via Google API first (backward compatibility)
+      // Then also update in DB if event exists there
+      let dbEventId: string | null = null
+      try {
+        // Try to find event in DB by Google event ID
+        const findResponse = await fetch(`/api/events?calendarIds=${createForm.calendarId}&timeMin=${startDate.toISOString()}&timeMax=${endDate.toISOString()}`)
+        if (findResponse.ok) {
+          const findData = await findResponse.json()
+          const foundEvent = findData.events?.find((e: any) => e.googleEventId === editingEventId)
+          if (foundEvent) {
+            dbEventId = foundEvent.id
+          }
+        }
+      } catch (error) {
+        console.error('Failed to find event in DB:', error)
+      }
+
+      // Update via Google API (existing flow - preserve backward compatibility)
+      const googleResponse = await fetch('/api/google/calendar/events', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -396,9 +432,31 @@ export default function CalendarPage() {
         }),
       })
 
-      const data = await response.json()
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to update event.')
+      const googleData = await googleResponse.json()
+      if (!googleResponse.ok || !googleData.success) {
+        throw new Error(googleData.error || 'Failed to update event.')
+      }
+
+      // Also update in DB if we found the event
+      if (dbEventId) {
+        try {
+          await fetch(`/api/events/${dbEventId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: createForm.title,
+              description: createForm.description || undefined,
+              location: createForm.location || undefined,
+              start: startDate.toISOString(),
+              end: endDate.toISOString(),
+              allDay: createForm.isAllDay,
+              syncToGoogle: false, // Already synced above
+            }),
+          })
+        } catch (error) {
+          console.error('Failed to update event in DB:', error)
+          // Don't fail the whole operation if DB update fails
+        }
       }
 
       setIsEditingEvent(false)
@@ -464,16 +522,27 @@ export default function CalendarPage() {
         end = { dateTime: endDateTime.toISOString() }
       }
 
-      const response = await fetch('/api/google/calendar/events', {
+      // Calculate actual start/end dates for DB
+      const startDate = createForm.isAllDay
+        ? new Date(createForm.startDate + 'T00:00:00')
+        : createDateTime(createForm.startDate, createForm.startTime)
+      const endDate = createForm.isAllDay
+        ? new Date(createForm.endDate + 'T00:00:00')
+        : createDateTime(createForm.endDate, createForm.endTime)
+
+      // Use new API route that saves to DB and syncs to Google
+      const response = await fetch('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          calendarId: createForm.calendarId,
-          summary: createForm.title,
+          calendarId: createForm.calendarId, // Can be Google calendar ID or DB ID
+          title: createForm.title,
           description: createForm.description || undefined,
           location: createForm.location || undefined,
-          start,
-          end,
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
+          allDay: createForm.isAllDay,
+          syncToGoogle: true, // Sync to Google for now
         }),
       })
 

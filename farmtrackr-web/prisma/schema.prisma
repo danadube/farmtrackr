@@ -442,3 +442,138 @@ model EmailLog {
   @@index([direction])
   @@map("email_logs")
 }
+
+// Calendar Module - Google Calendar Sync + CRM Events
+model Calendar {
+  id              String   @id @default(cuid())
+  name            String
+  color           String   @default("#4285f4")
+  type            String   // "google" | "crm"
+  googleCalendarId String? // Google Calendar ID (for Google calendars)
+  ownerId         String? // User/owner ID (for CRM calendars)
+  isPrimary       Boolean  @default(false)
+  isVisible       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  sharedWith      CalendarShare[]
+  events          Event[]
+
+  @@unique([googleCalendarId])
+  @@map("calendars")
+  @@index([googleCalendarId])
+  @@index([type])
+  @@index([ownerId])
+}
+
+model CalendarShare {
+  id         String   @id @default(cuid())
+  calendarId String
+  userId     String   // User ID who has access
+  role       String   // "owner" | "editor" | "viewer"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  calendar   Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  @@map("calendar_shares")
+  @@index([calendarId])
+  @@index([userId])
+}
+
+model RepeatRule {
+  id        String   @id @default(cuid())
+  frequency String   // "daily" | "weekly" | "monthly" | "yearly"
+  interval  Int      @default(1) // Every N days/weeks/months/years
+  count     Int?     // Number of occurrences (null = infinite)
+  until     DateTime? // End date (null = infinite)
+  byDay     String[] // Days of week (e.g., ["MO", "WE", "FR"])
+  byMonth   Int[]    // Months (1-12)
+  byMonthDay Int[]   // Days of month (1-31)
+  rrule     String?  // Full RRULE string
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events    Event[]
+
+  @@map("repeat_rules")
+}
+
+model Event {
+  id            String    @id @default(cuid())
+  calendarId   String
+  calendar     Calendar  @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  
+  // Basic Event Info
+  title         String
+  description   String?
+  location      String?
+  start         DateTime
+  end           DateTime
+  allDay        Boolean   @default(false)
+  color         String?
+  
+  // Google Calendar Sync
+  googleEventId String?   // Google Calendar event ID (crucial for sync)
+  source        String    @default("crm") // "crm" | "google"
+  syncStatus    String?   // "synced" | "pending" | "error"
+  lastSyncedAt  DateTime?
+  syncError     String?
+  
+  // Recurring Events
+  repeatRuleId  String?
+  repeatRule    RepeatRule? @relation(fields: [repeatRuleId], references: [id], onDelete: SetNull)
+  isRecurring   Boolean   @default(false)
+  recurrenceId  String?   // For recurring event instances
+  
+  // Attendees
+  attendees     Attendee[]
+  
+  // CRM Entity Linking
+  crmContactId  String?   // Link to FarmContact or GeneralContact
+  crmDealId     String?   // Link to Listing/Transaction
+  crmTaskId     String?   // Link to ListingTaskInstance
+  
+  // AI Features (structure only)
+  aiSuggested   Boolean   @default(false)
+  aiConfidence  Float?
+  
+  // Metadata
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("events")
+  @@index([calendarId])
+  @@index([googleEventId])
+  @@index([source])
+  @@index([syncStatus])
+  @@index([start])
+  @@index([end])
+  @@index([crmContactId])
+  @@index([crmDealId])
+  @@index([crmTaskId])
+  @@index([repeatRuleId])
+}
+
+model Attendee {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  email       String
+  displayName String?
+  responseStatus String @default("needsAction") // "needsAction" | "declined" | "tentative" | "accepted"
+  isOrganizer Boolean  @default(false)
+  isOptional  Boolean  @default(false)
+  
+  // Google Contacts linking
+  googleContactId String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("attendees")
+  @@index([eventId])
+  @@index([email])
+}
