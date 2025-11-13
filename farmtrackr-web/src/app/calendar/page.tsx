@@ -1016,7 +1016,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Calendar Controls Card */}
-          <div style={{ ...card, padding: spacing(3), display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing(2), width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ ...card, padding: spacing(3), display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing(2), boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
               <button
                 type="button"
@@ -1469,7 +1469,7 @@ export default function CalendarPage() {
           )}
 
           {/* Main Calendar Layout with Mini Calendar Sidebar */}
-          <div style={{ display: 'flex', gap: spacing(2), alignItems: 'flex-start', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', gap: spacing(2), alignItems: 'flex-start', boxSizing: 'border-box' }}>
             {/* Mini Calendar Sidebar */}
             <div style={{ ...card, padding: spacing(3), width: '280px', flexShrink: 0, position: 'sticky', top: spacing(2), boxSizing: 'border-box' }}>
               <div style={{ marginBottom: spacing(2) }}>
