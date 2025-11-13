@@ -258,7 +258,9 @@ export default function CalendarPage() {
       const normalizedGoogleEvents: NormalizedEvent[] = []
       const dbGoogleIds = new Set(dbEvents.filter((e: any) => e.googleEventId).map((e: any) => e.googleEventId))
       
-      for (const [googleEventId, googleEvent] of googleEventsMap.entries()) {
+      // Convert Map to Array for iteration
+      const googleEventsArray = Array.from(googleEventsMap.entries())
+      for (const [googleEventId, googleEvent] of googleEventsArray) {
         if (!dbGoogleIds.has(googleEventId)) {
           const meta = calendars.find((calendar) => 
             selectedCalendars.includes(calendar.id)
