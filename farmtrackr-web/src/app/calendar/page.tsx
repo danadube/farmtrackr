@@ -3558,6 +3558,7 @@ export default function CalendarPage() {
         </div>
       )}
     </Sidebar>
+    </>
   )
 }
 
