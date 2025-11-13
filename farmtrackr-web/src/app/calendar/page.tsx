@@ -2057,208 +2057,260 @@ export default function CalendarPage() {
               </div>
             )}
             {(view === 'week' || view === 'day') && (
-              <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-                {/* Time column */}
-                <div style={{ width: '60px', flexShrink: 0, paddingTop: '40px' }}>
-                  {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
-                    <div
-                      key={hour}
-                      style={{
-                        height: '60px',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        justifyContent: 'flex-end',
-                        paddingRight: spacing(1),
-                        paddingTop: spacing(0.5),
-                        borderTop: hour > 0 ? `1px solid ${colors.border}` : 'none',
-                      }}
-                    >
-                      <span style={{ fontSize: '11px', color: text.tertiary.color }}>
-                        {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                {/* Days/Time grid */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto' }}>
-                  {/* Day headers */}
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: view === 'week' ? 'repeat(7, minmax(0, 1fr))' : '1fr',
-                      borderBottom: `2px solid ${colors.border}`,
-                      position: 'sticky',
-                      top: 0,
-                      backgroundColor: colors.card,
-                      zIndex: 10,
-                    }}
-                  >
-                    {calendarCells.map((cellDate) => {
-                      const isToday = cellDate.toDateString() === new Date().toDateString()
-                      return (
-                        <div
-                          key={cellDate.toISOString()}
-                          style={{
-                            padding: spacing(1.5),
-                            borderRight: view === 'week' && calendarCells.indexOf(cellDate) < calendarCells.length - 1 ? `1px solid ${colors.border}` : 'none',
-                            backgroundColor: isToday ? colors.primaryLight || 'rgba(104, 159, 56, 0.1)' : 'transparent',
-                          }}
-                        >
-                          <div style={{ fontSize: '11px', fontWeight: 600, color: text.secondary.color, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: spacing(0.5) }}>
-                            {cellDate.toLocaleDateString(undefined, { weekday: 'short' })}
-                          </div>
-                          <div style={{ fontSize: '20px', fontWeight: isToday ? 700 : 600, color: isToday ? colors.primary : text.primary.color }}>
-                            {cellDate.getDate()}
-                          </div>
-                        </div>
-                      )
-                    })}
+              <div style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                {/* All-day events section */}
+                <div style={{ display: 'flex', borderBottom: `2px solid ${colors.border}`, backgroundColor: colors.card }}>
+                  <div style={{ width: '60px', flexShrink: 0, padding: spacing(1), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: text.secondary.color, textTransform: 'uppercase' }}>All day</span>
                   </div>
-                  {/* Time slots grid */}
                   <div
                     style={{
+                      flex: 1,
                       display: 'grid',
                       gridTemplateColumns: view === 'week' ? 'repeat(7, minmax(0, 1fr))' : '1fr',
-                      position: 'relative',
-                      flex: 1,
+                      minHeight: '40px',
                     }}
                   >
                     {calendarCells.map((cellDate) => {
                       const dayEvents = segmentedEvents.get(cellDate.toDateString()) || []
-                      const isToday = cellDate.toDateString() === new Date().toDateString()
-                      const currentHour = new Date().getHours()
-                      const currentMinute = new Date().getMinutes()
-                      const currentTimePosition = (currentHour + currentMinute / 60) * 60
+                      const allDayEvents = dayEvents.filter((event) => event.isAllDay)
+                      
+                      // Also get multi-day events that span this day
+                      const multiDayEvents = events.filter((event) => {
+                        if (event.isAllDay) {
+                          const eventStart = new Date(event.start)
+                          const eventEnd = new Date(event.end)
+                          // For all-day events, end date is exclusive (one day after), so subtract one day
+                          eventEnd.setDate(eventEnd.getDate() - 1)
+                          const cellDateStr = cellDate.toDateString()
+                          const eventStartStr = eventStart.toDateString()
+                          const eventEndStr = eventEnd.toDateString()
+                          
+                          // Check if this day is within the event range
+                          return cellDateStr >= eventStartStr && cellDateStr <= eventEndStr
+                        }
+                        return false
+                      })
+
+                      // Combine and deduplicate
+                      const allEventsForDay = [...new Map([...allDayEvents, ...multiDayEvents].map(e => [e.id, e])).values()]
 
                       return (
                         <div
                           key={cellDate.toISOString()}
                           style={{
-                            position: 'relative',
                             borderRight: view === 'week' && calendarCells.indexOf(cellDate) < calendarCells.length - 1 ? `1px solid ${colors.border}` : 'none',
+                            padding: spacing(0.5),
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: spacing(0.25),
+                            minHeight: '40px',
                           }}
                         >
-                          {/* Hour lines */}
-                          {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
-                            <div
-                              key={hour}
-                              style={{
-                                height: '60px',
-                                borderTop: `1px solid ${colors.border}`,
-                                position: 'relative',
-                              }}
-                            >
-                              {/* Current time indicator */}
-                              {isToday && hour === currentHour && (
-                                <div
-                                  style={{
-                                    position: 'absolute',
-                                    top: `${(currentMinute / 60) * 60}px`,
-                                    left: 0,
-                                    right: 0,
-                                    height: '2px',
-                                    backgroundColor: colors.error || '#ea4335',
-                                    zIndex: 5,
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      position: 'absolute',
-                                      left: '-6px',
-                                      top: '-4px',
-                                      width: '10px',
-                                      height: '10px',
-                                      borderRadius: '50%',
-                                      backgroundColor: colors.error || '#ea4335',
-                                    }}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                          {/* Events positioned by time */}
-                          {dayEvents
-                            .filter((event) => !event.isAllDay)
-                            .map((event) => {
-                              const startDate = new Date(event.start)
-                              const endDate = new Date(event.end)
-                              const startHour = startDate.getHours()
-                              const startMinute = startDate.getMinutes()
-                              const endHour = endDate.getHours()
-                              const endMinute = endDate.getMinutes()
-                              const startPosition = (startHour + startMinute / 60) * 60
-                              const endPosition = (endHour + endMinute / 60) * 60
-                              const duration = endPosition - startPosition
-                              const eventColor = event.calendarColor || colors.primary
-
+                          {allEventsForDay.map((event) => {
+                            const eventStart = new Date(event.start)
+                            const eventEnd = new Date(event.end)
+                            eventEnd.setDate(eventEnd.getDate() - 1) // All-day events have exclusive end date
+                            
+                            const cellDateStr = cellDate.toDateString()
+                            const eventStartStr = eventStart.toDateString()
+                            const eventEndStr = eventEnd.toDateString()
+                            
+                            const isFirstDay = cellDateStr === eventStartStr
+                            const isLastDay = cellDateStr === eventEndStr
+                            const isMiddleDay = cellDateStr > eventStartStr && cellDateStr < eventEndStr
+                            
+                            // Calculate which column this event starts in and how many columns it spans
+                            const startDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventStartStr)
+                            const endDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventEndStr)
+                            const currentDayIndex = calendarCells.indexOf(cellDate)
+                            
+                            // Only render if this is the first day of the event or if it's a multi-day event spanning this day
+                            if (currentDayIndex === startDayIndex || (currentDayIndex > startDayIndex && currentDayIndex <= endDayIndex)) {
+                              const spanDays = Math.min(endDayIndex - startDayIndex + 1, calendarCells.length - startDayIndex)
+                              
                               return (
                                 <div
-                                  key={event.id}
+                                  key={`${event.id}-${cellDateStr}`}
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     setSelectedEvent(event)
                                     setIsEventModalOpen(true)
                                   }}
                                   style={{
-                                    position: 'absolute',
-                                    top: `${startPosition}px`,
-                                    left: '4px',
-                                    right: '4px',
-                                    height: `${Math.max(duration, 20)}px`,
-                                    backgroundColor: eventColor,
+                                    backgroundColor: event.calendarColor || colors.primary,
                                     color: '#ffffff',
-                                    borderRadius: spacing(0.5),
-                                    padding: spacing(0.5),
+                                    borderRadius: spacing(0.25),
+                                    padding: `${spacing(0.5)} ${spacing(0.75)}`,
                                     fontSize: '12px',
                                     fontWeight: 500,
                                     cursor: 'pointer',
-                                    zIndex: 3,
                                     overflow: 'hidden',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: spacing(0.25),
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    marginLeft: isFirstDay ? 0 : '-4px',
+                                    marginRight: isLastDay ? 0 : '-4px',
+                                    borderTopLeftRadius: isFirstDay ? spacing(0.25) : 0,
+                                    borderBottomLeftRadius: isFirstDay ? spacing(0.25) : 0,
+                                    borderTopRightRadius: isLastDay ? spacing(0.25) : 0,
+                                    borderBottomRightRadius: isLastDay ? spacing(0.25) : 0,
+                                    width: currentDayIndex === startDayIndex ? `calc(${100 * spanDays}% + ${(spanDays - 1) * 4}px)` : '100%',
+                                    zIndex: isFirstDay ? 2 : 1,
                                   }}
                                   onMouseEnter={(e) => {
                                     e.currentTarget.style.opacity = '0.9'
-                                    e.currentTarget.style.transform = 'scale(1.02)'
                                   }}
                                   onMouseLeave={(e) => {
                                     e.currentTarget.style.opacity = '1'
-                                    e.currentTarget.style.transform = 'scale(1)'
                                   }}
                                 >
-                                  <span style={{ fontSize: '12px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {event.title}
-                                  </span>
-                                  {duration > 30 && (
-                                    <span style={{ fontSize: '11px', opacity: 0.9 }}>
-                                      {event.startLabel} – {event.endLabel}
-                                    </span>
-                                  )}
+                                  {isFirstDay && event.title}
                                 </div>
                               )
-                            })}
-                          {/* All-day events bar */}
-                          {dayEvents.filter((event) => event.isAllDay).length > 0 && (
-                            <div
-                              style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: '32px',
-                                borderBottom: `1px solid ${colors.border}`,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: spacing(0.25),
-                                padding: spacing(0.5),
-                                backgroundColor: colors.surface,
-                              }}
-                            >
-                              {dayEvents
-                                .filter((event) => event.isAllDay)
-                                .map((event) => (
+                            }
+                            return null
+                          })}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Time slots section (scrollable) */}
+                <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                  {/* Time column */}
+                  <div style={{ width: '60px', flexShrink: 0, paddingTop: '0' }}>
+                    {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                      <div
+                        key={hour}
+                        style={{
+                          height: '60px',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'flex-end',
+                          paddingRight: spacing(1),
+                          paddingTop: spacing(0.5),
+                          borderTop: hour > 0 ? `1px solid ${colors.border}` : 'none',
+                        }}
+                      >
+                        <span style={{ fontSize: '11px', color: text.tertiary.color }}>
+                          {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Days/Time grid */}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto' }}>
+                    {/* Day headers */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: view === 'week' ? 'repeat(7, minmax(0, 1fr))' : '1fr',
+                        borderBottom: `2px solid ${colors.border}`,
+                        position: 'sticky',
+                        top: 0,
+                        backgroundColor: colors.card,
+                        zIndex: 10,
+                      }}
+                    >
+                      {calendarCells.map((cellDate) => {
+                        const isToday = cellDate.toDateString() === new Date().toDateString()
+                        return (
+                          <div
+                            key={cellDate.toISOString()}
+                            style={{
+                              padding: spacing(1.5),
+                              borderRight: view === 'week' && calendarCells.indexOf(cellDate) < calendarCells.length - 1 ? `1px solid ${colors.border}` : 'none',
+                              backgroundColor: isToday ? colors.primaryLight || 'rgba(104, 159, 56, 0.1)' : 'transparent',
+                            }}
+                          >
+                            <div style={{ fontSize: '11px', fontWeight: 600, color: text.secondary.color, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: spacing(0.5) }}>
+                              {cellDate.toLocaleDateString(undefined, { weekday: 'short' })}
+                            </div>
+                            <div style={{ fontSize: '20px', fontWeight: isToday ? 700 : 600, color: isToday ? colors.primary : text.primary.color }}>
+                              {cellDate.getDate()}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {/* Time slots grid */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: view === 'week' ? 'repeat(7, minmax(0, 1fr))' : '1fr',
+                        position: 'relative',
+                        height: '1440px', // 24 hours * 60px
+                      }}
+                    >
+                      {calendarCells.map((cellDate) => {
+                        const dayEvents = segmentedEvents.get(cellDate.toDateString()) || []
+                        const isToday = cellDate.toDateString() === new Date().toDateString()
+                        const currentHour = new Date().getHours()
+                        const currentMinute = new Date().getMinutes()
+
+                        return (
+                          <div
+                            key={cellDate.toISOString()}
+                            style={{
+                              position: 'relative',
+                              borderRight: view === 'week' && calendarCells.indexOf(cellDate) < calendarCells.length - 1 ? `1px solid ${colors.border}` : 'none',
+                            }}
+                          >
+                            {/* Hour lines */}
+                            {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                              <div
+                                key={hour}
+                                style={{
+                                  height: '60px',
+                                  borderTop: `1px solid ${colors.border}`,
+                                  position: 'relative',
+                                }}
+                              >
+                                {/* Current time indicator */}
+                                {isToday && hour === currentHour && (
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      top: `${(currentMinute / 60) * 60}px`,
+                                      left: 0,
+                                      right: 0,
+                                      height: '2px',
+                                      backgroundColor: colors.error || '#ea4335',
+                                      zIndex: 5,
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        position: 'absolute',
+                                        left: '-6px',
+                                        top: '-4px',
+                                        width: '10px',
+                                        height: '10px',
+                                        borderRadius: '50%',
+                                        backgroundColor: colors.error || '#ea4335',
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            {/* Events positioned by time */}
+                            {dayEvents
+                              .filter((event) => !event.isAllDay)
+                              .map((event) => {
+                                const startDate = new Date(event.start)
+                                const endDate = new Date(event.end)
+                                const startHour = startDate.getHours()
+                                const startMinute = startDate.getMinutes()
+                                const endHour = endDate.getHours()
+                                const endMinute = endDate.getMinutes()
+                                const startPosition = (startHour + startMinute / 60) * 60
+                                const endPosition = (endHour + endMinute / 60) * 60
+                                const duration = endPosition - startPosition
+                                const eventColor = event.calendarColor || colors.primary
+
+                                return (
                                   <div
                                     key={event.id}
                                     onClick={(e) => {
@@ -2267,26 +2319,144 @@ export default function CalendarPage() {
                                       setIsEventModalOpen(true)
                                     }}
                                     style={{
-                                      backgroundColor: event.calendarColor || colors.primary,
+                                      position: 'absolute',
+                                      top: `${startPosition}px`,
+                                      left: '4px',
+                                      right: '4px',
+                                      height: `${Math.max(duration, 20)}px`,
+                                      backgroundColor: eventColor,
                                       color: '#ffffff',
-                                      borderRadius: spacing(0.25),
-                                      padding: `${spacing(0.25)} ${spacing(0.5)}`,
-                                      fontSize: '11px',
+                                      borderRadius: spacing(0.5),
+                                      padding: spacing(0.5),
+                                      fontSize: '12px',
                                       fontWeight: 500,
                                       cursor: 'pointer',
+                                      zIndex: 3,
                                       overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: spacing(0.25),
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.opacity = '0.9'
+                                      e.currentTarget.style.transform = 'scale(1.02)'
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.opacity = '1'
+                                      e.currentTarget.style.transform = 'scale(1)'
                                     }}
                                   >
-                                    {event.title}
+                                    <span style={{ fontSize: '12px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {event.title}
+                                    </span>
+                                    {duration > 30 && (
+                                      <span style={{ fontSize: '11px', opacity: 0.9 }}>
+                                        {event.startLabel} – {event.endLabel}
+                                      </span>
+                                    )}
                                   </div>
-                                ))}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
+                                )
+                              })}
+                            {/* Multi-day timed events that span into this day */}
+                            {events
+                              .filter((event) => {
+                                if (event.isAllDay) return false
+                                const eventStart = new Date(event.start)
+                                const eventEnd = new Date(event.end)
+                                const cellDateStr = cellDate.toDateString()
+                                const eventStartStr = eventStart.toDateString()
+                                const eventEndStr = eventEnd.toDateString()
+                                
+                                // Check if event spans multiple days and this day is in the middle
+                                if (eventStartStr !== eventEndStr && cellDateStr > eventStartStr && cellDateStr <= eventEndStr) {
+                                  return true
+                                }
+                                return false
+                              })
+                              .map((event) => {
+                                const eventStart = new Date(event.start)
+                                const eventEnd = new Date(event.end)
+                                const cellDateStr = cellDate.toDateString()
+                                const eventStartStr = eventStart.toDateString()
+                                const eventEndStr = eventEnd.toDateString()
+                                
+                                const isFirstDay = cellDateStr === eventStartStr
+                                const isLastDay = cellDateStr === eventEndStr
+                                
+                                // Calculate position
+                                let top = 0
+                                let height = 1440 // Full day
+                                
+                                if (isFirstDay) {
+                                  const startHour = eventStart.getHours()
+                                  const startMinute = eventStart.getMinutes()
+                                  top = (startHour + startMinute / 60) * 60
+                                  height = 1440 - top
+                                } else if (isLastDay) {
+                                  const endHour = eventEnd.getHours()
+                                  const endMinute = eventEnd.getMinutes()
+                                  height = (endHour + endMinute / 60) * 60
+                                }
+                                
+                                const eventColor = event.calendarColor || colors.primary
+                                
+                                return (
+                                  <div
+                                    key={`${event.id}-${cellDateStr}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setSelectedEvent(event)
+                                      setIsEventModalOpen(true)
+                                    }}
+                                    style={{
+                                      position: 'absolute',
+                                      top: `${top}px`,
+                                      left: '4px',
+                                      right: '4px',
+                                      height: `${height}px`,
+                                      backgroundColor: eventColor,
+                                      color: '#ffffff',
+                                      borderRadius: spacing(0.5),
+                                      padding: spacing(0.5),
+                                      fontSize: '12px',
+                                      fontWeight: 500,
+                                      cursor: 'pointer',
+                                      zIndex: 3,
+                                      overflow: 'hidden',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: spacing(0.25),
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                      borderTopLeftRadius: isFirstDay ? spacing(0.5) : 0,
+                                      borderBottomLeftRadius: isFirstDay ? spacing(0.5) : 0,
+                                      borderTopRightRadius: isLastDay ? spacing(0.5) : 0,
+                                      borderBottomRightRadius: isLastDay ? spacing(0.5) : 0,
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.opacity = '0.9'
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.opacity = '1'
+                                    }}
+                                  >
+                                    {isFirstDay && (
+                                      <>
+                                        <span style={{ fontSize: '12px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                          {event.title}
+                                        </span>
+                                        <span style={{ fontSize: '11px', opacity: 0.9 }}>
+                                          {event.startLabel}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
