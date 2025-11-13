@@ -119,6 +119,13 @@ export async function saveEventToDB(data: {
   crmContactId?: string | null
   crmDealId?: string | null
   crmTaskId?: string | null
+  attendees?: Array<{
+    email: string
+    displayName?: string
+    responseStatus?: string
+    isOrganizer?: boolean
+    isOptional?: boolean
+  }>
   isRecurring?: boolean
   recurrenceRule?: any // RecurrenceRule object
   rrule?: string | null // RRULE string
@@ -212,7 +219,7 @@ export async function saveEventToDB(data: {
     repeatRuleId = repeatRule.id
   }
 
-  return prisma.event.create({
+  const event = await prisma.event.create({
     data: {
       calendarId: data.calendarId,
       title: data.title,
@@ -233,6 +240,22 @@ export async function saveEventToDB(data: {
       repeatRuleId: repeatRuleId,
     },
   })
+
+  // Create attendees if provided
+  if (data.attendees && data.attendees.length > 0) {
+    await prisma.attendee.createMany({
+      data: data.attendees.map((attendee) => ({
+        eventId: event.id,
+        email: attendee.email,
+        displayName: attendee.displayName || null,
+        responseStatus: (attendee.responseStatus as any) || 'needsAction',
+        isOrganizer: attendee.isOrganizer || false,
+        isOptional: attendee.isOptional || false,
+      })),
+    })
+  }
+
+  return event
 }
 
 /**

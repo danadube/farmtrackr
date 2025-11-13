@@ -203,6 +203,7 @@ export async function POST(request: NextRequest) {
       crmContactId,
       crmDealId,
       crmTaskId,
+      attendees: attendees || undefined,
       isRecurring,
       recurrenceRule,
       rrule,
