@@ -2919,6 +2919,142 @@ export default function CalendarPage() {
           </div>
         </div>
       )}
+
+      {showCreateCalendarModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1200,
+            padding: spacing(2),
+          }}
+          onClick={() => {
+            if (!isSavingCalendar) {
+              setShowCreateCalendarModal(false)
+              setEditingCalendar(null)
+              setNewCalendarName('')
+              setNewCalendarColor('#4285f4')
+            }
+          }}
+        >
+          <div
+            style={{
+              ...card,
+              width: '100%',
+              maxWidth: '400px',
+              padding: spacing(3),
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing(2),
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: text.primary.color }}>
+                {editingCalendar ? 'Edit Calendar' : 'Create CRM Calendar'}
+              </h2>
+              <p style={{ margin: `${spacing(0.5)} 0 0 0`, fontSize: '13px', color: text.secondary.color }}>
+                {editingCalendar ? 'Update calendar name and color.' : 'Create a new calendar for CRM-only events.'}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                  Calendar Name
+                </label>
+                <input
+                  type="text"
+                  value={newCalendarName}
+                  onChange={(e) => setNewCalendarName(e.target.value)}
+                  placeholder="My CRM Calendar"
+                  style={inputStyle(colors, text, spacing)}
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                  Color
+                </label>
+                <div style={{ display: 'flex', gap: spacing(1), alignItems: 'center' }}>
+                  <input
+                    type="color"
+                    value={newCalendarColor}
+                    onChange={(e) => setNewCalendarColor(e.target.value)}
+                    style={{
+                      width: '60px',
+                      height: '40px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: spacing(0.5),
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <input
+                    type="text"
+                    value={newCalendarColor}
+                    onChange={(e) => setNewCalendarColor(e.target.value)}
+                    placeholder="#4285f4"
+                    style={{ ...inputStyle(colors, text, spacing), flex: 1, fontFamily: 'monospace' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing(1), paddingTop: spacing(1), borderTop: `1px solid ${colors.border}` }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateCalendarModal(false)
+                  setEditingCalendar(null)
+                  setNewCalendarName('')
+                  setNewCalendarColor('#4285f4')
+                }}
+                disabled={isSavingCalendar}
+                style={{
+                  padding: `${spacing(1)} ${spacing(2.5)}`,
+                  borderRadius: spacing(0.75),
+                  border: `1px solid ${colors.border}`,
+                  backgroundColor: colors.surface,
+                  color: text.primary.color,
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: isSavingCalendar ? 'not-allowed' : 'pointer',
+                  opacity: isSavingCalendar ? 0.5 : 1,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveCalendar}
+                disabled={isSavingCalendar || !newCalendarName.trim()}
+                style={{
+                  padding: `${spacing(1)} ${spacing(2.5)}`,
+                  borderRadius: spacing(0.75),
+                  border: 'none',
+                  backgroundColor: colors.primary,
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: isSavingCalendar || !newCalendarName.trim() ? 'not-allowed' : 'pointer',
+                  opacity: isSavingCalendar || !newCalendarName.trim() ? 0.5 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: spacing(0.75),
+                }}
+              >
+                {isSavingCalendar && <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />}
+                {editingCalendar ? 'Save Changes' : 'Create Calendar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Sidebar>
   )
 }
