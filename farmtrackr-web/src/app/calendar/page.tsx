@@ -59,6 +59,8 @@ type CreateEventState = {
   endTime: string
   location: string
   description: string
+  calendarId: string
+  isAllDay: boolean
 }
 
 const INITIAL_CREATE_EVENT_STATE: CreateEventState = {
@@ -69,6 +71,8 @@ const INITIAL_CREATE_EVENT_STATE: CreateEventState = {
   endTime: '10:00',
   location: '',
   description: '',
+  calendarId: 'primary',
+  isAllDay: false,
 }
 
 export default function CalendarPage() {
@@ -279,10 +283,13 @@ export default function CalendarPage() {
   const handleOpenCreateModal = () => {
     const startDate = toInputDate(selectedDate)
     const endDate = toInputDate(selectedDate)
+    // Use primary calendar or first available calendar
+    const defaultCalendarId = calendars.find((cal) => cal.primary)?.id || calendars[0]?.id || 'primary'
     setCreateForm({
       ...INITIAL_CREATE_EVENT_STATE,
       startDate,
       endDate,
+      calendarId: defaultCalendarId,
     })
     setIsCreateModalOpen(true)
   }
@@ -302,28 +309,50 @@ export default function CalendarPage() {
     setError(null)
 
     try {
-      const startDateTime = createDateTime(createForm.startDate, createForm.startTime)
-      const endDateTime = createDateTime(createForm.endDate, createForm.endTime)
+      let start: { date?: string; dateTime?: string; timeZone?: string }
+      let end: { date?: string; dateTime?: string; timeZone?: string }
 
-      if (startDateTime >= endDateTime) {
-        setError('End time must be after start time.')
-        setIsSavingEvent(false)
-        return
+      if (createForm.isAllDay) {
+        // For all-day events, use date format (YYYY-MM-DD)
+        // Google Calendar expects the end date to be exclusive (day after the last day)
+        const startDate = new Date(createForm.startDate + 'T00:00:00')
+        const endDate = new Date(createForm.endDate + 'T00:00:00')
+        endDate.setDate(endDate.getDate() + 1) // Add one day for exclusive end date
+
+        const formatDate = (date: Date) => {
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const day = String(date.getDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
+        }
+
+        start = { date: formatDate(startDate) }
+        end = { date: formatDate(endDate) }
+      } else {
+        // For timed events, use dateTime format
+        const startDateTime = createDateTime(createForm.startDate, createForm.startTime)
+        const endDateTime = createDateTime(createForm.endDate, createForm.endTime)
+
+        if (startDateTime >= endDateTime) {
+          setError('End time must be after start time.')
+          setIsSavingEvent(false)
+          return
+        }
+
+        start = { dateTime: startDateTime.toISOString() }
+        end = { dateTime: endDateTime.toISOString() }
       }
 
       const response = await fetch('/api/google/calendar/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          calendarId: createForm.calendarId,
           summary: createForm.title,
           description: createForm.description || undefined,
           location: createForm.location || undefined,
-          start: {
-            dateTime: startDateTime.toISOString(),
-          },
-          end: {
-            dateTime: endDateTime.toISOString(),
-          },
+          start,
+          end,
         }),
       })
 
@@ -967,7 +996,70 @@ export default function CalendarPage() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing(1) }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                  Calendar
+                </label>
+                <select
+                  value={createForm.calendarId}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, calendarId: e.target.value }))}
+                  style={inputStyle(colors, text, spacing)}
+                >
+                  {calendars.length === 0 ? (
+                    <option value="primary">Primary Calendar</option>
+                  ) : (
+                    calendars.map((calendar) => (
+                      <option key={calendar.id} value={calendar.id}>
+                        {calendar.summary} {calendar.primary ? '(Primary)' : ''}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                <input
+                  type="checkbox"
+                  id="all-day-checkbox"
+                  checked={createForm.isAllDay}
+                  onChange={(e) => {
+                    setCreateForm((prev) => {
+                      const newForm = { ...prev, isAllDay: e.target.checked }
+                      // When enabling all-day, set end date to start date if they're different
+                      if (e.target.checked && prev.startDate && prev.endDate !== prev.startDate) {
+                        newForm.endDate = prev.startDate
+                      }
+                      return newForm
+                    })
+                  }}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    cursor: 'pointer',
+                    accentColor: colors.primary,
+                  }}
+                />
+                <label
+                  htmlFor="all-day-checkbox"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: text.primary.color,
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                >
+                  All Day
+                </label>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: createForm.isAllDay ? '1fr 1fr' : '1fr 1fr',
+                  gap: spacing(1),
+                }}
+              >
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
                     Start Date
@@ -975,21 +1067,32 @@ export default function CalendarPage() {
                   <input
                     type="date"
                     value={createForm.startDate}
-                    onChange={(e) => setCreateForm((prev) => ({ ...prev, startDate: e.target.value }))}
+                    onChange={(e) => {
+                      setCreateForm((prev) => {
+                        const newForm = { ...prev, startDate: e.target.value }
+                        // If all-day and end date is before new start date, update end date
+                        if (prev.isAllDay && prev.endDate && e.target.value > prev.endDate) {
+                          newForm.endDate = e.target.value
+                        }
+                        return newForm
+                      })
+                    }}
                     style={inputStyle(colors, text, spacing)}
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
-                    Start Time
-                  </label>
-                  <input
-                    type="time"
-                    value={createForm.startTime}
-                    onChange={(e) => setCreateForm((prev) => ({ ...prev, startTime: e.target.value }))}
-                    style={inputStyle(colors, text, spacing)}
-                  />
-                </div>
+                {!createForm.isAllDay && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                      Start Time
+                    </label>
+                    <input
+                      type="time"
+                      value={createForm.startTime}
+                      onChange={(e) => setCreateForm((prev) => ({ ...prev, startTime: e.target.value }))}
+                      style={inputStyle(colors, text, spacing)}
+                    />
+                  </div>
+                )}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
                     End Date
@@ -998,20 +1101,23 @@ export default function CalendarPage() {
                     type="date"
                     value={createForm.endDate}
                     onChange={(e) => setCreateForm((prev) => ({ ...prev, endDate: e.target.value }))}
+                    min={createForm.startDate}
                     style={inputStyle(colors, text, spacing)}
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
-                    End Time
-                  </label>
-                  <input
-                    type="time"
-                    value={createForm.endTime}
-                    onChange={(e) => setCreateForm((prev) => ({ ...prev, endTime: e.target.value }))}
-                    style={inputStyle(colors, text, spacing)}
-                  />
-                </div>
+                {!createForm.isAllDay && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                      End Time
+                    </label>
+                    <input
+                      type="time"
+                      value={createForm.endTime}
+                      onChange={(e) => setCreateForm((prev) => ({ ...prev, endTime: e.target.value }))}
+                      style={inputStyle(colors, text, spacing)}
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
