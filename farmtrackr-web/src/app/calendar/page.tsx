@@ -544,6 +544,12 @@ export default function CalendarPage() {
       crmContactId: '', // Will be populated from event data if available
       crmDealId: '', // Will be populated from event data if available
       crmTaskId: '', // Will be populated from event data if available
+      isRecurring: false, // Will be populated from event data if available
+      recurrenceFrequency: '',
+      recurrenceInterval: 1,
+      recurrenceCount: undefined,
+      recurrenceUntil: undefined,
+      recurrenceByDay: [],
     })
     setEditingEventId(selectedEvent.id)
     setIsEditingEvent(true)
