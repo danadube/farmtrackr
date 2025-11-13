@@ -981,8 +981,7 @@ export default function CalendarPage() {
       <div style={{ minHeight: '100vh', backgroundColor: colors.background }}>
         <div
           style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
+            width: '100%',
             padding: '32px 48px 64px 48px',
             display: 'flex',
             flexDirection: 'column',
