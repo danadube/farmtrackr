@@ -279,6 +279,16 @@ export async function POST(request: NextRequest) {
           ? [rrule]
           : undefined
 
+        // Format attendees for Google Calendar
+        const googleAttendees = attendees && attendees.length > 0
+          ? attendees.map((a: any) => ({
+              email: a.email,
+              displayName: a.displayName,
+              responseStatus: a.responseStatus || 'needsAction',
+              optional: a.isOptional || false,
+            }))
+          : undefined
+
         const response = await googleCalendar.events.insert({
           calendarId: calendar.googleCalendarId,
           requestBody: {
@@ -288,6 +298,7 @@ export async function POST(request: NextRequest) {
             start: googleStart,
             end: googleEnd,
             recurrence: googleRecurrence,
+            attendees: googleAttendees,
           },
         })
 
@@ -319,6 +330,7 @@ export async function POST(request: NextRequest) {
       crmContactId: crmContactId || null,
       crmDealId: crmDealId || null,
       crmTaskId: crmTaskId || null,
+      attendees: attendees || undefined,
       isRecurring: isRecurring || false,
       recurrenceRule: recurrenceRule || null,
       rrule: rrule || null,
