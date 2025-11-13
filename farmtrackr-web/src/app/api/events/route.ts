@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getEventsFromDB, saveEventToDB } from '@/lib/calendarHelpers'
 import { getGoogleAccessToken } from '@/lib/googleTokenHelper'
 import { getAuthenticatedCalendarClient } from '@/lib/googleAuth'
+import { generateRecurringInstances, parseRRULE, type RecurrenceRule } from '@/lib/recurringEvents'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,8 +42,10 @@ export async function GET(request: NextRequest) {
     const endDate = timeMax ? new Date(timeMax) : new Date()
     endDate.setMonth(endDate.getMonth() + 2)
 
-    // Get events from database
-    const dbEvents = await getEventsFromDB(calendarIds, startDate, endDate)
+    // Get events from database (query a wider range to catch recurring events that start before but recur into range)
+    const queryStartDate = new Date(startDate)
+    queryStartDate.setFullYear(queryStartDate.getFullYear() - 1) // Look back 1 year for recurring events
+    const dbEvents = await getEventsFromDB(calendarIds, queryStartDate, endDate)
 
     // Optionally fetch from Google and merge
     let googleEvents: any[] = []
@@ -93,9 +96,58 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Expand recurring events into instances for the visible date range
+    const expandedEvents: any[] = []
+    for (const event of dbEvents) {
+      if (event.isRecurring && event.repeatRule) {
+        // Parse the recurrence rule
+        const rrule = event.repeatRule.rrule
+        if (rrule) {
+          const recurrenceRule = parseRRULE(rrule)
+          if (recurrenceRule) {
+            // Generate instances for the visible date range (pass view range for optimization)
+            const instances = generateRecurringInstances(
+              new Date(event.start),
+              new Date(event.end),
+              recurrenceRule,
+              1000, // Max instances (should be enough for any reasonable view)
+              startDate, // Only generate instances from view start
+              endDate // Only generate instances until view end
+            )
+            
+            // Instances are already filtered by the function, but double-check
+            const visibleInstances = instances.filter(
+              (instance) => instance.start <= endDate && instance.end >= startDate
+            )
+            
+            // Create event instances with unique IDs
+            for (const instance of visibleInstances) {
+              expandedEvents.push({
+                ...event,
+                id: `${event.id}_${instance.start.toISOString()}`, // Unique ID for this instance
+                start: instance.start,
+                end: instance.end,
+                isRecurringInstance: true, // Flag to indicate this is an instance
+                recurrenceId: event.id, // Reference to the parent recurring event
+              })
+            }
+          } else {
+            // If we can't parse the RRULE, just include the base event
+            expandedEvents.push(event)
+          }
+        } else {
+          // No RRULE, just include the base event
+          expandedEvents.push(event)
+        }
+      } else {
+        // Non-recurring event, include as-is
+        expandedEvents.push(event)
+      }
+    }
+
     // Merge events: prefer DB events (they have sync info), supplement with Google events not in DB
     const dbEventGoogleIds = new Set(
-      dbEvents.filter((e) => e.googleEventId).map((e) => e.googleEventId!)
+      expandedEvents.filter((e) => e.googleEventId).map((e) => e.googleEventId!)
     )
 
     const uniqueGoogleEvents = googleEvents.filter(
@@ -104,7 +156,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      events: dbEvents,
+      events: expandedEvents,
       googleEvents: uniqueGoogleEvents, // Return separately for client to merge
     })
   } catch (error) {

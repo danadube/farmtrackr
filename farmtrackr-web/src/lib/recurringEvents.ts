@@ -115,18 +115,44 @@ export function parseRRULE(rrule: string): RecurrenceRule | null {
 
 /**
  * Generate recurring event instances from a base event
+ * @param startDate - The start date of the base event
+ * @param endDate - The end date of the base event
+ * @param rule - The recurrence rule
+ * @param maxInstances - Maximum number of instances to generate
+ * @param viewStartDate - Optional: Only generate instances after this date (for performance)
+ * @param viewEndDate - Optional: Only generate instances before this date (for performance)
  */
 export function generateRecurringInstances(
   startDate: Date,
   endDate: Date,
   rule: RecurrenceRule,
-  maxInstances: number = 100
+  maxInstances: number = 100,
+  viewStartDate?: Date,
+  viewEndDate?: Date
 ): Array<{ start: Date; end: Date }> {
   const instances: Array<{ start: Date; end: Date }> = []
   const duration = endDate.getTime() - startDate.getTime()
 
   let currentDate = new Date(startDate)
   let instanceCount = 0
+
+  // If viewStartDate is provided, skip to that date (or earlier if needed for weekly/monthly patterns)
+  if (viewStartDate && currentDate < viewStartDate) {
+    // For weekly/monthly patterns, we need to calculate from the start date
+    // For now, we'll just start from viewStartDate and work forward
+    if (rule.frequency === 'WEEKLY' || rule.frequency === 'MONTHLY' || rule.frequency === 'YEARLY') {
+      // For these patterns, we need to calculate from the original start date
+      // So we'll iterate until we reach viewStartDate
+      while (currentDate < viewStartDate && instanceCount < maxInstances) {
+        const nextDate = getNextOccurrenceDate(currentDate, rule)
+        if (nextDate <= currentDate) break // Prevent infinite loop
+        currentDate = nextDate
+      }
+    } else {
+      // For daily, we can start from viewStartDate
+      currentDate = new Date(viewStartDate)
+    }
+  }
 
   while (instanceCount < maxInstances) {
     // Check if we've exceeded count or until date
@@ -136,19 +162,32 @@ export function generateRecurringInstances(
     if (rule.until && currentDate > rule.until) {
       break
     }
+    
+    // If viewEndDate is provided and we've passed it, stop
+    if (viewEndDate && currentDate > viewEndDate) {
+      break
+    }
 
     // Check if current date matches recurrence pattern
     if (matchesRecurrencePattern(currentDate, startDate, rule)) {
       const instanceEnd = new Date(currentDate.getTime() + duration)
-      instances.push({
-        start: new Date(currentDate),
-        end: instanceEnd,
-      })
-      instanceCount++
+      
+      // Only add if it's within the view range (if specified)
+      if (!viewStartDate || instanceEnd >= viewStartDate) {
+        if (!viewEndDate || currentDate <= viewEndDate) {
+          instances.push({
+            start: new Date(currentDate),
+            end: instanceEnd,
+          })
+          instanceCount++
+        }
+      }
     }
 
     // Move to next potential occurrence
-    currentDate = getNextOccurrenceDate(currentDate, rule)
+    const nextDate = getNextOccurrenceDate(currentDate, rule)
+    if (nextDate <= currentDate) break // Prevent infinite loop
+    currentDate = nextDate
   }
 
   return instances

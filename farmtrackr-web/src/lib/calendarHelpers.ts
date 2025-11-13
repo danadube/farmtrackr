@@ -409,6 +409,7 @@ export async function getEventsFromDB(
     include: {
       calendar: true,
       attendees: true,
+      repeatRule: true, // Include repeat rule for recurring events
     },
     orderBy: {
       start: 'asc',
