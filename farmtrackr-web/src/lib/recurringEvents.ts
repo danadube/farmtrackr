@@ -135,28 +135,43 @@ export function generateRecurringInstances(
 
   let currentDate = new Date(startDate)
   let instanceCount = 0
+  let skippedBeforeView = 0
 
-  // If viewStartDate is provided, skip to that date (or earlier if needed for weekly/monthly patterns)
+  // Always calculate from the original start date to ensure correctness
+  // For performance, we can skip ahead if viewStartDate is provided
   if (viewStartDate && currentDate < viewStartDate) {
-    // For weekly/monthly patterns, we need to calculate from the start date
-    // For now, we'll just start from viewStartDate and work forward
-    if (rule.frequency === 'WEEKLY' || rule.frequency === 'MONTHLY' || rule.frequency === 'YEARLY') {
-      // For these patterns, we need to calculate from the original start date
-      // So we'll iterate until we reach viewStartDate
-      while (currentDate < viewStartDate && instanceCount < maxInstances) {
+    // For patterns that depend on the original start date (weekly, monthly, yearly),
+    // we need to iterate from the start. For daily, we can jump ahead.
+    if (rule.frequency === 'DAILY') {
+      // For daily, we can safely jump to viewStartDate
+      const daysDiff = Math.floor((viewStartDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+      const interval = rule.interval || 1
+      const skipDays = Math.floor(daysDiff / interval) * interval
+      currentDate = new Date(startDate.getTime() + skipDays * 24 * 60 * 60 * 1000)
+      // Make sure we're not before viewStartDate
+      while (currentDate < viewStartDate && instanceCount < maxInstances * 10) {
         const nextDate = getNextOccurrenceDate(currentDate, rule)
-        if (nextDate <= currentDate) break // Prevent infinite loop
+        if (nextDate <= currentDate) break
         currentDate = nextDate
+        skippedBeforeView++
       }
     } else {
-      // For daily, we can start from viewStartDate
-      currentDate = new Date(viewStartDate)
+      // For weekly/monthly/yearly, iterate from start but skip adding instances before viewStartDate
+      // This ensures we get the correct days of week, days of month, etc.
+      while (currentDate < viewStartDate && skippedBeforeView < maxInstances * 10) {
+        if (matchesRecurrencePattern(currentDate, startDate, rule)) {
+          skippedBeforeView++
+        }
+        const nextDate = getNextOccurrenceDate(currentDate, rule)
+        if (nextDate <= currentDate) break
+        currentDate = nextDate
+      }
     }
   }
 
   while (instanceCount < maxInstances) {
     // Check if we've exceeded count or until date
-    if (rule.count && instanceCount >= rule.count) {
+    if (rule.count && (instanceCount + skippedBeforeView) >= rule.count) {
       break
     }
     if (rule.until && currentDate > rule.until) {
