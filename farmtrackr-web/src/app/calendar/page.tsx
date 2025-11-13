@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, RefreshCw, X, MapPin } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, RefreshCw, X, MapPin, Edit } from 'lucide-react'
 
 type CalendarView = 'month' | 'week' | 'day'
 
@@ -76,7 +76,7 @@ const INITIAL_CREATE_EVENT_STATE: CreateEventState = {
 }
 
 export default function CalendarPage() {
-  const { colors, text, card, cardWithLeftBorder, headerCard, headerDivider, spacing } = useThemeStyles()
+  const { colors, text, card, cardWithLeftBorder, headerCard, headerDivider, spacing, isDark } = useThemeStyles()
   const { getButtonPressHandlers, getButtonPressStyle, pressedButtons } = useButtonPress()
 
   const [currentDate, setCurrentDate] = useState(() => new Date())
@@ -95,6 +95,8 @@ export default function CalendarPage() {
   const [showCalendarPicker, setShowCalendarPicker] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<NormalizedEvent | null>(null)
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
+  const [isEditingEvent, setIsEditingEvent] = useState(false)
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
 
   useEffect(() => {
     let storedSelection: string[] | undefined
@@ -292,6 +294,125 @@ export default function CalendarPage() {
       calendarId: defaultCalendarId,
     })
     setIsCreateModalOpen(true)
+  }
+
+  const handleStartEdit = () => {
+    if (!selectedEvent) return
+    
+    const startDate = toInputDate(selectedEvent.start)
+    // For all-day events, Google Calendar end date is exclusive (one day after), so subtract one day
+    let endDate = toInputDate(selectedEvent.end)
+    if (selectedEvent.isAllDay) {
+      const endDateObj = new Date(selectedEvent.end)
+      endDateObj.setDate(endDateObj.getDate() - 1)
+      endDate = toInputDate(endDateObj)
+    }
+    const startTime = selectedEvent.isAllDay ? '09:00' : toInputTime(selectedEvent.start)
+    const endTime = selectedEvent.isAllDay ? '10:00' : toInputTime(selectedEvent.end)
+    
+    setCreateForm({
+      title: selectedEvent.title,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      location: selectedEvent.location || '',
+      description: selectedEvent.description || '',
+      calendarId: selectedEvent.calendarId || 'primary',
+      isAllDay: selectedEvent.isAllDay,
+    })
+    setEditingEventId(selectedEvent.id)
+    setIsEditingEvent(true)
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditingEvent(false)
+    setEditingEventId(null)
+    setCreateForm(INITIAL_CREATE_EVENT_STATE)
+  }
+
+  const handleUpdateEvent = async () => {
+    if (!editingEventId || !selectedEvent) {
+      setError('No event selected for editing.')
+      return
+    }
+
+    if (!createForm.title.trim()) {
+      setError('Please provide an event title.')
+      return
+    }
+
+    if (!createForm.startDate || !createForm.endDate) {
+      setError('Start and end dates are required.')
+      return
+    }
+
+    setIsSavingEvent(true)
+    setError(null)
+
+    try {
+      let start: { date?: string; dateTime?: string; timeZone?: string }
+      let end: { date?: string; dateTime?: string; timeZone?: string }
+
+      if (createForm.isAllDay) {
+        const startDate = new Date(createForm.startDate + 'T00:00:00')
+        const endDate = new Date(createForm.endDate + 'T00:00:00')
+        endDate.setDate(endDate.getDate() + 1)
+
+        const formatDate = (date: Date) => {
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const day = String(date.getDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
+        }
+
+        start = { date: formatDate(startDate) }
+        end = { date: formatDate(endDate) }
+      } else {
+        const startDateTime = createDateTime(createForm.startDate, createForm.startTime)
+        const endDateTime = createDateTime(createForm.endDate, createForm.endTime)
+
+        if (startDateTime >= endDateTime) {
+          setError('End time must be after start time.')
+          setIsSavingEvent(false)
+          return
+        }
+
+        start = { dateTime: startDateTime.toISOString() }
+        end = { dateTime: endDateTime.toISOString() }
+      }
+
+      const response = await fetch('/api/google/calendar/events', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          calendarId: createForm.calendarId,
+          eventId: editingEventId,
+          summary: createForm.title,
+          description: createForm.description || undefined,
+          location: createForm.location || undefined,
+          start,
+          end,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to update event.')
+      }
+
+      setIsEditingEvent(false)
+      setEditingEventId(null)
+      setCreateForm(INITIAL_CREATE_EVENT_STATE)
+      setIsEventModalOpen(false)
+      setSelectedEvent(null)
+      await fetchEvents(true)
+    } catch (err) {
+      console.error('Failed to update calendar event:', err)
+      setError(err instanceof Error ? err.message : 'Unexpected error while updating event.')
+    } finally {
+      setIsSavingEvent(false)
+    }
   }
 
   const handleCreateEvent = async () => {
@@ -1242,9 +1363,9 @@ export default function CalendarPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing(2) }}>
               <div style={{ flex: 1 }}>
                 <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: text.primary.color }}>
-                  {selectedEvent.title}
+                  {isEditingEvent ? 'Edit Event' : selectedEvent.title}
                 </h2>
-                {selectedEvent.calendarName && (
+                {!isEditingEvent && selectedEvent.calendarName && (
                   <p style={{ margin: `${spacing(0.5)} 0 0 0`, fontSize: '13px', color: text.secondary.color }}>
                     {selectedEvent.calendarName}
                   </p>
@@ -1254,6 +1375,9 @@ export default function CalendarPage() {
                 type="button"
                 {...getButtonPressHandlers('calendar-event-close')}
                 onClick={() => {
+                  if (isEditingEvent) {
+                    handleCancelEdit()
+                  }
                   setIsEventModalOpen(false)
                   setSelectedEvent(null)
                 }}
@@ -1275,110 +1399,339 @@ export default function CalendarPage() {
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                <CalendarIcon style={{ width: '16px', height: '16px', color: text.tertiary.color, flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color }}>
-                    {selectedEvent.isAllDay
-                      ? 'All Day'
-                      : `${selectedEvent.start.toLocaleDateString(undefined, {
-                          weekday: 'long',
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })} at ${selectedEvent.startLabel} – ${selectedEvent.endLabel}`}
-                  </p>
-                  {!selectedEvent.isAllDay &&
-                    selectedEvent.end.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) !==
-                      selectedEvent.start.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) && (
-                      <p style={{ margin: `${spacing(0.25)} 0 0 0`, fontSize: '12px', color: text.secondary.color }}>
-                        Ends {selectedEvent.end.toLocaleDateString(undefined, {
-                          weekday: 'long',
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })} at {selectedEvent.endLabel}
-                      </p>
-                    )}
-                </div>
+            {error && (
+              <div style={{ padding: spacing(1), backgroundColor: isDark ? '#7f1d1d' : '#fef2f2', borderRadius: spacing(0.75), border: `1px solid ${colors.error}` }}>
+                <p style={{ margin: 0, fontSize: '13px', color: colors.error }}>{error}</p>
               </div>
+            )}
 
-              {selectedEvent.location && (
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing(1) }}>
-                  <MapPin style={{ width: '16px', height: '16px', color: text.tertiary.color, flexShrink: 0, marginTop: '2px' }} />
-                  <p style={{ margin: 0, fontSize: '14px', color: text.primary.color }}>{selectedEvent.location}</p>
+            {isEditingEvent ? (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                      Title
+                    </label>
+                    <input
+                      type="text"
+                      value={createForm.title}
+                      onChange={(e) => setCreateForm((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="Property showing, closing, follow-up..."
+                      style={inputStyle(colors, text, spacing)}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                      Calendar
+                    </label>
+                    <select
+                      value={createForm.calendarId}
+                      onChange={(e) => setCreateForm((prev) => ({ ...prev, calendarId: e.target.value }))}
+                      style={inputStyle(colors, text, spacing)}
+                    >
+                      {calendars.length === 0 ? (
+                        <option value="primary">Primary Calendar</option>
+                      ) : (
+                        calendars.map((calendar) => (
+                          <option key={calendar.id} value={calendar.id}>
+                            {calendar.summary} {calendar.primary ? '(Primary)' : ''}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <input
+                      type="checkbox"
+                      id="edit-all-day-checkbox"
+                      checked={createForm.isAllDay}
+                      onChange={(e) => {
+                        setCreateForm((prev) => {
+                          const newForm = { ...prev, isAllDay: e.target.checked }
+                          if (e.target.checked && prev.startDate && prev.endDate !== prev.startDate) {
+                            newForm.endDate = prev.startDate
+                          }
+                          return newForm
+                        })
+                      }}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        cursor: 'pointer',
+                        accentColor: colors.primary,
+                      }}
+                    />
+                    <label
+                      htmlFor="edit-all-day-checkbox"
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        color: text.primary.color,
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                      }}
+                    >
+                      All Day
+                    </label>
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: createForm.isAllDay ? '1fr 1fr' : '1fr 1fr',
+                      gap: spacing(1),
+                    }}
+                  >
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={createForm.startDate}
+                        onChange={(e) => {
+                          setCreateForm((prev) => {
+                            const newForm = { ...prev, startDate: e.target.value }
+                            if (prev.isAllDay && prev.endDate && e.target.value > prev.endDate) {
+                              newForm.endDate = e.target.value
+                            }
+                            return newForm
+                          })
+                        }}
+                        style={inputStyle(colors, text, spacing)}
+                      />
+                    </div>
+                    {!createForm.isAllDay && (
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                          Start Time
+                        </label>
+                        <input
+                          type="time"
+                          value={createForm.startTime}
+                          onChange={(e) => setCreateForm((prev) => ({ ...prev, startTime: e.target.value }))}
+                          style={inputStyle(colors, text, spacing)}
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={createForm.endDate}
+                        onChange={(e) => setCreateForm((prev) => ({ ...prev, endDate: e.target.value }))}
+                        min={createForm.startDate}
+                        style={inputStyle(colors, text, spacing)}
+                      />
+                    </div>
+                    {!createForm.isAllDay && (
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                          End Time
+                        </label>
+                        <input
+                          type="time"
+                          value={createForm.endTime}
+                          onChange={(e) => setCreateForm((prev) => ({ ...prev, endTime: e.target.value }))}
+                          style={inputStyle(colors, text, spacing)}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      value={createForm.location}
+                      onChange={(e) => setCreateForm((prev) => ({ ...prev, location: e.target.value }))}
+                      placeholder="123 Main St, Palm Desert"
+                      style={inputStyle(colors, text, spacing)}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                      Description
+                    </label>
+                    <textarea
+                      value={createForm.description}
+                      onChange={(e) => setCreateForm((prev) => ({ ...prev, description: e.target.value }))}
+                      rows={4}
+                      placeholder="Include notes or agenda items for this appointment."
+                      style={{ ...inputStyle(colors, text, spacing), resize: 'vertical' }}
+                    />
+                  </div>
                 </div>
-              )}
 
-              {selectedEvent.description && (
-                <div>
-                  <p style={{ margin: `0 0 ${spacing(0.5)} 0`, fontSize: '12px', fontWeight: 600, color: text.tertiary.color, textTransform: 'uppercase' }}>
-                    Description
-                  </p>
-                  <p style={{ margin: 0, fontSize: '14px', color: text.primary.color, whiteSpace: 'pre-wrap' }}>
-                    {selectedEvent.description}
-                  </p>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing(1), paddingTop: spacing(1), borderTop: `1px solid ${colors.border}` }}>
+                  <button
+                    type="button"
+                    {...getButtonPressHandlers('calendar-edit-cancel')}
+                    onClick={handleCancelEdit}
+                    disabled={isSavingEvent}
+                    style={getButtonPressStyle(
+                      'calendar-edit-cancel',
+                      {
+                        padding: `${spacing(1)} ${spacing(2)}`,
+                        borderRadius: spacing(0.75),
+                        border: `1px solid ${colors.border}`,
+                        backgroundColor: colors.surface,
+                        color: text.secondary.color,
+                        fontSize: '13px',
+                        cursor: isSavingEvent ? 'not-allowed' : 'pointer',
+                      },
+                      colors.surface,
+                      colors.cardHover
+                    )}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    {...getButtonPressHandlers('calendar-edit-save')}
+                    onClick={handleUpdateEvent}
+                    disabled={isSavingEvent}
+                    style={getButtonPressStyle(
+                      'calendar-edit-save',
+                      {
+                        padding: `${spacing(1)} ${spacing(2.5)}`,
+                        borderRadius: spacing(0.75),
+                        border: 'none',
+                        backgroundColor: colors.primary,
+                        color: '#fff',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: isSavingEvent ? 'wait' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: spacing(0.75),
+                      },
+                      colors.primary,
+                      colors.primaryHover
+                    )}
+                  >
+                    {isSavingEvent && <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />}
+                    Save Changes
+                  </button>
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <CalendarIcon style={{ width: '16px', height: '16px', color: text.tertiary.color, flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color }}>
+                        {selectedEvent.isAllDay
+                          ? 'All Day'
+                          : `${selectedEvent.start.toLocaleDateString(undefined, {
+                              weekday: 'long',
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })} at ${selectedEvent.startLabel} – ${selectedEvent.endLabel}`}
+                      </p>
+                      {!selectedEvent.isAllDay &&
+                        selectedEvent.end.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) !==
+                          selectedEvent.start.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) && (
+                          <p style={{ margin: `${spacing(0.25)} 0 0 0`, fontSize: '12px', color: text.secondary.color }}>
+                            Ends {selectedEvent.end.toLocaleDateString(undefined, {
+                              weekday: 'long',
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })} at {selectedEvent.endLabel}
+                          </p>
+                        )}
+                    </div>
+                  </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing(1), paddingTop: spacing(1), borderTop: `1px solid ${colors.border}` }}>
-              <button
-                type="button"
-                {...getButtonPressHandlers('calendar-event-cancel')}
-                onClick={() => {
-                  setIsEventModalOpen(false)
-                  setSelectedEvent(null)
-                }}
-                style={getButtonPressStyle(
-                  'calendar-event-cancel',
-                  {
-                    padding: `${spacing(1)} ${spacing(2)}`,
-                    borderRadius: spacing(0.75),
-                    border: `1px solid ${colors.border}`,
-                    backgroundColor: colors.surface,
-                    color: text.secondary.color,
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                  },
-                  colors.surface,
-                  colors.cardHover
-                )}
-              >
-                Close
-              </button>
-              {selectedEvent.htmlLink && (
-                <button
-                  type="button"
-                  {...getButtonPressHandlers('calendar-event-open-google')}
-                  onClick={() => {
-                    window.open(selectedEvent.htmlLink, '_blank', 'noopener,noreferrer')
-                  }}
-                  style={getButtonPressStyle(
-                    'calendar-event-open-google',
-                    {
-                      padding: `${spacing(1)} ${spacing(2.5)}`,
-                      borderRadius: spacing(0.75),
-                      border: 'none',
-                      backgroundColor: colors.primary,
-                      color: '#ffffff',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: spacing(0.75),
-                    },
-                    colors.primary,
-                    colors.primaryHover
+                  {selectedEvent.location && (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing(1) }}>
+                      <MapPin style={{ width: '16px', height: '16px', color: text.tertiary.color, flexShrink: 0, marginTop: '2px' }} />
+                      <p style={{ margin: 0, fontSize: '14px', color: text.primary.color }}>{selectedEvent.location}</p>
+                    </div>
                   )}
-                >
-                  <CalendarIcon style={{ width: '16px', height: '16px' }} />
-                  Open in Google Calendar
-                </button>
-              )}
-            </div>
+
+                  {selectedEvent.description && (
+                    <div>
+                      <p style={{ margin: `0 0 ${spacing(0.5)} 0`, fontSize: '12px', fontWeight: 600, color: text.tertiary.color, textTransform: 'uppercase' }}>
+                        Description
+                      </p>
+                      <p style={{ margin: 0, fontSize: '14px', color: text.primary.color, whiteSpace: 'pre-wrap' }}>
+                        {selectedEvent.description}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing(1), paddingTop: spacing(1), borderTop: `1px solid ${colors.border}` }}>
+                  <button
+                    type="button"
+                    {...getButtonPressHandlers('calendar-event-edit')}
+                    onClick={handleStartEdit}
+                    style={getButtonPressStyle(
+                      'calendar-event-edit',
+                      {
+                        padding: `${spacing(1)} ${spacing(2.5)}`,
+                        borderRadius: spacing(0.75),
+                        border: `1px solid ${colors.border}`,
+                        backgroundColor: colors.surface,
+                        color: text.primary.color,
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: spacing(0.75),
+                      },
+                      colors.surface,
+                      colors.cardHover
+                    )}
+                  >
+                    <Edit style={{ width: '16px', height: '16px' }} />
+                    Edit
+                  </button>
+                  {selectedEvent.htmlLink && (
+                    <button
+                      type="button"
+                      {...getButtonPressHandlers('calendar-event-open-google')}
+                      onClick={() => {
+                        window.open(selectedEvent.htmlLink, '_blank', 'noopener,noreferrer')
+                      }}
+                      style={getButtonPressStyle(
+                        'calendar-event-open-google',
+                        {
+                          padding: `${spacing(1)} ${spacing(2.5)}`,
+                          borderRadius: spacing(0.75),
+                          border: 'none',
+                          backgroundColor: colors.primary,
+                          color: '#ffffff',
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: spacing(0.75),
+                        },
+                        colors.primary,
+                        colors.primaryHover
+                      )}
+                    >
+                      <CalendarIcon style={{ width: '16px', height: '16px' }} />
+                      Open in Google Calendar
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -1801,6 +2154,12 @@ function toInputDate(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+function toInputTime(date: Date) {
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${hours}:${minutes}`
 }
 
 function createDateTime(date: string, time: string) {

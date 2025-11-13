@@ -196,3 +196,91 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PUT(request: NextRequest) {
+  try {
+    const accessToken = await getGoogleAccessToken()
+    if (!accessToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Google account not connected',
+          requiresAuth: true,
+        },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const calendarId = (body.calendarId as string | undefined) || 'primary'
+    const eventId = body.eventId as string | undefined
+    const summary = body.summary as string | undefined
+    const description = body.description as string | undefined
+    const location = body.location as string | undefined
+    const attendees = Array.isArray(body.attendees) ? body.attendees : undefined
+    const reminders = body.reminders
+    const colorId = body.colorId as string | undefined
+
+    if (!eventId) {
+      return NextResponse.json(
+        { success: false, error: 'Event ID is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!summary) {
+      return NextResponse.json(
+        { success: false, error: 'Event summary is required' },
+        { status: 400 }
+      )
+    }
+
+    const start = body.start
+    const end = body.end
+
+    if (!start || !end) {
+      return NextResponse.json(
+        { success: false, error: 'Event start and end are required' },
+        { status: 400 }
+      )
+    }
+
+    const calendar = getAuthenticatedCalendarClient(accessToken)
+    
+    // First, get the existing event to preserve fields we're not updating
+    const existingEvent = await calendar.events.get({
+      calendarId,
+      eventId,
+    })
+
+    const updateResponse = await calendar.events.update({
+      calendarId,
+      eventId,
+      requestBody: {
+        ...existingEvent.data,
+        summary,
+        description: description !== undefined ? description : existingEvent.data.description,
+        location: location !== undefined ? location : existingEvent.data.location,
+        colorId: colorId !== undefined ? colorId : existingEvent.data.colorId,
+        start,
+        end,
+        attendees: attendees !== undefined ? attendees : existingEvent.data.attendees,
+        reminders: reminders !== undefined ? reminders : existingEvent.data.reminders,
+      },
+    })
+
+    return NextResponse.json({
+      success: true,
+      event: updateResponse.data,
+    })
+  } catch (error) {
+    console.error('Error updating calendar event:', error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error updating calendar event',
+      },
+      { status: 500 }
+    )
+  }
+}
+
