@@ -179,7 +179,10 @@ export default function CalendarPage() {
       if (response.ok) {
         const data = await response.json()
         setListings(
-          data.map((listing: any) => ({
+          data.listings?.map((listing: any) => ({
+            id: listing.id,
+            title: listing.title || 'Untitled Listing',
+          })) || data.map((listing: any) => ({
             id: listing.id,
             title: listing.title || 'Untitled Listing',
           }))
@@ -187,6 +190,39 @@ export default function CalendarPage() {
       }
     } catch (error) {
       console.error('Failed to load listings:', error)
+    }
+  }
+
+  const loadTasks = async () => {
+    try {
+      const response = await fetch('/api/listings')
+      if (response.ok) {
+        const data = await response.json()
+        const listings = data.listings || data
+        const allTasks: Array<{ id: string; name: string; listingId: string; listingTitle: string }> = []
+        
+        // Extract tasks from all listings
+        for (const listing of listings) {
+          if (listing.stageInstances) {
+            for (const stage of listing.stageInstances) {
+              if (stage.tasks) {
+                for (const task of stage.tasks) {
+                  allTasks.push({
+                    id: task.id,
+                    name: task.name,
+                    listingId: listing.id,
+                    listingTitle: listing.title || 'Untitled Listing',
+                  })
+                }
+              }
+            }
+          }
+        }
+        
+        setTasks(allTasks)
+      }
+    } catch (error) {
+      console.error('Failed to load tasks:', error)
     }
   }
   useEffect(() => {
@@ -544,9 +580,9 @@ export default function CalendarPage() {
       calendarId: selectedEvent.calendarId || 'primary',
       isAllDay: selectedEvent.isAllDay,
       syncToGoogle: true, // Default to syncing when editing (can be changed)
-      crmContactId: '', // Will be populated from event data if available
-      crmDealId: '', // Will be populated from event data if available
-      crmTaskId: '', // Will be populated from event data if available
+      crmContactId: selectedEvent.crmContactId || '',
+      crmDealId: selectedEvent.crmDealId || '',
+      crmTaskId: selectedEvent.crmTaskId || '',
       isRecurring: false, // Will be populated from event data if available
       recurrenceFrequency: '',
       recurrenceInterval: 1,
