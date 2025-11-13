@@ -1829,8 +1829,8 @@ export default function CalendarPage() {
                     const cells: JSX.Element[] = []
                     
                     // Previous month days
-                    for (let i = 0; i < firstDayOfWeek; i++) {
-                      const date = new Date(year, month, 1 - i)
+                    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+                      const date = new Date(year, month, -i)
                       cells.push(
                         <button
                           key={`prev-${i}`}
