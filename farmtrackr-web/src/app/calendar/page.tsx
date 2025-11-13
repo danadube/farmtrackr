@@ -107,6 +107,8 @@ export default function CalendarPage() {
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncStatus, setSyncStatus] = useState<string | null>(null)
+  const [contacts, setContacts] = useState<Array<{ id: string; name: string }>>([])
+  const [listings, setListings] = useState<Array<{ id: string; title: string }>>([])
 
   useEffect(() => {
     let storedSelection: string[] | undefined
@@ -127,7 +129,43 @@ export default function CalendarPage() {
       }
     }
     loadCalendars(storedSelection)
+    loadContacts()
+    loadListings()
   }, [])
+
+  const loadContacts = async () => {
+    try {
+      const response = await fetch('/api/contacts?search=')
+      if (response.ok) {
+        const data = await response.json()
+        setContacts(
+          data.map((contact: any) => ({
+            id: contact.id,
+            name: contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact',
+          }))
+        )
+      }
+    } catch (error) {
+      console.error('Failed to load contacts:', error)
+    }
+  }
+
+  const loadListings = async () => {
+    try {
+      const response = await fetch('/api/listings')
+      if (response.ok) {
+        const data = await response.json()
+        setListings(
+          data.map((listing: any) => ({
+            id: listing.id,
+            title: listing.title || 'Untitled Listing',
+          }))
+        )
+      }
+    } catch (error) {
+      console.error('Failed to load listings:', error)
+    }
+  }
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
@@ -1539,6 +1577,48 @@ export default function CalendarPage() {
                   placeholder="Include notes or agenda items for this appointment."
                   style={{ ...inputStyle(colors, text, spacing), resize: 'vertical' }}
                 />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: text.tertiary.color }}>
+                  Link to CRM
+                </div>
+                
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                    Contact
+                  </label>
+                  <select
+                    value={createForm.crmContactId}
+                    onChange={(e) => setCreateForm((prev) => ({ ...prev, crmContactId: e.target.value }))}
+                    style={inputStyle(colors, text, spacing)}
+                  >
+                    <option value="">None</option>
+                    {contacts.map((contact) => (
+                      <option key={contact.id} value={contact.id}>
+                        {contact.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                    Listing/Deal
+                  </label>
+                  <select
+                    value={createForm.crmDealId}
+                    onChange={(e) => setCreateForm((prev) => ({ ...prev, crmDealId: e.target.value }))}
+                    style={inputStyle(colors, text, spacing)}
+                  >
+                    <option value="">None</option>
+                    {listings.map((listing) => (
+                      <option key={listing.id} value={listing.id}>
+                        {listing.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1), padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
