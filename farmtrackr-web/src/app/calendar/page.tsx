@@ -976,6 +976,7 @@ export default function CalendarPage() {
   }, [currentDate, view])
 
   return (
+    <>
     <Sidebar>
       <div style={{ minHeight: '100vh', backgroundColor: colors.background }}>
         <div
@@ -2058,7 +2059,6 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
-    </Sidebar>
 
       {isCreateModalOpen && (
         <div
