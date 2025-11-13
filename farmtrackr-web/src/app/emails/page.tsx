@@ -398,12 +398,10 @@ export default function EmailsPage() {
       >
         <div 
           style={{
-            maxWidth: '1200px',
-            marginLeft: 'auto',
-            marginRight: 'auto',
             paddingLeft: '48px',
             paddingRight: '48px',
             paddingTop: '32px',
+            boxSizing: 'border-box',
             paddingBottom: '32px'
           }}
         >
