@@ -127,8 +127,10 @@ export default function CalendarPage() {
   const [syncStatus, setSyncStatus] = useState<string | null>(null)
   const [contacts, setContacts] = useState<Array<{ id: string; name: string }>>([])
   const [listings, setListings] = useState<Array<{ id: string; title: string }>>([])
+  const [tasks, setTasks] = useState<Array<{ id: string; name: string; listingId: string; listingTitle: string }>>([])
   const [linkedContact, setLinkedContact] = useState<{ id: string; name: string } | null>(null)
   const [linkedListing, setLinkedListing] = useState<{ id: string; title: string } | null>(null)
+  const [linkedTask, setLinkedTask] = useState<{ id: string; name: string; listingId: string; listingTitle: string } | null>(null)
 
   useEffect(() => {
     let storedSelection: string[] | undefined
@@ -151,6 +153,7 @@ export default function CalendarPage() {
     loadCalendars(storedSelection)
     loadContacts()
     loadListings()
+    loadTasks()
   }, [])
 
   const loadContacts = async () => {
@@ -1698,6 +1701,24 @@ export default function CalendarPage() {
                     ))}
                   </select>
                 </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                    Task
+                  </label>
+                  <select
+                    value={createForm.crmTaskId}
+                    onChange={(e) => setCreateForm((prev) => ({ ...prev, crmTaskId: e.target.value }))}
+                    style={inputStyle(colors, text, spacing)}
+                  >
+                    <option value="">None</option>
+                    {tasks.map((task) => (
+                      <option key={task.id} value={task.id}>
+                        {task.name} ({task.listingTitle})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
@@ -2279,7 +2300,7 @@ export default function CalendarPage() {
                     </div>
                   )}
 
-                  {(linkedContact || linkedListing) && (
+                  {(linkedContact || linkedListing || linkedTask) && (
                     <div style={{ padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
                       <p style={{ margin: `0 0 ${spacing(1)} 0`, fontSize: '12px', fontWeight: 600, color: text.tertiary.color, textTransform: 'uppercase' }}>
                         Linked to CRM
@@ -2337,6 +2358,34 @@ export default function CalendarPage() {
                           >
                             <span style={{ fontWeight: 500 }}>Listing:</span>
                             <span>{linkedListing.title}</span>
+                          </a>
+                        )}
+                        {linkedTask && (
+                          <a
+                            href={`/listings/${linkedTask.listingId}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              window.location.href = `/listings/${linkedTask.listingId}`
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: spacing(1),
+                              fontSize: '14px',
+                              color: colors.primary,
+                              textDecoration: 'none',
+                              cursor: 'pointer',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.textDecoration = 'underline'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.textDecoration = 'none'
+                            }}
+                          >
+                            <span style={{ fontWeight: 500 }}>Task:</span>
+                            <span>{linkedTask.name}</span>
+                            <span style={{ fontSize: '12px', color: text.secondary.color }}>({linkedTask.listingTitle})</span>
                           </a>
                         )}
                       </div>
