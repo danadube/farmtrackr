@@ -2054,9 +2054,11 @@ export default function CalendarPage() {
                 </p>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
+    </Sidebar>
 
       {isCreateModalOpen && (
         <div
