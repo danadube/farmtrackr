@@ -895,12 +895,10 @@ const referralNet = referralFeesReceived - referralFeesPaid
       >
           <div 
             style={{
-              maxWidth: '1200px',
-              marginLeft: 'auto',
-              marginRight: 'auto',
               paddingLeft: '64px',
               paddingRight: '64px',
               paddingTop: '32px',
+              boxSizing: 'border-box',
               paddingBottom: '32px'
             }}
           >

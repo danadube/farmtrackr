@@ -288,9 +288,8 @@ export default function EmailTemplatesManagerPage() {
       <div style={{ ...background }}>
         <div
           style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
             padding: '32px 48px 64px 48px',
+            boxSizing: 'border-box',
           }}
         >
           {/* Header */}
