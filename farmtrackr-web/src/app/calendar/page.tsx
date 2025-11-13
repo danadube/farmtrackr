@@ -378,20 +378,20 @@ export default function CalendarPage() {
       const allCalendars = [...googleCalendars, ...crmCalendars]
       setCalendars(allCalendars)
 
-      if (calendarList.length === 0) {
+      if (allCalendars.length === 0) {
         setSelectedCalendars([])
         return
       }
 
       const baseSelection = initialSelection ?? selectedCalendars
       const validSelection = baseSelection.filter((id) =>
-        calendarList.some((calendar) => calendar.id === id)
+        allCalendars.some((calendar) => calendar.id === id)
       )
 
       const nextSelection =
         validSelection.length > 0
           ? validSelection
-          : [calendarList.find((calendar) => calendar.primary)?.id || calendarList[0].id]
+          : [allCalendars.find((calendar) => calendar.primary)?.id || allCalendars[0].id]
 
       setSelectedCalendars((prev) => {
         if (arraysEqual(prev, nextSelection)) {
