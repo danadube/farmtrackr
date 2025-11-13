@@ -61,6 +61,7 @@ type CreateEventState = {
   description: string
   calendarId: string
   isAllDay: boolean
+  syncToGoogle: boolean // Whether to sync to Google Calendar
 }
 
 const INITIAL_CREATE_EVENT_STATE: CreateEventState = {
@@ -73,6 +74,7 @@ const INITIAL_CREATE_EVENT_STATE: CreateEventState = {
   description: '',
   calendarId: 'primary',
   isAllDay: false,
+  syncToGoogle: true, // Default to syncing to Google
 }
 
 export default function CalendarPage() {
@@ -340,17 +342,41 @@ export default function CalendarPage() {
       }
 
       // Get calendars from Google API (for display)
-      const response = await fetch('/api/google/calendar/list')
-      if (!response.ok) {
-        if (response.status === 401) {
-          setRequiresAuth(true)
-        }
-        return
+      const googleResponse = await fetch('/api/google/calendar/list')
+      let googleCalendars: GoogleCalendar[] = []
+      
+      if (googleResponse.ok) {
+        const googleData = await googleResponse.json()
+        googleCalendars = googleData.calendars || []
+      } else if (googleResponse.status === 401) {
+        setRequiresAuth(true)
       }
 
-      const data = await response.json()
-      const calendarList: GoogleCalendar[] = data.calendars || []
-      setCalendars(calendarList)
+      // Get CRM calendars from database
+      let crmCalendars: GoogleCalendar[] = []
+      try {
+        const dbResponse = await fetch('/api/calendar')
+        if (dbResponse.ok) {
+          const dbData = await dbResponse.json()
+          // Convert DB calendars to GoogleCalendar format for compatibility
+          crmCalendars = (dbData.calendars || [])
+            .filter((cal: any) => cal.type === 'crm')
+            .map((cal: any) => ({
+              id: cal.id,
+              summary: cal.name,
+              backgroundColor: cal.color,
+              foregroundColor: '#ffffff',
+              primary: cal.isPrimary,
+              description: null,
+            }))
+        }
+      } catch (error) {
+        console.error('Failed to load CRM calendars:', error)
+      }
+
+      // Merge Google and CRM calendars (Google first, then CRM)
+      const allCalendars = [...googleCalendars, ...crmCalendars]
+      setCalendars(allCalendars)
 
       if (calendarList.length === 0) {
         setSelectedCalendars([])
@@ -651,7 +677,7 @@ export default function CalendarPage() {
         ? new Date(createForm.endDate + 'T00:00:00')
         : createDateTime(createForm.endDate, createForm.endTime)
 
-      // Use new API route that saves to DB and syncs to Google
+      // Use new API route that saves to DB and optionally syncs to Google
       const response = await fetch('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -663,7 +689,7 @@ export default function CalendarPage() {
           start: startDate.toISOString(),
           end: endDate.toISOString(),
           allDay: createForm.isAllDay,
-          syncToGoogle: true, // Sync to Google for now
+          syncToGoogle: createForm.syncToGoogle, // Use form value
         }),
       })
 
@@ -1500,6 +1526,39 @@ export default function CalendarPage() {
                   placeholder="Include notes or agenda items for this appointment."
                   style={{ ...inputStyle(colors, text, spacing), resize: 'vertical' }}
                 />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1), padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
+                <input
+                  type="checkbox"
+                  id="sync-to-google-checkbox"
+                  checked={createForm.syncToGoogle}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, syncToGoogle: e.target.checked }))}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    cursor: 'pointer',
+                    accentColor: colors.primary,
+                  }}
+                />
+                <label
+                  htmlFor="sync-to-google-checkbox"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: text.primary.color,
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    flex: 1,
+                  }}
+                >
+                  Sync to Google Calendar
+                </label>
+                {!createForm.syncToGoogle && (
+                  <span style={{ fontSize: '12px', color: text.secondary.color, fontStyle: 'italic' }}>
+                    (CRM-only event)
+                  </span>
+                )}
               </div>
             </div>
 
