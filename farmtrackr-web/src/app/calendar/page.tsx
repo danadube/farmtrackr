@@ -2958,6 +2958,218 @@ export default function CalendarPage() {
         </div>
       )}
 
+      {sharingCalendar && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1200,
+            padding: spacing(2),
+          }}
+          onClick={() => {
+            setSharingCalendar(null)
+            setCalendarShares([])
+            setNewShareUserId('')
+            setNewShareRole('viewer')
+          }}
+        >
+          <div
+            style={{
+              ...card,
+              width: '100%',
+              maxWidth: '500px',
+              padding: spacing(3),
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing(2),
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: text.primary.color }}>
+                Share Calendar: {sharingCalendar.name}
+              </h2>
+              <p style={{ margin: `${spacing(0.5)} 0 0 0`, fontSize: '13px', color: text.secondary.color }}>
+                Manage who can view or edit this calendar.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(2) }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                  Add User
+                </label>
+                <div style={{ display: 'flex', gap: spacing(1) }}>
+                  <input
+                    type="text"
+                    value={newShareUserId}
+                    onChange={(e) => setNewShareUserId(e.target.value)}
+                    placeholder="User ID or email"
+                    style={{ ...inputStyle(colors, text, spacing), flex: 1 }}
+                  />
+                  <select
+                    value={newShareRole}
+                    onChange={(e) => setNewShareRole(e.target.value as 'viewer' | 'editor' | 'owner')}
+                    style={inputStyle(colors, text, spacing)}
+                  >
+                    <option value="viewer">Viewer</option>
+                    <option value="editor">Editor</option>
+                    <option value="owner">Owner</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!newShareUserId.trim()) {
+                        alert('Please enter a user ID')
+                        return
+                      }
+                      try {
+                        const response = await fetch(`/api/calendar/${sharingCalendar.id}/share`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            userId: newShareUserId.trim(),
+                            role: newShareRole,
+                          }),
+                        })
+                        if (response.ok) {
+                          const data = await response.json()
+                          setCalendarShares([...calendarShares, data.share])
+                          setNewShareUserId('')
+                          setNewShareRole('viewer')
+                        } else {
+                          const data = await response.json()
+                          alert(data.error || 'Failed to share calendar')
+                        }
+                      } catch (error) {
+                        console.error('Failed to share calendar:', error)
+                        alert('Failed to share calendar')
+                      }
+                    }}
+                    style={{
+                      padding: `${spacing(0.75)} ${spacing(2)}`,
+                      borderRadius: spacing(0.75),
+                      border: 'none',
+                      backgroundColor: colors.primary,
+                      color: 'white',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(0.5),
+                    }}
+                  >
+                    <UserPlus style={{ width: '16px', height: '16px' }} />
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                  Shared With ({calendarShares.length})
+                </label>
+                {isLoadingShares ? (
+                  <div style={{ display: 'flex', justifyContent: 'center', padding: spacing(2) }}>
+                    <Loader2 style={{ width: '20px', height: '20px', animation: 'spin 1s linear infinite' }} />
+                  </div>
+                ) : calendarShares.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: '12px', color: text.tertiary.color, padding: spacing(1) }}>
+                    No shares yet. Add a user above to share this calendar.
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
+                    {calendarShares.map((share) => (
+                      <div
+                        key={share.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: spacing(1),
+                          borderRadius: spacing(0.75),
+                          backgroundColor: colors.cardHover,
+                        }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '13px', fontWeight: 500, color: text.primary.color }}>
+                            {share.userId}
+                          </div>
+                          <div style={{ fontSize: '11px', color: text.secondary.color, textTransform: 'capitalize' }}>
+                            {share.role}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (confirm(`Remove access for ${share.userId}?`)) {
+                              try {
+                                const response = await fetch(`/api/calendar/${sharingCalendar.id}/share?userId=${encodeURIComponent(share.userId)}`, {
+                                  method: 'DELETE',
+                                })
+                                if (response.ok) {
+                                  setCalendarShares(calendarShares.filter((s) => s.id !== share.id))
+                                } else {
+                                  const data = await response.json()
+                                  alert(data.error || 'Failed to remove share')
+                                }
+                              } catch (error) {
+                                console.error('Failed to remove share:', error)
+                                alert('Failed to remove share')
+                              }
+                            }
+                          }}
+                          style={{
+                            padding: spacing(0.5),
+                            border: 'none',
+                            background: 'transparent',
+                            color: colors.error || '#ef4444',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                          }}
+                          title="Remove access"
+                        >
+                          <X style={{ width: '14px', height: '14px' }} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing(1), paddingTop: spacing(1), borderTop: `1px solid ${colors.border}` }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSharingCalendar(null)
+                  setCalendarShares([])
+                  setNewShareUserId('')
+                  setNewShareRole('viewer')
+                }}
+                style={{
+                  padding: `${spacing(1)} ${spacing(2.5)}`,
+                  borderRadius: spacing(0.75),
+                  border: `1px solid ${colors.border}`,
+                  backgroundColor: colors.surface,
+                  color: text.primary.color,
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showCreateCalendarModal && (
         <div
           style={{
