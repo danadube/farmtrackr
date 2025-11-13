@@ -46,21 +46,34 @@ export async function POST(request: NextRequest) {
     let totalSynced = 0
     const results = []
 
+    const allStats = {
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      conflicts: 0,
+    }
+
     for (const calendar of calendars) {
       if (!calendar.googleCalendarId) continue
 
       try {
-        const synced = await syncGoogleEventsToDB(
+        const syncResult = await syncGoogleEventsToDB(
           calendar.id,
           calendar.googleCalendarId,
           startDate,
           endDate
         )
-        totalSynced += synced.length
+        totalSynced += syncResult.events.length
+        allStats.created += syncResult.stats.created
+        allStats.updated += syncResult.stats.updated
+        allStats.skipped += syncResult.stats.skipped
+        allStats.conflicts += syncResult.stats.conflicts
+
         results.push({
           calendarId: calendar.id,
           calendarName: calendar.name,
-          synced: synced.length,
+          synced: syncResult.events.length,
+          stats: syncResult.stats,
         })
       } catch (error) {
         console.error(`Failed to sync calendar ${calendar.id}:`, error)
@@ -75,6 +88,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       totalSynced,
+      stats: allStats,
       results,
     })
   } catch (error) {

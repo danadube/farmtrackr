@@ -97,6 +97,8 @@ export default function CalendarPage() {
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
   const [isEditingEvent, setIsEditingEvent] = useState(false)
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<string | null>(null)
 
   useEffect(() => {
     let storedSelection: string[] | undefined
@@ -161,43 +163,121 @@ export default function CalendarPage() {
 
       const { start, end } = getViewDateRange(currentDate, view)
 
-      const results = await Promise.all(
+      // Fetch from new API that merges DB + Google events
+      const params = new URLSearchParams({
+        calendarIds: selectedCalendars.join(','),
+        timeMin: start.toISOString(),
+        timeMax: end.toISOString(),
+        includeGoogle: 'true', // Include live Google events
+      })
+
+      const dbResponse = await fetch(`/api/events?${params.toString()}`)
+      
+      if (!dbResponse.ok) {
+        if (dbResponse.status === 401) {
+          setRequiresAuth(true)
+        } else {
+          const { error: apiError } = await dbResponse.json()
+          setError((prev) => prev || apiError || 'Unable to load calendar events.')
+        }
+        setIsLoading(false)
+        setIsRefreshing(false)
+        return
+      }
+
+      const dbData = await dbResponse.json()
+      
+      // Also fetch from Google API for live events (fallback/merge)
+      const googleResults = await Promise.all(
         selectedCalendars.map(async (calendarId) => {
-          const params = new URLSearchParams({
+          const googleParams = new URLSearchParams({
             calendarId,
             timeMin: start.toISOString(),
             timeMax: end.toISOString(),
             maxResults: '250',
           })
 
-          const response = await fetch(`/api/google/calendar/events?${params.toString()}`)
-          return { calendarId, response }
+          try {
+            const response = await fetch(`/api/google/calendar/events?${googleParams.toString()}`)
+            if (!response.ok) {
+              if (response.status === 401) {
+                setRequiresAuth(true)
+              }
+              return { calendarId, events: [] }
+            }
+            const data = await response.json()
+            return { calendarId, events: data.events || [] }
+          } catch (error) {
+            console.error(`Failed to fetch Google events for ${calendarId}:`, error)
+            return { calendarId, events: [] }
+          }
         })
       )
 
-      const aggregatedEvents: NormalizedEvent[] = []
-      for (const { calendarId, response } of results) {
-        if (!response.ok) {
-          if (response.status === 401) {
-            setRequiresAuth(true)
-          } else {
-            const { error: apiError } = await response.json()
-            setError((prev) => prev || apiError || 'Unable to load calendar events.')
-          }
-          continue
-        }
-
-        const data = await response.json()
+      // Merge DB events and Google events
+      const dbEvents = dbData.events || []
+      const googleEventsMap = new Map<string, ApiCalendarEvent>()
+      
+      // Create map of Google events by ID
+      for (const { calendarId, events } of googleResults) {
         const meta = calendars.find((calendar) => calendar.id === calendarId)
-        const normalized = (data.events || [])
-          .map((event: ApiCalendarEvent) => normalizeEvent(event, meta))
-          .filter((event: NormalizedEvent | null): event is NormalizedEvent => !!event)
-
-        aggregatedEvents.push(...normalized)
+        for (const event of events) {
+          if (event.id) {
+            googleEventsMap.set(event.id, event)
+          }
+        }
       }
 
-      aggregatedEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
-      setEvents(aggregatedEvents)
+      // Normalize DB events
+      const normalizedDbEvents: NormalizedEvent[] = dbEvents
+        .map((event: any) => {
+          const meta = calendars.find((calendar) => calendar.id === event.calendarId)
+          return {
+            id: event.googleEventId || event.id,
+            title: event.title,
+            description: event.description || undefined,
+            location: event.location || undefined,
+            start: new Date(event.start),
+            end: new Date(event.end),
+            isAllDay: event.allDay,
+            startLabel: event.allDay 
+              ? new Date(event.start).toLocaleDateString()
+              : new Date(event.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+            endLabel: event.allDay
+              ? new Date(event.end).toLocaleDateString()
+              : new Date(event.end).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+            calendarId: event.calendarId,
+            calendarName: meta?.summary || event.calendar?.name || 'Unknown',
+            calendarColor: meta?.backgroundColor || event.calendar?.color || '#4285f4',
+            htmlLink: event.googleEventId ? `https://calendar.google.com/calendar/event?eid=${event.googleEventId}` : undefined,
+          }
+        })
+        .filter((event: NormalizedEvent | null): event is NormalizedEvent => !!event)
+
+      // Normalize Google events that aren't in DB
+      const normalizedGoogleEvents: NormalizedEvent[] = []
+      const dbGoogleIds = new Set(dbEvents.filter((e: any) => e.googleEventId).map((e: any) => e.googleEventId))
+      
+      for (const [googleEventId, googleEvent] of googleEventsMap.entries()) {
+        if (!dbGoogleIds.has(googleEventId)) {
+          const meta = calendars.find((calendar) => 
+            selectedCalendars.includes(calendar.id)
+          )
+          const normalized = normalizeEvent(googleEvent, meta)
+          if (normalized) {
+            normalizedGoogleEvents.push(normalized)
+          }
+        }
+      }
+
+      // Merge and deduplicate
+      const allEvents = [...normalizedDbEvents, ...normalizedGoogleEvents]
+      const uniqueEvents = Array.from(
+        new Map(allEvents.map((event) => [event.id, event])).values()
+      )
+
+      uniqueEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
+      setEvents(uniqueEvents)
     } catch (err) {
       console.error('Failed to fetch calendar events:', err)
       setError(err instanceof Error ? err.message : 'Unexpected error while loading events.')
@@ -205,6 +285,45 @@ export default function CalendarPage() {
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
+    }
+  }
+
+  const handleSyncFromGoogle = async () => {
+    setIsSyncing(true)
+    setSyncStatus(null)
+    setError(null)
+
+    try {
+      const { start, end } = getViewDateRange(currentDate, view)
+      
+      const response = await fetch('/api/events/google-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          calendarIds: selectedCalendars,
+          timeMin: start.toISOString(),
+          timeMax: end.toISOString(),
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to sync from Google')
+      }
+
+      setSyncStatus(
+        `Synced ${data.totalSynced} events (${data.stats.created} new, ${data.stats.updated} updated)`
+      )
+      
+      // Refresh events after sync
+      await fetchEvents(true)
+    } catch (err) {
+      console.error('Failed to sync from Google:', err)
+      setError(err instanceof Error ? err.message : 'Unexpected error while syncing.')
+    } finally {
+      setIsSyncing(false)
+      // Clear status message after 5 seconds
+      setTimeout(() => setSyncStatus(null), 5000)
     }
   }
 
@@ -661,6 +780,51 @@ export default function CalendarPage() {
                   />
                   Refresh
                 </button>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('calendar-sync')}
+                  onClick={handleSyncFromGoogle}
+                  disabled={isSyncing || selectedCalendars.length === 0}
+                  style={getButtonPressStyle(
+                    'calendar-sync',
+                    {
+                      padding: `${spacing(1.5)} ${spacing(2)}`,
+                      borderRadius: spacing(1),
+                      border: `1px solid ${colors.border}`,
+                      backgroundColor: colors.surface,
+                      cursor: isSyncing ? 'wait' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1),
+                      fontSize: '14px',
+                      color: text.secondary.color,
+                      opacity: selectedCalendars.length === 0 ? 0.5 : 1,
+                    },
+                    colors.surface,
+                    colors.cardHover
+                  )}
+                  title="Sync events from Google Calendar to database"
+                >
+                  <RefreshCw
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      animation: isSyncing ? 'spin 1s linear infinite' : 'none',
+                    }}
+                  />
+                  Sync from Google
+                </button>
+                {syncStatus && (
+                  <span style={{ 
+                    fontSize: '12px', 
+                    color: text.secondary.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: `${spacing(1)} ${spacing(2)}`,
+                  }}>
+                    {syncStatus}
+                  </span>
+                )}
                 <button
                   type="button"
                   {...getButtonPressHandlers('calendar-new-event')}

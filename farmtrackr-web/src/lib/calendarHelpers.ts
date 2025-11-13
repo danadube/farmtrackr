@@ -171,7 +171,7 @@ export async function saveEventToDB(data: {
 }
 
 /**
- * Sync Google events to database
+ * Sync Google events to database with conflict resolution
  */
 export async function syncGoogleEventsToDB(
   calendarId: string,
@@ -195,6 +195,12 @@ export async function syncGoogleEventsToDB(
 
   const googleEvents = response.data.items || []
   const syncedEvents = []
+  const stats = {
+    created: 0,
+    updated: 0,
+    skipped: 0,
+    conflicts: 0,
+  }
 
   for (const googleEvent of googleEvents) {
     if (!googleEvent.id) continue
@@ -216,38 +222,93 @@ export async function syncGoogleEventsToDB(
 
     const isAllDay = !!googleEvent.start?.date && !googleEvent.start?.dateTime
 
-    // Save to database
-    const event = await saveEventToDB({
-      calendarId,
-      title: googleEvent.summary || 'Untitled Event',
-      description: googleEvent.description || null,
-      location: googleEvent.location || null,
-      start: startDate,
-      end: endDate,
-      allDay: isAllDay,
-      color: null, // Could extract from calendar
-      googleEventId: googleEvent.id,
-      source: 'google',
-      syncStatus: 'synced',
-      crmContactId: null,
-      crmDealId: null,
-      crmTaskId: null,
+    // Check if event exists in DB
+    const existing = await prisma.event.findFirst({
+      where: {
+        googleEventId: googleEvent.id,
+      },
     })
 
-    syncedEvents.push(event)
+    // Conflict resolution: If event exists and was modified in CRM, check timestamps
+    if (existing) {
+      const googleUpdated = googleEvent.updated ? new Date(googleEvent.updated) : new Date()
+      const dbUpdated = existing.updatedAt
 
-    // Sync attendees if present
-    if (googleEvent.attendees && googleEvent.attendees.length > 0) {
-      // Delete existing attendees first, then recreate (simpler than upsert without unique constraint)
+      // If CRM event was modified more recently, skip Google update (CRM wins)
+      if (dbUpdated > googleUpdated && existing.source === 'crm') {
+        stats.skipped++
+        syncedEvents.push(existing)
+        continue
+      }
+
+      // If both were modified, it's a conflict (Google wins for now, but log it)
+      if (Math.abs(dbUpdated.getTime() - googleUpdated.getTime()) < 60000) {
+        // Within 1 minute = likely same edit
+        stats.conflicts++
+      }
+
+      // Update existing event (Google wins)
+      const updated = await prisma.event.update({
+        where: { id: existing.id },
+        data: {
+          title: googleEvent.summary || existing.title,
+          description: googleEvent.description ?? existing.description,
+          location: googleEvent.location ?? existing.location,
+          start: startDate,
+          end: endDate,
+          allDay: isAllDay,
+          syncStatus: 'synced',
+          lastSyncedAt: new Date(),
+          // Preserve CRM links
+          crmContactId: existing.crmContactId,
+          crmDealId: existing.crmDealId,
+          crmTaskId: existing.crmTaskId,
+        },
+      })
+
+      stats.updated++
+      syncedEvents.push(updated)
+    } else {
+      // Create new event
+      const event = await saveEventToDB({
+        calendarId,
+        title: googleEvent.summary || 'Untitled Event',
+        description: googleEvent.description || null,
+        location: googleEvent.location || null,
+        start: startDate,
+        end: endDate,
+        allDay: isAllDay,
+        color: null,
+        googleEventId: googleEvent.id,
+        source: 'google',
+        syncStatus: 'synced',
+        crmContactId: null,
+        crmDealId: null,
+        crmTaskId: null,
+      })
+
+      stats.created++
+      syncedEvents.push(event)
+    }
+
+    // Sync attendees if present (for both new and updated events)
+    const currentEvent = existing
+      ? await prisma.event.findUnique({ where: { id: existing.id } })
+      : syncedEvents[syncedEvents.length - 1]
+    
+    if (!currentEvent) continue
+
+    if (currentEvent && googleEvent.attendees && googleEvent.attendees.length > 0) {
+      // Delete existing attendees first, then recreate
       await prisma.attendee.deleteMany({
-        where: { eventId: event.id },
+        where: { eventId: currentEvent.id },
       })
 
       await prisma.attendee.createMany({
         data: googleEvent.attendees
           .filter((a) => a.email)
           .map((attendee) => ({
-            eventId: event.id,
+            eventId: currentEvent.id,
             email: attendee.email!,
             displayName: attendee.displayName || null,
             responseStatus: (attendee.responseStatus as any) || 'needsAction',
@@ -257,7 +318,7 @@ export async function syncGoogleEventsToDB(
     }
   }
 
-  return syncedEvents
+  return { events: syncedEvents, stats }
 }
 
 /**
