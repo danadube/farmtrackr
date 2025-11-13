@@ -1714,6 +1714,127 @@ export default function CalendarPage() {
                 </button>
               </div>
 
+              {/* Calendar List */}
+              <div style={{ marginTop: spacing(2), paddingTop: spacing(2), borderTop: `1px solid ${colors.border}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(1.5) }}>
+                  <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: text.secondary.color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    My calendars
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateCalendarModal(true)}
+                    style={{
+                      padding: spacing(0.25),
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      color: text.secondary.color,
+                      borderRadius: spacing(0.5),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.cardHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
+                  >
+                    <Plus style={{ width: '14px', height: '14px' }} />
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
+                  {calendars.map((calendar) => {
+                    const isSelected = selectedCalendars.includes(calendar.id)
+                    return (
+                      <div
+                        key={calendar.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: spacing(1),
+                          padding: `${spacing(0.5)} ${spacing(0.75)}`,
+                          borderRadius: spacing(0.5),
+                          cursor: 'pointer',
+                          backgroundColor: isSelected ? colors.cardHover : 'transparent',
+                        }}
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedCalendars(selectedCalendars.filter((id) => id !== calendar.id))
+                          } else {
+                            setSelectedCalendars([...selectedCalendars, calendar.id])
+                          }
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.backgroundColor = colors.cardHover
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '12px',
+                            height: '12px',
+                            borderRadius: '3px',
+                            backgroundColor: calendar.color || calendar.backgroundColor || colors.primary,
+                            flexShrink: 0,
+                            border: `1px solid ${colors.border}`,
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: '12px',
+                            color: isSelected ? text.primary.color : text.secondary.color,
+                            fontWeight: isSelected ? 500 : 400,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            flex: 1,
+                          }}
+                        >
+                          {calendar.name || calendar.summary || 'Unnamed Calendar'}
+                        </span>
+                        {!isSelected && (
+                          <div
+                            style={{
+                              width: '14px',
+                              height: '14px',
+                              border: `1.5px solid ${colors.border}`,
+                              borderRadius: '3px',
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        {isSelected && (
+                          <div
+                            style={{
+                              width: '14px',
+                              height: '14px',
+                              backgroundColor: calendar.color || calendar.backgroundColor || colors.primary,
+                              borderRadius: '3px',
+                              flexShrink: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                              <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
               {/* Day Details - Event Card */}
               <div style={{ marginTop: spacing(2), paddingTop: spacing(2), borderTop: `1px solid ${colors.border}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(1.5), gap: spacing(1) }}>
@@ -1935,29 +2056,266 @@ export default function CalendarPage() {
                 ))}
               </div>
             )}
-            <div
-              style={{
-                ...gridTemplateForView(view),
-                gap: view === 'month' ? '4px' : spacing(1),
-                flex: 1,
-              }}
-            >
-              {renderCalendarGrid({
-                view,
-                calendarCells,
-                eventsByDate: segmentedEvents,
-                selectedDate,
-                setSelectedDate,
-                pressedButtons,
-                getButtonPressHandlers,
-                getButtonPressStyle,
-                colors,
-                text,
-                spacing,
-                setSelectedEvent,
-                setIsEventModalOpen,
-              })}
-            </div>
+            {(view === 'week' || view === 'day') && (
+              <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                {/* Time column */}
+                <div style={{ width: '60px', flexShrink: 0, paddingTop: '40px' }}>
+                  {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                    <div
+                      key={hour}
+                      style={{
+                        height: '60px',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'flex-end',
+                        paddingRight: spacing(1),
+                        paddingTop: spacing(0.5),
+                        borderTop: hour > 0 ? `1px solid ${colors.border}` : 'none',
+                      }}
+                    >
+                      <span style={{ fontSize: '11px', color: text.tertiary.color }}>
+                        {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {/* Days/Time grid */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto' }}>
+                  {/* Day headers */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: view === 'week' ? 'repeat(7, minmax(0, 1fr))' : '1fr',
+                      borderBottom: `2px solid ${colors.border}`,
+                      position: 'sticky',
+                      top: 0,
+                      backgroundColor: colors.card,
+                      zIndex: 10,
+                    }}
+                  >
+                    {calendarCells.map((cellDate) => {
+                      const isToday = cellDate.toDateString() === new Date().toDateString()
+                      return (
+                        <div
+                          key={cellDate.toISOString()}
+                          style={{
+                            padding: spacing(1.5),
+                            borderRight: view === 'week' && calendarCells.indexOf(cellDate) < calendarCells.length - 1 ? `1px solid ${colors.border}` : 'none',
+                            backgroundColor: isToday ? colors.primaryLight || 'rgba(104, 159, 56, 0.1)' : 'transparent',
+                          }}
+                        >
+                          <div style={{ fontSize: '11px', fontWeight: 600, color: text.secondary.color, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: spacing(0.5) }}>
+                            {cellDate.toLocaleDateString(undefined, { weekday: 'short' })}
+                          </div>
+                          <div style={{ fontSize: '20px', fontWeight: isToday ? 700 : 600, color: isToday ? colors.primary : text.primary.color }}>
+                            {cellDate.getDate()}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* Time slots grid */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: view === 'week' ? 'repeat(7, minmax(0, 1fr))' : '1fr',
+                      position: 'relative',
+                      flex: 1,
+                    }}
+                  >
+                    {calendarCells.map((cellDate) => {
+                      const dayEvents = segmentedEvents.get(cellDate.toDateString()) || []
+                      const isToday = cellDate.toDateString() === new Date().toDateString()
+                      const currentHour = new Date().getHours()
+                      const currentMinute = new Date().getMinutes()
+                      const currentTimePosition = (currentHour + currentMinute / 60) * 60
+
+                      return (
+                        <div
+                          key={cellDate.toISOString()}
+                          style={{
+                            position: 'relative',
+                            borderRight: view === 'week' && calendarCells.indexOf(cellDate) < calendarCells.length - 1 ? `1px solid ${colors.border}` : 'none',
+                          }}
+                        >
+                          {/* Hour lines */}
+                          {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                            <div
+                              key={hour}
+                              style={{
+                                height: '60px',
+                                borderTop: `1px solid ${colors.border}`,
+                                position: 'relative',
+                              }}
+                            >
+                              {/* Current time indicator */}
+                              {isToday && hour === currentHour && (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: `${(currentMinute / 60) * 60}px`,
+                                    left: 0,
+                                    right: 0,
+                                    height: '2px',
+                                    backgroundColor: colors.error || '#ea4335',
+                                    zIndex: 5,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      left: '-6px',
+                                      top: '-4px',
+                                      width: '10px',
+                                      height: '10px',
+                                      borderRadius: '50%',
+                                      backgroundColor: colors.error || '#ea4335',
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          {/* Events positioned by time */}
+                          {dayEvents
+                            .filter((event) => !event.isAllDay)
+                            .map((event) => {
+                              const startDate = new Date(event.start)
+                              const endDate = new Date(event.end)
+                              const startHour = startDate.getHours()
+                              const startMinute = startDate.getMinutes()
+                              const endHour = endDate.getHours()
+                              const endMinute = endDate.getMinutes()
+                              const startPosition = (startHour + startMinute / 60) * 60
+                              const endPosition = (endHour + endMinute / 60) * 60
+                              const duration = endPosition - startPosition
+                              const eventColor = event.calendarColor || colors.primary
+
+                              return (
+                                <div
+                                  key={event.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedEvent(event)
+                                    setIsEventModalOpen(true)
+                                  }}
+                                  style={{
+                                    position: 'absolute',
+                                    top: `${startPosition}px`,
+                                    left: '4px',
+                                    right: '4px',
+                                    height: `${Math.max(duration, 20)}px`,
+                                    backgroundColor: eventColor,
+                                    color: '#ffffff',
+                                    borderRadius: spacing(0.5),
+                                    padding: spacing(0.5),
+                                    fontSize: '12px',
+                                    fontWeight: 500,
+                                    cursor: 'pointer',
+                                    zIndex: 3,
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: spacing(0.25),
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.opacity = '0.9'
+                                    e.currentTarget.style.transform = 'scale(1.02)'
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.opacity = '1'
+                                    e.currentTarget.style.transform = 'scale(1)'
+                                  }}
+                                >
+                                  <span style={{ fontSize: '12px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {event.title}
+                                  </span>
+                                  {duration > 30 && (
+                                    <span style={{ fontSize: '11px', opacity: 0.9 }}>
+                                      {event.startLabel} – {event.endLabel}
+                                    </span>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          {/* All-day events bar */}
+                          {dayEvents.filter((event) => event.isAllDay).length > 0 && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                height: '32px',
+                                borderBottom: `1px solid ${colors.border}`,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: spacing(0.25),
+                                padding: spacing(0.5),
+                                backgroundColor: colors.surface,
+                              }}
+                            >
+                              {dayEvents
+                                .filter((event) => event.isAllDay)
+                                .map((event) => (
+                                  <div
+                                    key={event.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setSelectedEvent(event)
+                                      setIsEventModalOpen(true)
+                                    }}
+                                    style={{
+                                      backgroundColor: event.calendarColor || colors.primary,
+                                      color: '#ffffff',
+                                      borderRadius: spacing(0.25),
+                                      padding: `${spacing(0.25)} ${spacing(0.5)}`,
+                                      fontSize: '11px',
+                                      fontWeight: 500,
+                                      cursor: 'pointer',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    {event.title}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+            {view === 'month' && (
+              <div
+                style={{
+                  ...gridTemplateForView(view),
+                  gap: '4px',
+                  flex: 1,
+                }}
+              >
+                {renderCalendarGrid({
+                  view,
+                  calendarCells,
+                  eventsByDate: segmentedEvents,
+                  selectedDate,
+                  setSelectedDate,
+                  pressedButtons,
+                  getButtonPressHandlers,
+                  getButtonPressStyle,
+                  colors,
+                  text,
+                  spacing,
+                  setSelectedEvent,
+                  setIsEventModalOpen,
+                })}
+              </div>
+            )}
 
             {isLoading && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: spacing(1.5), padding: spacing(2), borderRadius: spacing(1), backgroundColor: colors.surface }}>
