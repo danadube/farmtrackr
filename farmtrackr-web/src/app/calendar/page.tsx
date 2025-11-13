@@ -2103,6 +2103,70 @@ export default function CalendarPage() {
                       </p>
                     </div>
                   )}
+
+                  {(linkedContact || linkedListing) && (
+                    <div style={{ padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
+                      <p style={{ margin: `0 0 ${spacing(1)} 0`, fontSize: '12px', fontWeight: 600, color: text.tertiary.color, textTransform: 'uppercase' }}>
+                        Linked to CRM
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
+                        {linkedContact && (
+                          <a
+                            href={`/contacts/${linkedContact.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              window.location.href = `/contacts/${linkedContact.id}`
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: spacing(1),
+                              fontSize: '14px',
+                              color: colors.primary,
+                              textDecoration: 'none',
+                              cursor: 'pointer',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.textDecoration = 'underline'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.textDecoration = 'none'
+                            }}
+                          >
+                            <span style={{ fontWeight: 500 }}>Contact:</span>
+                            <span>{linkedContact.name}</span>
+                          </a>
+                        )}
+                        {linkedListing && (
+                          <a
+                            href={`/listings/${linkedListing.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              window.location.href = `/listings/${linkedListing.id}`
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: spacing(1),
+                              fontSize: '14px',
+                              color: colors.primary,
+                              textDecoration: 'none',
+                              cursor: 'pointer',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.textDecoration = 'underline'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.textDecoration = 'none'
+                            }}
+                          >
+                            <span style={{ fontWeight: 500 }}>Listing:</span>
+                            <span>{linkedListing.title}</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing(1), paddingTop: spacing(1), borderTop: `1px solid ${colors.border}` }}>
