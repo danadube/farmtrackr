@@ -895,6 +895,17 @@ export async function getListings(client: PrismaClient = prisma) {
   })
 }
 
+// Import auto-event generation (avoid circular dependency)
+let generateAllListingEvents: ((listingId: string) => Promise<any>) | null = null
+
+async function loadAutoEventGenerator() {
+  if (!generateAllListingEvents) {
+    const module = await import('./autoCalendarEvents')
+    generateAllListingEvents = module.generateAllListingEvents
+  }
+  return generateAllListingEvents
+}
+
 export async function createListingFromTemplate(input: CreateListingInput, client: PrismaClient = prisma) {
   const template = await client.listingPipelineTemplate.findUnique({
     where: { id: input.pipelineTemplateId },
@@ -980,11 +991,20 @@ export async function createListingFromTemplate(input: CreateListingInput, clien
       })
     }
 
-    return tx.listing.findUniqueOrThrow({
+    const result = await tx.listing.findUniqueOrThrow({
       where: { id: listing.id },
       include: LISTING_INCLUDE
     })
+    return result
   })
+
+  // Auto-generate calendar events for the new listing (async, don't wait)
+  loadAutoEventGenerator()
+    .then((generator) => generator?.(result.id))
+    .catch((error) => {
+      console.error('Failed to auto-generate calendar events for listing:', error)
+      // Don't fail the listing creation if event generation fails
+    })
 
   return result
 }
@@ -1196,7 +1216,7 @@ export async function advanceListingStage(listingId: string, client: PrismaClien
   const now = new Date()
 
   try {
-    return await client.$transaction(async (tx: TxClient) => {
+    const result = await client.$transaction(async (tx: TxClient) => {
       console.log('Advancing stage for listing:', listingId)
 
       const listing = await tx.listing.findUnique({
@@ -1377,6 +1397,16 @@ export async function advanceListingStage(listingId: string, client: PrismaClien
       console.log('Successfully advanced stage for listing:', listingId)
       return result
     })
+
+    // Auto-generate calendar events after stage advancement (async, don't wait)
+    loadAutoEventGenerator()
+      .then((generator) => generator?.(listingId))
+      .catch((error) => {
+        console.error('Failed to auto-generate calendar events after stage advancement:', error)
+        // Don't fail the stage advancement if event generation fails
+      })
+
+    return result
   } catch (error) {
     console.error('Error in advanceListingStage:', {
       listingId,
