@@ -128,6 +128,9 @@ export async function POST(request: NextRequest) {
       crmContactId,
       crmDealId,
       crmTaskId,
+      isRecurring,
+      recurrenceRule,
+      rrule,
     } = body
 
     if (!calendarId || !title || !start || !end) {
@@ -195,6 +198,11 @@ export async function POST(request: NextRequest) {
           ? { date: endDate.toISOString().split('T')[0] }
           : { dateTime: endDate.toISOString() }
 
+        // Build recurrence rule for Google Calendar if recurring
+        const googleRecurrence: string[] | undefined = rrule
+          ? [rrule]
+          : undefined
+
         const response = await googleCalendar.events.insert({
           calendarId: calendar.googleCalendarId,
           requestBody: {
@@ -203,6 +211,7 @@ export async function POST(request: NextRequest) {
             location: location || undefined,
             start: googleStart,
             end: googleEnd,
+            recurrence: googleRecurrence,
           },
         })
 
@@ -234,6 +243,9 @@ export async function POST(request: NextRequest) {
       crmContactId: crmContactId || null,
       crmDealId: crmDealId || null,
       crmTaskId: crmTaskId || null,
+      isRecurring: isRecurring || false,
+      recurrenceRule: recurrenceRule || null,
+      rrule: rrule || null,
     })
 
     return NextResponse.json({

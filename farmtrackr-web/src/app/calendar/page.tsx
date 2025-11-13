@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, RefreshCw, X, MapPin, Edit } from 'lucide-react'
+import { generateRRULE, type RecurrenceRule } from '@/lib/recurringEvents'
 
 type CalendarView = 'month' | 'week' | 'day'
 
@@ -70,6 +71,12 @@ type CreateEventState = {
   crmContactId: string // Link to contact (FarmContact or GeneralContact)
   crmDealId: string // Link to listing/deal
   crmTaskId: string // Link to task
+  isRecurring: boolean // Whether this is a recurring event
+  recurrenceFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | ''
+  recurrenceInterval: number // e.g., every 2 weeks = 2
+  recurrenceCount?: number // Number of occurrences
+  recurrenceUntil?: string // End date (YYYY-MM-DD)
+  recurrenceByDay: string[] // e.g., ['MO', 'WE', 'FR']
 }
 
 const INITIAL_CREATE_EVENT_STATE: CreateEventState = {
@@ -86,6 +93,12 @@ const INITIAL_CREATE_EVENT_STATE: CreateEventState = {
   crmContactId: '',
   crmDealId: '',
   crmTaskId: '',
+  isRecurring: false,
+  recurrenceFrequency: '',
+  recurrenceInterval: 1,
+  recurrenceCount: undefined,
+  recurrenceUntil: undefined,
+  recurrenceByDay: [],
 }
 
 export default function CalendarPage() {
@@ -732,6 +745,21 @@ export default function CalendarPage() {
         ? new Date(createForm.endDate + 'T00:00:00')
         : createDateTime(createForm.endDate, createForm.endTime)
 
+      // Build recurrence rule if recurring
+      let recurrenceRule: RecurrenceRule | undefined
+      let rruleString: string | undefined
+      
+      if (createForm.isRecurring && createForm.recurrenceFrequency) {
+        recurrenceRule = {
+          frequency: createForm.recurrenceFrequency as RecurrenceRule['frequency'],
+          interval: createForm.recurrenceInterval,
+          count: createForm.recurrenceCount,
+          until: createForm.recurrenceUntil ? new Date(createForm.recurrenceUntil) : undefined,
+          byDay: createForm.recurrenceByDay.length > 0 ? createForm.recurrenceByDay : undefined,
+        }
+        rruleString = generateRRULE(recurrenceRule)
+      }
+
       // Use new API route that saves to DB and optionally syncs to Google
       const response = await fetch('/api/events', {
         method: 'POST',
@@ -748,6 +776,9 @@ export default function CalendarPage() {
           crmContactId: createForm.crmContactId || undefined,
           crmDealId: createForm.crmDealId || undefined,
           crmTaskId: createForm.crmTaskId || undefined,
+          isRecurring: createForm.isRecurring,
+          recurrenceRule: recurrenceRule,
+          rrule: rruleString,
         }),
       })
 
@@ -1661,6 +1692,144 @@ export default function CalendarPage() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                  <input
+                    type="checkbox"
+                    id="recurring-checkbox"
+                    checked={createForm.isRecurring}
+                    onChange={(e) => setCreateForm((prev) => ({ ...prev, isRecurring: e.target.checked }))}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      cursor: 'pointer',
+                      accentColor: colors.primary,
+                    }}
+                  />
+                  <label
+                    htmlFor="recurring-checkbox"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: text.primary.color,
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                    }}
+                  >
+                    Recurring Event
+                  </label>
+                </div>
+
+                {createForm.isRecurring && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), paddingLeft: spacing(2) }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing(1) }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                          Frequency
+                        </label>
+                        <select
+                          value={createForm.recurrenceFrequency}
+                          onChange={(e) => setCreateForm((prev) => ({ ...prev, recurrenceFrequency: e.target.value as any }))}
+                          style={inputStyle(colors, text, spacing)}
+                        >
+                          <option value="">Select...</option>
+                          <option value="DAILY">Daily</option>
+                          <option value="WEEKLY">Weekly</option>
+                          <option value="MONTHLY">Monthly</option>
+                          <option value="YEARLY">Yearly</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                          Every
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={createForm.recurrenceInterval}
+                          onChange={(e) => setCreateForm((prev) => ({ ...prev, recurrenceInterval: parseInt(e.target.value) || 1 }))}
+                          style={inputStyle(colors, text, spacing)}
+                        />
+                      </div>
+                    </div>
+
+                    {createForm.recurrenceFrequency === 'WEEKLY' && (
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                          Days of Week
+                        </label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing(0.75) }}>
+                          {[
+                            { value: 'MO', label: 'Mon' },
+                            { value: 'TU', label: 'Tue' },
+                            { value: 'WE', label: 'Wed' },
+                            { value: 'TH', label: 'Thu' },
+                            { value: 'FR', label: 'Fri' },
+                            { value: 'SA', label: 'Sat' },
+                            { value: 'SU', label: 'Sun' },
+                          ].map((day) => (
+                            <button
+                              key={day.value}
+                              type="button"
+                              onClick={() => {
+                                setCreateForm((prev) => {
+                                  const byDay = prev.recurrenceByDay.includes(day.value)
+                                    ? prev.recurrenceByDay.filter((d) => d !== day.value)
+                                    : [...prev.recurrenceByDay, day.value]
+                                  return { ...prev, recurrenceByDay: byDay }
+                                })
+                              }}
+                              style={{
+                                padding: `${spacing(0.5)} ${spacing(1)}`,
+                                borderRadius: spacing(0.5),
+                                border: `1px solid ${colors.border}`,
+                                backgroundColor: createForm.recurrenceByDay.includes(day.value) ? colors.primary : colors.surface,
+                                color: createForm.recurrenceByDay.includes(day.value) ? '#fff' : text.primary.color,
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                fontWeight: createForm.recurrenceByDay.includes(day.value) ? 600 : 400,
+                              }}
+                            >
+                              {day.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing(1) }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                          End After (occurrences)
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={createForm.recurrenceCount || ''}
+                          onChange={(e) => setCreateForm((prev) => ({ ...prev, recurrenceCount: e.target.value ? parseInt(e.target.value) : undefined, recurrenceUntil: undefined }))}
+                          placeholder="No limit"
+                          style={inputStyle(colors, text, spacing)}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                          End Date
+                        </label>
+                        <input
+                          type="date"
+                          value={createForm.recurrenceUntil || ''}
+                          onChange={(e) => setCreateForm((prev) => ({ ...prev, recurrenceUntil: e.target.value || undefined, recurrenceCount: undefined }))}
+                          min={createForm.startDate}
+                          style={inputStyle(colors, text, spacing)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1), padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>

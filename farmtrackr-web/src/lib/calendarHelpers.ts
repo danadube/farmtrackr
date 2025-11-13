@@ -119,6 +119,9 @@ export async function saveEventToDB(data: {
   crmContactId?: string | null
   crmDealId?: string | null
   crmTaskId?: string | null
+  isRecurring?: boolean
+  recurrenceRule?: any // RecurrenceRule object
+  rrule?: string | null // RRULE string
 }) {
   // If googleEventId exists, check for existing event
   if (data.googleEventId) {
@@ -129,6 +132,46 @@ export async function saveEventToDB(data: {
     })
 
     if (existing) {
+      // Handle recurrence rule update
+      let repeatRuleId: string | null = existing.repeatRuleId
+      
+      if (data.isRecurring && data.recurrenceRule && data.rrule) {
+        if (existing.repeatRuleId) {
+          // Update existing rule
+          await prisma.repeatRule.update({
+            where: { id: existing.repeatRuleId },
+            data: {
+              frequency: data.recurrenceRule.frequency.toLowerCase(),
+              interval: data.recurrenceRule.interval || 1,
+              count: data.recurrenceRule.count || null,
+              until: data.recurrenceRule.until || null,
+              byDay: data.recurrenceRule.byDay || [],
+              byMonth: data.recurrenceRule.byMonth || [],
+              byMonthDay: data.recurrenceRule.byMonthDay || [],
+              rrule: data.rrule,
+            },
+          })
+        } else {
+          // Create new rule
+          const repeatRule = await prisma.repeatRule.create({
+            data: {
+              frequency: data.recurrenceRule.frequency.toLowerCase(),
+              interval: data.recurrenceRule.interval || 1,
+              count: data.recurrenceRule.count || null,
+              until: data.recurrenceRule.until || null,
+              byDay: data.recurrenceRule.byDay || [],
+              byMonth: data.recurrenceRule.byMonth || [],
+              byMonthDay: data.recurrenceRule.byMonthDay || [],
+              rrule: data.rrule,
+            },
+          })
+          repeatRuleId = repeatRule.id
+        }
+      } else if (!data.isRecurring && existing.repeatRuleId) {
+        // Remove recurrence if unchecked
+        repeatRuleId = null
+      }
+
       return prisma.event.update({
         where: { id: existing.id },
         data: {
@@ -144,9 +187,29 @@ export async function saveEventToDB(data: {
           crmContactId: data.crmContactId,
           crmDealId: data.crmDealId,
           crmTaskId: data.crmTaskId,
+          isRecurring: data.isRecurring || false,
+          repeatRuleId: repeatRuleId,
         },
       })
     }
+  }
+
+  // Create recurrence rule if provided
+  let repeatRuleId: string | null = null
+  if (data.isRecurring && data.recurrenceRule && data.rrule) {
+    const repeatRule = await prisma.repeatRule.create({
+      data: {
+        frequency: data.recurrenceRule.frequency.toLowerCase(),
+        interval: data.recurrenceRule.interval || 1,
+        count: data.recurrenceRule.count || null,
+        until: data.recurrenceRule.until || null,
+        byDay: data.recurrenceRule.byDay || [],
+        byMonth: data.recurrenceRule.byMonth || [],
+        byMonthDay: data.recurrenceRule.byMonthDay || [],
+        rrule: data.rrule,
+      },
+    })
+    repeatRuleId = repeatRule.id
   }
 
   return prisma.event.create({
@@ -166,6 +229,8 @@ export async function saveEventToDB(data: {
       crmContactId: data.crmContactId,
       crmDealId: data.crmDealId,
       crmTaskId: data.crmTaskId,
+      isRecurring: data.isRecurring || false,
+      repeatRuleId: repeatRuleId,
     },
   })
 }
