@@ -122,7 +122,7 @@ export async function saveEventToDB(data: {
 }) {
   // If googleEventId exists, check for existing event
   if (data.googleEventId) {
-    const existing = await prisma.event.findUnique({
+    const existing = await prisma.event.findFirst({
       where: {
         googleEventId: data.googleEventId,
       },
