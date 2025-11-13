@@ -1013,7 +1013,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Calendar Controls Card */}
-          <div style={{ ...card, padding: spacing(3), display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing(2), boxSizing: 'border-box' }}>
+          <div style={{ ...card, padding: spacing(3), display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing(2), boxSizing: 'border-box', marginBottom: spacing(2.5) }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
               <button
                 type="button"
