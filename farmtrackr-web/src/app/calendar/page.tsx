@@ -982,10 +982,12 @@ export default function CalendarPage() {
         <div
           style={{
             width: '100%',
+            maxWidth: '100%',
             padding: '32px 48px 64px 48px',
             display: 'flex',
             flexDirection: 'column',
             gap: spacing(2.5),
+            boxSizing: 'border-box',
           }}
         >
           {/* Page Header */}
@@ -1468,7 +1470,7 @@ export default function CalendarPage() {
           )}
 
           {/* Main Calendar Layout with Mini Calendar Sidebar */}
-          <div style={{ display: 'flex', gap: spacing(2), alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: spacing(2), alignItems: 'flex-start', width: '100%' }}>
             {/* Mini Calendar Sidebar */}
             <div style={{ ...card, padding: spacing(3), width: '280px', flexShrink: 0, position: 'sticky', top: spacing(2) }}>
               <div style={{ marginBottom: spacing(2) }}>
