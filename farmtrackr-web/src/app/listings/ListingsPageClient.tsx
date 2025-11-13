@@ -1194,8 +1194,8 @@ const ListingsPageClient = ({ initialListings, pipelineTemplates }: ListingsPage
 
   return (
     <Sidebar>
-      <div style={{ ...background, minHeight: '100vh' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '36px 40px 48px' }}>
+      <div style={{ ...background, minHeight: '100vh', padding: '36px 40px 48px', boxSizing: 'border-box' }}>
+        <div style={{}}>
         <section
           style={{
             ...headerCard,

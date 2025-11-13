@@ -1366,13 +1366,11 @@ export default function DashboardClient({ contacts, stats, listings: initialList
       >
         <div 
           style={{
-            maxWidth: '1200px',
-            marginLeft: 'auto',
-            marginRight: 'auto',
             paddingLeft: spacing(6),
             paddingRight: spacing(6),
             paddingTop: spacing(4),
-            paddingBottom: spacing(4)
+            paddingBottom: spacing(4),
+            boxSizing: 'border-box',
           }}
         >
           {/* Hero Section */}
