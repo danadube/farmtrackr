@@ -1367,7 +1367,8 @@ export default function CalendarPage() {
                         try {
                           const listingResponse = await fetch(`/api/listings/${event.crmDealId}`)
                           if (listingResponse.ok) {
-                            const listing = await listingResponse.json()
+                            const listingData = await listingResponse.json()
+                            const listing = listingData.listing || listingData
                             setLinkedListing({
                               id: listing.id,
                               title: listing.title || 'Untitled Listing',
@@ -1378,6 +1379,46 @@ export default function CalendarPage() {
                         }
                       } else {
                         setLinkedListing(null)
+                      }
+                      
+                      // Load linked task
+                      if (event.crmTaskId) {
+                        // First try to find in loaded tasks
+                        const task = tasks.find((t) => t.id === event.crmTaskId)
+                        if (task) {
+                          setLinkedTask(task)
+                        } else {
+                          // If not found, try to fetch from listings
+                          try {
+                            const listingsResponse = await fetch('/api/listings')
+                            if (listingsResponse.ok) {
+                              const listingsData = await listingsResponse.json()
+                              const listings = listingsData.listings || listingsData
+                              for (const listing of listings) {
+                                if (listing.stageInstances) {
+                                  for (const stage of listing.stageInstances) {
+                                    if (stage.tasks) {
+                                      const foundTask = stage.tasks.find((t: any) => t.id === event.crmTaskId)
+                                      if (foundTask) {
+                                        setLinkedTask({
+                                          id: foundTask.id,
+                                          name: foundTask.name,
+                                          listingId: listing.id,
+                                          listingTitle: listing.title || 'Untitled Listing',
+                                        })
+                                        break
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          } catch (error) {
+                            console.error('Failed to load linked task:', error)
+                          }
+                        }
+                      } else {
+                        setLinkedTask(null)
                       }
                     }}
                     style={{
