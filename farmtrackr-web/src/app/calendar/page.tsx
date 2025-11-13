@@ -49,6 +49,11 @@ type NormalizedEvent = {
   calendarId?: string
   calendarName?: string
   calendarColor?: string
+  crmContactId?: string
+  crmDealId?: string
+  crmTaskId?: string
+  linkedContact?: { id: string; name: string }
+  linkedListing?: { id: string; title: string }
 }
 
 type CreateEventState = {
@@ -109,6 +114,8 @@ export default function CalendarPage() {
   const [syncStatus, setSyncStatus] = useState<string | null>(null)
   const [contacts, setContacts] = useState<Array<{ id: string; name: string }>>([])
   const [listings, setListings] = useState<Array<{ id: string; title: string }>>([])
+  const [linkedContact, setLinkedContact] = useState<{ id: string; name: string } | null>(null)
+  const [linkedListing, setLinkedListing] = useState<{ id: string; title: string } | null>(null)
 
   useEffect(() => {
     let storedSelection: string[] | undefined
@@ -1258,9 +1265,44 @@ export default function CalendarPage() {
                 {selectedDateEvents.map((event) => (
                   <div
                     key={event.id}
-                    onClick={() => {
+                    onClick={async () => {
                       setSelectedEvent(event)
                       setIsEventModalOpen(true)
+                      
+                      // Load linked entity details
+                      if (event.crmContactId) {
+                        try {
+                          const contactResponse = await fetch(`/api/contacts/${event.crmContactId}`)
+                          if (contactResponse.ok) {
+                            const contact = await contactResponse.json()
+                            setLinkedContact({
+                              id: contact.id,
+                              name: contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact',
+                            })
+                          }
+                        } catch (error) {
+                          console.error('Failed to load linked contact:', error)
+                        }
+                      } else {
+                        setLinkedContact(null)
+                      }
+                      
+                      if (event.crmDealId) {
+                        try {
+                          const listingResponse = await fetch(`/api/listings/${event.crmDealId}`)
+                          if (listingResponse.ok) {
+                            const listing = await listingResponse.json()
+                            setLinkedListing({
+                              id: listing.id,
+                              title: listing.title || 'Untitled Listing',
+                            })
+                          }
+                        } catch (error) {
+                          console.error('Failed to load linked listing:', error)
+                        }
+                      } else {
+                        setLinkedListing(null)
+                      }
                     }}
                     style={{
                       padding: spacing(1.25),
@@ -1731,6 +1773,8 @@ export default function CalendarPage() {
           onClick={() => {
             setIsEventModalOpen(false)
             setSelectedEvent(null)
+            setLinkedContact(null)
+            setLinkedListing(null)
           }}
         >
           <div
@@ -1767,6 +1811,8 @@ export default function CalendarPage() {
                   }
                   setIsEventModalOpen(false)
                   setSelectedEvent(null)
+                  setLinkedContact(null)
+                  setLinkedListing(null)
                 }}
                 style={getButtonPressStyle(
                   'calendar-event-close',
