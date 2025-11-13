@@ -11,11 +11,15 @@ type CalendarView = 'month' | 'week' | 'day'
 
 type GoogleCalendar = {
   id: string
-  summary: string
+  summary?: string
+  name?: string
   description?: string | null
   backgroundColor?: string | null
+  color?: string
   foregroundColor?: string | null
   primary?: boolean | null
+  type?: 'google' | 'crm'
+  googleCalendarId?: string | null
 }
 
 type ApiCalendarEvent = {
@@ -129,6 +133,11 @@ export default function CalendarPage() {
   const [calendars, setCalendars] = useState<GoogleCalendar[]>([])
   const [selectedCalendars, setSelectedCalendars] = useState<string[]>([])
   const [showCalendarPicker, setShowCalendarPicker] = useState(false)
+  const [showCreateCalendarModal, setShowCreateCalendarModal] = useState(false)
+  const [editingCalendar, setEditingCalendar] = useState<{ id: string; name: string; color: string } | null>(null)
+  const [newCalendarName, setNewCalendarName] = useState('')
+  const [newCalendarColor, setNewCalendarColor] = useState('#4285f4')
+  const [isSavingCalendar, setIsSavingCalendar] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<NormalizedEvent | null>(null)
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
   const [isEditingEvent, setIsEditingEvent] = useState(false)
@@ -492,10 +501,14 @@ export default function CalendarPage() {
             .map((cal: any) => ({
               id: cal.id,
               summary: cal.name,
+              name: cal.name,
               backgroundColor: cal.color,
+              color: cal.color,
               foregroundColor: '#ffffff',
               primary: cal.isPrimary,
               description: null,
+              type: 'crm' as const,
+              googleCalendarId: null,
             }))
         }
       } catch (error) {
@@ -629,6 +642,61 @@ export default function CalendarPage() {
     setIsEditingEvent(false)
     setEditingEventId(null)
     setCreateForm(INITIAL_CREATE_EVENT_STATE)
+  }
+
+  const handleSaveCalendar = async () => {
+    if (!newCalendarName.trim()) {
+      alert('Calendar name is required')
+      return
+    }
+
+    setIsSavingCalendar(true)
+    try {
+      if (editingCalendar) {
+        // Update existing calendar
+        const response = await fetch('/api/calendar', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editingCalendar.id,
+            name: newCalendarName.trim(),
+            color: newCalendarColor,
+          }),
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || 'Failed to update calendar')
+        }
+      } else {
+        // Create new calendar
+        const response = await fetch('/api/calendar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: newCalendarName.trim(),
+            color: newCalendarColor,
+          }),
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || 'Failed to create calendar')
+        }
+      }
+
+      // Reload calendars and close modal
+      await loadCalendars()
+      setShowCreateCalendarModal(false)
+      setEditingCalendar(null)
+      setNewCalendarName('')
+      setNewCalendarColor('#4285f4')
+    } catch (error) {
+      console.error('Failed to save calendar:', error)
+      alert(error instanceof Error ? error.message : 'Failed to save calendar')
+    } finally {
+      setIsSavingCalendar(false)
+    }
   }
 
   const handleUpdateEvent = async () => {
@@ -1208,8 +1276,9 @@ export default function CalendarPage() {
                       ) : (
                         calendars.map((calendar) => {
                           const checked = selectedCalendars.includes(calendar.id)
+                          const isCRMCalendar = calendar.type === 'crm' || (!calendar.googleCalendarId && calendar.id)
                           return (
-                            <label
+                            <div
                               key={calendar.id}
                               style={{
                                 display: 'flex',
@@ -1218,44 +1287,152 @@ export default function CalendarPage() {
                                 padding: spacing(0.75),
                                 borderRadius: spacing(0.75),
                                 backgroundColor: checked ? colors.cardHover : 'transparent',
-                                cursor: 'pointer',
-                                fontSize: '13px',
-                                color: text.primary.color,
                               }}
                             >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={(e) => {
-                                  setSelectedCalendars((prev) => {
-                                    if (e.target.checked) {
-                                      return Array.from(new Set([...prev, calendar.id]))
-                                    }
-                                    return prev.filter((id) => id !== calendar.id)
-                                  })
-                                }}
-                              />
-                              <span
+                              <label
                                 style={{
-                                  width: '12px',
-                                  height: '12px',
-                                  borderRadius: '50%',
-                                  backgroundColor: calendar.backgroundColor || '#2563eb',
-                                  flexShrink: 0,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: spacing(1),
+                                  flex: 1,
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  color: text.primary.color,
                                 }}
-                              />
-                              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {calendar.summary}
-                                {calendar.primary && (
-                                  <span style={{ marginLeft: spacing(0.5), fontSize: '11px', color: colors.primary }}>
-                                    (Primary)
-                                  </span>
-                                )}
-                              </span>
-                            </label>
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(e) => {
+                                    setSelectedCalendars((prev) => {
+                                      if (e.target.checked) {
+                                        return Array.from(new Set([...prev, calendar.id]))
+                                      }
+                                      return prev.filter((id) => id !== calendar.id)
+                                    })
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    width: '12px',
+                                    height: '12px',
+                                    borderRadius: '50%',
+                                    backgroundColor: calendar.backgroundColor || calendar.color || '#2563eb',
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {calendar.summary || calendar.name}
+                                  {calendar.primary && (
+                                    <span style={{ marginLeft: spacing(0.5), fontSize: '11px', color: colors.primary }}>
+                                      (Primary)
+                                    </span>
+                                  )}
+                                  {isCRMCalendar && (
+                                    <span style={{ marginLeft: spacing(0.5), fontSize: '11px', color: text.tertiary.color }}>
+                                      (CRM)
+                                    </span>
+                                  )}
+                                </span>
+                              </label>
+                              {isCRMCalendar && (
+                                <div style={{ display: 'flex', gap: spacing(0.5) }}>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setEditingCalendar({
+                                        id: calendar.id,
+                                        name: calendar.summary || calendar.name || '',
+                                        color: calendar.backgroundColor || calendar.color || '#4285f4',
+                                      })
+                                      setNewCalendarName(calendar.summary || calendar.name || '')
+                                      setNewCalendarColor(calendar.backgroundColor || calendar.color || '#4285f4')
+                                      setShowCreateCalendarModal(true)
+                                    }}
+                                    style={{
+                                      padding: spacing(0.5),
+                                      border: 'none',
+                                      background: 'transparent',
+                                      color: text.secondary.color,
+                                      cursor: 'pointer',
+                                      fontSize: '12px',
+                                    }}
+                                    title="Edit calendar"
+                                  >
+                                    <Edit style={{ width: '14px', height: '14px' }} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={async (e) => {
+                                      e.stopPropagation()
+                                      if (confirm(`Delete calendar "${calendar.summary || calendar.name}"? This will also delete all events in this calendar.`)) {
+                                        try {
+                                          const response = await fetch(`/api/calendar?id=${calendar.id}`, {
+                                            method: 'DELETE',
+                                          })
+                                          if (response.ok) {
+                                            await loadCalendars()
+                                            await fetchEvents(true)
+                                          } else {
+                                            const data = await response.json()
+                                            alert(data.error || 'Failed to delete calendar')
+                                          }
+                                        } catch (error) {
+                                          console.error('Failed to delete calendar:', error)
+                                          alert('Failed to delete calendar')
+                                        }
+                                      }
+                                    }}
+                                    style={{
+                                      padding: spacing(0.5),
+                                      border: 'none',
+                                      background: 'transparent',
+                                      color: colors.error || '#ef4444',
+                                      cursor: 'pointer',
+                                      fontSize: '12px',
+                                    }}
+                                    title="Delete calendar"
+                                  >
+                                    <X style={{ width: '14px', height: '14px' }} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           )
                         })
                       )}
+
+                      <div style={{ marginTop: spacing(1), paddingTop: spacing(1), borderTop: `1px solid ${colors.border}` }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingCalendar(null)
+                            setNewCalendarName('')
+                            setNewCalendarColor('#4285f4')
+                            setShowCreateCalendarModal(true)
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: `${spacing(0.75)} ${spacing(1.5)}`,
+                            borderRadius: spacing(0.75),
+                            border: `1px solid ${colors.border}`,
+                            backgroundColor: colors.primary,
+                            color: 'white',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: spacing(0.5),
+                          }}
+                          {...getButtonPressHandlers('create-calendar')}
+                        >
+                          <Plus style={{ width: '16px', height: '16px' }} />
+                          Create CRM Calendar
+                        </button>
+                      </div>
 
                       <button
                         type="button"
