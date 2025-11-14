@@ -4174,9 +4174,12 @@ function renderCalendarGrid({
     const totalRows = Math.ceil(calendarCells.length / 7)
     const rowLevels = Array(totalRows).fill(0)
     const rowMaxLevels = Array(totalRows).fill(0)
+    const rowMaxLevels = Array(totalRows).fill(0)
     const multiDayOverlays: React.ReactNode[] = []
 
     const multiDayEntries = allEvents.filter(({ startDate, endDate }) => startDate.toDateString() !== endDate.toDateString())
+    const overlayHeaderOffset = 28
+
     multiDayEntries.forEach(({ event, startDate, endDate }) => {
       const absoluteStartIdx = calendarCells.findIndex((d) => d.toDateString() === startDate.toDateString())
       let startIdx = absoluteStartIdx >= 0 ? absoluteStartIdx : 0
@@ -4214,7 +4217,7 @@ function renderCalendarGrid({
               gridColumn: `${columnStart} / span ${spanDays}`,
               gridRow: `${row + 1}`,
               alignSelf: 'start',
-              margin: `${spacing(0.25) + level * 22}px ${spacing(0.5)} 0`,
+              margin: `${overlayHeaderOffset + level * 22}px ${spacing(0.5)} 0`,
               backgroundColor: event.calendarColor || colors.primary,
               color: '#ffffff',
               borderRadius: spacing(0.5),
@@ -4270,7 +4273,7 @@ function renderCalendarGrid({
       const limitedEvents = singleDayEvents.slice(0, 3)
 
       const rowIndex = Math.floor(index / 7)
-      const paddingTopAdjustment = rowMaxLevels[rowIndex] ? rowMaxLevels[rowIndex] * 24 + spacing(0.5) : 0
+      const multiDayOffset = rowMaxLevels[rowIndex] ? rowMaxLevels[rowIndex] * 22 + spacing(0.5) : 0
 
       return (
         <div
@@ -4285,7 +4288,6 @@ function renderCalendarGrid({
               border: isSelected ? `2px solid ${colors.primary}` : `1px solid ${colors.border}`,
               backgroundColor: isSelected ? 'rgba(255,255,255,0.05)' : colors.surface,
               padding: spacing(1),
-              paddingTop: spacing(1) + paddingTopAdjustment,
               display: 'flex',
               flexDirection: 'column',
               gap: spacing(0.75),
@@ -4332,7 +4334,17 @@ function renderCalendarGrid({
             )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5), overflow: 'hidden', position: 'relative', zIndex: 1 }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing(0.5),
+              overflow: 'hidden',
+              position: 'relative',
+              zIndex: 1,
+              marginTop: multiDayOffset,
+            }}
+          >
             {limitedEvents.map((event) => {
               const eventStart = new Date(event.start)
               let eventEnd = new Date(event.end)
