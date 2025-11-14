@@ -4177,7 +4177,8 @@ function renderCalendarGrid({
     const multiDayOverlays: React.ReactNode[] = []
 
     const multiDayEntries = allEvents.filter(({ startDate, endDate }) => startDate.toDateString() !== endDate.toDateString())
-    const overlayHeaderOffset = 28
+    const overlayHeaderOffset = 22
+    const multiDayRowHeight = 18
 
     multiDayEntries.forEach(({ event, startDate, endDate }) => {
       const absoluteStartIdx = calendarCells.findIndex((d) => d.toDateString() === startDate.toDateString())
@@ -4223,7 +4224,7 @@ function renderCalendarGrid({
               }}
               style={{
                 position: 'absolute',
-                top: `${overlayHeaderOffset + level * 22}px`,
+                top: `${overlayHeaderOffset + level * multiDayRowHeight}px`,
                 left: spacing(0.5),
                 right: spacing(0.5),
                 backgroundColor: event.calendarColor || colors.primary,
@@ -4282,7 +4283,8 @@ function renderCalendarGrid({
       const limitedEvents = singleDayEvents.slice(0, 3)
 
       const rowIndex = Math.floor(index / 7)
-      const multiDayOffset = rowMaxLevels[rowIndex] ? rowMaxLevels[rowIndex] * 22 + spacing(0.5) : 0
+      const multiDayOffset =
+        rowMaxLevels[rowIndex] > 0 ? rowMaxLevels[rowIndex] * multiDayRowHeight + spacing(0.5) : 0
 
       return (
         <div
