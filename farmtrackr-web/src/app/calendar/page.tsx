@@ -4177,9 +4177,8 @@ function renderCalendarGrid({
     const multiDayOverlays: React.ReactNode[] = []
 
     const multiDayEntries = allEvents.filter(({ startDate, endDate }) => startDate.toDateString() !== endDate.toDateString())
-    const overlayHeaderOffset = 20
-    const headerHeight = 22
-    const multiDayRowHeight = 12
+    const dateLabelHeight = 26
+    const multiDayRowHeight = 14
 
     multiDayEntries.forEach(({ event, startDate, endDate }) => {
       const absoluteStartIdx = calendarCells.findIndex((d) => d.toDateString() === startDate.toDateString())
@@ -4206,6 +4205,7 @@ function renderCalendarGrid({
         const isFirstVisibleSegment = segmentStartIdx === effectiveStartIdx
         const isLastVisibleSegment = segmentEndIdx === effectiveEndIdx
 
+        const absoluteTop = dateLabelHeight + level * multiDayRowHeight
         multiDayOverlays.push(
           <div
             key={`multi-${event.id}-${row}-${segmentStartIdx}`}
@@ -4225,7 +4225,7 @@ function renderCalendarGrid({
               }}
               style={{
                 position: 'absolute',
-                top: `${overlayHeaderOffset + level * multiDayRowHeight}px`,
+                top: `${absoluteTop}px`,
                 left: spacing(0.5),
                 right: spacing(0.5),
                 backgroundColor: event.calendarColor || colors.primary,
@@ -4239,12 +4239,12 @@ function renderCalendarGrid({
                 gap: spacing(0.5),
                 cursor: 'pointer',
                 pointerEvents: 'auto',
-                minHeight: '20px',
+                minHeight: '18px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
                 zIndex: 2,
               }}
             >
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
+              <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{event.title}</span>
               {!event.isAllDay && (
                 <span style={{ fontSize: '10px', opacity: 0.85 }}>
@@ -4286,10 +4286,7 @@ function renderCalendarGrid({
       const rowIndex = Math.floor(index / 7)
       const multiDayOffset =
         rowMaxLevels[rowIndex] > 0
-          ? Math.max(
-              0,
-              overlayHeaderOffset + rowMaxLevels[rowIndex] * multiDayRowHeight - headerHeight
-            )
+          ? Math.max(0, dateLabelHeight + rowMaxLevels[rowIndex] * multiDayRowHeight - dateLabelHeight)
           : 0
 
       return (
