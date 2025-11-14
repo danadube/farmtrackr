@@ -3693,32 +3693,6 @@ export default function CalendarPage() {
                     )}
                     Delete
                   </button>
-                  <button
-                    type="button"
-                    {...getButtonPressHandlers('calendar-event-edit')}
-                    onClick={handleStartEdit}
-                    style={getButtonPressStyle(
-                      'calendar-event-edit',
-                      {
-                        padding: `${spacing(1)} ${spacing(2.5)}`,
-                        borderRadius: spacing(0.75),
-                        border: `1px solid ${colors.border}`,
-                        backgroundColor: colors.surface,
-                        color: text.primary.color,
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: spacing(0.75),
-                      },
-                      colors.surface,
-                      colors.cardHover
-                    )}
-                  >
-                    <Edit style={{ width: '16px', height: '16px' }} />
-                    Edit
-                  </button>
                   {selectedEvent.htmlLink && (
                     <button
                       type="button"
