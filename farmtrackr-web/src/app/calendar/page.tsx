@@ -360,14 +360,13 @@ export default function CalendarPage() {
 
       // Merge DB events and Google events
       const dbEvents = dbData.events || []
-      const googleEventsMap = new Map<string, ApiCalendarEvent>()
+      const googleEventsMap = new Map<string, { event: ApiCalendarEvent; calendarId: string }>()
       
-      // Create map of Google events by ID
+      // Create map of Google events by ID, tracking which calendar each event came from
       for (const { calendarId, events } of googleResults) {
-        const meta = calendars.find((calendar) => calendar.id === calendarId)
         for (const event of events) {
           if (event.id) {
-            googleEventsMap.set(event.id, event)
+            googleEventsMap.set(event.id, { event, calendarId })
           }
         }
       }
@@ -392,7 +391,7 @@ export default function CalendarPage() {
               : new Date(event.end).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
             calendarId: event.calendarId,
             calendarName: meta?.summary || event.calendar?.name || 'Unknown',
-            calendarColor: meta?.backgroundColor || event.calendar?.color || '#4285f4',
+            calendarColor: meta?.backgroundColor || meta?.color || event.calendar?.color || '#4285f4',
             htmlLink: event.googleEventId ? `https://calendar.google.com/calendar/event?eid=${event.googleEventId}` : undefined,
           }
         })
@@ -404,11 +403,10 @@ export default function CalendarPage() {
       
       // Convert Map to Array for iteration
       const googleEventsArray = Array.from(googleEventsMap.entries())
-      for (const [googleEventId, googleEvent] of googleEventsArray) {
+      for (const [googleEventId, { event: googleEvent, calendarId }] of googleEventsArray) {
         if (!dbGoogleIds.has(googleEventId)) {
-          const meta = calendars.find((calendar) => 
-            selectedCalendars.includes(calendar.id)
-          )
+          // Find the correct calendar for this event
+          const meta = calendars.find((calendar) => calendar.id === calendarId)
           const normalized = normalizeEvent(googleEvent, meta)
           if (normalized) {
             normalizedGoogleEvents.push(normalized)
@@ -4141,12 +4139,58 @@ function renderCalendarGrid({
     const today = new Date()
     const currentMonth = calendarCells[15]?.getMonth() // central cell to determine month
 
+    // Collect all events to detect multi-day spanning
+    const allEvents: Array<{ event: any; startDate: Date; endDate: Date }> = []
+    const eventsMap = new Map<string, any>()
+    
+    // Build a map of all events with their date ranges
+    for (const [dateStr, events] of eventsByDate.entries()) {
+      for (const event of events) {
+        if (!eventsMap.has(event.id)) {
+          const startDate = new Date(event.start)
+          let endDate = new Date(event.end)
+          // For all-day events, end date is exclusive (one day after), so subtract one day
+          if (event.isAllDay) {
+            endDate.setDate(endDate.getDate() - 1)
+          }
+          eventsMap.set(event.id, { event, startDate, endDate })
+          allEvents.push({ event, startDate, endDate })
+        }
+      }
+    }
+
     return calendarCells.map((cellDate, index) => {
       const key = `calendar-cell-${cellDate.toISOString()}`
       const isToday = cellDate.toDateString() === today.toDateString()
       const isSelected = cellDate.toDateString() === selectedDate.toDateString()
       const isCurrentMonth = cellDate.getMonth() === currentMonth
       const dayEvents = eventsByDate.get(cellDate.toDateString()) || []
+      const cellDateStr = cellDate.toDateString()
+
+      // Find events that start on this day (for multi-day spanning)
+      const eventsStartingToday = allEvents.filter(({ event, startDate }) => {
+        return startDate.toDateString() === cellDateStr
+      })
+
+      // Find events that continue through this day (but don't start here)
+      const eventsContinuingToday = allEvents.filter(({ event, startDate, endDate }) => {
+        const startStr = startDate.toDateString()
+        const endStr = endDate.toDateString()
+        return cellDateStr > startStr && cellDateStr <= endStr
+      })
+
+      // Combine and sort events for display
+      const displayEvents = [...eventsStartingToday.map(e => e.event), ...dayEvents.filter(e => {
+        const eventStart = new Date(e.start)
+        const eventEnd = new Date(e.end)
+        if (e.isAllDay) {
+          eventEnd.setDate(eventEnd.getDate() - 1)
+        }
+        const startStr = eventStart.toDateString()
+        const endStr = eventEnd.toDateString()
+        // Only show if it's not a multi-day event that starts before today
+        return startStr === cellDateStr || (startStr < cellDateStr && endStr < cellDateStr)
+      })].slice(0, 3)
 
       return (
         <div
@@ -4165,6 +4209,7 @@ function renderCalendarGrid({
               flexDirection: 'column',
               gap: spacing(0.75),
               cursor: 'pointer',
+              position: 'relative',
             },
             isSelected ? 'rgba(255,255,255,0.05)' : colors.surface,
             colors.cardHover
@@ -4206,49 +4251,91 @@ function renderCalendarGrid({
             )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5), overflow: 'hidden' }}>
-            {dayEvents.slice(0, 3).map((event) => (
-              <div
-                key={event.id}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedEvent(event)
-                  setIsEventModalOpen(true)
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: spacing(0.75),
-                  borderRadius: spacing(0.5),
-                  backgroundColor: colors.cardHover,
-                  padding: `${spacing(0.5)} ${spacing(0.75)}`,
-                  cursor: event.htmlLink ? 'pointer' : 'default',
-                  transition: 'background-color 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  if (event.htmlLink) {
-                    e.currentTarget.style.backgroundColor = colors.borderHover || colors.card
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (event.htmlLink) {
-                    e.currentTarget.style.backgroundColor = colors.cardHover
-                  }
-                }}
-              >
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: event.calendarColor || colors.primary, flexShrink: 0 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), minWidth: 0 }}>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: text.primary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {event.title}
-                  </span>
-                  {!event.isAllDay && (
-                    <span style={{ fontSize: '10px', color: text.secondary.color }}>
-                      {event.startLabel} – {event.endLabel}
-                    </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5), overflow: 'hidden', position: 'relative', zIndex: 1 }}>
+            {displayEvents.map((event) => {
+              const eventStart = new Date(event.start)
+              let eventEnd = new Date(event.end)
+              if (event.isAllDay) {
+                eventEnd.setDate(eventEnd.getDate() - 1)
+              }
+              const eventStartStr = eventStart.toDateString()
+              const eventEndStr = eventEnd.toDateString()
+              const isFirstDay = cellDateStr === eventStartStr
+              const isLastDay = cellDateStr === eventEndStr
+              const isMultiDay = eventStartStr !== eventEndStr
+              
+              // Calculate which columns this event spans
+              const startDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventStartStr)
+              const endDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventEndStr)
+              const currentDayIndex = calendarCells.indexOf(cellDate)
+              
+              // Only render multi-day events on their first day
+              if (isMultiDay && !isFirstDay) {
+                return null
+              }
+              
+              const spanDays = isMultiDay && startDayIndex >= 0 && endDayIndex >= 0 
+                ? Math.min(endDayIndex - startDayIndex + 1, calendarCells.length - startDayIndex)
+                : 1
+
+              return (
+                <div
+                  key={event.id}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectedEvent(event)
+                    setIsEventModalOpen(true)
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(0.75),
+                    borderRadius: spacing(0.5),
+                    backgroundColor: event.calendarColor || colors.primary,
+                    color: '#ffffff',
+                    padding: `${spacing(0.5)} ${spacing(0.75)}`,
+                    cursor: event.htmlLink ? 'pointer' : 'default',
+                    transition: 'background-color 0.15s ease',
+                    position: isMultiDay && isFirstDay ? 'absolute' : 'relative',
+                    left: isMultiDay && isFirstDay ? 0 : undefined,
+                    width: isMultiDay && isFirstDay 
+                      ? `calc(${(100 / 7) * spanDays}% - ${spacing(2)} + ${(spanDays - 1) * 8}px)` 
+                      : undefined,
+                    zIndex: isMultiDay ? 2 : 1,
+                    marginLeft: isMultiDay && isFirstDay ? spacing(1) : 0,
+                    marginRight: isMultiDay && isFirstDay ? spacing(1) : 0,
+                    borderTopLeftRadius: isFirstDay ? spacing(0.5) : 0,
+                    borderBottomLeftRadius: isFirstDay ? spacing(0.5) : 0,
+                    borderTopRightRadius: isLastDay ? spacing(0.5) : 0,
+                    borderBottomRightRadius: isLastDay ? spacing(0.5) : 0,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (event.htmlLink) {
+                      e.currentTarget.style.opacity = '0.9'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (event.htmlLink) {
+                      e.currentTarget.style.opacity = '1'
+                    }
+                  }}
+                >
+                  {!isMultiDay && (
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ffffff', flexShrink: 0, opacity: 0.8 }} />
                   )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), minWidth: 0, flex: 1 }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {event.title}
+                    </span>
+                    {!event.isAllDay && !isMultiDay && (
+                      <span style={{ fontSize: '10px', color: '#ffffff', opacity: 0.9 }}>
+                        {event.startLabel} – {event.endLabel}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
             {dayEvents.length > 3 && (
               <span style={{ fontSize: '10px', color: colors.primary, fontWeight: 600 }}>
                 +{dayEvents.length - 3} more
