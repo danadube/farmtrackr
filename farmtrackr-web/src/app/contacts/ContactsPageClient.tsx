@@ -52,7 +52,7 @@ export default function ContactsPageClient() {
     <div
       style={{
         display: 'flex',
-        justifyContent: 'flex-end',
+      justifyContent: 'flex-start',
       }}
     >
       <div
