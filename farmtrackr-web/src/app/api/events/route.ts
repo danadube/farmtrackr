@@ -155,19 +155,20 @@ export async function GET(request: NextRequest) {
                 end: instance.end,
                 isRecurringInstance: true, // Flag to indicate this is an instance
                 recurrenceId: event.id, // Reference to the parent recurring event
+                originalId: event.id,
               })
             }
           } else {
             // If we can't parse the RRULE, just include the base event
-            expandedEvents.push(event)
+            expandedEvents.push({ ...event, originalId: event.originalId || event.id })
           }
         } else {
           // No RRULE, just include the base event
-          expandedEvents.push(event)
+          expandedEvents.push({ ...event, originalId: event.originalId || event.id })
         }
       } else {
         // Non-recurring event, include as-is
-        expandedEvents.push(event)
+        expandedEvents.push({ ...event, originalId: event.originalId || event.id })
       }
     }
 

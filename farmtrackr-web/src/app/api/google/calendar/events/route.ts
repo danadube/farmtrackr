@@ -284,3 +284,49 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+export async function DELETE(request: NextRequest) {
+  try {
+    const accessToken = await getGoogleAccessToken()
+    if (!accessToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Google account not connected',
+          requiresAuth: true,
+        },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const calendarId = body.calendarId as string | undefined
+    const eventId = body.eventId as string | undefined
+
+    if (!calendarId || !eventId) {
+      return NextResponse.json(
+        { success: false, error: 'calendarId and eventId are required' },
+        { status: 400 }
+      )
+    }
+
+    const calendar = getAuthenticatedCalendarClient(accessToken)
+    await calendar.events.delete({
+      calendarId,
+      eventId,
+    })
+
+    return NextResponse.json({
+      success: true,
+    })
+  } catch (error) {
+    console.error('Error deleting calendar event:', error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error deleting calendar event',
+      },
+      { status: 500 }
+    )
+  }
+}
+

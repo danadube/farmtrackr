@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, RefreshCw, X, MapPin, Edit, Share2, UserPlus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, RefreshCw, X, MapPin, Edit, Share2, UserPlus, Trash2 } from 'lucide-react'
 import { generateRRULE, type RecurrenceRule } from '@/lib/recurringEvents'
 
 type CalendarView = 'month' | 'week' | 'day'
@@ -42,6 +42,8 @@ type ApiCalendarEvent = {
 
 type NormalizedEvent = {
   id: string
+  dbId?: string
+  googleEventId?: string
   title: string
   description?: string
   location?: string
@@ -130,6 +132,7 @@ export default function CalendarPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [createForm, setCreateForm] = useState<CreateEventState>(INITIAL_CREATE_EVENT_STATE)
   const [isSavingEvent, setIsSavingEvent] = useState(false)
+  const [isDeletingEvent, setIsDeletingEvent] = useState(false)
   const [calendars, setCalendars] = useState<GoogleCalendar[]>([])
   const [selectedCalendars, setSelectedCalendars] = useState<string[]>([])
   const [showCalendarPicker, setShowCalendarPicker] = useState(false)
@@ -376,8 +379,11 @@ export default function CalendarPage() {
         .map((event: any) => {
           const effectiveCalendarId = event.calendar?.googleCalendarId || event.calendarId
           const meta = calendars.find((calendar) => calendar.id === effectiveCalendarId)
+          const dbEventId = event.originalId || event.id
           return {
-            id: event.googleEventId || event.id,
+            id: event.googleEventId || dbEventId,
+            dbId: dbEventId,
+            googleEventId: event.googleEventId || undefined,
             title: event.title,
             description: event.description || undefined,
             location: event.location || undefined,
@@ -408,7 +414,10 @@ export default function CalendarPage() {
         if (!dbGoogleIds.has(googleEventId)) {
           // Find the correct calendar for this event
           const meta = calendars.find((calendar) => calendar.id === calendarId)
-          const normalized = normalizeEvent(googleEvent, meta)
+          const normalized = normalizeEvent(
+            googleEvent,
+            meta || ({ id: calendarId } as GoogleCalendar)
+          )
           if (normalized) {
             normalizedGoogleEvents.push(normalized)
           }
@@ -844,6 +853,55 @@ export default function CalendarPage() {
       setError(err instanceof Error ? err.message : 'Unexpected error while updating event.')
     } finally {
       setIsSavingEvent(false)
+    }
+  }
+
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return
+    const confirmDelete = window.confirm(`Delete "${selectedEvent.title}"?`)
+    if (!confirmDelete) return
+
+    setIsDeletingEvent(true)
+    setError(null)
+
+    try {
+      if (selectedEvent.googleEventId && selectedEvent.calendarId) {
+        const googleResponse = await fetch('/api/google/calendar/events', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            calendarId: selectedEvent.calendarId,
+            eventId: selectedEvent.googleEventId,
+          }),
+        })
+        if (!googleResponse.ok) {
+          const data = await googleResponse.json()
+          throw new Error(data.error || 'Failed to delete Google Calendar event.')
+        }
+      }
+
+      const dbEventId = selectedEvent.dbId || (!selectedEvent.googleEventId ? selectedEvent.id : null)
+      if (dbEventId) {
+        const dbResponse = await fetch(`/api/events/${dbEventId}`, {
+          method: 'DELETE',
+        })
+        if (!dbResponse.ok) {
+          const data = await dbResponse.json()
+          throw new Error(data.error || 'Failed to delete event from database.')
+        }
+      }
+
+      setIsEventModalOpen(false)
+      setSelectedEvent(null)
+      setLinkedContact(null)
+      setLinkedListing(null)
+      setLinkedTask(null)
+      await fetchEvents(true)
+    } catch (error) {
+      console.error('Failed to delete event:', error)
+      setError(error instanceof Error ? error.message : 'Failed to delete event.')
+    } finally {
+      setIsDeletingEvent(false)
     }
   }
 
@@ -3587,6 +3645,32 @@ export default function CalendarPage() {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing(1), paddingTop: spacing(1), borderTop: `1px solid ${colors.border}` }}>
                   <button
                     type="button"
+                    disabled={isDeletingEvent}
+                    onClick={handleDeleteEvent}
+                    style={{
+                      padding: `${spacing(1)} ${spacing(2)}`,
+                      borderRadius: spacing(0.75),
+                      border: `1px solid ${colors.error || '#ef4444'}`,
+                      backgroundColor: isDeletingEvent ? colors.error || '#ef4444' : 'transparent',
+                      color: isDeletingEvent ? '#ffffff' : colors.error || '#ef4444',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      cursor: isDeletingEvent ? 'wait' : 'pointer',
+                      opacity: isDeletingEvent ? 0.85 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(0.75),
+                    }}
+                  >
+                    {isDeletingEvent ? (
+                      <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                    ) : (
+                      <Trash2 style={{ width: '16px', height: '16px' }} />
+                    )}
+                    Delete
+                  </button>
+                  <button
+                    type="button"
                     {...getButtonPressHandlers('calendar-event-edit')}
                     onClick={handleStartEdit}
                     style={getButtonPressStyle(
@@ -4005,8 +4089,10 @@ function normalizeEvent(event: ApiCalendarEvent, calendar?: GoogleCalendar): Nor
   if (!startDate || !endDate) return null
   const isAllDay = !!event.start?.date && !event.start?.dateTime
 
-  return {
-    id: event.id || `${startDate.getTime()}-${endDate.getTime()}`,
+return {
+  id: event.id || `${startDate.getTime()}-${endDate.getTime()}`,
+  dbId: undefined,
+  googleEventId: event.id || undefined,
     title: event.summary || 'Untitled Event',
     description: event.description || undefined,
     location: event.location || undefined,
