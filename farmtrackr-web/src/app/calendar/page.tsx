@@ -2069,31 +2069,13 @@ export default function CalendarPage() {
                       display: 'grid',
                       gridTemplateColumns: view === 'week' ? 'repeat(7, minmax(0, 1fr))' : '1fr',
                       minHeight: '40px',
+                      position: 'relative',
                     }}
                   >
+                    {/* Render day cells */}
                     {calendarCells.map((cellDate, cellIndex) => {
                       const dayEvents = segmentedEvents.get(cellDate.toDateString()) || []
                       const allDayEvents = dayEvents.filter((event) => event.isAllDay)
-                      
-                      // Also get multi-day events that span this day
-                      const multiDayEvents = events.filter((event) => {
-                        if (event.isAllDay) {
-                          const eventStart = new Date(event.start)
-                          const eventEnd = new Date(event.end)
-                          // For all-day events, end date is exclusive (one day after), so subtract one day
-                          eventEnd.setDate(eventEnd.getDate() - 1)
-                          const cellDateStr = cellDate.toDateString()
-                          const eventStartStr = eventStart.toDateString()
-                          const eventEndStr = eventEnd.toDateString()
-                          
-                          // Check if this day is within the event range
-                          return cellDateStr >= eventStartStr && cellDateStr <= eventEndStr
-                        }
-                        return false
-                      })
-
-                      // Combine and deduplicate
-                      const allEventsForDay = Array.from(new Map([...allDayEvents, ...multiDayEvents].map(e => [e.id, e])).values())
 
                       return (
                         <div
@@ -2101,89 +2083,83 @@ export default function CalendarPage() {
                           style={{
                             borderRight: view === 'week' && cellIndex < calendarCells.length - 1 ? `1px solid ${colors.border}` : 'none',
                             padding: spacing(0.5),
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: spacing(0.25),
                             minHeight: '40px',
-                            position: 'relative',
                           }}
-                        >
-                          {allEventsForDay.map((event) => {
-                            const eventStart = new Date(event.start)
-                            const eventEnd = new Date(event.end)
-                            eventEnd.setDate(eventEnd.getDate() - 1) // All-day events have exclusive end date
-                            
-                            const cellDateStr = cellDate.toDateString()
-                            const eventStartStr = eventStart.toDateString()
-                            const eventEndStr = eventEnd.toDateString()
-                            
-                            // Find the indices in the calendar grid
-                            const startDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventStartStr)
-                            const endDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventEndStr)
-                            
-                            // Only render on the first day of the event (or first visible day if event starts before visible range)
-                            const shouldRender = cellIndex === (startDayIndex >= 0 ? startDayIndex : 0)
-                            
-                            if (shouldRender) {
-                              // Calculate how many days this event spans within the visible range
-                              const visibleStartIndex = Math.max(0, startDayIndex >= 0 ? startDayIndex : 0)
-                              const visibleEndIndex = endDayIndex >= 0 ? endDayIndex : calendarCells.length - 1
-                              const spanDays = Math.min(visibleEndIndex - visibleStartIndex + 1, calendarCells.length - visibleStartIndex)
-                              
-                              const isLastDay = cellDateStr === eventEndStr || cellIndex === visibleEndIndex
-                              
-                              // Calculate width to span multiple columns
-                              // Each column is 100% / numColumns, plus we need to account for borders/padding
-                              const columnWidth = 100 / calendarCells.length
-                              const totalWidth = columnWidth * spanDays
-                              // Account for borders between columns (each border is ~1px, roughly 0.1% of width)
-                              const borderWidth = (spanDays - 1) * (100 / calendarCells.length / 10)
-                              
-                              return (
-                                <div
-                                  key={`${event.id}-${cellDateStr}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setSelectedEvent(event)
-                                    setIsEventModalOpen(true)
-                                  }}
-                                  style={{
-                                    backgroundColor: event.calendarColor || colors.primary,
-                                    color: '#ffffff',
-                                    borderRadius: spacing(0.25),
-                                    padding: `${spacing(0.5)} ${spacing(0.75)}`,
-                                    fontSize: '12px',
-                                    fontWeight: 500,
-                                    cursor: 'pointer',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                    position: 'absolute',
-                                    left: 0,
-                                    width: `calc(${totalWidth}% + ${borderWidth}%)`,
-                                    borderTopLeftRadius: spacing(0.25),
-                                    borderBottomLeftRadius: spacing(0.25),
-                                    borderTopRightRadius: isLastDay ? spacing(0.25) : 0,
-                                    borderBottomRightRadius: isLastDay ? spacing(0.25) : 0,
-                                    zIndex: 2,
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.opacity = '0.9'
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.opacity = '1'
-                                  }}
-                                >
-                                  {event.title}
-                                </div>
-                              )
-                            }
-                            
-                            return null
-                          })}
-                        </div>
+                        />
                       )
                     })}
+                    
+                    {/* Render all-day events positioned absolutely over the grid */}
+                    {events
+                      .filter((event) => event.isAllDay)
+                      .map((event) => {
+                        const eventStart = new Date(event.start)
+                        const eventEnd = new Date(event.end)
+                        eventEnd.setDate(eventEnd.getDate() - 1) // All-day events have exclusive end date
+                        
+                        const eventStartStr = eventStart.toDateString()
+                        const eventEndStr = eventEnd.toDateString()
+                        
+                        // Find the indices in the calendar grid
+                        const startDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventStartStr)
+                        const endDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventEndStr)
+                        
+                        // Skip if event is not in visible range
+                        if (startDayIndex < 0 && endDayIndex < 0) return null
+                        
+                        // Calculate visible range
+                        const visibleStartIndex = Math.max(0, startDayIndex >= 0 ? startDayIndex : 0)
+                        const visibleEndIndex = endDayIndex >= 0 ? endDayIndex : calendarCells.length - 1
+                        const spanDays = Math.min(visibleEndIndex - visibleStartIndex + 1, calendarCells.length - visibleStartIndex)
+                        
+                        // Calculate position and width
+                        const columnWidthPercent = 100 / calendarCells.length
+                        const leftPercent = visibleStartIndex * columnWidthPercent
+                        const widthPercent = columnWidthPercent * spanDays
+                        
+                        const isLastDay = visibleEndIndex === calendarCells.length - 1 || endDayIndex >= 0 && visibleEndIndex === endDayIndex
+                        
+                        return (
+                          <div
+                            key={`allday-${event.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedEvent(event)
+                              setIsEventModalOpen(true)
+                            }}
+                            style={{
+                              backgroundColor: event.calendarColor || colors.primary,
+                              color: '#ffffff',
+                              borderRadius: spacing(0.25),
+                              padding: `${spacing(0.5)} ${spacing(0.75)}`,
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              position: 'absolute',
+                              left: `${leftPercent}%`,
+                              width: `calc(${widthPercent}% - ${spacing(1)})`,
+                              marginLeft: spacing(0.5),
+                              marginRight: spacing(0.5),
+                              borderTopLeftRadius: spacing(0.25),
+                              borderBottomLeftRadius: spacing(0.25),
+                              borderTopRightRadius: isLastDay ? spacing(0.25) : 0,
+                              borderBottomRightRadius: isLastDay ? spacing(0.25) : 0,
+                              zIndex: 2,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.opacity = '0.9'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.opacity = '1'
+                            }}
+                          >
+                            {event.title}
+                          </div>
+                        )
+                      })}
                   </div>
                 </div>
 
