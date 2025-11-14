@@ -3442,6 +3442,190 @@ export default function CalendarPage() {
                       style={{ ...inputStyle(colors, text, spacing), resize: 'vertical' }}
                     />
                   </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: text.tertiary.color }}>
+                    Link to CRM
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                      Contact
+                    </label>
+                    <select
+                      value={createForm.crmContactId}
+                      onChange={(e) => setCreateForm((prev) => ({ ...prev, crmContactId: e.target.value }))}
+                      style={inputStyle(colors, text, spacing)}
+                    >
+                      <option value="">None</option>
+                      {contacts.map((contact) => (
+                        <option key={contact.id} value={contact.id}>
+                          {contact.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                      Listing/Deal
+                    </label>
+                    <select
+                      value={createForm.crmDealId}
+                      onChange={(e) => setCreateForm((prev) => ({ ...prev, crmDealId: e.target.value }))}
+                      style={inputStyle(colors, text, spacing)}
+                    >
+                      <option value="">None</option>
+                      {listings.map((listing) => (
+                        <option key={listing.id} value={listing.id}>
+                          {listing.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                      Task
+                    </label>
+                    <select
+                      value={createForm.crmTaskId}
+                      onChange={(e) => setCreateForm((prev) => ({ ...prev, crmTaskId: e.target.value }))}
+                      style={inputStyle(colors, text, spacing)}
+                    >
+                      <option value="">None</option>
+                      {tasks.map((task) => (
+                        <option key={task.id} value={task.id}>
+                          {task.name} ({task.listingTitle})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5), padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
+                    Attendees
+                  </div>
+
+                  {createForm.attendees.map((attendee, index) => (
+                    <div key={index} style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: spacing(0.5) }}>
+                        <input
+                          type="email"
+                          value={attendee.email}
+                          onChange={(e) => {
+                            const newAttendees = [...createForm.attendees]
+                            newAttendees[index] = { ...newAttendees[index], email: e.target.value }
+                            setCreateForm((prev) => ({ ...prev, attendees: newAttendees }))
+                          }}
+                          placeholder="email@example.com"
+                          style={{ ...inputStyle(colors, text, spacing), fontSize: '13px' }}
+                        />
+                        {attendee.displayName && (
+                          <input
+                            type="text"
+                            value={attendee.displayName}
+                            onChange={(e) => {
+                              const newAttendees = [...createForm.attendees]
+                              newAttendees[index] = { ...newAttendees[index], displayName: e.target.value }
+                              setCreateForm((prev) => ({ ...prev, attendees: newAttendees }))
+                            }}
+                            placeholder="Display name (optional)"
+                            style={{ ...inputStyle(colors, text, spacing), fontSize: '12px' }}
+                          />
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreateForm((prev) => ({
+                            ...prev,
+                            attendees: prev.attendees.filter((_, i) => i !== index),
+                          }))
+                        }}
+                        style={{
+                          padding: spacing(0.75),
+                          backgroundColor: colors.error || '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: spacing(0.5),
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minWidth: '32px',
+                          height: '32px',
+                        }}
+                        {...getButtonPressHandlers(`calendar-edit-remove-attendee-${index}`)}
+                      >
+                        <X style={{ width: '16px', height: '16px' }} />
+                      </button>
+                    </div>
+                  ))}
+
+                  <div style={{ display: 'flex', gap: spacing(1) }}>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const contactId = e.target.value
+                        if (contactId) {
+                          const contact = googleContacts.find((c) => c.id === contactId)
+                          if (contact) {
+                            const email = contact.email1 || contact.email2
+                            const name = contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || undefined
+                            if (email) {
+                              setCreateForm((prev) => ({
+                                ...prev,
+                                attendees: [...prev.attendees, { email, displayName: name }],
+                              }))
+                            }
+                          }
+                          e.target.value = ''
+                        }
+                      }}
+                      style={{ ...inputStyle(colors, text, spacing), flex: 1, fontSize: '13px' }}
+                    >
+                      <option value="">Add from Google Contacts...</option>
+                      {googleContacts
+                        .filter((c) => c.email1 || c.email2)
+                        .map((contact) => {
+                          const email = contact.email1 || contact.email2
+                          const name = contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || email
+                          return (
+                            <option key={contact.id} value={contact.id}>
+                              {name} ({email})
+                            </option>
+                          )
+                        })}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCreateForm((prev) => ({
+                          ...prev,
+                          attendees: [...prev.attendees, { email: '', displayName: undefined }],
+                        }))
+                      }}
+                      style={{
+                        padding: `0 ${spacing(1.5)}`,
+                        backgroundColor: colors.primary,
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: spacing(0.5),
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                      }}
+                      {...getButtonPressHandlers('calendar-edit-add-attendee')}
+                    >
+                      <Plus style={{ width: '16px', height: '16px', marginRight: spacing(0.5) }} />
+                      Add
+                    </button>
+                  </div>
+                </div>
                 </div>
 
                 <div
