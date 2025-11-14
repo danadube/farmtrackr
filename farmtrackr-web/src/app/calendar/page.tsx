@@ -614,58 +614,59 @@ export default function CalendarPage() {
       endDate,
       calendarId: defaultCalendarId,
     })
-    setIsCreateModalOpen(true)
+    setSelectedEvent({
+      id: crypto.randomUUID(),
+      title: '',
+      description: '',
+      location: '',
+      start,
+      end,
+      isAllDay: view === 'month',
+      startLabel: toInputTime(start),
+      endLabel: toInputTime(end),
+      calendarId: selectedCalendars[0] || calendars[0]?.id || 'primary',
+    })
+    setIsEventModalOpen(true)
   }
 
-  const handleStartEdit = () => {
-    if (!selectedEvent) return
-    
-    const startDate = toInputDate(selectedEvent.start)
-    // For all-day events, Google Calendar end date is exclusive (one day after), so subtract one day
-    let endDate = toInputDate(selectedEvent.end)
-    if (selectedEvent.isAllDay) {
-      const endDateObj = new Date(selectedEvent.end)
+  const prepareEditForm = (event: NormalizedEvent, attendeesList: typeof eventAttendees) => {
+    const startDate = toInputDate(event.start)
+    let endDate = toInputDate(event.end)
+    if (event.isAllDay) {
+      const endDateObj = new Date(event.end)
       endDateObj.setDate(endDateObj.getDate() - 1)
       endDate = toInputDate(endDateObj)
     }
-    const startTime = selectedEvent.isAllDay ? '09:00' : toInputTime(selectedEvent.start)
-    const endTime = selectedEvent.isAllDay ? '10:00' : toInputTime(selectedEvent.end)
-    
+    const startTime = event.isAllDay ? '09:00' : toInputTime(event.start)
+    const endTime = event.isAllDay ? '10:00' : toInputTime(event.end)
+
     setCreateForm({
-      title: selectedEvent.title,
+      title: event.title,
       startDate,
       startTime,
       endDate,
       endTime,
-      location: selectedEvent.location || '',
-      description: selectedEvent.description || '',
-      calendarId: selectedEvent.calendarId || 'primary',
-      isAllDay: selectedEvent.isAllDay,
-      syncToGoogle: true, // Default to syncing when editing (can be changed)
-      crmContactId: selectedEvent.crmContactId || '',
-      crmDealId: selectedEvent.crmDealId || '',
-      crmTaskId: selectedEvent.crmTaskId || '',
-      attendees: eventAttendees.map((a) => ({
+      location: event.location || '',
+      description: event.description || '',
+      calendarId: event.calendarId || 'primary',
+      isAllDay: event.isAllDay,
+      syncToGoogle: true,
+      crmContactId: event.crmContactId || '',
+      crmDealId: event.crmDealId || '',
+      crmTaskId: event.crmTaskId || '',
+      attendees: attendeesList.map((a) => ({
         email: a.email,
         displayName: a.displayName,
         responseStatus: (a.responseStatus as any) || 'needsAction',
         isOrganizer: a.isOrganizer || false,
       })),
-      isRecurring: false, // Will be populated from event data if available
+      isRecurring: false,
       recurrenceFrequency: '',
       recurrenceInterval: 1,
       recurrenceCount: undefined,
       recurrenceUntil: undefined,
       recurrenceByDay: [],
     })
-    setEditingEventId(selectedEvent.id)
-    setIsEditingEvent(true)
-  }
-
-  const handleCancelEdit = () => {
-    setIsEditingEvent(false)
-    setEditingEventId(null)
-    setCreateForm(INITIAL_CREATE_EVENT_STATE)
   }
 
   const handleSaveCalendar = async () => {
@@ -842,9 +843,9 @@ export default function CalendarPage() {
         }
       }
 
-      setIsEditingEvent(false)
-      setEditingEventId(null)
-      setCreateForm(INITIAL_CREATE_EVENT_STATE)
+    setIsEditingEvent(false)
+    setEditingEventId(null)
+    setCreateForm(INITIAL_CREATE_EVENT_STATE)
       setIsEventModalOpen(false)
       setSelectedEvent(null)
       await fetchEvents(true)
@@ -3145,7 +3146,7 @@ export default function CalendarPage() {
               <button
                 type="button"
                 {...getButtonPressHandlers('calendar-create-save')}
-                onClick={handleCreateEvent}
+                    onClick={selectedEvent ? handleUpdateEvent : handleCreateEvent}
                 disabled={isSavingEvent}
                 style={getButtonPressStyle(
                   'calendar-create-save',
@@ -3165,10 +3166,10 @@ export default function CalendarPage() {
                   colors.primary,
                   colors.primaryHover
                 )}
-              >
-                {isSavingEvent && <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />}
-                Save Event
-              </button>
+                  >
+                    {isSavingEvent && <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />}
+                    Save Event
+                  </button>
             </div>
           </div>
         </div>
@@ -3189,11 +3190,10 @@ export default function CalendarPage() {
             zIndex: 1000,
           }}
           onClick={() => {
-            setIsEventModalOpen(false)
-            setSelectedEvent(null)
-            setLinkedContact(null)
-            setLinkedListing(null)
-          }}
+                      handleCancelCreate()
+                      setLinkedContact(null)
+                      setLinkedListing(null)
+                    }}
         >
           <div
             style={{
@@ -3481,13 +3481,18 @@ export default function CalendarPage() {
                     <div style={{ flex: 1 }}>
                       <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color }}>
                         {selectedEvent.isAllDay
-                          ? 'All Day'
+                          ? `${selectedEvent.start.toLocaleDateString(undefined, {
+                              weekday: 'long',
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })} — All day`
                           : `${selectedEvent.start.toLocaleDateString(undefined, {
                               weekday: 'long',
                               month: 'long',
                               day: 'numeric',
                               year: 'numeric',
-                            })} at ${selectedEvent.startLabel} – ${selectedEvent.endLabel}`}
+                            })} · ${selectedEvent.startLabel} – ${selectedEvent.endLabel}`}
                       </p>
                       {!selectedEvent.isAllDay &&
                         selectedEvent.end.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) !==
@@ -3498,7 +3503,7 @@ export default function CalendarPage() {
                               month: 'long',
                               day: 'numeric',
                               year: 'numeric',
-                            })} at {selectedEvent.endLabel}
+                            })} · {selectedEvent.endLabel}
                           </p>
                         )}
                     </div>
@@ -3700,7 +3705,7 @@ export default function CalendarPage() {
                       type="button"
                       {...getButtonPressHandlers('calendar-event-open-google')}
                       onClick={() => {
-                        window.open(selectedEvent.htmlLink, '_blank', 'noopener,noreferrer')
+                      window.open(selectedEvent.htmlLink, '_blank', 'noopener,noreferrer')
                       }}
                       style={getButtonPressStyle(
                         'calendar-event-open-google',
