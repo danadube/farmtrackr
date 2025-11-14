@@ -406,6 +406,9 @@ export default function CalendarPage() {
             calendarName: meta?.summary || event.calendar?.name || 'Unknown',
             calendarColor: meta?.backgroundColor || meta?.color || event.calendar?.color || '#4285f4',
             htmlLink: event.googleEventId ? `https://calendar.google.com/calendar/event?eid=${event.googleEventId}` : undefined,
+            crmContactId: event.crmContactId || undefined,
+            crmDealId: event.crmDealId || undefined,
+            crmTaskId: event.crmTaskId || undefined,
           }
         })
         .filter((event: NormalizedEvent | null): event is NormalizedEvent => !!event)
