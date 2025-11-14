@@ -4173,6 +4173,7 @@ function renderCalendarGrid({
 
     const totalRows = Math.ceil(calendarCells.length / 7)
     const rowLevels = Array(totalRows).fill(0)
+    const rowMaxLevels = Array(totalRows).fill(0)
     const multiDayOverlays: React.ReactNode[] = []
 
     const multiDayEntries = allEvents.filter(({ startDate, endDate }) => startDate.toDateString() !== endDate.toDateString())
@@ -4198,6 +4199,7 @@ function renderCalendarGrid({
         const columnStart = (segmentStartIdx % 7) + 1
         const level = rowLevels[row]
         rowLevels[row] = level + 1
+        rowMaxLevels[row] = Math.max(rowMaxLevels[row], rowLevels[row])
 
         const isFirstVisibleSegment = segmentStartIdx === effectiveStartIdx
         const isLastVisibleSegment = segmentEndIdx === effectiveEndIdx
@@ -4279,6 +4281,9 @@ function renderCalendarGrid({
 
       const limitedEvents = singleDayEvents.slice(0, 3)
 
+      const rowIndex = Math.floor(index / 7)
+      const multiDayOffset = rowMaxLevels[rowIndex] ? rowMaxLevels[rowIndex] * 22 + spacing(0.5) : 0
+
       return (
         <div
           key={key}
@@ -4338,7 +4343,17 @@ function renderCalendarGrid({
             )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5), overflow: 'hidden', position: 'relative', zIndex: 1 }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing(0.5),
+              overflow: 'hidden',
+              position: 'relative',
+              zIndex: 1,
+              marginTop: multiDayOffset,
+            }}
+          >
             {limitedEvents.map((event) => {
               const eventStart = new Date(event.start)
               let eventEnd = new Date(event.end)
