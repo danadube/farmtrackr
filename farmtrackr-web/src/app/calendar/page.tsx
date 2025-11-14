@@ -2463,6 +2463,7 @@ export default function CalendarPage() {
                   ...gridTemplateForView(view),
                   gap: '4px',
                   flex: 1,
+                  position: 'relative',
                 }}
               >
                 {renderCalendarGrid({
@@ -4169,13 +4170,6 @@ function renderCalendarGrid({
       }
     }
 
-    const monthGridStyle = {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-      gridTemplateRows: 'repeat(6, minmax(0, 1fr))',
-      gap: '8px',
-    }
-
     const totalRows = Math.ceil(calendarCells.length / 7)
     const rowLevels = Array(totalRows).fill(0)
     const multiDayOverlays: React.ReactNode[] = []
@@ -4393,21 +4387,23 @@ function renderCalendarGrid({
     })
 
     return (
-      <div style={{ position: 'relative' }}>
-        <div style={monthGridStyle}>{cellElements}</div>
+      <>
+        {cellElements}
         {multiDayOverlays.length > 0 && (
           <div
             style={{
-              ...monthGridStyle,
               position: 'absolute',
               inset: 0,
               pointerEvents: 'none',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+              gridTemplateRows: 'repeat(6, minmax(0, 1fr))',
             }}
           >
             {multiDayOverlays}
           </div>
         )}
-      </div>
+      </>
     )
   }
 
