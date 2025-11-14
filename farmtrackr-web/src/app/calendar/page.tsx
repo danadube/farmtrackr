@@ -518,8 +518,19 @@ export default function CalendarPage() {
         console.error('Failed to load CRM calendars:', error)
       }
 
-      // Merge Google and CRM calendars (Google first, then CRM)
-      const allCalendars = [...googleCalendars, ...crmCalendars]
+      // Merge Google and CRM calendars (Google first, then CRM), deduplicate by ID
+      const calendarMap = new Map<string, GoogleCalendar>()
+      // Add Google calendars first
+      for (const calendar of googleCalendars) {
+        calendarMap.set(calendar.id, calendar)
+      }
+      // Add CRM calendars (only if not already present)
+      for (const calendar of crmCalendars) {
+        if (!calendarMap.has(calendar.id)) {
+          calendarMap.set(calendar.id, calendar)
+        }
+      }
+      const allCalendars = Array.from(calendarMap.values())
       setCalendars(allCalendars)
 
       if (allCalendars.length === 0) {
@@ -4172,25 +4183,41 @@ function renderCalendarGrid({
         return startDate.toDateString() === cellDateStr
       })
 
-      // Find events that continue through this day (but don't start here)
-      const eventsContinuingToday = allEvents.filter(({ event, startDate, endDate }) => {
-        const startStr = startDate.toDateString()
-        const endStr = endDate.toDateString()
-        return cellDateStr > startStr && cellDateStr <= endStr
-      })
-
-      // Combine and sort events for display
-      const displayEvents = [...eventsStartingToday.map(e => e.event), ...dayEvents.filter(e => {
+      // Find single-day events that occur on this day (not multi-day)
+      const singleDayEvents = dayEvents.filter(e => {
         const eventStart = new Date(e.start)
-        const eventEnd = new Date(e.end)
+        let eventEnd = new Date(e.end)
         if (e.isAllDay) {
           eventEnd.setDate(eventEnd.getDate() - 1)
         }
         const startStr = eventStart.toDateString()
         const endStr = eventEnd.toDateString()
-        // Only show if it's not a multi-day event that starts before today
-        return startStr === cellDateStr || (startStr < cellDateStr && endStr < cellDateStr)
-      })].slice(0, 3)
+        // Only include if it's a single-day event OR if it starts on this day (multi-day events are handled separately)
+        return startStr === endStr || startStr === cellDateStr
+      })
+
+      // Combine events starting today with single-day events, avoiding duplicates
+      const eventIds = new Set<string>()
+      const displayEvents: any[] = []
+      
+      // Add multi-day events that start today
+      for (const { event } of eventsStartingToday) {
+        if (!eventIds.has(event.id)) {
+          eventIds.add(event.id)
+          displayEvents.push(event)
+        }
+      }
+      
+      // Add single-day events
+      for (const event of singleDayEvents) {
+        if (!eventIds.has(event.id)) {
+          eventIds.add(event.id)
+          displayEvents.push(event)
+        }
+      }
+      
+      // Limit to 3 events for display
+      const limitedEvents = displayEvents.slice(0, 3)
 
       return (
         <div
@@ -4252,7 +4279,7 @@ function renderCalendarGrid({
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5), overflow: 'hidden', position: 'relative', zIndex: 1 }}>
-            {displayEvents.map((event) => {
+            {limitedEvents.map((event) => {
               const eventStart = new Date(event.start)
               let eventEnd = new Date(event.end)
               if (event.isAllDay) {
@@ -4336,9 +4363,9 @@ function renderCalendarGrid({
                 </div>
               )
             })}
-            {dayEvents.length > 3 && (
+            {displayEvents.length > 3 && (
               <span style={{ fontSize: '10px', color: colors.primary, fontWeight: 600 }}>
-                +{dayEvents.length - 3} more
+                +{displayEvents.length - 3} more
               </span>
             )}
           </div>
