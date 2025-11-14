@@ -2071,7 +2071,7 @@ export default function CalendarPage() {
                       minHeight: '40px',
                     }}
                   >
-                    {calendarCells.map((cellDate) => {
+                    {calendarCells.map((cellDate, cellIndex) => {
                       const dayEvents = segmentedEvents.get(cellDate.toDateString()) || []
                       const allDayEvents = dayEvents.filter((event) => event.isAllDay)
                       
@@ -2099,12 +2099,13 @@ export default function CalendarPage() {
                         <div
                           key={cellDate.toISOString()}
                           style={{
-                            borderRight: view === 'week' && calendarCells.indexOf(cellDate) < calendarCells.length - 1 ? `1px solid ${colors.border}` : 'none',
+                            borderRight: view === 'week' && cellIndex < calendarCells.length - 1 ? `1px solid ${colors.border}` : 'none',
                             padding: spacing(0.5),
                             display: 'flex',
                             flexDirection: 'column',
                             gap: spacing(0.25),
                             minHeight: '40px',
+                            position: 'relative',
                           }}
                         >
                           {allEventsForDay.map((event) => {
@@ -2116,18 +2117,27 @@ export default function CalendarPage() {
                             const eventStartStr = eventStart.toDateString()
                             const eventEndStr = eventEnd.toDateString()
                             
-                            const isFirstDay = cellDateStr === eventStartStr
-                            const isLastDay = cellDateStr === eventEndStr
-                            const isMiddleDay = cellDateStr > eventStartStr && cellDateStr < eventEndStr
-                            
-                            // Calculate which column this event starts in and how many columns it spans
+                            // Find the indices in the calendar grid
                             const startDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventStartStr)
                             const endDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventEndStr)
-                            const currentDayIndex = calendarCells.indexOf(cellDate)
                             
-                            // Only render if this is the first day of the event or if it's a multi-day event spanning this day
-                            if (currentDayIndex === startDayIndex || (currentDayIndex > startDayIndex && currentDayIndex <= endDayIndex)) {
-                              const spanDays = Math.min(endDayIndex - startDayIndex + 1, calendarCells.length - startDayIndex)
+                            // Only render on the first day of the event (or first visible day if event starts before visible range)
+                            const shouldRender = cellIndex === (startDayIndex >= 0 ? startDayIndex : 0)
+                            
+                            if (shouldRender) {
+                              // Calculate how many days this event spans within the visible range
+                              const visibleStartIndex = Math.max(0, startDayIndex >= 0 ? startDayIndex : 0)
+                              const visibleEndIndex = endDayIndex >= 0 ? endDayIndex : calendarCells.length - 1
+                              const spanDays = Math.min(visibleEndIndex - visibleStartIndex + 1, calendarCells.length - visibleStartIndex)
+                              
+                              const isLastDay = cellDateStr === eventEndStr || cellIndex === visibleEndIndex
+                              
+                              // Calculate width to span multiple columns
+                              // Each column is 100% / numColumns, plus we need to account for borders/padding
+                              const columnWidth = 100 / calendarCells.length
+                              const totalWidth = columnWidth * spanDays
+                              // Account for borders between columns (each border is ~1px, roughly 0.1% of width)
+                              const borderWidth = (spanDays - 1) * (100 / calendarCells.length / 10)
                               
                               return (
                                 <div
@@ -2148,14 +2158,14 @@ export default function CalendarPage() {
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
                                     whiteSpace: 'nowrap',
-                                    marginLeft: isFirstDay ? 0 : '-4px',
-                                    marginRight: isLastDay ? 0 : '-4px',
-                                    borderTopLeftRadius: isFirstDay ? spacing(0.25) : 0,
-                                    borderBottomLeftRadius: isFirstDay ? spacing(0.25) : 0,
+                                    position: 'absolute',
+                                    left: 0,
+                                    width: `calc(${totalWidth}% + ${borderWidth}%)`,
+                                    borderTopLeftRadius: spacing(0.25),
+                                    borderBottomLeftRadius: spacing(0.25),
                                     borderTopRightRadius: isLastDay ? spacing(0.25) : 0,
                                     borderBottomRightRadius: isLastDay ? spacing(0.25) : 0,
-                                    width: currentDayIndex === startDayIndex ? `calc(${100 * spanDays}% + ${(spanDays - 1) * 4}px)` : '100%',
-                                    zIndex: isFirstDay ? 2 : 1,
+                                    zIndex: 2,
                                   }}
                                   onMouseEnter={(e) => {
                                     e.currentTarget.style.opacity = '0.9'
@@ -2164,10 +2174,11 @@ export default function CalendarPage() {
                                     e.currentTarget.style.opacity = '1'
                                   }}
                                 >
-                                  {isFirstDay && event.title}
+                                  {event.title}
                                 </div>
                               )
                             }
+                            
                             return null
                           })}
                         </div>
