@@ -4173,7 +4173,6 @@ function renderCalendarGrid({
 
     const totalRows = Math.ceil(calendarCells.length / 7)
     const rowLevels = Array(totalRows).fill(0)
-    const rowMaxLevels = Array(totalRows).fill(0)
     const multiDayOverlays: React.ReactNode[] = []
 
     const multiDayEntries = allEvents.filter(({ startDate, endDate }) => startDate.toDateString() !== endDate.toDateString())
@@ -4199,7 +4198,6 @@ function renderCalendarGrid({
         const columnStart = (segmentStartIdx % 7) + 1
         const level = rowLevels[row]
         rowLevels[row] = level + 1
-        rowMaxLevels[row] = Math.max(rowMaxLevels[row], rowLevels[row])
 
         const isFirstVisibleSegment = segmentStartIdx === effectiveStartIdx
         const isLastVisibleSegment = segmentEndIdx === effectiveEndIdx
@@ -4207,39 +4205,49 @@ function renderCalendarGrid({
         multiDayOverlays.push(
           <div
             key={`multi-${event.id}-${row}-${segmentStartIdx}`}
-            onClick={(e) => {
-              e.stopPropagation()
-              setSelectedEvent(event)
-              setIsEventModalOpen(true)
-            }}
             style={{
               gridColumn: `${columnStart} / span ${spanDays}`,
               gridRow: `${row + 1}`,
-              alignSelf: 'start',
-              margin: `${overlayHeaderOffset + level * 22}px ${spacing(0.5)} 0`,
-              backgroundColor: event.calendarColor || colors.primary,
-              color: '#ffffff',
-              borderRadius: spacing(0.5),
-              padding: `${spacing(0.25)} ${spacing(0.75)}`,
-              fontSize: '11px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: spacing(0.5),
-              cursor: 'pointer',
-              pointerEvents: 'auto',
-              minHeight: '20px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
-              zIndex: 2,
+              position: 'relative',
+              height: 0,
+              pointerEvents: 'none',
             }}
           >
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{event.title}</span>
-            {!event.isAllDay && (
-              <span style={{ fontSize: '10px', opacity: 0.85 }}>
-                {isFirstVisibleSegment ? event.startLabel : isLastVisibleSegment ? event.endLabel : ''}
-              </span>
-            )}
+            <div
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedEvent(event)
+                setIsEventModalOpen(true)
+              }}
+              style={{
+                position: 'absolute',
+                top: `${overlayHeaderOffset + level * 22}px`,
+                left: spacing(0.5),
+                right: spacing(0.5),
+                backgroundColor: event.calendarColor || colors.primary,
+                color: '#ffffff',
+                borderRadius: spacing(0.5),
+                padding: `${spacing(0.25)} ${spacing(0.75)}`,
+                fontSize: '11px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: spacing(0.5),
+                cursor: 'pointer',
+                pointerEvents: 'auto',
+                minHeight: '20px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                zIndex: 2,
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{event.title}</span>
+              {!event.isAllDay && (
+                <span style={{ fontSize: '10px', opacity: 0.85 }}>
+                  {isFirstVisibleSegment ? event.startLabel : isLastVisibleSegment ? event.endLabel : ''}
+                </span>
+              )}
+            </div>
           </div>
         )
 
@@ -4270,9 +4278,6 @@ function renderCalendarGrid({
       })
 
       const limitedEvents = singleDayEvents.slice(0, 3)
-
-      const rowIndex = Math.floor(index / 7)
-      const multiDayOffset = rowMaxLevels[rowIndex] ? rowMaxLevels[rowIndex] * 22 + spacing(0.5) : 0
 
       return (
         <div
@@ -4333,17 +4338,7 @@ function renderCalendarGrid({
             )}
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: spacing(0.5),
-              overflow: 'hidden',
-              position: 'relative',
-              zIndex: 1,
-              marginTop: multiDayOffset,
-            }}
-          >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5), overflow: 'hidden', position: 'relative', zIndex: 1 }}>
             {limitedEvents.map((event) => {
               const eventStart = new Date(event.start)
               let eventEnd = new Date(event.end)
