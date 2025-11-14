@@ -48,10 +48,34 @@ export async function GET(request: NextRequest) {
     const endDate = timeMax ? new Date(timeMax) : new Date()
     endDate.setMonth(endDate.getMonth() + 2)
 
+    // Map selected calendar identifiers (DB IDs or Google IDs) to actual DB calendar IDs
+    const calendarRecords = await prisma.calendar.findMany({
+      where: {
+        OR: [
+          { id: { in: calendarIds } },
+          { googleCalendarId: { in: calendarIds } },
+        ],
+      },
+    })
+
+    const selectionToDbId = new Map<string, string>()
+    for (const cal of calendarRecords) {
+      selectionToDbId.set(cal.id, cal.id)
+      if (cal.googleCalendarId) {
+        selectionToDbId.set(cal.googleCalendarId, cal.id)
+      }
+    }
+
+    const dbCalendarIds = calendarIds
+      .map((id) => selectionToDbId.get(id))
+      .filter((id): id is string => typeof id === 'string')
+
     // Get events from database (query a wider range to catch recurring events that start before but recur into range)
     const queryStartDate = new Date(startDate)
     queryStartDate.setFullYear(queryStartDate.getFullYear() - 1) // Look back 1 year for recurring events
-    const dbEvents = await getEventsFromDB(calendarIds, queryStartDate, endDate)
+    const dbEvents = dbCalendarIds.length
+      ? await getEventsFromDB(dbCalendarIds, queryStartDate, endDate)
+      : []
 
     // Optionally fetch from Google and merge
     let googleEvents: any[] = []
@@ -62,13 +86,9 @@ export async function GET(request: NextRequest) {
           const calendar = getAuthenticatedCalendarClient(accessToken)
           
           // Get Google calendars for these calendar IDs
-          const calendars = await prisma.calendar.findMany({
-            where: {
-              id: { in: calendarIds },
-              type: 'google',
-              googleCalendarId: { not: null },
-            },
-          })
+          const calendars = calendarRecords.filter(
+            (cal) => cal.type === 'google' && cal.googleCalendarId && dbCalendarIds.includes(cal.id)
+          )
 
           const googleResults = await Promise.all(
             calendars.map(async (cal) => {
@@ -322,7 +342,7 @@ export async function POST(request: NextRequest) {
 
     // Save to database
     const event = await saveEventToDB({
-      calendarId,
+      calendarId: calendar.id,
       title,
       description: description || null,
       location: location || null,

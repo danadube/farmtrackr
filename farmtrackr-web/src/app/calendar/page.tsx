@@ -374,7 +374,8 @@ export default function CalendarPage() {
       // Normalize DB events
       const normalizedDbEvents: NormalizedEvent[] = dbEvents
         .map((event: any) => {
-          const meta = calendars.find((calendar) => calendar.id === event.calendarId)
+          const effectiveCalendarId = event.calendar?.googleCalendarId || event.calendarId
+          const meta = calendars.find((calendar) => calendar.id === effectiveCalendarId)
           return {
             id: event.googleEventId || event.id,
             title: event.title,
@@ -389,7 +390,7 @@ export default function CalendarPage() {
             endLabel: event.allDay
               ? new Date(event.end).toLocaleDateString()
               : new Date(event.end).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
-            calendarId: event.calendarId,
+            calendarId: effectiveCalendarId,
             calendarName: meta?.summary || event.calendar?.name || 'Unknown',
             calendarColor: meta?.backgroundColor || meta?.color || event.calendar?.color || '#4285f4',
             htmlLink: event.googleEventId ? `https://calendar.google.com/calendar/event?eid=${event.googleEventId}` : undefined,
@@ -4172,6 +4173,7 @@ function renderCalendarGrid({
 
     const totalRows = Math.ceil(calendarCells.length / 7)
     const rowLevels = Array(totalRows).fill(0)
+    const rowMaxLevels = Array(totalRows).fill(0)
     const multiDayOverlays: React.ReactNode[] = []
 
     const multiDayEntries = allEvents.filter(({ startDate, endDate }) => startDate.toDateString() !== endDate.toDateString())
@@ -4195,6 +4197,7 @@ function renderCalendarGrid({
         const columnStart = (segmentStartIdx % 7) + 1
         const level = rowLevels[row]
         rowLevels[row] = level + 1
+        rowMaxLevels[row] = Math.max(rowMaxLevels[row], rowLevels[row])
 
         const isFirstVisibleSegment = segmentStartIdx === effectiveStartIdx
         const isLastVisibleSegment = segmentEndIdx === effectiveEndIdx
@@ -4225,6 +4228,7 @@ function renderCalendarGrid({
               pointerEvents: 'auto',
               minHeight: '20px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+              zIndex: 2,
             }}
           >
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
@@ -4265,6 +4269,9 @@ function renderCalendarGrid({
 
       const limitedEvents = singleDayEvents.slice(0, 3)
 
+      const rowIndex = Math.floor(index / 7)
+      const paddingTopAdjustment = rowMaxLevels[rowIndex] ? rowMaxLevels[rowIndex] * 24 + spacing(0.5) : 0
+
       return (
         <div
           key={key}
@@ -4278,6 +4285,7 @@ function renderCalendarGrid({
               border: isSelected ? `2px solid ${colors.primary}` : `1px solid ${colors.border}`,
               backgroundColor: isSelected ? 'rgba(255,255,255,0.05)' : colors.surface,
               padding: spacing(1),
+              paddingTop: spacing(1) + paddingTopAdjustment,
               display: 'flex',
               flexDirection: 'column',
               gap: spacing(0.75),
