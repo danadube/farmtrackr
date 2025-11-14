@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, RefreshCw, X, MapPin, Edit, Share2, UserPlus, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Loader2, RefreshCw, X, MapPin, Edit, Share2, UserPlus, Trash2, ExternalLink } from 'lucide-react'
 import { generateRRULE, type RecurrenceRule } from '@/lib/recurringEvents'
 
 type CalendarView = 'month' | 'week' | 'day'
@@ -69,6 +69,13 @@ type AttendeeInput = {
   responseStatus?: 'needsAction' | 'declined' | 'tentative' | 'accepted'
   isOrganizer?: boolean
   isOptional?: boolean
+}
+
+type EventAttendee = {
+  email: string
+  displayName?: string
+  responseStatus?: string
+  isOrganizer?: boolean
 }
 
 type CreateEventState = {
@@ -148,7 +155,6 @@ export default function CalendarPage() {
   const [isLoadingShares, setIsLoadingShares] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<NormalizedEvent | null>(null)
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
-  const [isEditingEvent, setIsEditingEvent] = useState(false)
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncStatus, setSyncStatus] = useState<string | null>(null)
@@ -159,7 +165,7 @@ export default function CalendarPage() {
   const [linkedContact, setLinkedContact] = useState<{ id: string; name: string } | null>(null)
   const [linkedListing, setLinkedListing] = useState<{ id: string; title: string } | null>(null)
   const [linkedTask, setLinkedTask] = useState<{ id: string; name: string; listingId: string; listingTitle: string } | null>(null)
-  const [eventAttendees, setEventAttendees] = useState<Array<{ email: string; displayName?: string; responseStatus?: string; isOrganizer?: boolean }>>([])
+  const [eventAttendees, setEventAttendees] = useState<EventAttendee[]>([])
 
   useEffect(() => {
     let storedSelection: string[] | undefined
@@ -633,7 +639,9 @@ export default function CalendarPage() {
     setIsEventModalOpen(true)
   }
 
-  const prepareEditForm = (event: NormalizedEvent, attendeesList: typeof eventAttendees) => {
+  const prepareEditForm = (event: NormalizedEvent, attendeesList?: EventAttendee[]) => {
+    const fallbackAttendees = (event as any)?.attendees as EventAttendee[] | undefined
+    const attendeesToUse = attendeesList ?? fallbackAttendees ?? []
     const startDate = toInputDate(event.start)
     let endDate = toInputDate(event.end)
     if (event.isAllDay) {
@@ -658,7 +666,7 @@ export default function CalendarPage() {
       crmContactId: event.crmContactId || '',
       crmDealId: event.crmDealId || '',
       crmTaskId: event.crmTaskId || '',
-      attendees: attendeesList.map((a) => ({
+      attendees: attendeesToUse.map((a) => ({
         email: a.email,
         displayName: a.displayName,
         responseStatus: (a.responseStatus as any) || 'needsAction',
@@ -671,6 +679,119 @@ export default function CalendarPage() {
       recurrenceUntil: undefined,
       recurrenceByDay: [],
     })
+  }
+
+  const openEventEditor = (event: NormalizedEvent, attendeesOverride: EventAttendee[] = []) => {
+    const resolvedEditingId = event.googleEventId || event.dbId || (event as any)?.originalId || event.id
+    setSelectedEvent(event)
+    setEditingEventId(resolvedEditingId || null)
+    setEventAttendees(attendeesOverride)
+    prepareEditForm(event, attendeesOverride)
+    setIsEventModalOpen(true)
+  }
+
+  const handleEventSelect = async (event: NormalizedEvent) => {
+    openEventEditor(event, [])
+    setLinkedContact(null)
+    setLinkedListing(null)
+    setLinkedTask(null)
+
+    if (event.crmContactId) {
+      try {
+        const contactResponse = await fetch(`/api/contacts/${event.crmContactId}`)
+        if (contactResponse.ok) {
+          const contact = await contactResponse.json()
+          setLinkedContact({
+            id: contact.id,
+            name: contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact',
+          })
+        }
+      } catch (contactError) {
+        console.error('Failed to load linked contact:', contactError)
+      }
+    }
+
+    if (event.crmDealId) {
+      try {
+        const listingResponse = await fetch(`/api/listings/${event.crmDealId}`)
+        if (listingResponse.ok) {
+          const listingData = await listingResponse.json()
+          const listing = listingData.listing || listingData
+          setLinkedListing({
+            id: listing.id,
+            title: listing.title || 'Untitled Listing',
+          })
+        }
+      } catch (listingError) {
+        console.error('Failed to load linked listing:', listingError)
+      }
+    }
+
+    if (event.crmTaskId) {
+      const task = tasks.find((t) => t.id === event.crmTaskId)
+      if (task) {
+        setLinkedTask(task)
+      } else {
+        try {
+          const listingsResponse = await fetch('/api/listings')
+          if (listingsResponse.ok) {
+            const listingsData = await listingsResponse.json()
+            const listingsCollection = listingsData.listings || listingsData
+            for (const listing of listingsCollection) {
+              if (listing.stageInstances) {
+                for (const stage of listing.stageInstances) {
+                  if (stage.tasks) {
+                    const foundTask = stage.tasks.find((t: any) => t.id === event.crmTaskId)
+                    if (foundTask) {
+                      setLinkedTask({
+                        id: foundTask.id,
+                        name: foundTask.name,
+                        listingId: listing.id,
+                        listingTitle: listing.title || 'Untitled Listing',
+                      })
+                      break
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (taskError) {
+          console.error('Failed to load linked task:', taskError)
+        }
+      }
+    } else {
+      setLinkedTask(null)
+    }
+
+    if (event.id && !event.id.includes('_')) {
+      try {
+        const eventResponse = await fetch(`/api/events/${event.id}`)
+        if (eventResponse.ok) {
+          const eventData = await eventResponse.json()
+          if (eventData.event?.attendees) {
+            const mappedAttendees: EventAttendee[] = eventData.event.attendees.map((a: any) => ({
+              email: a.email,
+              displayName: a.displayName,
+              responseStatus: a.responseStatus,
+              isOrganizer: a.isOrganizer,
+            }))
+            setEventAttendees(mappedAttendees)
+            prepareEditForm(event, mappedAttendees)
+          } else {
+            setEventAttendees([])
+            prepareEditForm(event, [])
+          }
+        }
+      } catch (attendeeError) {
+        console.error('Failed to load attendees:', attendeeError)
+        setEventAttendees([])
+        prepareEditForm(event, [])
+      }
+    } else {
+      setEventAttendees([])
+      prepareEditForm(event, [])
+    }
   }
 
   const handleSaveCalendar = async () => {
@@ -1949,111 +2070,8 @@ export default function CalendarPage() {
                     {selectedDateEvents.map((event) => (
                       <div
                         key={event.id}
-                        onClick={async () => {
-                          setSelectedEvent(event)
-                          setIsEventModalOpen(true)
-                          
-                          // Load linked entity details
-                          if (event.crmContactId) {
-                            try {
-                              const contactResponse = await fetch(`/api/contacts/${event.crmContactId}`)
-                              if (contactResponse.ok) {
-                                const contact = await contactResponse.json()
-                                setLinkedContact({
-                                  id: contact.id,
-                                  name: contact.organizationName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact',
-                                })
-                              }
-                            } catch (error) {
-                              console.error('Failed to load linked contact:', error)
-                            }
-                          } else {
-                            setLinkedContact(null)
-                          }
-                          
-                          if (event.crmDealId) {
-                            try {
-                              const listingResponse = await fetch(`/api/listings/${event.crmDealId}`)
-                              if (listingResponse.ok) {
-                                const listingData = await listingResponse.json()
-                                const listing = listingData.listing || listingData
-                                setLinkedListing({
-                                  id: listing.id,
-                                  title: listing.title || 'Untitled Listing',
-                                })
-                              }
-                            } catch (error) {
-                              console.error('Failed to load linked listing:', error)
-                            }
-                          } else {
-                            setLinkedListing(null)
-                          }
-                          
-                          // Load linked task
-                          if (event.crmTaskId) {
-                            // First try to find in loaded tasks
-                            const task = tasks.find((t) => t.id === event.crmTaskId)
-                            if (task) {
-                              setLinkedTask(task)
-                            } else {
-                              // If not found, try to fetch from listings
-                              try {
-                                const listingsResponse = await fetch('/api/listings')
-                                if (listingsResponse.ok) {
-                                  const listingsData = await listingsResponse.json()
-                                  const listings = listingsData.listings || listingsData
-                                  for (const listing of listings) {
-                                    if (listing.stageInstances) {
-                                      for (const stage of listing.stageInstances) {
-                                        if (stage.tasks) {
-                                          const foundTask = stage.tasks.find((t: any) => t.id === event.crmTaskId)
-                                          if (foundTask) {
-                                            setLinkedTask({
-                                              id: foundTask.id,
-                                              name: foundTask.name,
-                                              listingId: listing.id,
-                                              listingTitle: listing.title || 'Untitled Listing',
-                                            })
-                                            break
-                                          }
-                                        }
-                                      }
-                                    }
-                                  }
-                                }
-                              } catch (error) {
-                                console.error('Failed to load linked task:', error)
-                              }
-                            }
-                          } else {
-                            setLinkedTask(null)
-                          }
-                          
-                          // Load attendees
-                          if (event.id && !event.id.includes('_')) {
-                            // Only load for non-instance events (instances share the same attendees)
-                            try {
-                              const eventResponse = await fetch(`/api/events/${event.id}`)
-                              if (eventResponse.ok) {
-                                const eventData = await eventResponse.json()
-                                if (eventData.event?.attendees) {
-                                  setEventAttendees(eventData.event.attendees.map((a: any) => ({
-                                    email: a.email,
-                                    displayName: a.displayName,
-                                    responseStatus: a.responseStatus,
-                                    isOrganizer: a.isOrganizer,
-                                  })))
-                                } else {
-                                  setEventAttendees([])
-                                }
-                              }
-                            } catch (error) {
-                              console.error('Failed to load attendees:', error)
-                              setEventAttendees([])
-                            }
-                          } else {
-                            setEventAttendees([])
-                          }
+                        onClick={() => {
+                          void handleEventSelect(event)
                         }}
                         style={{
                           padding: spacing(1),
@@ -2197,8 +2215,7 @@ export default function CalendarPage() {
                             key={`allday-${event.id}`}
                             onClick={(e) => {
                               e.stopPropagation()
-                              setSelectedEvent(event)
-                              setIsEventModalOpen(true)
+                              void onSelectEvent(event)
                             }}
                             style={{
                               backgroundColor: event.calendarColor || colors.primary,
@@ -2375,8 +2392,7 @@ export default function CalendarPage() {
                                     key={event.id}
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      setSelectedEvent(event)
-                                      setIsEventModalOpen(true)
+                                      void onSelectEvent(event)
                                     }}
                                     style={{
                                       position: 'absolute',
@@ -2466,8 +2482,7 @@ export default function CalendarPage() {
                                     key={`${event.id}-${cellDateStr}`}
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      setSelectedEvent(event)
-                                      setIsEventModalOpen(true)
+                                      void onSelectEvent(event)
                                     }}
                                     style={{
                                       position: 'absolute',
@@ -2542,8 +2557,7 @@ export default function CalendarPage() {
                   colors,
                   text,
                   spacing,
-                  setSelectedEvent,
-                  setIsEventModalOpen,
+                  onSelectEvent: handleEventSelect,
                 })}
               </div>
             )}
@@ -3199,7 +3213,6 @@ export default function CalendarPage() {
             setLinkedContact(null)
             setLinkedListing(null)
             setLinkedTask(null)
-            setIsEditingEvent(false)
             setEditingEventId(null)
             setCreateForm(INITIAL_CREATE_EVENT_STATE)
           }}
@@ -3221,9 +3234,9 @@ export default function CalendarPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing(2) }}>
               <div style={{ flex: 1 }}>
                 <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: text.primary.color }}>
-                  {isEditingEvent ? 'Edit Event' : selectedEvent.title}
+                  {selectedEvent ? 'Edit Event' : 'Event'}
                 </h2>
-                {!isEditingEvent && selectedEvent.calendarName && (
+                {selectedEvent?.calendarName && (
                   <p style={{ margin: `${spacing(0.5)} 0 0 0`, fontSize: '13px', color: text.secondary.color }}>
                     {selectedEvent.calendarName}
                   </p>
@@ -3238,7 +3251,6 @@ export default function CalendarPage() {
                   setLinkedContact(null)
                   setLinkedListing(null)
                   setLinkedTask(null)
-                  setIsEditingEvent(false)
                   setEditingEventId(null)
                   setCreateForm(INITIAL_CREATE_EVENT_STATE)
                 }}
@@ -3266,8 +3278,7 @@ export default function CalendarPage() {
               </div>
             )}
 
-            {isEditingEvent ? (
-              <>
+            <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: text.tertiary.color, marginBottom: spacing(0.5) }}>
@@ -3431,286 +3442,127 @@ export default function CalendarPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing(1), paddingTop: spacing(1), borderTop: `1px solid ${colors.border}` }}>
-                  <button
-                    type="button"
-                    {...getButtonPressHandlers('calendar-edit-cancel')}
-                    onClick={() => {
-                      setIsEventModalOpen(false)
-                      setSelectedEvent(null)
-                      setLinkedContact(null)
-                      setLinkedListing(null)
-                      setLinkedTask(null)
-                      setIsEditingEvent(false)
-                      setEditingEventId(null)
-                      setCreateForm(INITIAL_CREATE_EVENT_STATE)
-                    }}
-                    disabled={isSavingEvent}
-                    style={getButtonPressStyle(
-                      'calendar-edit-cancel',
-                      {
-                        padding: `${spacing(1)} ${spacing(2)}`,
-                        borderRadius: spacing(0.75),
-                        border: `1px solid ${colors.border}`,
-                        backgroundColor: colors.surface,
-                        color: text.secondary.color,
-                        fontSize: '13px',
-                        cursor: isSavingEvent ? 'not-allowed' : 'pointer',
-                      },
-                      colors.surface,
-                      colors.cardHover
-                    )}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    {...getButtonPressHandlers('calendar-edit-save')}
-                    onClick={handleUpdateEvent}
-                    disabled={isSavingEvent}
-                    style={getButtonPressStyle(
-                      'calendar-edit-save',
-                      {
-                        padding: `${spacing(1)} ${spacing(2.5)}`,
-                        borderRadius: spacing(0.75),
-                        border: 'none',
-                        backgroundColor: colors.primary,
-                        color: '#fff',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        cursor: isSavingEvent ? 'wait' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: spacing(0.75),
-                      },
-                      colors.primary,
-                      colors.primaryHover
-                    )}
-                  >
-                    {isSavingEvent && <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />}
-                    Save Changes
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                    <CalendarIcon style={{ width: '16px', height: '16px', color: text.tertiary.color, flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: text.primary.color }}>
-                        {selectedEvent.isAllDay
-                          ? `${selectedEvent.start.toLocaleDateString(undefined, {
-                              weekday: 'long',
-                              month: 'long',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })} — All day`
-                          : `${selectedEvent.start.toLocaleDateString(undefined, {
-                              weekday: 'long',
-                              month: 'long',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })} · ${selectedEvent.startLabel} – ${selectedEvent.endLabel}`}
-                      </p>
-                      {!selectedEvent.isAllDay &&
-                        selectedEvent.end.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) !==
-                          selectedEvent.start.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) && (
-                          <p style={{ margin: `${spacing(0.25)} 0 0 0`, fontSize: '12px', color: text.secondary.color }}>
-                            Ends {selectedEvent.end.toLocaleDateString(undefined, {
-                              weekday: 'long',
-                              month: 'long',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })} · {selectedEvent.endLabel}
-                          </p>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: spacing(1),
+                    paddingTop: spacing(1),
+                    borderTop: `1px solid ${colors.border}`,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: spacing(1) }}>
+                    {selectedEvent?.htmlLink && (
+                      <button
+                        type="button"
+                        {...getButtonPressHandlers('calendar-open-google')}
+                        onClick={() => {
+                          window.open(selectedEvent.htmlLink, '_blank', 'noopener,noreferrer')
+                        }}
+                        style={getButtonPressStyle(
+                          'calendar-open-google',
+                          {
+                            padding: `${spacing(1)} ${spacing(2)}`,
+                            borderRadius: spacing(0.75),
+                            border: `1px solid ${colors.border}`,
+                            backgroundColor: colors.surface,
+                            color: text.primary.color,
+                            fontSize: '13px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: spacing(0.75),
+                            cursor: 'pointer',
+                          },
+                          colors.surface,
+                          colors.cardHover
                         )}
-                    </div>
+                      >
+                        <ExternalLink style={{ width: '16px', height: '16px' }} />
+                        Open in Google
+                      </button>
+                    )}
+                    {selectedEvent && (
+                      <button
+                        type="button"
+                        {...getButtonPressHandlers('calendar-delete-event')}
+                        onClick={handleDeleteEvent}
+                        disabled={isDeletingEvent}
+                        style={getButtonPressStyle(
+                          'calendar-delete-event',
+                          {
+                            padding: `${spacing(1)} ${spacing(2)}`,
+                            borderRadius: spacing(0.75),
+                            border: `1px solid ${colors.error}`,
+                            backgroundColor: colors.surface,
+                            color: colors.error,
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: spacing(0.75),
+                            cursor: isDeletingEvent ? 'wait' : 'pointer',
+                          },
+                          colors.surface,
+                          colors.cardHover
+                        )}
+                      >
+                        {isDeletingEvent ? (
+                          <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                        ) : (
+                          <Trash2 style={{ width: '16px', height: '16px' }} />
+                        )}
+                        Delete
+                      </button>
+                    )}
                   </div>
-
-                  {selectedEvent.location && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing(1) }}>
-                      <MapPin style={{ width: '16px', height: '16px', color: text.tertiary.color, flexShrink: 0, marginTop: '2px' }} />
-                      <p style={{ margin: 0, fontSize: '14px', color: text.primary.color }}>{selectedEvent.location}</p>
-                    </div>
-                  )}
-
-                  {selectedEvent.description && (
-                    <div>
-                      <p style={{ margin: `0 0 ${spacing(0.5)} 0`, fontSize: '12px', fontWeight: 600, color: text.tertiary.color, textTransform: 'uppercase' }}>
-                        Description
-                      </p>
-                      <p style={{ margin: 0, fontSize: '14px', color: text.primary.color, whiteSpace: 'pre-wrap' }}>
-                        {selectedEvent.description}
-                      </p>
-                    </div>
-                  )}
-
-                  {eventAttendees.length > 0 && (
-                    <div style={{ padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
-                      <p style={{ margin: `0 0 ${spacing(1)} 0`, fontSize: '12px', fontWeight: 600, color: text.tertiary.color, textTransform: 'uppercase' }}>
-                        Attendees ({eventAttendees.length})
-                      </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.75) }}>
-                        {eventAttendees.map((attendee, index) => (
-                          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: spacing(1), fontSize: '14px' }}>
-                            <span style={{ color: text.primary.color, fontWeight: attendee.isOrganizer ? 600 : 400 }}>
-                              {attendee.displayName || attendee.email}
-                            </span>
-                            {attendee.isOrganizer && (
-                              <span style={{ fontSize: '11px', color: text.tertiary.color, textTransform: 'uppercase' }}>
-                                Organizer
-                              </span>
-                            )}
-                            {attendee.responseStatus && attendee.responseStatus !== 'needsAction' && (
-                              <span style={{ fontSize: '11px', color: text.secondary.color, textTransform: 'capitalize' }}>
-                                ({attendee.responseStatus})
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {(linkedContact || linkedListing || linkedTask) && (
-                    <div style={{ padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
-                      <p style={{ margin: `0 0 ${spacing(1)} 0`, fontSize: '12px', fontWeight: 600, color: text.tertiary.color, textTransform: 'uppercase' }}>
-                        Linked to CRM
-                      </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
-                        {linkedContact && (
-                          <a
-                            href={`/contacts/${linkedContact.id}`}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              window.location.href = `/contacts/${linkedContact.id}`
-                            }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: spacing(1),
-                              fontSize: '14px',
-                              color: colors.primary,
-                              textDecoration: 'none',
-                              cursor: 'pointer',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.textDecoration = 'underline'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.textDecoration = 'none'
-                            }}
-                          >
-                            <span style={{ fontWeight: 500 }}>Contact:</span>
-                            <span>{linkedContact.name}</span>
-                          </a>
-                        )}
-                        {linkedListing && (
-                          <a
-                            href={`/listings/${linkedListing.id}`}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              window.location.href = `/listings/${linkedListing.id}`
-                            }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: spacing(1),
-                              fontSize: '14px',
-                              color: colors.primary,
-                              textDecoration: 'none',
-                              cursor: 'pointer',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.textDecoration = 'underline'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.textDecoration = 'none'
-                            }}
-                          >
-                            <span style={{ fontWeight: 500 }}>Listing:</span>
-                            <span>{linkedListing.title}</span>
-                          </a>
-                        )}
-                        {linkedTask && (
-                          <a
-                            href={`/listings/${linkedTask.listingId}`}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              window.location.href = `/listings/${linkedTask.listingId}`
-                            }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: spacing(1),
-                              fontSize: '14px',
-                              color: colors.primary,
-                              textDecoration: 'none',
-                              cursor: 'pointer',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.textDecoration = 'underline'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.textDecoration = 'none'
-                            }}
-                          >
-                            <span style={{ fontWeight: 500 }}>Task:</span>
-                            <span>{linkedTask.name}</span>
-                            <span style={{ fontSize: '12px', color: text.secondary.color }}>({linkedTask.listingTitle})</span>
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing(1), paddingTop: spacing(1), borderTop: `1px solid ${colors.border}` }}>
-                  <button
-                    type="button"
-                    disabled={isDeletingEvent}
-                    onClick={handleDeleteEvent}
-                    style={{
-                      padding: `${spacing(1)} ${spacing(2)}`,
-                      borderRadius: spacing(0.75),
-                      border: `1px solid ${colors.error || '#ef4444'}`,
-                      backgroundColor: isDeletingEvent ? colors.error || '#ef4444' : 'transparent',
-                      color: isDeletingEvent ? '#ffffff' : colors.error || '#ef4444',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      cursor: isDeletingEvent ? 'wait' : 'pointer',
-                      opacity: isDeletingEvent ? 0.85 : 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: spacing(0.75),
-                    }}
-                  >
-                    {isDeletingEvent ? (
-                      <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
-                    ) : (
-                      <Trash2 style={{ width: '16px', height: '16px' }} />
-                    )}
-                    Delete
-                  </button>
-                  {selectedEvent.htmlLink && (
+                  <div style={{ display: 'flex', gap: spacing(1) }}>
                     <button
                       type="button"
-                      {...getButtonPressHandlers('calendar-event-open-google')}
+                      {...getButtonPressHandlers('calendar-edit-cancel')}
                       onClick={() => {
-                      window.open(selectedEvent.htmlLink, '_blank', 'noopener,noreferrer')
+                        setIsEventModalOpen(false)
+                        setSelectedEvent(null)
+                        setLinkedContact(null)
+                        setLinkedListing(null)
+                        setLinkedTask(null)
+                        setEditingEventId(null)
+                        setCreateForm(INITIAL_CREATE_EVENT_STATE)
                       }}
+                      disabled={isSavingEvent}
                       style={getButtonPressStyle(
-                        'calendar-event-open-google',
+                        'calendar-edit-cancel',
+                        {
+                          padding: `${spacing(1)} ${spacing(2)}`,
+                          borderRadius: spacing(0.75),
+                          border: `1px solid ${colors.border}`,
+                          backgroundColor: colors.surface,
+                          color: text.secondary.color,
+                          fontSize: '13px',
+                          cursor: isSavingEvent ? 'not-allowed' : 'pointer',
+                        },
+                        colors.surface,
+                        colors.cardHover
+                      )}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      {...getButtonPressHandlers('calendar-edit-save')}
+                      onClick={handleUpdateEvent}
+                      disabled={isSavingEvent}
+                      style={getButtonPressStyle(
+                        'calendar-edit-save',
                         {
                           padding: `${spacing(1)} ${spacing(2.5)}`,
                           borderRadius: spacing(0.75),
                           border: 'none',
                           backgroundColor: colors.primary,
-                          color: '#ffffff',
+                          color: '#fff',
                           fontSize: '13px',
-                          fontWeight: 500,
-                          cursor: 'pointer',
+                          fontWeight: 600,
+                          cursor: isSavingEvent ? 'wait' : 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           gap: spacing(0.75),
@@ -3719,13 +3571,135 @@ export default function CalendarPage() {
                         colors.primaryHover
                       )}
                     >
-                      <CalendarIcon style={{ width: '16px', height: '16px' }} />
-                      Open in Google Calendar
+                      {isSavingEvent && <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />}
+                      Save Changes
                     </button>
-                  )}
+                  </div>
                 </div>
-              </>
-            )}
+
+              {eventAttendees.length > 0 && (
+                <div style={{ padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
+                  <p style={{ margin: `0 0 ${spacing(1)} 0`, fontSize: '12px', fontWeight: 600, color: text.tertiary.color, textTransform: 'uppercase' }}>
+                    Attendees ({eventAttendees.length})
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.75) }}>
+                    {eventAttendees.map((attendee, index) => (
+                      <div key={index} style={{ display: 'flex', alignItems: 'center', gap: spacing(1), fontSize: '14px' }}>
+                        <span style={{ color: text.primary.color, fontWeight: attendee.isOrganizer ? 600 : 400 }}>
+                          {attendee.displayName || attendee.email}
+                        </span>
+                        {attendee.isOrganizer && (
+                          <span style={{ fontSize: '11px', color: text.tertiary.color, textTransform: 'uppercase' }}>
+                            Organizer
+                          </span>
+                        )}
+                        {attendee.responseStatus && attendee.responseStatus !== 'needsAction' && (
+                          <span style={{ fontSize: '11px', color: text.secondary.color, textTransform: 'capitalize' }}>
+                            ({attendee.responseStatus})
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(linkedContact || linkedListing || linkedTask) && (
+                <div style={{ padding: spacing(1.5), backgroundColor: colors.surface, borderRadius: spacing(1), border: `1px solid ${colors.border}` }}>
+                  <p style={{ margin: `0 0 ${spacing(1)} 0`, fontSize: '12px', fontWeight: 600, color: text.tertiary.color, textTransform: 'uppercase' }}>
+                    Linked to CRM
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
+                    {linkedContact && (
+                      <a
+                        href={`/contacts/${linkedContact.id}`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          window.location.href = `/contacts/${linkedContact.id}`
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: spacing(1),
+                          fontSize: '14px',
+                          color: colors.primary,
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.textDecoration = 'underline'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.textDecoration = 'none'
+                        }}
+                      >
+                        <Share2 style={{ width: '16px', height: '16px' }} />
+                        {linkedContact.name}
+                      </a>
+                    )}
+
+                    {linkedListing && (
+                      <a
+                        href={`/listings/${linkedListing.id}`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          window.location.href = `/listings/${linkedListing.id}`
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: spacing(1),
+                          fontSize: '14px',
+                          color: colors.primary,
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.textDecoration = 'underline'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.textDecoration = 'none'
+                        }}
+                      >
+                        <MapPin style={{ width: '16px', height: '16px' }} />
+                        {linkedListing.title}
+                      </a>
+                    )}
+
+                    {linkedTask && (
+                      <a
+                        href={`/listings/${linkedTask.listingId}`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          window.location.href = `/listings/${linkedTask.listingId}`
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: spacing(0.25),
+                          fontSize: '13px',
+                          color: colors.primary,
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.textDecoration = 'underline'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.textDecoration = 'none'
+                        }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: spacing(0.5) }}>
+                          <MapPin style={{ width: '14px', height: '14px' }} />
+                          {linkedTask.listingTitle}
+                        </span>
+                        <span style={{ paddingLeft: spacing(2), color: text.secondary.color }}>{linkedTask.name}</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           </div>
         </div>
       )}
@@ -4213,8 +4187,7 @@ type RenderCalendarGridParams = {
   colors: ReturnType<typeof useThemeStyles>['colors']
   text: ReturnType<typeof useThemeStyles>['text']
   spacing: ReturnType<typeof useThemeStyles>['spacing']
-  setSelectedEvent: (event: NormalizedEvent | null) => void
-  setIsEventModalOpen: (open: boolean) => void
+  onSelectEvent: (event: NormalizedEvent) => void
 }
 
 function renderCalendarGrid({
@@ -4229,8 +4202,7 @@ function renderCalendarGrid({
   colors,
   text,
   spacing,
-  setSelectedEvent,
-  setIsEventModalOpen,
+  onSelectEvent,
 }: RenderCalendarGridParams) {
   if (view === 'month') {
     const today = new Date()
@@ -4291,8 +4263,8 @@ function renderCalendarGrid({
 
         const absoluteTop = dateLabelHeight + level * multiDayRowHeight
         multiDayOverlays.push(
-          <div
-            key={`multi-${event.id}-${row}-${segmentStartIdx}`}
+            <div
+              key={`multi-${event.id}-${row}-${segmentStartIdx}`}
             style={{
               gridColumn: `${columnStart} / span ${spanDays}`,
               gridRow: `${row + 1}`,
@@ -4304,8 +4276,7 @@ function renderCalendarGrid({
             <div
               onClick={(e) => {
                 e.stopPropagation()
-                setSelectedEvent(event)
-                setIsEventModalOpen(true)
+                void onSelectEvent(event)
               }}
               style={{
                 position: 'absolute',
@@ -4456,8 +4427,7 @@ function renderCalendarGrid({
                   key={event.id}
                   onClick={(e) => {
                     e.stopPropagation()
-                    setSelectedEvent(event)
-                    setIsEventModalOpen(true)
+                    void onSelectEvent(event)
                   }}
                   style={{
                     display: 'flex',
@@ -4589,8 +4559,7 @@ function renderCalendarGrid({
                 key={event.id}
                 onClick={(e) => {
                   e.stopPropagation()
-                  setSelectedEvent(event)
-                  setIsEventModalOpen(true)
+                  void onSelectEvent(event)
                 }}
                 style={{
                   borderRadius: spacing(0.75),
