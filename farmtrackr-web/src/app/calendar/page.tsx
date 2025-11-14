@@ -1272,9 +1272,23 @@ export default function CalendarPage() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-
-                <div style={{ display: 'flex', gap: spacing(0.5), backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: spacing(0.75), border: `1px solid rgba(255,255,255,0.2)`, padding: spacing(0.5) }}>
-                  {(['month', 'week', 'day'] as CalendarView[]).map((option) => (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: spacing(0.5),
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : colors.surface,
+                  borderRadius: spacing(0.75),
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.25)' : colors.border}`,
+                  padding: spacing(0.5),
+                }}
+              >
+                {(['month', 'week', 'day'] as CalendarView[]).map((option) => {
+                  const isActive = view === option
+                  const activeBg = isDark ? 'rgba(255,255,255,0.25)' : colors.card
+                  const inactiveBg = 'transparent'
+                  const activeColor = isDark ? '#ffffff' : text.primary.color
+                  const inactiveColor = isDark ? 'rgba(255,255,255,0.8)' : text.secondary.color
+                  return (
                     <button
                       key={option}
                       type="button"
@@ -1286,48 +1300,54 @@ export default function CalendarPage() {
                           padding: `${spacing(0.75)} ${spacing(1.5)}`,
                           borderRadius: spacing(0.5),
                           border: 'none',
-                          backgroundColor: view === option ? 'rgba(255,255,255,0.25)' : 'transparent',
-                          color: '#ffffff',
+                          backgroundColor: isActive ? activeBg : inactiveBg,
+                          color: isActive ? activeColor : inactiveColor,
                           fontSize: '13px',
-                          fontWeight: view === option ? 600 : 500,
+                          fontWeight: isActive ? 600 : 500,
                           cursor: 'pointer',
                           textTransform: 'capitalize',
                         },
-                        view === option ? 'rgba(255,255,255,0.25)' : 'transparent',
-                        view === option ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)'
+                        isActive ? activeBg : inactiveBg,
+                        isActive
+                          ? isDark
+                            ? 'rgba(255,255,255,0.35)'
+                            : colors.cardHover
+                          : inactiveBg
                       )}
                     >
                       {option}
                     </button>
-                  ))}
-                </div>
+                  )
+                })}
+              </div>
 
-                <button
-                  type="button"
-                  {...getButtonPressHandlers('calendar-new-event')}
-                  onClick={handleOpenCreateModal}
-                  style={getButtonPressStyle(
-                    'calendar-new-event',
-                    {
-                      padding: `${spacing(0.75)} ${spacing(1.5)}`,
-                      borderRadius: spacing(0.75),
-                      border: 'none',
-                      backgroundColor: '#ffffff',
-                      color: colors.primary,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: spacing(0.75),
-                      fontSize: '13px',
-                      fontWeight: 600,
-                    },
-                    '#ffffff',
-                    'rgba(255,255,255,0.9)'
-                  )}
-                >
-                  <Plus style={{ width: '16px', height: '16px' }} />
-                  New Event
-                </button>
+              <button
+                type="button"
+                {...getButtonPressHandlers('calendar-new-event')}
+                onClick={handleOpenCreateModal}
+                style={getButtonPressStyle(
+                  'calendar-new-event',
+                  {
+                    padding: `${spacing(0.75)} ${spacing(1.75)}`,
+                    borderRadius: spacing(0.75),
+                    border: 'none',
+                    backgroundColor: colors.primary,
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(0.75),
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.15)',
+                  },
+                  colors.primary,
+                  colors.primaryHover || colors.primary
+                )}
+              >
+                <Plus style={{ width: '16px', height: '16px' }} />
+                New Event
+              </button>
               </div>
             </div>
           </div>
