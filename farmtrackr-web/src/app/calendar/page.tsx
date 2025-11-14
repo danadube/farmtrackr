@@ -3228,9 +3228,6 @@ export default function CalendarPage() {
                 type="button"
                 {...getButtonPressHandlers('calendar-event-close')}
                 onClick={() => {
-                  if (isEditingEvent) {
-                    handleCancelEdit()
-                  }
                   setIsEventModalOpen(false)
                   setSelectedEvent(null)
                   setLinkedContact(null)
