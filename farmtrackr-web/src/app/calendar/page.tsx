@@ -2093,7 +2093,7 @@ export default function CalendarPage() {
                       })
 
                       // Combine and deduplicate
-                      const allEventsForDay = [...new Map([...allDayEvents, ...multiDayEvents].map(e => [e.id, e])).values()]
+                      const allEventsForDay = Array.from(new Map([...allDayEvents, ...multiDayEvents].map(e => [e.id, e])).values())
 
                       return (
                         <div
