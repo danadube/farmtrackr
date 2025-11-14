@@ -148,6 +148,7 @@ export async function GET(request: NextRequest) {
             
             // Create event instances with unique IDs
             for (const instance of visibleInstances) {
+              const originalId = (event as any).originalId ?? event.id
               expandedEvents.push({
                 ...event,
                 id: `${event.id}_${instance.start.toISOString()}`, // Unique ID for this instance
@@ -155,20 +156,23 @@ export async function GET(request: NextRequest) {
                 end: instance.end,
                 isRecurringInstance: true, // Flag to indicate this is an instance
                 recurrenceId: event.id, // Reference to the parent recurring event
-                originalId: event.id,
+                originalId,
               })
             }
           } else {
             // If we can't parse the RRULE, just include the base event
-            expandedEvents.push({ ...event, originalId: event.originalId || event.id })
+            const originalId = (event as any).originalId ?? event.id
+            expandedEvents.push({ ...event, originalId })
           }
         } else {
           // No RRULE, just include the base event
-          expandedEvents.push({ ...event, originalId: event.originalId || event.id })
+          const originalId = (event as any).originalId ?? event.id
+          expandedEvents.push({ ...event, originalId })
         }
       } else {
         // Non-recurring event, include as-is
-        expandedEvents.push({ ...event, originalId: event.originalId || event.id })
+        const originalId = (event as any).originalId ?? event.id
+        expandedEvents.push({ ...event, originalId })
       }
     }
 
