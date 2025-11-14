@@ -4144,7 +4144,7 @@ function renderCalendarGrid({
     const eventsMap = new Map<string, any>()
     
     // Build a map of all events with their date ranges
-    for (const [dateStr, events] of eventsByDate.entries()) {
+    for (const [dateStr, events] of Array.from(eventsByDate.entries())) {
       for (const event of events) {
         if (!eventsMap.has(event.id)) {
           const startDate = new Date(event.start)
