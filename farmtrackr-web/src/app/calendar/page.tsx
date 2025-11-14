@@ -3194,10 +3194,15 @@ export default function CalendarPage() {
             zIndex: 1000,
           }}
           onClick={() => {
-                      handleCancelCreate()
-                      setLinkedContact(null)
-                      setLinkedListing(null)
-                    }}
+            setIsEventModalOpen(false)
+            setSelectedEvent(null)
+            setLinkedContact(null)
+            setLinkedListing(null)
+            setLinkedTask(null)
+            setIsEditingEvent(false)
+            setEditingEventId(null)
+            setCreateForm(INITIAL_CREATE_EVENT_STATE)
+          }}
         >
           <div
             style={{
@@ -3232,6 +3237,10 @@ export default function CalendarPage() {
                   setSelectedEvent(null)
                   setLinkedContact(null)
                   setLinkedListing(null)
+                  setLinkedTask(null)
+                  setIsEditingEvent(false)
+                  setEditingEventId(null)
+                  setCreateForm(INITIAL_CREATE_EVENT_STATE)
                 }}
                 style={getButtonPressStyle(
                   'calendar-event-close',
