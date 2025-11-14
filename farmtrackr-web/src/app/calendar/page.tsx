@@ -614,7 +614,7 @@ export default function CalendarPage() {
       endDate,
       calendarId: defaultCalendarId,
     })
-    setSelectedEvent({
+    const newEventPayload = {
       id: crypto.randomUUID(),
       title: '',
       description: '',
@@ -625,7 +625,8 @@ export default function CalendarPage() {
       startLabel: toInputTime(start),
       endLabel: toInputTime(end),
       calendarId: selectedCalendars[0] || calendars[0]?.id || 'primary',
-    })
+    }
+    setSelectedEvent(newEventPayload)
     setIsEventModalOpen(true)
   }
 
