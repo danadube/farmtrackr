@@ -4150,22 +4150,23 @@ function renderCalendarGrid({
     const today = new Date()
     const currentMonth = calendarCells[15]?.getMonth() // central cell to determine month
 
-    // Collect all events to detect multi-day spanning
+    // Collect all events to detect multi-day coverage across the visible month grid
     const allEvents: Array<{ event: any; startDate: Date; endDate: Date }> = []
-    const eventsMap = new Map<string, any>()
+    const eventsMap = new Map<string, { event: any; startDate: Date; endDate: Date }>()
     
-    // Build a map of all events with their date ranges
-    for (const [dateStr, events] of Array.from(eventsByDate.entries())) {
+    for (const [, events] of Array.from(eventsByDate.entries())) {
       for (const event of events) {
         if (!eventsMap.has(event.id)) {
           const startDate = new Date(event.start)
           let endDate = new Date(event.end)
-          // For all-day events, end date is exclusive (one day after), so subtract one day
           if (event.isAllDay) {
             endDate.setDate(endDate.getDate() - 1)
           }
-          eventsMap.set(event.id, { event, startDate, endDate })
-          allEvents.push({ event, startDate, endDate })
+          const normalizedStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+          const normalizedEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999)
+          const entry = { event, startDate: normalizedStart, endDate: normalizedEnd }
+          eventsMap.set(event.id, entry)
+          allEvents.push(entry)
         }
       }
     }
@@ -4178,46 +4179,24 @@ function renderCalendarGrid({
       const dayEvents = eventsByDate.get(cellDate.toDateString()) || []
       const cellDateStr = cellDate.toDateString()
 
-      // Find events that start on this day (for multi-day spanning)
-      const eventsStartingToday = allEvents.filter(({ event, startDate }) => {
-        return startDate.toDateString() === cellDateStr
-      })
+      // Determine events that occur on this day (including multi-day coverage)
+      const dayStart = new Date(cellDateStr)
+      dayStart.setHours(0, 0, 0, 0)
+      const dayEnd = new Date(dayStart)
+      dayEnd.setHours(23, 59, 59, 999)
 
-      // Find single-day events that occur on this day (not multi-day)
-      const singleDayEvents = dayEvents.filter(e => {
-        const eventStart = new Date(e.start)
-        let eventEnd = new Date(e.end)
-        if (e.isAllDay) {
-          eventEnd.setDate(eventEnd.getDate() - 1)
-        }
-        const startStr = eventStart.toDateString()
-        const endStr = eventEnd.toDateString()
-        // Only include if it's a single-day event OR if it starts on this day (multi-day events are handled separately)
-        return startStr === endStr || startStr === cellDateStr
-      })
+      const eventsOnThisDay: any[] = []
+      const seenEventIds = new Set<string>()
 
-      // Combine events starting today with single-day events, avoiding duplicates
-      const eventIds = new Set<string>()
-      const displayEvents: any[] = []
-      
-      // Add multi-day events that start today
-      for (const { event } of eventsStartingToday) {
-        if (!eventIds.has(event.id)) {
-          eventIds.add(event.id)
-          displayEvents.push(event)
+      for (const { event, startDate, endDate } of allEvents) {
+        const overlapsDay = dayStart <= endDate && dayEnd >= startDate
+        if (overlapsDay && !seenEventIds.has(event.id)) {
+          seenEventIds.add(event.id)
+          eventsOnThisDay.push(event)
         }
       }
-      
-      // Add single-day events
-      for (const event of singleDayEvents) {
-        if (!eventIds.has(event.id)) {
-          eventIds.add(event.id)
-          displayEvents.push(event)
-        }
-      }
-      
-      // Limit to 3 events for display
-      const limitedEvents = displayEvents.slice(0, 3)
+
+      const limitedEvents = eventsOnThisDay.slice(0, 3)
 
       return (
         <div
@@ -4290,20 +4269,6 @@ function renderCalendarGrid({
               const isFirstDay = cellDateStr === eventStartStr
               const isLastDay = cellDateStr === eventEndStr
               const isMultiDay = eventStartStr !== eventEndStr
-              
-              // Calculate which columns this event spans
-              const startDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventStartStr)
-              const endDayIndex = calendarCells.findIndex((d) => d.toDateString() === eventEndStr)
-              const currentDayIndex = calendarCells.indexOf(cellDate)
-              
-              // Only render multi-day events on their first day
-              if (isMultiDay && !isFirstDay) {
-                return null
-              }
-              
-              const spanDays = isMultiDay && startDayIndex >= 0 && endDayIndex >= 0 
-                ? Math.min(endDayIndex - startDayIndex + 1, calendarCells.length - startDayIndex)
-                : 1
 
               return (
                 <div
@@ -4323,18 +4288,7 @@ function renderCalendarGrid({
                     padding: `${spacing(0.5)} ${spacing(0.75)}`,
                     cursor: event.htmlLink ? 'pointer' : 'default',
                     transition: 'background-color 0.15s ease',
-                    position: isMultiDay && isFirstDay ? 'absolute' : 'relative',
-                    left: isMultiDay && isFirstDay ? 0 : undefined,
-                    width: isMultiDay && isFirstDay 
-                      ? `calc(${(100 / 7) * spanDays}% - ${spacing(2)} + ${(spanDays - 1) * 8}px)` 
-                      : undefined,
-                    zIndex: isMultiDay ? 2 : 1,
-                    marginLeft: isMultiDay && isFirstDay ? spacing(1) : 0,
-                    marginRight: isMultiDay && isFirstDay ? spacing(1) : 0,
-                    borderTopLeftRadius: isFirstDay ? spacing(0.5) : 0,
-                    borderBottomLeftRadius: isFirstDay ? spacing(0.5) : 0,
-                    borderTopRightRadius: isLastDay ? spacing(0.5) : 0,
-                    borderBottomRightRadius: isLastDay ? spacing(0.5) : 0,
+                    opacity: isMultiDay && !isFirstDay ? 0.85 : 1,
                   }}
                   onMouseEnter={(e) => {
                     if (event.htmlLink) {
@@ -4347,25 +4301,27 @@ function renderCalendarGrid({
                     }
                   }}
                 >
-                  {!isMultiDay && (
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ffffff', flexShrink: 0, opacity: 0.8 }} />
-                  )}
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ffffff', flexShrink: 0, opacity: 0.9 }} />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), minWidth: 0, flex: 1 }}>
                     <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {event.title}
                     </span>
-                    {!event.isAllDay && !isMultiDay && (
+                    {event.isAllDay ? (
                       <span style={{ fontSize: '10px', color: '#ffffff', opacity: 0.9 }}>
-                        {event.startLabel} – {event.endLabel}
+                        {isMultiDay ? (isFirstDay ? 'Starts' : isLastDay ? 'Ends' : 'All day') : 'All day'}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '10px', color: '#ffffff', opacity: 0.9 }}>
+                        {isFirstDay ? `${event.startLabel} – ${event.endLabel}` : 'Continues'}
                       </span>
                     )}
                   </div>
                 </div>
               )
             })}
-            {displayEvents.length > 3 && (
+            {eventsOnThisDay.length > 3 && (
               <span style={{ fontSize: '10px', color: colors.primary, fontWeight: 600 }}>
-                +{displayEvents.length - 3} more
+                +{eventsOnThisDay.length - 3} more
               </span>
             )}
           </div>
