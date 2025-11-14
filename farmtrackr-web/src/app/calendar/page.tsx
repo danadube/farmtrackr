@@ -604,8 +604,11 @@ export default function CalendarPage() {
   }
 
   const handleOpenCreateModal = () => {
-    const startDate = toInputDate(selectedDate)
-    const endDate = toInputDate(selectedDate)
+    const start = new Date(selectedDate)
+    const end = new Date(selectedDate)
+    end.setHours(end.getHours() + 1)
+    const startDate = toInputDate(start)
+    const endDate = toInputDate(end)
     // Use primary calendar or first available calendar
     const defaultCalendarId = calendars.find((cal) => cal.primary)?.id || calendars[0]?.id || 'primary'
     setCreateForm({
