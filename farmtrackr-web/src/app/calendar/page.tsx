@@ -968,7 +968,6 @@ export default function CalendarPage() {
         }
       }
 
-    setIsEditingEvent(false)
     setEditingEventId(null)
     setCreateForm(INITIAL_CREATE_EVENT_STATE)
       setIsEventModalOpen(false)
