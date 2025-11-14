@@ -4150,8 +4150,8 @@ function renderCalendarGrid({
     const today = new Date()
     const currentMonth = calendarCells[15]?.getMonth() // central cell to determine month
 
-    const allEvents: Array<{ event: any; startDate: Date; endDate: Date }> = []
-    const eventsMap = new Map<string, { event: any; startDate: Date; endDate: Date }>()
+    const allEvents: Array<{ event: NormalizedEvent; startDate: Date; endDate: Date }> = []
+    const eventsMap = new Map<string, { event: NormalizedEvent; startDate: Date; endDate: Date }>()
     for (const [, events] of Array.from(eventsByDate.entries())) {
       for (const event of events) {
         if (!eventsMap.has(event.id)) {
@@ -4168,9 +4168,80 @@ function renderCalendarGrid({
         }
       }
     }
-    const multiDayEntries = allEvents.filter(({ startDate, endDate }) => startDate.toDateString() !== endDate.toDateString())
 
-    return calendarCells.map((cellDate, index) => {
+    const totalRows = Math.ceil(calendarCells.length / 7)
+    const rowLevels = Array(totalRows).fill(0)
+    const rowMaxLevels = Array(totalRows).fill(0)
+    const multiDayOverlays: React.ReactNode[] = []
+
+    const multiDayEntries = allEvents.filter(({ startDate, endDate }) => startDate.toDateString() !== endDate.toDateString())
+    multiDayEntries.forEach(({ event, startDate, endDate }) => {
+      const absoluteStartIdx = calendarCells.findIndex((d) => d.toDateString() === startDate.toDateString())
+      let startIdx = absoluteStartIdx >= 0 ? absoluteStartIdx : 0
+      const absoluteEndIdx = calendarCells.findIndex((d) => d.toDateString() === endDate.toDateString())
+      let endIdx = absoluteEndIdx >= 0 ? absoluteEndIdx : calendarCells.length - 1
+
+      const effectiveStartIdx = Math.max(startIdx, 0)
+      const effectiveEndIdx = Math.min(endIdx, calendarCells.length - 1)
+
+      let segmentStartIdx = effectiveStartIdx
+
+      while (segmentStartIdx <= effectiveEndIdx) {
+        const row = Math.floor(segmentStartIdx / 7)
+        const rowStartIdx = row * 7
+        const rowEndIdx = rowStartIdx + 6
+        const segmentEndIdx = Math.min(effectiveEndIdx, rowEndIdx)
+        const spanDays = Math.max(1, segmentEndIdx - segmentStartIdx + 1)
+        const columnStart = (segmentStartIdx % 7) + 1
+        const level = rowLevels[row]
+        rowLevels[row] += 1
+        rowMaxLevels[row] = Math.max(rowMaxLevels[row], rowLevels[row])
+
+        const isFirstVisibleSegment = segmentStartIdx === effectiveStartIdx
+        const isLastVisibleSegment = segmentEndIdx === effectiveEndIdx
+
+        multiDayOverlays.push(
+          <div
+            key={`multi-${event.id}-${row}-${segmentStartIdx}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              setSelectedEvent(event)
+              setIsEventModalOpen(true)
+            }}
+            style={{
+              gridColumn: `${columnStart} / span ${spanDays}`,
+              gridRow: `${row + 1}`,
+              alignSelf: 'start',
+              marginTop: `${4 + level * 22}px`,
+              backgroundColor: event.calendarColor || colors.primary,
+              color: '#ffffff',
+              borderRadius: spacing(0.5),
+              padding: `${spacing(0.25)} ${spacing(0.75)}`,
+              fontSize: '11px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: spacing(0.5),
+              cursor: 'pointer',
+              zIndex: 5,
+              minHeight: '20px',
+            }}
+          >
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{event.title}</span>
+            {!event.isAllDay && (
+              <span style={{ fontSize: '10px', opacity: 0.85 }}>
+                {isFirstVisibleSegment ? event.startLabel : isLastVisibleSegment ? event.endLabel : ''}
+              </span>
+            )}
+          </div>
+        )
+
+        segmentStartIdx = segmentEndIdx + 1
+      }
+    })
+
+    const cellElements = calendarCells.map((cellDate, index) => {
       const key = `calendar-cell-${cellDate.toISOString()}`
       const isToday = cellDate.toDateString() === today.toDateString()
       const isSelected = cellDate.toDateString() === selectedDate.toDateString()
@@ -4183,14 +4254,6 @@ function renderCalendarGrid({
       const dayEnd = new Date(dayStart)
       dayEnd.setHours(23, 59, 59, 999)
 
-      const multiDayEventsForCell = multiDayEntries.filter(({ event, startDate, endDate }) => {
-        const overlapsDay = dayStart <= endDate && dayEnd >= startDate
-        if (!overlapsDay) return false
-        const startIndex = calendarCells.findIndex((d) => d.toDateString() === startDate.toDateString())
-        const visibleStartIndex = startIndex >= 0 ? startIndex : 0
-        return index === visibleStartIndex
-      })
-
       const singleDayEvents = dayEvents.filter((event) => {
         const eventStart = new Date(event.start)
         let eventEnd = new Date(event.end)
@@ -4201,6 +4264,8 @@ function renderCalendarGrid({
       })
 
       const limitedEvents = singleDayEvents.slice(0, 3)
+      const rowIndex = Math.floor(index / 7)
+      const rowPaddingTop = rowMaxLevels[rowIndex] ? rowMaxLevels[rowIndex] * 24 + spacing(0.5) : 0
 
       return (
         <div
@@ -4215,6 +4280,7 @@ function renderCalendarGrid({
               border: isSelected ? `2px solid ${colors.primary}` : `1px solid ${colors.border}`,
               backgroundColor: isSelected ? 'rgba(255,255,255,0.05)' : colors.surface,
               padding: spacing(1),
+              paddingTop: rowPaddingTop + spacing(1),
               display: 'flex',
               flexDirection: 'column',
               gap: spacing(0.75),
@@ -4259,48 +4325,6 @@ function renderCalendarGrid({
                 Today
               </span>
             )}
-          </div>
-
-          <div style={{ position: 'relative', height: multiDayEventsForCell.length ? `${multiDayEventsForCell.length * 26}px` : '0px', marginBottom: multiDayEventsForCell.length ? spacing(0.5) : 0 }}>
-            {multiDayEventsForCell.map(({ event, startDate, endDate }, multiIndex) => {
-              const startIdx = calendarCells.findIndex((d) => d.toDateString() === startDate.toDateString())
-              const endIdx = calendarCells.findIndex((d) => d.toDateString() === endDate.toDateString())
-              const visibleStartIdx = startIdx >= 0 ? startIdx : 0
-              const visibleEndIdx = endIdx >= 0 ? endIdx : calendarCells.length - 1
-              const spanDays = Math.min(calendarCells.length - visibleStartIdx, visibleEndIdx - visibleStartIdx + 1)
-              const columnWidthPercent = 100 / 7
-              const widthPercent = columnWidthPercent * spanDays
-              return (
-                <div
-                  key={`multi-${event.id}`}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedEvent(event)
-                    setIsEventModalOpen(true)
-                  }}
-                  style={{
-                    position: 'absolute',
-                    top: `${multiIndex * 26}px`,
-                    left: '0',
-                    width: `calc(${widthPercent}% - 6px)`,
-                    backgroundColor: event.calendarColor || colors.primary,
-                    color: '#ffffff',
-                    borderRadius: spacing(0.5),
-                    padding: `${spacing(0.25)} ${spacing(0.75)}`,
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing(0.5),
-                    cursor: 'pointer',
-                    zIndex: 3,
-                  }}
-                >
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.title}</span>
-                </div>
-              )
-            })}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5), overflow: 'hidden', position: 'relative', zIndex: 1 }}>
@@ -4364,6 +4388,8 @@ function renderCalendarGrid({
         </div>
       )
     })
+
+    return [...cellElements, ...multiDayOverlays]
   }
 
   // Week and day views share similar structure
