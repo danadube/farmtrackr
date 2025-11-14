@@ -3435,7 +3435,16 @@ export default function CalendarPage() {
                   <button
                     type="button"
                     {...getButtonPressHandlers('calendar-edit-cancel')}
-                    onClick={handleCancelCreate}
+                    onClick={() => {
+                      setIsEventModalOpen(false)
+                      setSelectedEvent(null)
+                      setLinkedContact(null)
+                      setLinkedListing(null)
+                      setLinkedTask(null)
+                      setIsEditingEvent(false)
+                      setEditingEventId(null)
+                      setCreateForm(INITIAL_CREATE_EVENT_STATE)
+                    }}
                     disabled={isSavingEvent}
                     style={getButtonPressStyle(
                       'calendar-edit-cancel',
