@@ -2214,7 +2214,7 @@ export default function CalendarPage() {
                             key={`allday-${event.id}`}
                             onClick={(e) => {
                               e.stopPropagation()
-                              void onSelectEvent(event)
+                              void handleEventSelect(event)
                             }}
                             style={{
                               backgroundColor: event.calendarColor || colors.primary,
@@ -2391,7 +2391,7 @@ export default function CalendarPage() {
                                     key={event.id}
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      void onSelectEvent(event)
+                                      void handleEventSelect(event)
                                     }}
                                     style={{
                                       position: 'absolute',
@@ -2481,7 +2481,7 @@ export default function CalendarPage() {
                                     key={`${event.id}-${cellDateStr}`}
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      void onSelectEvent(event)
+                                      void handleEventSelect(event)
                                     }}
                                     style={{
                                       position: 'absolute',
