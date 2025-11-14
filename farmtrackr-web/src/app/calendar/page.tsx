@@ -4150,10 +4150,8 @@ function renderCalendarGrid({
     const today = new Date()
     const currentMonth = calendarCells[15]?.getMonth() // central cell to determine month
 
-    // Collect all events to detect multi-day coverage across the visible month grid
     const allEvents: Array<{ event: any; startDate: Date; endDate: Date }> = []
     const eventsMap = new Map<string, { event: any; startDate: Date; endDate: Date }>()
-    
     for (const [, events] of Array.from(eventsByDate.entries())) {
       for (const event of events) {
         if (!eventsMap.has(event.id)) {
@@ -4170,6 +4168,7 @@ function renderCalendarGrid({
         }
       }
     }
+    const multiDayEntries = allEvents.filter(({ startDate, endDate }) => startDate.toDateString() !== endDate.toDateString())
 
     return calendarCells.map((cellDate, index) => {
       const key = `calendar-cell-${cellDate.toISOString()}`
@@ -4179,24 +4178,29 @@ function renderCalendarGrid({
       const dayEvents = eventsByDate.get(cellDate.toDateString()) || []
       const cellDateStr = cellDate.toDateString()
 
-      // Determine events that occur on this day (including multi-day coverage)
       const dayStart = new Date(cellDateStr)
       dayStart.setHours(0, 0, 0, 0)
       const dayEnd = new Date(dayStart)
       dayEnd.setHours(23, 59, 59, 999)
 
-      const eventsOnThisDay: any[] = []
-      const seenEventIds = new Set<string>()
-
-      for (const { event, startDate, endDate } of allEvents) {
+      const multiDayEventsForCell = multiDayEntries.filter(({ event, startDate, endDate }) => {
         const overlapsDay = dayStart <= endDate && dayEnd >= startDate
-        if (overlapsDay && !seenEventIds.has(event.id)) {
-          seenEventIds.add(event.id)
-          eventsOnThisDay.push(event)
-        }
-      }
+        if (!overlapsDay) return false
+        const startIndex = calendarCells.findIndex((d) => d.toDateString() === startDate.toDateString())
+        const visibleStartIndex = startIndex >= 0 ? startIndex : 0
+        return index === visibleStartIndex
+      })
 
-      const limitedEvents = eventsOnThisDay.slice(0, 3)
+      const singleDayEvents = dayEvents.filter((event) => {
+        const eventStart = new Date(event.start)
+        let eventEnd = new Date(event.end)
+        if (event.isAllDay) {
+          eventEnd.setDate(eventEnd.getDate() - 1)
+        }
+        return eventStart.toDateString() === eventEnd.toDateString()
+      })
+
+      const limitedEvents = singleDayEvents.slice(0, 3)
 
       return (
         <div
@@ -4257,6 +4261,48 @@ function renderCalendarGrid({
             )}
           </div>
 
+          <div style={{ position: 'relative', height: multiDayEventsForCell.length ? `${multiDayEventsForCell.length * 26}px` : '0px', marginBottom: multiDayEventsForCell.length ? spacing(0.5) : 0 }}>
+            {multiDayEventsForCell.map(({ event, startDate, endDate }, multiIndex) => {
+              const startIdx = calendarCells.findIndex((d) => d.toDateString() === startDate.toDateString())
+              const endIdx = calendarCells.findIndex((d) => d.toDateString() === endDate.toDateString())
+              const visibleStartIdx = startIdx >= 0 ? startIdx : 0
+              const visibleEndIdx = endIdx >= 0 ? endIdx : calendarCells.length - 1
+              const spanDays = Math.min(calendarCells.length - visibleStartIdx, visibleEndIdx - visibleStartIdx + 1)
+              const columnWidthPercent = 100 / 7
+              const widthPercent = columnWidthPercent * spanDays
+              return (
+                <div
+                  key={`multi-${event.id}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectedEvent(event)
+                    setIsEventModalOpen(true)
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: `${multiIndex * 26}px`,
+                    left: '0',
+                    width: `calc(${widthPercent}% - 6px)`,
+                    backgroundColor: event.calendarColor || colors.primary,
+                    color: '#ffffff',
+                    borderRadius: spacing(0.5),
+                    padding: `${spacing(0.25)} ${spacing(0.75)}`,
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing(0.5),
+                    cursor: 'pointer',
+                    zIndex: 3,
+                  }}
+                >
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.title}</span>
+                </div>
+              )
+            })}
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.5), overflow: 'hidden', position: 'relative', zIndex: 1 }}>
             {limitedEvents.map((event) => {
               const eventStart = new Date(event.start)
@@ -4266,10 +4312,6 @@ function renderCalendarGrid({
               }
               const eventStartStr = eventStart.toDateString()
               const eventEndStr = eventEnd.toDateString()
-              const isFirstDay = cellDateStr === eventStartStr
-              const isLastDay = cellDateStr === eventEndStr
-              const isMultiDay = eventStartStr !== eventEndStr
-
               return (
                 <div
                   key={event.id}
@@ -4283,45 +4325,39 @@ function renderCalendarGrid({
                     alignItems: 'center',
                     gap: spacing(0.75),
                     borderRadius: spacing(0.5),
-                    backgroundColor: event.calendarColor || colors.primary,
-                    color: '#ffffff',
+                    backgroundColor: colors.cardHover,
                     padding: `${spacing(0.5)} ${spacing(0.75)}`,
                     cursor: event.htmlLink ? 'pointer' : 'default',
                     transition: 'background-color 0.15s ease',
-                    opacity: isMultiDay && !isFirstDay ? 0.85 : 1,
                   }}
                   onMouseEnter={(e) => {
                     if (event.htmlLink) {
-                      e.currentTarget.style.opacity = '0.9'
+                      e.currentTarget.style.backgroundColor = colors.borderHover || colors.card
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (event.htmlLink) {
-                      e.currentTarget.style.opacity = '1'
+                      e.currentTarget.style.backgroundColor = colors.cardHover
                     }
                   }}
                 >
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ffffff', flexShrink: 0, opacity: 0.9 }} />
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: event.calendarColor || colors.primary, flexShrink: 0, opacity: 0.9 }} />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(0.25), minWidth: 0, flex: 1 }}>
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: text.primary.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {event.title}
                     </span>
-                    {event.isAllDay ? (
-                      <span style={{ fontSize: '10px', color: '#ffffff', opacity: 0.9 }}>
-                        {isMultiDay ? (isFirstDay ? 'Starts' : isLastDay ? 'Ends' : 'All day') : 'All day'}
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: '10px', color: '#ffffff', opacity: 0.9 }}>
-                        {isFirstDay ? `${event.startLabel} – ${event.endLabel}` : 'Continues'}
+                    {!event.isAllDay && (
+                      <span style={{ fontSize: '10px', color: text.secondary.color }}>
+                        {event.startLabel} – {event.endLabel}
                       </span>
                     )}
                   </div>
                 </div>
               )
             })}
-            {eventsOnThisDay.length > 3 && (
+            {singleDayEvents.length > 3 && (
               <span style={{ fontSize: '10px', color: colors.primary, fontWeight: 600 }}>
-                +{eventsOnThisDay.length - 3} more
+                +{singleDayEvents.length - 3} more
               </span>
             )}
           </div>
