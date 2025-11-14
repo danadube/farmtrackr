@@ -4171,7 +4171,6 @@ function renderCalendarGrid({
 
     const totalRows = Math.ceil(calendarCells.length / 7)
     const rowLevels = Array(totalRows).fill(0)
-    const rowMaxLevels = Array(totalRows).fill(0)
     const multiDayOverlays: React.ReactNode[] = []
 
     const multiDayEntries = allEvents.filter(({ startDate, endDate }) => startDate.toDateString() !== endDate.toDateString())
@@ -4194,8 +4193,7 @@ function renderCalendarGrid({
         const spanDays = Math.max(1, segmentEndIdx - segmentStartIdx + 1)
         const columnStart = (segmentStartIdx % 7) + 1
         const level = rowLevels[row]
-        rowLevels[row] += 1
-        rowMaxLevels[row] = Math.max(rowMaxLevels[row], rowLevels[row])
+        rowLevels[row] = level + 1
 
         const isFirstVisibleSegment = segmentStartIdx === effectiveStartIdx
         const isLastVisibleSegment = segmentEndIdx === effectiveEndIdx
@@ -4211,29 +4209,40 @@ function renderCalendarGrid({
             style={{
               gridColumn: `${columnStart} / span ${spanDays}`,
               gridRow: `${row + 1}`,
-              alignSelf: 'start',
-              marginTop: `${4 + level * 22}px`,
-              backgroundColor: event.calendarColor || colors.primary,
-              color: '#ffffff',
-              borderRadius: spacing(0.5),
-              padding: `${spacing(0.25)} ${spacing(0.75)}`,
-              fontSize: '11px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: spacing(0.5),
-              cursor: 'pointer',
-              zIndex: 5,
-              minHeight: '20px',
+              position: 'relative',
+              height: 0,
+              pointerEvents: 'none',
+              overflow: 'visible',
             }}
           >
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{event.title}</span>
-            {!event.isAllDay && (
-              <span style={{ fontSize: '10px', opacity: 0.85 }}>
-                {isFirstVisibleSegment ? event.startLabel : isLastVisibleSegment ? event.endLabel : ''}
-              </span>
-            )}
+            <div
+              style={{
+                position: 'absolute',
+                top: `${spacing(0.5) + level * 22}px`,
+                left: 0,
+                right: 0,
+                backgroundColor: event.calendarColor || colors.primary,
+                color: '#ffffff',
+                borderRadius: spacing(0.5),
+                padding: `${spacing(0.25)} ${spacing(0.75)}`,
+                fontSize: '11px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: spacing(0.5),
+                cursor: 'pointer',
+                pointerEvents: 'auto',
+                minHeight: '20px',
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{event.title}</span>
+              {!event.isAllDay && (
+                <span style={{ fontSize: '10px', opacity: 0.85 }}>
+                  {isFirstVisibleSegment ? event.startLabel : isLastVisibleSegment ? event.endLabel : ''}
+                </span>
+              )}
+            </div>
           </div>
         )
 
@@ -4264,8 +4273,6 @@ function renderCalendarGrid({
       })
 
       const limitedEvents = singleDayEvents.slice(0, 3)
-      const rowIndex = Math.floor(index / 7)
-      const rowPaddingTop = rowMaxLevels[rowIndex] ? rowMaxLevels[rowIndex] * 24 + spacing(0.5) : 0
 
       return (
         <div
@@ -4280,7 +4287,6 @@ function renderCalendarGrid({
               border: isSelected ? `2px solid ${colors.primary}` : `1px solid ${colors.border}`,
               backgroundColor: isSelected ? 'rgba(255,255,255,0.05)' : colors.surface,
               padding: spacing(1),
-              paddingTop: rowPaddingTop + spacing(1),
               display: 'flex',
               flexDirection: 'column',
               gap: spacing(0.75),
