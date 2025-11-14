@@ -4174,7 +4174,6 @@ function renderCalendarGrid({
     const totalRows = Math.ceil(calendarCells.length / 7)
     const rowLevels = Array(totalRows).fill(0)
     const rowMaxLevels = Array(totalRows).fill(0)
-    const rowMaxLevels = Array(totalRows).fill(0)
     const multiDayOverlays: React.ReactNode[] = []
 
     const multiDayEntries = allEvents.filter(({ startDate, endDate }) => startDate.toDateString() !== endDate.toDateString())
