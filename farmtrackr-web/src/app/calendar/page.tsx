@@ -4169,6 +4169,13 @@ function renderCalendarGrid({
       }
     }
 
+    const monthGridStyle = {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+      gridTemplateRows: 'repeat(6, minmax(0, 1fr))',
+      gap: '8px',
+    }
+
     const totalRows = Math.ceil(calendarCells.length / 7)
     const rowLevels = Array(totalRows).fill(0)
     const multiDayOverlays: React.ReactNode[] = []
@@ -4209,40 +4216,30 @@ function renderCalendarGrid({
             style={{
               gridColumn: `${columnStart} / span ${spanDays}`,
               gridRow: `${row + 1}`,
-              position: 'relative',
-              height: 0,
-              pointerEvents: 'none',
-              overflow: 'visible',
+              alignSelf: 'start',
+              margin: `${spacing(0.25) + level * 22}px ${spacing(0.5)} 0`,
+              backgroundColor: event.calendarColor || colors.primary,
+              color: '#ffffff',
+              borderRadius: spacing(0.5),
+              padding: `${spacing(0.25)} ${spacing(0.75)}`,
+              fontSize: '11px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: spacing(0.5),
+              cursor: 'pointer',
+              pointerEvents: 'auto',
+              minHeight: '20px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
             }}
           >
-            <div
-              style={{
-                position: 'absolute',
-                top: `${spacing(0.5) + level * 22}px`,
-                left: 0,
-                right: 0,
-                backgroundColor: event.calendarColor || colors.primary,
-                color: '#ffffff',
-                borderRadius: spacing(0.5),
-                padding: `${spacing(0.25)} ${spacing(0.75)}`,
-                fontSize: '11px',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing(0.5),
-                cursor: 'pointer',
-                pointerEvents: 'auto',
-                minHeight: '20px',
-              }}
-            >
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{event.title}</span>
-              {!event.isAllDay && (
-                <span style={{ fontSize: '10px', opacity: 0.85 }}>
-                  {isFirstVisibleSegment ? event.startLabel : isLastVisibleSegment ? event.endLabel : ''}
-                </span>
-              )}
-            </div>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff', opacity: 0.85 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{event.title}</span>
+            {!event.isAllDay && (
+              <span style={{ fontSize: '10px', opacity: 0.85 }}>
+                {isFirstVisibleSegment ? event.startLabel : isLastVisibleSegment ? event.endLabel : ''}
+              </span>
+            )}
           </div>
         )
 
@@ -4395,7 +4392,23 @@ function renderCalendarGrid({
       )
     })
 
-    return [...cellElements, ...multiDayOverlays]
+    return (
+      <div style={{ position: 'relative' }}>
+        <div style={monthGridStyle}>{cellElements}</div>
+        {multiDayOverlays.length > 0 && (
+          <div
+            style={{
+              ...monthGridStyle,
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+            }}
+          >
+            {multiDayOverlays}
+          </div>
+        )}
+      </div>
+    )
   }
 
   // Week and day views share similar structure
