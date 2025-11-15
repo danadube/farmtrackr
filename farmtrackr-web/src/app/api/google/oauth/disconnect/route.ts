@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { deleteGoogleOAuthToken } from '@/lib/googleTokenStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,6 +10,8 @@ export const dynamic = 'force-dynamic'
  */
 export async function POST(request: NextRequest) {
   try {
+    await deleteGoogleOAuthToken()
+
     const cookieStore = await cookies()
     
     // Clear all Google OAuth cookies

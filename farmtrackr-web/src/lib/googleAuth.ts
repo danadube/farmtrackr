@@ -18,6 +18,9 @@ export const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets', // Google Sheets (read/write access)
   'https://www.googleapis.com/auth/contacts.readonly', // Google Contacts read access
   'https://www.googleapis.com/auth/calendar', // Google Calendar read/write access
+  'https://www.googleapis.com/auth/gmail.modify', // Gmail read/write (modify)
+  'https://www.googleapis.com/auth/gmail.send', // Gmail send access
+  'https://www.googleapis.com/auth/gmail.readonly', // Gmail read-only (fallback)
 ]
 
 /**
@@ -78,6 +81,18 @@ export function getAuthenticatedCalendarClient(accessToken: string) {
   auth.setCredentials({ access_token: accessToken })
 
   const client = google.calendar({ version: 'v3', auth })
+  return client
+}
+
+export function getAuthenticatedGmailClient(accessToken: string) {
+  const auth = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    REDIRECT_URI
+  )
+  auth.setCredentials({ access_token: accessToken })
+
+  const client = google.gmail({ version: 'v1', auth })
   return client
 }
 

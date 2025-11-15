@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { getGoogleAccessToken } from '@/lib/googleTokenHelper'
 import { getAuthenticatedPeopleClient } from '@/lib/googleAuth'
+import { getGoogleOAuthToken } from '@/lib/googleTokenStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,23 +11,18 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get('google_access_token')?.value
-    const refreshToken = cookieStore.get('google_refresh_token')?.value
-    const expiry = cookieStore.get('google_token_expiry')?.value
+    const storedToken = await getGoogleOAuthToken()
+    const accessToken = storedToken?.accessToken || null
+    const refreshToken = storedToken?.refreshToken || null
+    const expiry = storedToken?.expiryDate ? storedToken.expiryDate.getTime() : null
 
     const isConnected = !!accessToken || !!refreshToken
-    
-    let isExpired = false
-    if (expiry) {
-      const expiryTime = parseInt(expiry, 10)
-      isExpired = Date.now() >= expiryTime
-    }
+    const isExpired = expiry ? Date.now() >= expiry : false
 
     // Fetch user info if connected
-    let userEmail: string | null = null
+    let userEmail: string | null = storedToken?.accountEmail || null
     let userName: string | null = null
-    
+
     if (isConnected) {
       try {
         const token = await getGoogleAccessToken()

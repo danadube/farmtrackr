@@ -4,7 +4,7 @@
 
 This roadmap outlines the development plan to bring the web application to feature parity with the Swift app, with special attention to the label printing functionality that had implementation challenges.
 
-**Last Updated:** November 10, 2025  
+**Last Updated:** November 15, 2025  
 **Current Version:** v0.7.0 (UI/UX Enhancements & Polish) - ✅ COMPLETE  
 **Previous Version:** v0.6.0 (Commission Tracking Module) - ✅ COMPLETE  
 **Next Priority:** v0.8.0 (Email & Communication Integration) + v0.7.1 (User Feedback & Bug Fixes)
@@ -59,11 +59,11 @@ This roadmap outlines the development plan to bring the web application to featu
   - Farm-filtered export support (API ready)
   - Column selection UI exists
 
-- [x] **Data Import** ✅ API IMPLEMENTED - UI NEEDS VERIFICATION
+- [x] **Data Import** ✅ VERIFIED - UI + API COMPLETE
   - CSV import API fully functional (`/api/contacts/import`)
   - Excel (.xlsx) import API fully functional
   - Field mapping and validation in API
-  - Import UI exists but needs testing/refinement
+  - Drag-and-drop import UI on `/import-export` tested end-to-end
 
 - [x] **Data Quality & Duplicate Detection** ✅ VERIFIED - FULLY IMPLEMENTED
   - Duplicate detection algorithm (name, email, phone matching)
@@ -85,16 +85,10 @@ This roadmap outlines the development plan to bring the web application to featu
   - Version update documentation
 
 ### 🚧 In Progress / Partial Implementation
-- [ ] **Google Sheets Integration** (Partially implemented)
+- [ ] **Google Sheets Integration** (UI + API implemented, OAuth pending)
+  - Dedicated page at `/google-sheets` with farm-aware import/export
   - API structure exists (`/api/google-sheets/import` and `/export`)
-  - Needs authentication flow completion
-  - Needs data sync implementation
-  - UI page exists but requires OAuth setup
-
-- [ ] **CSV/Excel Import UI** (API complete, UI needs verification)
-  - Import page exists at `/import-export`
-  - API fully functional
-  - UI may need refinement based on user testing
+  - Awaiting Google OAuth credential flow and token storage
 
 ### ❌ Not Started / Planned
 - [ ] **Export Column Selection for Transactions**
@@ -1309,8 +1303,8 @@ Google Services Layer
 |---------|-----------|----------------|----------|-------|
 | Contact CRUD | ✅ Complete | ✅ Complete | ✅ Done | Fully verified |
 | Search & Filter | ✅ Complete | ✅ Complete | ✅ Done | Basic search/filter working |
-| CSV Import | ✅ Complete | 🟡 API Done, UI Needs Testing | 🔴 High | API functional, UI exists |
-| Excel Import | ✅ Complete | 🟡 API Done, UI Needs Testing | 🟡 Medium | API functional, UI exists |
+| CSV Import | ✅ Complete | ✅ Complete | ✅ Done | Workflow verified via `/import-export` |
+| Excel Import | ✅ Complete | ✅ Complete | ✅ Done | Workflow verified via `/import-export` |
 | CSV Export | ✅ Complete | ✅ Complete | ✅ Done | Full implementation verified |
 | Excel Export | ✅ Complete | ✅ Complete | ✅ Done | Full implementation verified |
 | JSON Export | ✅ Complete | ✅ Complete | ✅ Done | API implemented |
@@ -1324,8 +1318,8 @@ Google Services Layer
 | Google Calendar Integration | ❌ Not Started | ❌ Not Started | 🟡 Medium | Calendar API + OAuth |
 | Google Drive Integration | ❌ Not Started | ❌ Not Started | 🟡 Medium | Drive API + OAuth |
 | Import Templates | ✅ Complete | ❌ Not Started | 🟡 Medium | Future enhancement |
-| Document Management | ✅ Complete | 🟡 API Complete, UI Partial | 🟡 Medium | CRUD API done, file upload pending |
-| Batch Operations | ✅ Complete | ❌ Not Started | 🟡 Medium | Future enhancement |
+| Document Management | ✅ Complete | ✅ Complete | ✅ Done | CRUD + file upload live on `/documents` |
+| Batch Operations | ✅ Complete | ✅ Complete | ✅ Done | Multi-select + bulk actions implemented |
 | Theme System | ✅ Complete | ✅ Complete | ✅ Done | Light/Dark/System working |
 | Database Integration | ✅ Core Data | ✅ PostgreSQL + Prisma | ✅ Done | Production ready |
 | Advanced Search | ✅ Complete | ❌ Not Started | 🟡 Medium | Basic search sufficient for now |
@@ -1342,10 +1336,10 @@ Google Services Layer
 
 ### Critical Priority (Must Have)
 1. ~~**Label Printing**~~ - ✅ COMPLETE - Successfully implemented
-2. **CSV/Excel Import UI Verification** - Core data migration functionality
+2. ~~**CSV/Excel Import UI Verification**~~ - ✅ COMPLETE
 3. ~~**Duplicate Detection**~~ - ✅ COMPLETE
 4. ~~**Database Integration**~~ - ✅ COMPLETE
-5. **Document Management UI** - Complete CRUD workflow
+5. ~~**Document Management UI**~~ - ✅ COMPLETE
 
 ### High Priority (Important)
 1. **Data Validation** - Prevent bad data entry
@@ -1427,79 +1421,45 @@ This roadmap should be reviewed and updated:
 
 ---
 
-## 🎯 Immediate Next Steps (v0.4.2 & v0.5.0)
+## 🎯 Immediate Next Steps (Updated November 15, 2025)
 
-### Priority 1: Complete Document Management (v0.4.2)
-**Status:** API Complete, UI Partial ✅🚧
+### Priority 1: Gmail/Email Integration (v0.8.0)
+**Status:** UI and API scaffolding complete; needs live Gmail connector.
 
-**Remaining Tasks:**
-1. **Create Document Modal**
-   - Form with title, description, type
-   - Validation and error handling
-   - Success feedback
+**Next Actions:**
+1. Implement OAuth + token storage for Gmail (send + read scopes).
+2. Wire `/api/emails/*` routes to real Gmail data instead of stubs.
+3. Finish template management (persisted templates + editor polish).
+4. Add delete/archive/label actions backed by Gmail.
 
-2. **Edit & Delete Actions**
-   - Edit document modal
-   - Delete confirmation dialog
-   - Optimistic UI updates
+### Priority 2: Google Sheets OAuth Completion (v0.5.0 follow-up)
+**Status:** Import/export flows functional in UI; blocked on auth.
 
-3. **File Upload Integration** (Optional - can be v0.5.0)
-   - File upload endpoint (Vercel Blob or AWS S3)
-   - Document preview for PDFs/images
-   - Download functionality
+**Next Actions:**
+1. Finalize Google Cloud credentials and server-side token storage.
+2. Connect `/api/google-sheets/import|export` to authenticated client.
+3. Add sync status indicators + error reporting on `/google-sheets`.
 
+### Priority 3: Transaction Pipeline UI (v0.9.0)
+**Status:** Transactions + analytics exist; pipeline view not started.
 
-### Priority 2: Google Integration (v0.5.0)
-**Status:** API Structure Exists for Sheets 🟡, Contacts Not Started ❌
+**Next Actions:**
+1. Design Kanban list grouped by stage using existing transaction data.
+2. Enable drag/drop stage changes with optimistic updates.
+3. Expose stage-specific task templates (prep for task system).
 
-**Google Sheets Tasks:**
-1. **OAuth 2.0 Setup**
-   - Google Cloud Console configuration
-   - OAuth flow implementation
-   - Token storage (secure backend)
+### Priority 4: Task & Reminders Foundations (v0.10.0)
+**Status:** Listing tasks exist but no global task module.
 
-2. **Complete Sync Implementation**
-   - Import from Google Sheets
-   - Export to Google Sheets
-   - Sync status UI
+**Next Actions:**
+1. Standalone `/tasks` page listing per-contact/per-transaction tasks.
+2. Hook calendar events to task reminders to prep for Apple Reminders sync.
+3. Define schema for recurring reminders ahead of external sync work.
 
-**Google Contacts Tasks:**
-1. **People API Setup**
-   - Enable People API in Google Cloud Console
-   - Add contacts scope to OAuth
-
-2. **Import from Google Contacts**
-   - Connect Google account
-   - Fetch contacts via People API
-   - Field mapping wizard
-   - Import to FarmTrackr
-
-3. **Export to Google Contacts**
-   - Create/update Google contacts
-   - Match existing contacts
-   - Handle duplicates
-
-2. **Complete Sync Implementation**
-   - Import from Google Sheets
-   - Export to Google Sheets
-   - Sync status UI
-
-**Estimated Time:** 1-2 weeks
-
-### Priority 3: CSV/Excel Import UI Verification (v0.4.1)
-**Status:** API Complete, UI Needs Testing 🟡
-
-**Tasks:**
-1. Test import workflow end-to-end
-2. Fix any UI issues found
-3. Improve error messaging
-4. Add progress indicators if needed
-
-
-### Priority 4: Theme Flash Fix (Technical Debt)
+### Priority 5: Theme Flash Fix (Technical Debt)
 **Status:** Known Issue ⚠️
 
-**Issue:** Theme switches dark→light on page refresh when set to System
+**Issue:** Theme switches dark→light on refresh when set to System
 **Priority:** Low (doesn't affect functionality)
 
 ---

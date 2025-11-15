@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, CSSProperties, MouseEvent } from 'react'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
 import { Mail, Send, Inbox, Search, RefreshCw, Loader2, Paperclip, X, Reply, Forward, Link as LinkIcon, Unlink } from 'lucide-react'
@@ -29,6 +29,55 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
   const [isLinking, setIsLinking] = useState(false)
   const [showLinkSelector, setShowLinkSelector] = useState(false)
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
+
+  const emailThemeVars = useMemo(() => {
+    const primaryText = text.primary?.color || '#e8eaed'
+    const secondaryText = text.secondary?.color || '#9aa0a6'
+    const tertiaryText = text.tertiary?.color || '#5f6368'
+    return {
+      '--email-bg-card': colors.card,
+      '--email-bg-hover': colors.cardHover || '#2f3439',
+      '--email-bg-dark': isDark ? '#1a1d21' : '#f5f5f5',
+      '--email-border-subtle': colors.border,
+      '--email-text-primary': primaryText,
+      '--email-text-secondary': secondaryText,
+      '--email-text-tertiary': tertiaryText,
+      '--email-hover-overlay': `${colors.primary}26`,
+      '--email-selected-border': colors.primary,
+      '--email-primary': colors.primary,
+      '--email-icon-muted': secondaryText,
+      '--meadow-green': '#689f38',
+      '--forest-green': '#558b2f',
+      '--deep-forest': '#2d5016',
+      '--light-sage': '#7da65d',
+      '--tangerine': '#ff9800',
+      '--plum': '#673ab7',
+      '--cherry': '#f4516c',
+      '--sky-blue': '#42a5f5',
+      '--peach': '#ffb74d',
+    } as CSSProperties
+  }, [colors, isDark, text.primary, text.secondary, text.tertiary])
+
+  const handleToggleStar = useCallback((event: MouseEvent<HTMLButtonElement>, email: GmailMessage) => {
+    event.stopPropagation()
+    setEmails((prev) =>
+      prev.map((item) =>
+        item.id === email.id ? { ...item, isStarred: !email.isStarred } : item
+      )
+    )
+  }, [])
+
+  const handleArchiveEmail = useCallback((event: MouseEvent<HTMLButtonElement>, email: GmailMessage) => {
+    event.stopPropagation()
+    setEmails((prev) => prev.filter((item) => item.id !== email.id))
+    setSelectedEmail((current) => (current?.id === email.id ? null : current))
+  }, [])
+
+  const handleDeleteEmailQuick = useCallback((event: MouseEvent<HTMLButtonElement>, email: GmailMessage) => {
+    event.stopPropagation()
+    setEmails((prev) => prev.filter((item) => item.id !== email.id))
+    setSelectedEmail((current) => (current?.id === email.id ? null : current))
+  }, [])
 
   useEffect(() => {
     // Load emails when filters change, even without contactEmail
@@ -259,7 +308,14 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
   })
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        ...emailThemeVars,
+      }}
+    >
       {/* Header */}
       <div style={{ 
         padding: spacing(3), 
@@ -487,22 +543,15 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
             <p style={{ fontSize: '14px', ...text.secondary, margin: '0' }}>Loading emails...</p>
           </div>
         ) : filteredEmails.length === 0 ? (
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            padding: spacing(6),
-            flexDirection: 'column',
-            gap: spacing(2)
-          }}>
-            <Inbox style={{ width: '48px', height: '48px', color: colors.text.tertiary }} />
-            <p style={{ fontSize: '14px', ...text.secondary, margin: '0', textAlign: 'center' }}>
+          <div className="email-empty-state">
+            <Inbox style={{ width: '48px', height: '48px', color: text.tertiary.color }} />
+            <p className="empty-title">
               {searchQuery ? 'No emails match your search' : 'No emails found'}
             </p>
             {!contactEmail && (
               <>
-                <p style={{ fontSize: '12px', ...text.tertiary, margin: '0', textAlign: 'center' }}>
-                  {transactionId ? 'No emails linked to this transaction yet' : 'No emails found'}
+                <p className="empty-subtext">
+                  {transactionId ? 'No emails linked to this transaction yet' : 'Try adjusting your filters or load recent messages.'}
                 </p>
                 <button
                   type="button"
@@ -510,7 +559,7 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    loadEmails(true) // Force load all emails, not just linked ones
+                    loadEmails(true)
                   }}
                   style={getButtonPressStyle(
                     'load-recent-emails',
@@ -539,129 +588,95 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
-            {filteredEmails.map((email) => (
-              <div
-                key={email.id}
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setSelectedEmail(email)
-                }}
-                style={{
-                  padding: spacing(3),
-                  ...card,
-                  cursor: 'pointer',
-                  border: selectedEmail?.id === email.id ? `1px solid ${colors.primary}` : `1px solid ${colors.border}`,
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedEmail?.id !== email.id) {
-                    e.currentTarget.style.backgroundColor = colors.cardHover
-                    e.currentTarget.style.borderColor = colors.primary
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedEmail?.id !== email.id) {
-                    e.currentTarget.style.backgroundColor = colors.card
-                    e.currentTarget.style.borderColor = colors.border
-                  }
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing(2) }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5), marginBottom: spacing(1) }}>
-                      <p style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                        {email.subject || '(No subject)'}
-                      </p>
-                      {email.isUnread && (
-                        <span style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: colors.primary
-                        }} />
-                      )}
+          <div className="email-card-list">
+            {filteredEmails.map((email) => {
+              const { name: parsedName, email: parsedEmail } = parseEmailField(email.from)
+              const avatarColor = getAvatarColor(parsedEmail)
+              const avatarInitials = getAvatarInitials(parsedName, parsedEmail)
+              const hasAttachments = !!(email.attachments && email.attachments.length)
+              const firstLabel = email.labels && email.labels.length > 0 ? email.labels[0] : null
+
+              return (
+                <div
+                  key={email.id}
+                  className={`email-card${selectedEmail?.id === email.id ? ' selected' : ''}${email.isUnread ? ' unread' : ''}`}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setSelectedEmail(email)
+                  }}
+                >
+                  {email.isUnread && <div className="unread-indicator" />}
+                  <div className="email-card-inner">
+                    <div
+                      className="email-avatar"
+                      style={{ backgroundColor: avatarColor }}
+                    >
+                      {avatarInitials}
                     </div>
-                    <p style={{ fontSize: '12px', ...text.secondary, margin: '0 0 4px 0' }}>
-                      {email.from} → {email.to}
-                    </p>
-                    <p style={{ fontSize: '12px', ...text.tertiary, margin: '0' }}>
-                      {new Date(email.date).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric', 
-                        year: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                    {email.plainBody && (
-                      <p style={{ 
-                        fontSize: '12px', 
-                        ...text.tertiary, 
-                        margin: `${spacing(1)} 0 0 0`,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical'
-                      }}>
-                        {email.plainBody.substring(0, 150)}...
-                      </p>
-                    )}
-                    {/* Labels */}
-                    {email.labels && email.labels.length > 0 && (
-                      <div style={{ 
-                        display: 'flex', 
-                        flexWrap: 'wrap', 
-                        gap: spacing(0.5),
-                        marginTop: spacing(1)
-                      }}>
-                        {email.labels.slice(0, 3).map((label) => (
-                          <button
-                            key={label}
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              setSelectedLabel(label)
-                            }}
-                            style={{
-                              fontSize: '11px',
-                              padding: '2px 6px',
-                              backgroundColor: selectedLabel === label 
-                                ? colors.primary 
-                                : colors.background,
-                              color: selectedLabel === label 
-                                ? '#ffffff' 
-                                : colors.text.tertiary,
-                              border: `1px solid ${selectedLabel === label ? colors.primary : colors.border}`,
-                              borderRadius: spacing(0.5),
-                              cursor: 'pointer',
-                              fontWeight: '500'
-                            }}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                        {email.labels.length > 3 && (
-                          <span style={{
-                            fontSize: '11px',
-                            padding: '2px 6px',
-                            color: colors.text.tertiary
-                          }}>
-                            +{email.labels.length - 3}
+                    <div className="email-content">
+                      <div className="email-header-row">
+                        <span className="email-sender">{parsedName || parsedEmail}</span>
+                        <span className="email-time">{formatEmailDate(email.date)}</span>
+                      </div>
+                      <div className="email-subject">
+                        {email.subject || '(No subject)'}
+                      </div>
+                      {email.plainBody && (
+                        <div className="email-preview">
+                          {email.plainBody}
+                        </div>
+                      )}
+                      <div className="email-badges">
+                        {email.transactionId && (
+                          <span className="badge badge-transaction">
+                            <span className="badge-icon">🏡</span>
+                            {email.transactionId}
+                          </span>
+                        )}
+                        {hasAttachments && (
+                          <span className="badge badge-attachment">
+                            <span className="badge-icon">📎</span>
+                            {email.attachments?.length}
+                          </span>
+                        )}
+                        {firstLabel && (
+                          <span className="badge badge-label">
+                            {firstLabel}
                           </span>
                         )}
                       </div>
-                    )}
+                    </div>
+                    <div className="email-quick-actions">
+                      <button
+                        type="button"
+                        className="btn-icon-action"
+                        title="Star email"
+                        onClick={(event) => handleToggleStar(event, email)}
+                      >
+                        {email.isStarred ? '⭐' : '☆'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-icon-action"
+                        title="Archive"
+                        onClick={(event) => handleArchiveEmail(event, email)}
+                      >
+                        📁
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-icon-action"
+                        title="Delete"
+                        onClick={(event) => handleDeleteEmailQuick(event, email)}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
-                  {email.attachments && email.attachments.length > 0 && (
-                    <Paperclip style={{ width: '16px', height: '16px', color: colors.text.tertiary, flexShrink: 0 }} />
-                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
@@ -1069,8 +1084,256 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        .email-card-list {
+          display: flex;
+          flex-direction: column;
+        }
+        .email-card {
+          position: relative;
+          background: var(--email-bg-card);
+          border-bottom: 1px solid var(--email-border-subtle);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .email-card:last-child {
+          border-bottom: none;
+        }
+        .email-card:hover {
+          background: var(--email-bg-hover);
+        }
+        .email-card.selected {
+          background: rgba(104, 159, 56, 0.15);
+          border-left: 3px solid var(--meadow-green);
+        }
+        .email-card.unread {
+          background: rgba(104, 159, 56, 0.05);
+        }
+        .email-card-inner {
+          display: flex;
+          gap: 12px;
+          padding: 16px;
+          align-items: flex-start;
+        }
+        .email-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justifyContent: center;
+          color: #fff;
+          font-weight: 600;
+          font-size: 14px;
+          font-family: 'Outfit', sans-serif;
+        }
+        .email-content {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .email-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 16px;
+        }
+        .email-sender {
+          font-family: 'Outfit', sans-serif;
+          font-size: 15px;
+          font-weight: 500;
+          color: var(--email-text-primary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .email-time {
+          font-family: 'Work Sans', sans-serif;
+          font-size: 12px;
+          color: var(--email-text-secondary);
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .email-subject {
+          font-family: 'Work Sans', sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--email-text-primary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .email-card.unread .email-subject {
+          font-weight: 600;
+        }
+        .email-preview {
+          font-family: 'Work Sans', sans-serif;
+          font-size: 13px;
+          color: var(--email-text-secondary);
+          line-height: 1.4;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          margin-top: 2px;
+        }
+        .email-badges {
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+          margin-top: 6px;
+        }
+        .badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-family: 'Work Sans', sans-serif;
+          font-size: 11px;
+          font-weight: 500;
+          padding: 3px 8px;
+          border-radius: 12px;
+          white-space: nowrap;
+        }
+        .badge-transaction {
+          background: rgba(104, 159, 56, 0.2);
+          color: var(--light-sage);
+          border: 1px solid rgba(104, 159, 56, 0.3);
+        }
+        .badge-attachment {
+          background: rgba(66, 165, 245, 0.2);
+          color: var(--sky-blue);
+          border: 1px solid rgba(66, 165, 245, 0.3);
+        }
+        .badge-label {
+          background: rgba(255, 152, 0, 0.2);
+          color: var(--tangerine);
+          border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+        .email-quick-actions {
+          display: flex;
+          gap: 4px;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+          flex-shrink: 0;
+        }
+        .email-card:hover .email-quick-actions {
+          opacity: 1;
+        }
+        .btn-icon-action {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: none;
+          background: transparent;
+          color: var(--email-icon-muted);
+          font-size: 16px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+        }
+        .btn-icon-action:hover {
+          background: var(--email-bg-dark);
+          color: var(--email-text-primary);
+          transform: scale(1.1);
+        }
+        .unread-indicator {
+          position: absolute;
+          left: 6px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: var(--sky-blue);
+        }
+        .email-empty-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 64px 24px;
+          text-align: center;
+          gap: 8px;
+        }
+        .email-empty-state .empty-title {
+          font-family: 'Work Sans', sans-serif;
+          font-size: 16px;
+          color: var(--email-text-secondary);
+          margin: 0;
+        }
+        .email-empty-state .empty-subtext {
+          font-family: 'Work Sans', sans-serif;
+          font-size: 14px;
+          color: var(--email-text-tertiary);
+          margin: 0;
+        }
       `}</style>
     </div>
   )
+}
+
+const AVATAR_COLORS = [
+  '#ea4335',
+  '#34a853',
+  '#4285f4',
+  '#fbbc04',
+  '#ff6d00',
+  '#9c27b0',
+  '#00bcd4',
+  '#ff9800',
+]
+
+function parseEmailField(value: string) {
+  if (!value) {
+    return { name: '', email: '' }
+  }
+  const match = value.match(/(.*)<(.+@.+)>/)
+  if (match) {
+    return {
+      name: match[1]?.replace(/"/g, '').trim(),
+      email: match[2]?.trim() || '',
+    }
+  }
+  return { name: '', email: value.trim() }
+}
+
+function getAvatarInitials(name?: string | null, email?: string) {
+  if (name && name.trim().length > 0) {
+    const cleanName = name.replace(/<.*?>/, '').trim()
+    const parts = cleanName.split(' ').filter(Boolean)
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    }
+    return cleanName.substring(0, 2).toUpperCase()
+  }
+  const fallback = email ? email.split('@')[0] : 'FT'
+  return fallback.substring(0, 2).toUpperCase()
+}
+
+function getAvatarColor(email: string) {
+  if (!email) return AVATAR_COLORS[0]
+  let hash = 0
+  for (let i = 0; i < email.length; i += 1) {
+    hash = email.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
+function formatEmailDate(dateStr: string) {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const isSameDay =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear()
+
+  if (isSameDay) {
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  }
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 

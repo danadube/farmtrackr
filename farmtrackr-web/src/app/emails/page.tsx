@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, CSSProperties } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
@@ -71,11 +71,93 @@ export default function EmailsPage() {
   const [loading, setLoading] = useState(false)
   const [showComposer, setShowComposer] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [showLabelsMenu, setShowLabelsMenu] = useState(false)
-  const labelsSectionRef = useRef<HTMLDivElement | null>(null)
+  const [collapsedSections, setCollapsedSections] = useState({
+    siu: false,
+    transactions: false,
+    custom: false,
+  })
   const [showLinkSelector, setShowLinkSelector] = useState(false)
   const [isLinking, setIsLinking] = useState(false)
   const [templates, setTemplates] = useState<EmailTemplate[]>(DEFAULT_EMAIL_TEMPLATES)
+
+  const labelThemeVars = useMemo(() => ({
+    '--label-bg-card': colors.card,
+    '--label-bg-hover': colors.cardHover || '#2f3439',
+    '--label-border-subtle': colors.border,
+    '--label-text-primary': text.primary.color,
+    '--label-text-secondary': text.secondary.color,
+    '--label-text-tertiary': text.tertiary.color,
+    '--label-accent': colors.primary,
+    '--label-hover-bg': colors.cardHover || '#2f3439',
+  }) as CSSProperties, [colors.card, colors.cardHover, colors.border, colors.primary, text.primary.color, text.secondary.color, text.tertiary.color])
+
+  const categorizedLabels = useMemo(() => {
+    const systemOrder = ['INBOX', 'STARRED', 'SENT', 'DRAFTS', 'IMPORTANT']
+    const system: GmailLabel[] = []
+    const siu: GmailLabel[] = []
+    const transactions: GmailLabel[] = []
+    const custom: GmailLabel[] = []
+    let hasLoggedLabel = false
+
+    labels.forEach((label) => {
+      const rawValue = label.value || label.name
+      if (!rawValue) return
+      const upperValue = rawValue.toUpperCase()
+      const upperName = (label.name || '').toUpperCase()
+
+      if (upperValue === 'LOGGED') {
+        hasLoggedLabel = true
+        transactions.push(label)
+        return
+      }
+
+      if (systemOrder.includes(upperValue)) {
+        system.push(label)
+        return
+      }
+
+      if (upperName.startsWith('SIU')) {
+        siu.push(label)
+        return
+      }
+
+      if (upperName.includes('TRANSACTION') || upperName.includes('TXN')) {
+        transactions.push(label)
+        return
+      }
+
+      custom.push(label)
+    })
+
+    if (!hasLoggedLabel) {
+      transactions.unshift({
+        name: 'Logged Emails',
+        value: 'LOGGED',
+        count: 0,
+        type: 'virtual',
+      } as GmailLabel)
+    }
+
+    const orderedSystem: GmailLabel[] = []
+    systemOrder.forEach((value) => {
+      const match = system.find((label) => (label.value || label.name || '').toUpperCase() === value)
+      if (match) {
+        orderedSystem.push(match)
+      }
+    })
+    system.forEach((label) => {
+      if (!orderedSystem.includes(label)) {
+        orderedSystem.push(label)
+      }
+    })
+
+    return {
+      system: orderedSystem,
+      siu,
+      transactions,
+      custom,
+    }
+  }, [labels])
 
   // Load Gmail labels
   useEffect(() => {
@@ -223,21 +305,6 @@ export default function EmailsPage() {
     }
   }
 
-  useEffect(() => {
-    if (!showLabelsMenu) return
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (labelsSectionRef.current && !labelsSectionRef.current.contains(event.target as Node)) {
-        setShowLabelsMenu(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [showLabelsMenu])
-
   const loadEmails = async () => {
     setLoading(true)
     try {
@@ -353,30 +420,84 @@ export default function EmailsPage() {
     }
   }
 
-  const getLabelIcon = (labelName: string) => {
-    switch (labelName) {
-      case 'INBOX':
-        return <Inbox style={{ width: '16px', height: '16px' }} />
-      case 'SENT':
-      case 'Sent':
-        return <Send style={{ width: '16px', height: '16px' }} />
-      case 'IMPORTANT':
-      case 'Important':
-        return <Star style={{ width: '16px', height: '16px' }} />
-      case 'Clients':
-        return <Users style={{ width: '16px', height: '16px' }} />
-      case 'Transactions':
-        return <Home style={{ width: '16px', height: '16px' }} />
-      case 'Personal':
-        return <User style={{ width: '16px', height: '16px' }} />
-      case 'DRAFTS':
-      case 'Drafts':
-        return <FileEdit style={{ width: '16px', height: '16px' }} />
-      case 'LOGGED':
-        return <Mail style={{ width: '16px', height: '16px', color: colors.text.secondary }} />
-      default:
-        return <Mail style={{ width: '16px', height: '16px' }} />
+  const toggleLabelSection = (section: keyof typeof collapsedSections) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }))
+  }
+
+  const handleManageLabels = () => {
+    if (typeof window !== 'undefined') {
+      window.open('https://mail.google.com/mail/u/0/#settings/labels', '_blank')
     }
+  }
+
+  const getLabelValue = (label: GmailLabel) => label.value || label.name || ''
+
+  const getLabelDisplayName = (label: GmailLabel) => {
+    const value = getLabelValue(label).toUpperCase()
+    switch (value) {
+      case 'INBOX':
+        return 'Inbox'
+      case 'SENT':
+        return 'Sent'
+      case 'STARRED':
+        return 'Starred'
+      case 'DRAFT':
+      case 'DRAFTS':
+        return 'Drafts'
+      case 'IMPORTANT':
+        return 'Important'
+      case 'LOGGED':
+        return 'Logged Emails'
+      default:
+        return label.name || getLabelValue(label)
+    }
+  }
+
+  const getLabelGlyph = (label: GmailLabel) => {
+    const value = getLabelValue(label).toUpperCase()
+    if (value === 'INBOX') return '📬'
+    if (value === 'SENT') return '📤'
+    if (value === 'STARRED' || value === 'IMPORTANT') return '⭐'
+    if (value === 'DRAFT' || value === 'DRAFTS') return '📝'
+    if (value === 'LOGGED') return '🗂️'
+
+    const upperName = (label.name || '').toUpperCase()
+    if (upperName.startsWith('SIU')) return '🏷️'
+    if (upperName.includes('TRANSACTION') || upperName.includes('TXN')) return '🏡'
+    if (upperName.includes('CLIENT')) return '👥'
+    if (upperName.includes('PAID')) return '💳'
+    if (upperName.includes('ACTIVE')) return '✅'
+
+    return '🏷️'
+  }
+
+  const getLabelCount = (label: GmailLabel) => label.count ?? 0
+
+  const renderLabelButton = (label: GmailLabel, index: number, prefix: string) => {
+    const rawValue = getLabelValue(label)
+    if (!rawValue) return null
+    const isActive = selectedLabel === rawValue
+
+    return (
+      <button
+        type="button"
+        key={`${prefix}-${rawValue}-${index}`}
+        className={`label-item${isActive ? ' active' : ''}`}
+        onClick={() => handleSelectLabel(rawValue)}
+      >
+        <span
+          className="label-icon"
+          style={label.color ? { color: label.color } : undefined}
+        >
+          {getLabelGlyph(label)}
+        </span>
+        <span className="label-name">{getLabelDisplayName(label)}</span>
+        <span className="label-count">{getLabelCount(label)}</span>
+      </button>
+    )
   }
 
   const getLinkedEmailCount = () => {
@@ -625,151 +746,99 @@ export default function EmailsPage() {
             overflow: 'hidden',
             maxHeight: 'calc(100vh - 300px)'
           }}>
-            {/* Gmail Labels Section */}
+          {/* Gmail Labels Section */}
+          <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}` }}>
             <div
-              ref={labelsSectionRef}
-              style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}`, position: 'relative' as const }}
+              className="labels-sidebar"
+              style={labelThemeVars}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(2) }}>
-                <h3 style={{ fontSize: '12px', fontWeight: '600', ...text.tertiary, textTransform: 'uppercase', margin: 0 }}>
-                  Gmail Folders/Labels
-                </h3>
-                <button
-                  onClick={() => setShowLabelsMenu((prev) => !prev)}
-                  style={{
-                    fontSize: '12px',
-                    color: colors.primary,
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 0
-                  }}
-                >
-                  Manage Labels
+              {labels.length === 0 ? (
+                <div className="label-empty">
+                  <span className="empty-icon">📭</span>
+                  <p>No labels found.</p>
+                  <p className="label-empty-subtext">Connect Gmail or refresh to load folders.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="label-section">
+                    <div className="label-section-header">
+                      <span className="section-title">SYSTEM</span>
+                    </div>
+                    <div className="label-items">
+                      {categorizedLabels.system.length === 0 ? (
+                        <span className="label-empty-subtext">No system labels available.</span>
+                      ) : (
+                        categorizedLabels.system.map((label, index) =>
+                          renderLabelButton(label, index, 'system')
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  {categorizedLabels.siu.length > 0 && (
+                    <div className="label-section">
+                      <button
+                        type="button"
+                        className={`label-section-header collapsible${collapsedSections.siu ? ' collapsed' : ''}`}
+                        onClick={() => toggleLabelSection('siu')}
+                      >
+                        <span className="section-title">SIU LABELS</span>
+                        <span className="section-toggle">▼</span>
+                      </button>
+                      <div className={`label-items${collapsedSections.siu ? ' collapsed' : ''}`}>
+                        {categorizedLabels.siu.map((label, index) =>
+                          renderLabelButton(label, index, 'siu')
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {categorizedLabels.transactions.length > 0 && (
+                    <div className="label-section">
+                      <button
+                        type="button"
+                        className={`label-section-header collapsible${collapsedSections.transactions ? ' collapsed' : ''}`}
+                        onClick={() => toggleLabelSection('transactions')}
+                      >
+                        <span className="section-title">TRANSACTIONS</span>
+                        <span className="section-toggle">▼</span>
+                      </button>
+                      <div className={`label-items${collapsedSections.transactions ? ' collapsed' : ''}`}>
+                        {categorizedLabels.transactions.map((label, index) =>
+                          renderLabelButton(label, index, 'transactions')
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {categorizedLabels.custom.length > 0 && (
+                    <div className="label-section">
+                      <button
+                        type="button"
+                        className={`label-section-header collapsible${collapsedSections.custom ? ' collapsed' : ''}`}
+                        onClick={() => toggleLabelSection('custom')}
+                      >
+                        <span className="section-title">CUSTOM</span>
+                        <span className="section-toggle">▼</span>
+                      </button>
+                      <div className={`label-items${collapsedSections.custom ? ' collapsed' : ''}`}>
+                        {categorizedLabels.custom.map((label, index) =>
+                          renderLabelButton(label, index, 'custom')
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div className="label-footer">
+                <button className="btn-manage-labels" type="button" onClick={handleManageLabels}>
+                  <span className="btn-icon">➕</span>
+                  <span className="btn-text">Manage Labels</span>
                 </button>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing(1) }}>
-                {labels.length === 0 ? (
-                  <span style={{ fontSize: '12px', ...text.tertiary }}>
-                    No labels found. Click refresh to try again.
-                  </span>
-                ) : (
-                  (() => {
-                    const sortedLabels = [...labels]
-                      .map((label) => ({
-                        ...label,
-                        displayName:
-                          (label.value || label.name) === 'LOGGED'
-                            ? 'Logged Emails'
-                            : label.name
-                      }))
-                      .sort((a, b) => (b.count || 0) - (a.count || 0))
-
-                    if (!sortedLabels.some((label) => (label.value || label.name) === 'LOGGED')) {
-                      sortedLabels.unshift({
-                        name: 'Logged Emails',
-                        displayName: 'Logged Emails',
-                        count: 0,
-                        icon: '🗂️',
-                        color: '#6b7280',
-                        type: 'virtual',
-                        value: 'LOGGED'
-                      })
-                    }
-
-                    return sortedLabels.slice(0, 6).map((label) => {
-                      const labelValue = label.value || label.name
-                      const displayName = label.displayName || label.name
-                      return (
-                        <button
-                          key={labelValue}
-                          {...getButtonPressHandlers(`label-${labelValue}`)}
-                          onClick={() => handleSelectLabel(labelValue)}
-                          style={getButtonPressStyle(
-                            `label-${labelValue}`,
-                            {
-                              padding: `${spacing(1)} ${spacing(2)}`,
-                              backgroundColor: selectedLabel === labelValue ? colors.primary : 'transparent',
-                              color: selectedLabel === labelValue ? '#ffffff' : colors.text.primary,
-                              border: `1px solid ${selectedLabel === labelValue ? colors.primary : colors.border}`,
-                              borderRadius: spacing(1),
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: spacing(1)
-                            },
-                            selectedLabel === labelValue ? colors.primary : colors.card,
-                            selectedLabel === labelValue ? colors.primaryHover : colors.cardHover
-                          )}
-                        >
-                          {labelValue === 'LOGGED' ? (
-                            <Mail style={{ width: '16px', height: '16px', color: colors.text.secondary }} />
-                          ) : (
-                            getLabelIcon(labelValue)
-                          )}
-                          <span>{displayName}</span>
-                          <span style={{ opacity: 0.7 }}>({label.count || 0})</span>
-                        </button>
-                      )
-                    })
-                  })()
-                )}
-              </div>
-
-              {showLabelsMenu && labels.length > 0 && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 8px)',
-                    right: spacing(3),
-                    zIndex: 30,
-                    backgroundColor: colors.background,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: spacing(1),
-                    boxShadow: isDark
-                      ? '0 12px 30px rgba(0, 0, 0, 0.6)'
-                      : '0 16px 40px rgba(15, 23, 42, 0.12)',
-                    minWidth: '240px',
-                    maxHeight: '260px',
-                    overflowY: 'auto'
-                  }}
-                >
-                  <div style={{ padding: spacing(2), display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
-                    {labels.map((label) => {
-                      const labelValue = label.value || label.name
-                      return (
-                      <button
-                        key={`menu-${labelValue}`}
-                        onClick={() => handleSelectLabel(labelValue)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: spacing(1.5),
-                          borderRadius: spacing(1),
-                          border: 'none',
-                          backgroundColor: selectedLabel === labelValue ? colors.primaryLight : 'transparent',
-                          color: selectedLabel === labelValue ? colors.primary : colors.text.primary,
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          fontWeight: selectedLabel === labelValue ? 600 : 500,
-                          textAlign: 'left'
-                        }}
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                          {getLabelIcon(labelValue)}
-                          {label.name}
-                        </span>
-                        <span style={{ fontSize: '12px', ...text.tertiary }}>({label.count})</span>
-                      </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
+          </div>
 
             {/* Search and Filter */}
             <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}` }}>
@@ -1155,6 +1224,194 @@ export default function EmailsPage() {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+
+        .labels-sidebar {
+          width: 100%;
+          max-width: 280px;
+          background: var(--label-bg-card);
+          border-radius: 12px;
+          padding: 12px 0;
+          margin-bottom: 24px;
+          border: 1px solid var(--label-border-subtle);
+        }
+
+        .label-section {
+          margin-bottom: 16px;
+        }
+
+        .label-section:last-of-type {
+          margin-bottom: 8px;
+        }
+
+        .label-section-header {
+          padding: 8px 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .label-section-header .section-title {
+          font-family: 'Outfit', sans-serif;
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--label-text-tertiary);
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+
+        .label-section-header.collapsible {
+          width: 100%;
+          border: none;
+          background: transparent;
+          cursor: pointer;
+          user-select: none;
+          border-radius: 6px;
+          margin: 0 8px;
+          padding: 8px 12px;
+          transition: background-color 0.2s ease;
+        }
+
+        .label-section-header.collapsible:hover {
+          background: var(--label-bg-hover);
+        }
+
+        .label-section-header.collapsible .section-toggle {
+          font-size: 10px;
+          color: var(--label-text-tertiary);
+          transition: transform 0.2s ease;
+        }
+
+        .label-section-header.collapsible.collapsed .section-toggle {
+          transform: rotate(-90deg);
+        }
+
+        .label-items {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .label-items.collapsed {
+          display: none;
+        }
+
+        .label-item {
+          width: 100%;
+          border: none;
+          background: transparent;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 16px;
+          cursor: pointer;
+          border-radius: 6px;
+          margin: 0 8px;
+          color: var(--label-text-primary);
+          transition: all 0.2s ease;
+        }
+
+        .label-item:hover {
+          background: var(--label-bg-hover);
+        }
+
+        .label-item.active {
+          background: rgba(104, 159, 56, 0.2);
+          border-left: 3px solid var(--label-accent);
+          padding-left: 13px;
+        }
+
+        .label-icon {
+          font-size: 16px;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .label-name {
+          font-family: 'Work Sans', sans-serif;
+          font-size: 14px;
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .label-item.active .label-name {
+          color: var(--label-accent);
+          font-weight: 600;
+        }
+
+        .label-count {
+          font-family: 'Work Sans', sans-serif;
+          font-size: 12px;
+          font-weight: 500;
+          color: var(--label-text-secondary);
+          background: var(--label-bg-hover);
+          padding: 2px 8px;
+          border-radius: 10px;
+          min-width: 28px;
+          text-align: center;
+          flex-shrink: 0;
+        }
+
+        .label-item.active .label-count {
+          background: rgba(104, 159, 56, 0.3);
+          color: var(--label-accent);
+        }
+
+        .label-footer {
+          padding: 8px 16px;
+          border-top: 1px solid var(--label-border-subtle);
+          margin-top: 8px;
+          padding-top: 16px;
+        }
+
+        .btn-manage-labels {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 8px 12px;
+          background: transparent;
+          border: 1px solid var(--label-border-subtle);
+          border-radius: 8px;
+          color: var(--label-text-secondary);
+          font-family: 'Work Sans', sans-serif;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .btn-manage-labels:hover {
+          background: var(--label-bg-hover);
+          color: var(--label-text-primary);
+          border-color: var(--label-accent);
+        }
+
+        .label-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 32px 16px;
+          text-align: center;
+          gap: 6px;
+          color: var(--label-text-secondary);
+        }
+
+        .label-empty .empty-icon {
+          font-size: 32px;
+        }
+
+        .label-empty-subtext {
+          font-size: 12px;
+          color: var(--label-text-tertiary);
         }
       `}</style>
     </Sidebar>

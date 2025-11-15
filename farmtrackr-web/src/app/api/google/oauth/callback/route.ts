@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getTokensFromCode } from '@/lib/googleAuth'
+import { google } from 'googleapis'
+import { getTokensFromCode, oauth2Client } from '@/lib/googleAuth'
 import { cookies } from 'next/headers'
+import { saveGoogleOAuthToken } from '@/lib/googleTokenStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,37 +39,60 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Store tokens securely (using HTTP-only cookies for security)
-    // In production, consider encrypting these tokens or using a session store
+    const scopesFromToken =
+      tokens.scope && typeof tokens.scope === 'string'
+        ? tokens.scope.split(' ')
+        : Array.isArray(tokens.scope)
+          ? tokens.scope
+          : []
+
+    let accountEmail: string | null = null
+
+    try {
+      oauth2Client.setCredentials({ access_token: tokens.access_token })
+      const oauthClient = google.oauth2({ version: 'v2', auth: oauth2Client })
+      const profile = await oauthClient.userinfo.get()
+      accountEmail = profile.data.email || null
+    } catch (profileError) {
+      console.warn('Unable to fetch Google profile during OAuth callback:', profileError)
+    }
+
+    await saveGoogleOAuthToken({
+      accountEmail,
+      scopes: scopesFromToken,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token ?? null,
+      tokenType: tokens.token_type ?? null,
+      expiryDate: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+    })
+
+    // Store tokens securely (using HTTP-only cookies for legacy flows)
     const cookieStore = await cookies()
     
-    // Set access token (short-lived, expires when browser closes)
     cookieStore.set('google_access_token', tokens.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60, // 1 hour
+      maxAge: 60 * 60,
       path: '/',
     })
 
-    // Store refresh token (long-lived, for getting new access tokens)
     if (tokens.refresh_token) {
       cookieStore.set('google_refresh_token', tokens.refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 365, // 1 year
+        maxAge: 60 * 60 * 24 * 365,
         path: '/',
       })
     }
 
-    // Store token expiry
     if (tokens.expiry_date) {
       cookieStore.set('google_token_expiry', tokens.expiry_date.toString(), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60, // 1 hour
+        maxAge: 60 * 60,
         path: '/',
       })
     }
