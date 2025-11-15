@@ -78,6 +78,7 @@ export interface GmailMessage {
   plainBody: string
   date: string
   isUnread: boolean
+  isStarred?: boolean
   attachments: EmailAttachment[]
   labels: string[]
   transactionId?: string
