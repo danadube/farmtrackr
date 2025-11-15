@@ -254,17 +254,14 @@ export default function EmailsPage() {
             setSelectedLabel(getLabelValue(defaultLabel))
           }
         }
-        setShowLabelsMenu(false)
       } else {
         setLabels([])
         setUnreadCount(0)
-        setShowLabelsMenu(false)
       }
     } catch (err) {
       console.error('Error loading labels:', err)
       setLabels([])
       setUnreadCount(0)
-      setShowLabelsMenu(false)
     }
   }
 
@@ -506,7 +503,6 @@ export default function EmailsPage() {
 
   const handleSelectLabel = (labelName: string) => {
     setSelectedLabel(labelName)
-    setShowLabelsMenu(false)
   }
 
   return (
