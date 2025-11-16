@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, CSSProperties, MouseEvent } 
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
 import { Mail, Send, Inbox, Search, RefreshCw, Loader2, Paperclip, X, Reply, Forward, Link as LinkIcon, Unlink } from 'lucide-react'
-import { GmailMessage, EmailData } from '@/types'
+import { GmailMessage, EmailData, EmailAttachment } from '@/types'
 import { sendEmail, fetchEmails, fetchTransactionEmails } from '@/lib/gmailService'
 import { EmailComposer } from './EmailComposer'
 import { TransactionSelector } from './TransactionSelector'
@@ -77,6 +77,36 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
     event.stopPropagation()
     setEmails((prev) => prev.filter((item) => item.id !== email.id))
     setSelectedEmail((current) => (current?.id === email.id ? null : current))
+  }, [])
+
+  const handleDownloadAttachment = useCallback((att: EmailAttachment) => {
+    try {
+      if (!att?.content) {
+        // No inlined content available; in a future iteration we can fetch via API
+        return
+      }
+      const base64 = att.content.includes('base64,')
+        ? att.content.split('base64,')[1]
+        : att.content
+      const byteCharacters = typeof window !== 'undefined' ? window.atob(base64) : ''
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i += 1) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+      const blob = new Blob([byteArray], { type: att.mimeType || 'application/octet-stream' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = att.name || 'attachment'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      // Swallow errors silently; future enhancement: toast
+      // console.error('Attachment download failed', e)
+    }
   }, [])
 
   useEffect(() => {
@@ -1110,6 +1140,71 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
                   )}
                 </div>
               </div>
+              {/* Attachments */}
+              {Array.isArray((selectedEmail as any)?.attachments) && (selectedEmail as any).attachments.length > 0 && (
+                <div style={{ 
+                  margin: `${spacing(2)} 0`,
+                  padding: spacing(2),
+                  backgroundColor: colors.card,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: spacing(1)
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1), marginBottom: spacing(1.5) }}>
+                    <span style={{ fontSize: '16px' }}>📎</span>
+                    <span style={{ ...text.primary, fontWeight: 600, fontSize: '14px' }}>
+                      Attachments ({(selectedEmail as any).attachments.length})
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1) }}>
+                    {((selectedEmail as any).attachments as EmailAttachment[]).map((att, idx) => (
+                      <div key={`${att.name}-${idx}`} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: `${spacing(1)} ${spacing(1.5)}`,
+                        backgroundColor: colors.cardHover,
+                        borderRadius: spacing(1)
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                          <span style={{ fontSize: '16px' }}>📄</span>
+                          <div>
+                            <div style={{ ...text.primary, fontSize: '13px', fontWeight: 500 }}>{att.name || 'Attachment'}</div>
+                            <div style={{ ...text.tertiary, fontSize: '12px' }}>{formatFileSize(att.size)}</div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          {...getButtonPressHandlers(`dl-${idx}`)}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleDownloadAttachment(att)
+                          }}
+                          disabled={!att?.content}
+                          style={getButtonPressStyle(
+                            `dl-${idx}`,
+                            {
+                              padding: `${spacing(1)} ${spacing(2)}`,
+                              backgroundColor: att?.content ? colors.primary : colors.card,
+                              color: att?.content ? '#fff' : text.tertiary.color,
+                              border: `1px solid ${att?.content ? colors.primary : colors.border}`,
+                              borderRadius: spacing(1),
+                              cursor: att?.content ? 'pointer' : 'not-allowed',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                            },
+                            att?.content ? colors.primary : colors.card,
+                            att?.content ? colors.primaryHover : colors.cardHover
+                          )}
+                        >
+                          Download
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div 
                 style={{ 
                   padding: spacing(3),
@@ -1120,9 +1215,50 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
                   ...text.primary,
                   whiteSpace: 'pre-wrap'
                 }}
-                dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
+                dangerouslySetInnerHTML={{ __html: selectedEmail.body || (selectedEmail as any).plainBody || '' }}
               />
               
+              {/* Quick Reply */}
+              {!replyMode && (
+                <div style={{ 
+                  marginTop: spacing(2),
+                  paddingTop: spacing(2),
+                  borderTop: `1px solid ${colors.border}`
+                }}>
+                  <button
+                    type="button"
+                    {...getButtonPressHandlers('quick-reply')}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setReplyMode('reply')
+                    }}
+                    style={getButtonPressStyle(
+                      'quick-reply',
+                      {
+                        width: '100%',
+                        padding: `${spacing(1.5)} ${spacing(2)}`,
+                        backgroundColor: colors.primary,
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: spacing(1),
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: spacing(1)
+                      },
+                      colors.primary,
+                      colors.primaryHover
+                    )}
+                  >
+                    ↩️ Quick reply to {(parseEmailField(selectedEmail.from).name || parseEmailField(selectedEmail.from).email)}
+                  </button>
+                </div>
+              )}
+
               {/* Reply/Forward Form */}
               {replyMode && (
                 <div style={{ marginTop: spacing(3), paddingTop: spacing(3), borderTop: `1px solid ${colors.border}` }}>
@@ -1422,5 +1558,25 @@ function formatEmailDate(dateStr: string) {
     return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
   }
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+}
+
+function formatFullDate(dateStr: string) {
+  const date = new Date(dateStr)
+  return date.toLocaleString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+function formatFileSize(size?: number) {
+  if (!size || size <= 0) return ''
+  const i = Math.floor(Math.log(size) / Math.log(1024))
+  const num = (size / Math.pow(1024, i)).toFixed(1)
+  const unit = ['B', 'KB', 'MB', 'GB', 'TB'][i] || 'B'
+  return `${num} ${unit}`
 }
 
