@@ -693,6 +693,111 @@ export default function EmailsPage() {
             </div>
           </div>
 
+          {/* Middle Pane - Email List */}
+          <div style={{
+            width: '420px',
+            ...card,
+            display: 'flex',
+            flexDirection: 'column',
+            overflowY: 'auto',
+            maxHeight: 'calc(100vh - 300px)',
+            minHeight: 0
+          }}>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {loading ? (
+                <div style={{ padding: spacing(4), textAlign: 'center', ...text.secondary }}>
+                  Loading emails...
+                </div>
+              ) : emails.length === 0 ? (
+                <div style={{ padding: spacing(4), textAlign: 'center', ...text.tertiary }}>
+                  No emails found
+                </div>
+              ) : (
+                emails.map((email) => {
+                  const attachments = (email as any)?.attachments as any[] | undefined
+                  const showAttachmentIcon = Boolean(email.hasAttachments || (attachments && attachments.length > 0))
+                  return (
+                    <div
+                      key={email.id}
+                      {...getButtonPressHandlers(`mid-email-${email.id}`)}
+                      onClick={() => setSelectedEmail(email)}
+                      style={getButtonPressStyle(
+                        `mid-email-${email.id}`,
+                        {
+                          padding: spacing(3),
+                          borderBottom: `1px solid ${colors.border}`,
+                          cursor: 'pointer',
+                          backgroundColor: selectedEmail?.id === email.id ? colors.primaryLight : 'transparent',
+                          borderLeft: selectedEmail?.id === email.id ? `4px solid ${colors.primary}` : '4px solid transparent'
+                        },
+                        selectedEmail?.id === email.id ? colors.primaryLight : colors.card,
+                        colors.cardHover
+                      )}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: spacing(1) }}>
+                        <div style={{ display: 'flex', gap: spacing(1), flexWrap: 'wrap' }}>
+                          <span style={{
+                            padding: '2px 6px',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            backgroundColor: email.direction === 'received' ? '#e9d5ff' : '#dbeafe',
+                            color: email.direction === 'received' ? '#7c3aed' : '#1e40af',
+                            borderRadius: '4px',
+                            textTransform: 'uppercase'
+                          }}>
+                            {email.direction === 'received' ? 'Received' : 'Sent'}
+                          </span>
+                          {email.transactionId && (
+                            <span style={{
+                              padding: '2px 6px',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              backgroundColor: colors.successLight,
+                              color: colors.success,
+                              borderRadius: '4px'
+                            }}>
+                              TXN-{email.transactionId.slice(-6)}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                          {email.isStarred && <Star style={{ width: '14px', height: '14px', color: colors.warning, fill: colors.warning }} />}
+                          {showAttachmentIcon && (
+                            <Paperclip style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />
+                          )}
+                          <span style={{ fontSize: '12px', ...text.tertiary }}>
+                            {formatDate(email.date)}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '14px', fontWeight: email.isUnread ? '600' : '400', ...text.primary, marginBottom: spacing(0.5) }}>
+                        From: {email.from}
+                      </div>
+                      <div style={{ fontSize: '14px', fontWeight: email.isUnread ? '600' : '400', ...text.primary, marginBottom: spacing(1) }}>
+                        {email.subject || '(No subject)'}
+                      </div>
+                      <div style={{ fontSize: '13px', ...text.secondary, marginBottom: spacing(1), lineHeight: '1.4' }}>
+                        {email.plainBody.substring(0, 100)}...
+                      </div>
+                      <div style={{ display: 'flex', gap: spacing(1), flexWrap: 'wrap' }}>
+                        {email.labels.slice(0, 3).map((label) => (
+                          <span key={label} style={{
+                            fontSize: '11px',
+                            padding: '2px 6px',
+                            backgroundColor: colors.background,
+                            color: colors.text.tertiary,
+                            borderRadius: '4px'
+                          }}>
+                            {label.toLowerCase()}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
           {/* (Removed duplicate middle pane above columns) */}
 
           {/* Email Filter Bar */}
@@ -925,8 +1030,8 @@ export default function EmailsPage() {
               </div>
             </div>
 
-            {/* Email List */}
-            <div style={{ flex: 1, overflowY: 'auto' }}>
+            {/* Email List (legacy in left pane - keep hidden) */}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'none' }}>
               {loading ? (
                 <div style={{ padding: spacing(4), textAlign: 'center', ...text.secondary }}>
                   Loading emails...
