@@ -702,7 +702,8 @@ export default function EmailsPage() {
               flexDirection: 'column',
               overflowY: 'auto',
               maxHeight: 'calc(100vh - 300px)',
-              minHeight: 0
+              minHeight: 0,
+              display: 'none'
             }}
           >
             <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -1032,7 +1033,7 @@ export default function EmailsPage() {
             </div>
 
             {/* Email List */}
-            <div style={{ flex: 1, overflowY: 'auto', display: 'none' }}>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
               {loading ? (
                 <div style={{ padding: spacing(4), textAlign: 'center', ...text.secondary }}>
                   Loading emails...
