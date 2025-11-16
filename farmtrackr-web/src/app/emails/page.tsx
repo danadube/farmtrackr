@@ -515,7 +515,13 @@ export default function EmailsPage() {
       
       if (result.success) {
         // Update the email's labels
-        const labelValue = getLabelValue({ id: labelId, name: labelName, value: labelName } as GmailLabel)
+        const labelValue = getLabelValue({ 
+          id: labelId, 
+          name: labelName, 
+          value: labelName,
+          count: 0,
+          type: 'user'
+        } as GmailLabel)
         if (!selectedEmail.labels.includes(labelValue)) {
           setSelectedEmail({
             ...selectedEmail,
