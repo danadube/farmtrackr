@@ -1520,6 +1520,7 @@ export default function EmailsPage() {
                           </span>
                         ))}
                       </div>
+                      </div>
                     </div>
                   )
                 })
