@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
 
     const labels = response.data.labels || []
 
-    // Transform to expected format
-    const formattedLabels = labels.map((label) => {
+    // Transform to expected format and get accurate counts
+    const formattedLabels = await Promise.all(labels.map(async (label) => {
       const labelId = label.id || ''
       const labelName = label.name || ''
       
@@ -46,15 +46,56 @@ export async function GET(request: NextRequest) {
         'SPAM': 'SPAM',
       }
 
+      // Get count - use messagesTotal, threadsTotal, or query for estimate
+      let count = label.messagesTotal || label.threadsTotal || 0
+      
+      // If count is still 0, try to get estimate from messages list
+      // This handles cases where Gmail API doesn't return accurate counts
+      if (count === 0) {
+        try {
+          // Build query based on label type
+          let query = ''
+          if (systemLabelMap[labelId]) {
+            // System label
+            const systemQueries: Record<string, string> = {
+              'INBOX': 'in:inbox',
+              'STARRED': 'is:starred',
+              'SENT': 'in:sent',
+              'DRAFT': 'in:drafts',
+              'IMPORTANT': 'is:important',
+              'TRASH': 'in:trash',
+              'SPAM': 'in:spam',
+            }
+            query = systemQueries[labelId] || ''
+          } else {
+            // Custom label - use label name
+            query = `label:"${labelName}"`
+          }
+
+          if (query) {
+            const messagesResponse = await gmail.users.messages.list({
+              userId: 'me',
+              q: query,
+              maxResults: 1, // We only need resultSizeEstimate
+            })
+            // resultSizeEstimate gives approximate count (faster than fetching all)
+            count = messagesResponse.data.resultSizeEstimate || 0
+          }
+        } catch (error) {
+          console.error(`Error getting count for label ${labelName}:`, error)
+          // Keep the original count (0 or from messagesTotal/threadsTotal)
+        }
+      }
+
       return {
         id: labelId,
         name: labelName,
         value: systemLabelMap[labelId] || labelId,
-        count: label.messagesTotal || 0,
+        count: count,
         type: label.type || 'user',
         color: label.color?.backgroundColor || undefined,
       }
-    })
+    }))
 
     return NextResponse.json(formattedLabels)
   } catch (error) {
