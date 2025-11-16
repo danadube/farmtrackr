@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getGoogleAccessToken } from '@/lib/googleTokenHelper'
+import { getAuthenticatedGmailClient } from '@/lib/googleAuth'
+
+export const dynamic = 'force-dynamic'
 
 /**
  * API Route: Send Email via Gmail
  * POST /api/gmail/send
  * 
- * Sends email through Google Apps Script Gmail integration
+ * Sends email using direct Gmail API
  */
 export async function POST(request: NextRequest) {
   try {
@@ -18,51 +22,63 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get Apps Script Web App URL from environment
-    const webAppUrl = process.env.GOOGLE_APPS_SCRIPT_WEB_APP_URL
-    if (!webAppUrl) {
+    // Get authenticated Gmail client
+    const accessToken = await getGoogleAccessToken()
+    if (!accessToken) {
       return NextResponse.json(
-        { success: false, error: 'Google Apps Script Web App URL not configured' },
-        { status: 500 }
+        { success: false, error: 'Not authenticated with Gmail. Please connect your Google account.' },
+        { status: 401 }
       )
     }
 
-    // Call Google Apps Script
-    // Format: { action: 'send', emailData: { to, subject, body, cc, bcc, transactionId, contactId, attachments } }
-    const response = await fetch(webAppUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const gmail = getAuthenticatedGmailClient(accessToken)
+
+    // Build email message
+    const to = Array.isArray(emailData.to) ? emailData.to.join(', ') : emailData.to
+    const cc = emailData.cc ? (Array.isArray(emailData.cc) ? emailData.cc.join(', ') : emailData.cc) : ''
+    const bcc = emailData.bcc ? (Array.isArray(emailData.bcc) ? emailData.bcc.join(', ') : emailData.bcc) : ''
+    
+    const lines = [
+      `To: ${to}`,
+      cc ? `Cc: ${cc}` : '',
+      bcc ? `Bcc: ${bcc}` : '',
+      `Subject: ${emailData.subject}`,
+      'Content-Type: text/html; charset=utf-8',
+      '',
+      emailData.body,
+    ].filter(Boolean)
+
+    const rawMessage = lines.join('\r\n')
+    const encodedMessage = Buffer.from(rawMessage)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+
+    // Send email
+    const response = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: encodedMessage,
+        threadId: emailData.threadId || undefined,
       },
-      body: JSON.stringify({
-        action: 'send',
-        emailData: {
-          to: emailData.to,
-          subject: emailData.subject,
-          body: emailData.body,
-          cc: emailData.cc,
-          bcc: emailData.bcc,
-          transactionId: emailData.transactionId,
-          contactId: emailData.contactId,
-          attachments: emailData.attachments,
-        },
-      }),
     })
 
-    if (!response.ok) {
-      throw new Error(`Apps Script returned ${response.status}`)
-    }
-
-    const result = await response.json()
-
-    if (!result.success) {
+    if (!response.data.id) {
       return NextResponse.json(
-        { success: false, error: result.error || 'Failed to send email' },
+        { success: false, error: 'Failed to send email' },
         { status: 500 }
       )
     }
 
-    return NextResponse.json(result)
+    // TODO: Link email to transaction if transactionId is provided
+    // This would require storing the email in the database with the transaction link
+
+    return NextResponse.json({
+      success: true,
+      messageId: response.data.id,
+      threadId: response.data.threadId,
+    })
   } catch (error) {
     console.error('Error sending email:', error)
     return NextResponse.json(
@@ -71,4 +87,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
