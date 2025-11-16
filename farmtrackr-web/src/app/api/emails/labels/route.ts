@@ -46,46 +46,10 @@ export async function GET(request: NextRequest) {
         'SPAM': 'SPAM',
       }
 
-      // Get count - use messagesTotal, threadsTotal, or query for estimate
-      let count = label.messagesTotal || label.threadsTotal || 0
-      
-      // If count is still 0, try to get estimate from messages list
-      // This handles cases where Gmail API doesn't return accurate counts
-      if (count === 0) {
-        try {
-          // Build query based on label type
-          let query = ''
-          if (systemLabelMap[labelId]) {
-            // System label
-            const systemQueries: Record<string, string> = {
-              'INBOX': 'in:inbox',
-              'STARRED': 'is:starred',
-              'SENT': 'in:sent',
-              'DRAFT': 'in:drafts',
-              'IMPORTANT': 'is:important',
-              'TRASH': 'in:trash',
-              'SPAM': 'in:spam',
-            }
-            query = systemQueries[labelId] || ''
-          } else {
-            // Custom label - use label name
-            query = `label:"${labelName}"`
-          }
-
-          if (query) {
-            const messagesResponse = await gmail.users.messages.list({
-              userId: 'me',
-              q: query,
-              maxResults: 1, // We only need resultSizeEstimate
-            })
-            // resultSizeEstimate gives approximate count (faster than fetching all)
-            count = messagesResponse.data.resultSizeEstimate || 0
-          }
-        } catch (error) {
-          console.error(`Error getting count for label ${labelName}:`, error)
-          // Keep the original count (0 or from messagesTotal/threadsTotal)
-        }
-      }
+      // Get count - Gmail API provides messagesTotal which is the authoritative count
+      // Use messagesTotal if available, otherwise fall back to threadsTotal
+      // The Gmail labels API should provide accurate counts, so we trust it
+      const count = label.messagesTotal ?? label.threadsTotal ?? 0
 
       return {
         id: labelId,
