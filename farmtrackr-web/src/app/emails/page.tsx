@@ -1571,7 +1571,7 @@ export default function EmailsPage() {
                                 onClick={() => handleMoveToFolder(labelId, label.name)}
                                 disabled={isAlreadyInFolder || isMoving}
                                 style={getButtonPressStyle(
-                                  `move-to-${label.id || label.name}`,
+                                  `move-to-${labelId || label.name}`,
                                   {
                                     width: '100%',
                                     padding: spacing(1.5),
