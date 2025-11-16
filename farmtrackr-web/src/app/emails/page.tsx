@@ -943,9 +943,9 @@ export default function EmailsPage() {
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: spacing(3), minHeight: '600px', borderTop: 'none' }}>
+          <div className="email-module-layout" style={{ display: 'flex', gap: spacing(3), minHeight: '600px', borderTop: 'none' }}>
           {/* Left Pane - Navigation & Email List */}
-          <div style={{
+          <div className="email-module-left" style={{
             width: '400px',
             ...card,
             display: 'flex',
@@ -1209,7 +1209,7 @@ export default function EmailsPage() {
           </div>
 
           {/* Middle Pane - Email List */}
-          <div style={{
+          <div className="email-module-middle" style={{
             width: '420px',
             ...card,
             display: 'flex',
@@ -1315,7 +1315,7 @@ export default function EmailsPage() {
           </div>
 
           {/* Right Pane - Email Detail */}
-          <div style={{ flex: 1, ...card, display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: 'calc(100vh - 300px)' }}>
+          <div className={`email-module-right${selectedEmail ? ' has-content' : ''}`} style={{ flex: 1, ...card, display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: 'calc(100vh - 300px)' }}>
             {selectedEmail ? (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {/* Detail Header */}
@@ -2300,6 +2300,42 @@ export default function EmailsPage() {
           transform: scale(1.05);
         }
 
+        /* Responsive Layout */
+        .email-module-layout {
+          flex-wrap: nowrap;
+        }
+
+        .email-module-left,
+        .email-module-middle,
+        .email-module-right {
+          transition: all 0.3s ease;
+        }
+
+        /* Tablet: Stack detail view below, keep folders and list side by side */
+        @media (max-width: 1200px) {
+          .email-module-layout {
+            flex-wrap: wrap;
+          }
+
+          .email-module-left {
+            width: 100%;
+            max-width: 350px;
+            min-width: 280px;
+          }
+
+          .email-module-middle {
+            width: 100%;
+            flex: 1;
+            min-width: 300px;
+          }
+
+          .email-module-right {
+            width: 100%;
+            order: 3;
+          }
+        }
+
+        /* Mobile: Stack all columns vertically */
         @media (max-width: 900px) {
           .email-filters-bar {
             flex-direction: column;
@@ -2312,6 +2348,77 @@ export default function EmailsPage() {
 
           .filter-select-wrapper {
             width: 100%;
+          }
+
+          .email-module-layout {
+            flex-direction: column;
+            gap: 16px;
+          }
+
+          .email-module-left {
+            width: 100%;
+            max-width: 100%;
+            min-width: 100%;
+            max-height: 300px;
+            order: 1;
+          }
+
+          .email-module-middle {
+            width: 100%;
+            max-width: 100%;
+            min-width: 100%;
+            max-height: 400px;
+            order: 2;
+          }
+
+          .email-module-right {
+            width: 100%;
+            max-width: 100%;
+            order: 3;
+            max-height: none;
+          }
+
+          /* On mobile, when detail view is shown, make it full screen */
+          .email-module-right.has-content {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            max-height: 100vh;
+            border-radius: 0;
+          }
+        }
+
+        /* Small mobile: Further optimizations */
+        @media (max-width: 600px) {
+          .email-module-left {
+            max-height: 250px;
+          }
+
+          .email-module-middle {
+            max-height: 300px;
+          }
+
+          .labels-sidebar {
+            padding: 8px 0;
+          }
+
+          .label-item {
+            padding: 6px 10px;
+            font-size: 13px;
+          }
+
+          /* Compact detail header actions on small screens */
+          .email-module-right.has-content [class*="detail-"] {
+            padding: 8px 12px;
+            font-size: 12px;
+          }
+
+          .email-module-right.has-content [class*="detail-"] svg {
+            width: 14px;
+            height: 14px;
           }
         }
       `}</style>
