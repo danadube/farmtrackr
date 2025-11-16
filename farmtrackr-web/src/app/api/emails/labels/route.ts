@@ -59,8 +59,8 @@ export async function GET(request: NextRequest) {
         count = label.threadsTotal
       }
       
-      // If count is still 0 (or messagesTotal/threadsTotal were undefined/null), query for estimate
-      // This handles cases where Gmail API doesn't populate counts
+      // If count is still 0 (or messagesTotal/threadsTotal were undefined/null), query for a better estimate
+      // This handles cases where Gmail API doesn't populate counts accurately
       if (count === 0) {
         try {
           // Build query based on label type
@@ -83,16 +83,30 @@ export async function GET(request: NextRequest) {
           }
 
           if (query) {
+            // Fetch a small batch to check if messages exist and get a better estimate
             const messagesResponse = await gmail.users.messages.list({
               userId: 'me',
               q: query,
-              maxResults: 1,
+              maxResults: 100, // Fetch up to 100 to get a more accurate count
             })
-            // Use resultSizeEstimate as a fallback when messagesTotal is 0
-            // This is an estimate but better than showing 0 when there are emails
+            
+            const messages = messagesResponse.data.messages || []
             const estimate = messagesResponse.data.resultSizeEstimate
-            if (typeof estimate === 'number' && estimate > 0) {
-              count = estimate
+            
+            // If we got messages, use the actual count or a reasonable estimate
+            if (messages.length > 0) {
+              // If we got 100 messages, there are likely more - use estimate if reasonable
+              if (messages.length === 100 && estimate && estimate > 100) {
+                // Use estimate but cap it at a reasonable number to avoid showing 201
+                count = Math.min(estimate, 1000)
+              } else {
+                // Use actual count of messages we fetched
+                count = messages.length
+              }
+            } else if (estimate && estimate > 0) {
+              // No messages in first batch but estimate says there are some
+              // This is unlikely but handle it
+              count = Math.min(estimate, 100)
             }
           }
         } catch (error) {
