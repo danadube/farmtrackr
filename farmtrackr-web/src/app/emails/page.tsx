@@ -693,44 +693,72 @@ export default function EmailsPage() {
             </div>
           </div>
 
-          {/* Transaction Context Bar */}
-          <div style={{
-            ...card,
-            padding: spacing(3),
-            marginBottom: spacing(3),
-            display: 'flex',
-            alignItems: 'center',
-            gap: spacing(3),
-            flexWrap: 'wrap'
-          }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2) }}>
-            <span style={{ fontSize: '14px', ...text.secondary }}>View Emails For:</span>
-            <div style={{ width: '300px' }}>
-              <TransactionSelector
-                selectedTransactionId={selectedTransactionId || undefined}
-                onSelect={(id) => setSelectedTransactionId(id)}
-                placeholder="All Transactions"
-              />
+          {/* Email Filter Bar */}
+          <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}` }}>
+            <div className="email-filters-bar">
+              <div className="filter-group">
+                <label className="filter-label">
+                  <span className="filter-icon">🏡</span>
+                  <span className="filter-label-text">Transaction:</span>
+                </label>
+                <div className="filter-select-wrapper">
+                  <TransactionSelector
+                    selectedTransactionId={selectedTransactionId || undefined}
+                    onSelect={(id) => setSelectedTransactionId(id)}
+                    placeholder="All Transactions"
+                  />
+                </div>
+              </div>
+
+              <div className="filter-group filter-search">
+                <span className="filter-search-icon">🔍</span>
+                <input
+                  type="text"
+                  id="emailSearch"
+                  name="emailSearch"
+                  className="filter-search-input"
+                  placeholder="Search emails..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className="filter-group">
+                <select
+                  id="emailStatusFilter"
+                  className="filter-select-compact"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="all">All status</option>
+                  <option value="unread">📭 Unread</option>
+                  <option value="starred">⭐ Starred</option>
+                  <option value="hasAttachments">📎 Has attachments</option>
+                </select>
+              </div>
             </div>
+
+            {selectedTransactionId && (
+              <div className="transaction-context">
+                <div className="context-info">
+                  <div className="context-icon">🏡</div>
+                  <div className="context-details">
+                    <div className="context-title">Transaction {selectedTransactionId.slice(0, 6)}</div>
+                    <div className="context-meta">
+                      <span>Linked emails: {getLinkedEmailCount()}</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn-clear-filter"
+                  onClick={() => setSelectedTransactionId(null)}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
           </div>
-          
-          {selectedTransactionId && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                <Calendar style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
-                <span style={{ fontSize: '14px', ...text.secondary }}>Status: Active</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                <DollarSign style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
-                <span style={{ fontSize: '14px', ...text.secondary }}>Price: $525,000</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                <LinkIcon style={{ width: '16px', height: '16px', color: colors.text.tertiary }} />
-                <span style={{ fontSize: '14px', ...text.secondary }}>Linked: {getLinkedEmailCount()} emails</span>
-              </div>
-            </>
-          )}
-        </div>
 
           <div style={{ display: 'flex', gap: spacing(3), minHeight: '600px' }}>
           {/* Left Pane - Navigation & Email List */}
@@ -739,8 +767,9 @@ export default function EmailsPage() {
             ...card,
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'hidden',
-            maxHeight: 'calc(100vh - 300px)'
+            overflowY: 'auto',
+            maxHeight: 'calc(100vh - 300px)',
+            minHeight: 0
           }}>
           {/* Gmail Labels Section */}
           <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}` }}>
@@ -1408,6 +1437,185 @@ export default function EmailsPage() {
         .label-empty-subtext {
           font-size: 12px;
           color: var(--label-text-tertiary);
+        }
+
+        .email-filters-bar {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+          padding: 16px;
+          background: ${colors.card};
+          border-radius: 12px;
+          margin-bottom: 16px;
+          flex-wrap: wrap;
+          border: 1px solid ${colors.border};
+        }
+
+        .email-filters-bar .filter-group {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .filter-label {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-family: 'Work Sans', sans-serif;
+          font-size: 13px;
+          font-weight: 500;
+          color: ${text.secondary.color};
+        }
+
+        .filter-icon {
+          font-size: 16px;
+        }
+
+        .filter-select-wrapper {
+          min-width: 220px;
+        }
+
+        .filter-group.filter-search {
+          flex: 1;
+          position: relative;
+          min-width: 200px;
+        }
+
+        .filter-search-icon {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 16px;
+          color: ${text.tertiary.color};
+          pointer-events: none;
+        }
+
+        .filter-search-input {
+          width: 100%;
+          font-family: 'Work Sans', sans-serif;
+          font-size: 14px;
+          color: ${text.primary.color};
+          background: ${colors.cardHover};
+          border: 1px solid ${colors.border};
+          border-radius: 8px;
+          padding: 8px 12px 8px 36px;
+          transition: all 0.2s ease;
+        }
+
+        .filter-search-input::placeholder {
+          color: ${text.tertiary.color};
+        }
+
+        .filter-search-input:focus {
+          outline: none;
+          border-color: ${colors.primary};
+          box-shadow: 0 0 0 3px ${colors.primary}24;
+        }
+
+        .filter-select-compact {
+          font-family: 'Work Sans', sans-serif;
+          font-size: 14px;
+          color: ${text.primary.color};
+          background: ${colors.cardHover};
+          border: 1px solid ${colors.border};
+          border-radius: 8px;
+          padding: 8px 32px 8px 12px;
+          min-width: 160px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%239aa0a6' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 10px center;
+        }
+
+        .filter-select-compact:focus {
+          outline: none;
+          border-color: ${colors.primary};
+          box-shadow: 0 0 0 3px ${colors.primary}24;
+        }
+
+        .transaction-context {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 12px 16px;
+          background: rgba(104, 159, 56, 0.1);
+          border: 1px solid rgba(104, 159, 56, 0.3);
+          border-radius: 12px;
+          margin-top: 16px;
+        }
+
+        .context-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex: 1;
+        }
+
+        .context-icon {
+          font-size: 24px;
+          flex-shrink: 0;
+        }
+
+        .context-details {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .context-title {
+          font-family: 'Outfit', sans-serif;
+          font-size: 15px;
+          font-weight: 600;
+          color: ${colors.primary};
+        }
+
+        .context-meta {
+          font-family: 'Work Sans', sans-serif;
+          font-size: 12px;
+          color: ${text.secondary.color};
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .btn-clear-filter {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          border: none;
+          background: rgba(104, 159, 56, 0.2);
+          color: ${colors.primary};
+          font-size: 14px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          flex-shrink: 0;
+        }
+
+        .btn-clear-filter:hover {
+          background: rgba(104, 159, 56, 0.3);
+          transform: scale(1.05);
+        }
+
+        @media (max-width: 900px) {
+          .email-filters-bar {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .email-filters-bar .filter-group {
+            width: 100%;
+          }
+
+          .filter-select-wrapper {
+            width: 100%;
+          }
         }
       `}</style>
     </Sidebar>
