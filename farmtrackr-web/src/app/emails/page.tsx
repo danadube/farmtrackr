@@ -1562,12 +1562,13 @@ export default function EmailsPage() {
                             return !['INBOX', 'SENT', 'DRAFTS', 'TRASH', 'SPAM'].includes(labelValue.toUpperCase())
                           }).map((label) => {
                             const labelValue = getLabelValue(label)
+                            const labelId = (label as any).id || labelValue
                             const isAlreadyInFolder = selectedEmail?.labels.includes(labelValue)
                             return (
                               <button
-                                key={label.id || label.name}
-                                {...getButtonPressHandlers(`move-to-${label.id || label.name}`)}
-                                onClick={() => handleMoveToFolder(label.id || labelValue, label.name)}
+                                key={labelId || label.name}
+                                {...getButtonPressHandlers(`move-to-${labelId || label.name}`)}
+                                onClick={() => handleMoveToFolder(labelId, label.name)}
                                 disabled={isAlreadyInFolder || isMoving}
                                 style={getButtonPressStyle(
                                   `move-to-${label.id || label.name}`,
