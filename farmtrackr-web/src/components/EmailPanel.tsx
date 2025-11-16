@@ -721,10 +721,41 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
-                {selectedEmail.subject || '(No subject)'}
-              </h3>
+            <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing(2) }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('back-to-inbox')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setSelectedEmail(null)
+                    setReplyMode(null)
+                  }}
+                  style={getButtonPressStyle(
+                    'back-to-inbox',
+                    {
+                      padding: `${spacing(1)} ${spacing(1.5)}`,
+                      backgroundColor: 'transparent',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: spacing(1),
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1)
+                    },
+                    'transparent',
+                    colors.cardHover
+                  )}
+                >
+                  ← Back
+                </button>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', ...text.primary, margin: '0' }}>
+                  {selectedEmail.subject || '(No subject)'}
+                </h3>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1.5) }}>
                 <button
                   type="button"
@@ -787,6 +818,62 @@ export function EmailPanel({ transactionId, contactEmail }: EmailPanelProps) {
                 >
                   <Forward style={{ width: '16px', height: '16px', color: colors.text.primary }} />
                   Forward
+                </button>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('star-email-detail')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleToggleStar(e as unknown as React.MouseEvent<HTMLButtonElement>, selectedEmail)
+                  }}
+                  style={getButtonPressStyle(
+                    'star-email-detail',
+                    {
+                      padding: `${spacing(1.5)} ${spacing(2)}`,
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: spacing(1),
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1),
+                      fontSize: '14px',
+                      fontWeight: '500'
+                    },
+                    colors.cardHover,
+                    colors.borderHover
+                  )}
+                >
+                  {selectedEmail.isStarred ? '⭐' : '☆'}
+                </button>
+                <button
+                  type="button"
+                  {...getButtonPressHandlers('delete-email-detail')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleDeleteEmailQuick(e as unknown as React.MouseEvent<HTMLButtonElement>, selectedEmail)
+                  }}
+                  style={getButtonPressStyle(
+                    'delete-email-detail',
+                    {
+                      padding: `${spacing(1.5)} ${spacing(2)}`,
+                      backgroundColor: colors.cardHover,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: spacing(1),
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing(1),
+                      fontSize: '14px',
+                      fontWeight: '500'
+                    },
+                    colors.cardHover,
+                    colors.borderHover
+                  )}
+                >
+                  🗑️
                 </button>
                 <button
                   type="button"
