@@ -58,8 +58,10 @@ export async function GET(request: NextRequest) {
       else if (typeof label.threadsTotal === 'number' && label.threadsTotal > 0) {
         count = label.threadsTotal
       }
-      // If both are 0 or undefined, try to get a count by querying
-      else {
+      
+      // If count is still 0 (or messagesTotal/threadsTotal were undefined/null), query for estimate
+      // This handles cases where Gmail API doesn't populate counts
+      if (count === 0) {
         try {
           // Build query based on label type
           let query = ''
