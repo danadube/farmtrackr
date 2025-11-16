@@ -1529,6 +1529,7 @@ export default function EmailsPage() {
           display: flex;
           flex-direction: column;
           gap: 4px;
+          padding: 0 8px;
         }
 
         .label-items.collapsed {
@@ -1542,12 +1543,13 @@ export default function EmailsPage() {
           display: flex;
           align-items: center;
           gap: 10px;
-          padding: 8px 16px;
+          padding: 8px 12px;
           cursor: pointer;
           border-radius: 6px;
-          margin: 0 8px;
+          margin: 0;
           color: var(--label-text-primary);
           transition: all 0.2s ease;
+          box-sizing: border-box;
         }
 
         .label-item:hover {
@@ -1555,7 +1557,7 @@ export default function EmailsPage() {
         }
 
         .label-item.active {
-          background: transparent;
+          background: rgba(104, 159, 56, 0.1);
           position: relative;
         }
 
@@ -1607,6 +1609,7 @@ export default function EmailsPage() {
           min-width: 28px;
           text-align: center;
           flex-shrink: 0;
+          margin-left: auto;
         }
 
         .label-item.active .label-count {
