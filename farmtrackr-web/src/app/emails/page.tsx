@@ -1555,7 +1555,7 @@ export default function EmailsPage() {
         }
 
         .label-item.active {
-          background: rgba(104, 159, 56, 0.2);
+          background: transparent;
           position: relative;
         }
 
