@@ -89,6 +89,7 @@ export default function EmailsPage() {
   const [isReplying, setIsReplying] = useState(false)
   const [showMoveMenu, setShowMoveMenu] = useState(false)
   const [isMoving, setIsMoving] = useState(false)
+  const [hoveredEmailId, setHoveredEmailId] = useState<string | null>(null)
 
   const labelThemeVars = useMemo(() => ({
     '--label-bg-card': colors.card,
@@ -451,17 +452,62 @@ export default function EmailsPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!selectedEmail) return
+  const handleDelete = async (emailId?: string) => {
+    const emailToDelete = emailId ? emails.find(e => e.id === emailId) : selectedEmail
+    if (!emailToDelete) return
     
     if (!confirm('Are you sure you want to delete this email?')) return
     
     try {
-      // TODO: Implement API call to delete
-      setSelectedEmail(null)
-      loadEmails()
+      const response = await fetch('/api/emails/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId: emailToDelete.id })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        // If we deleted the selected email, clear selection
+        if (selectedEmail?.id === emailToDelete.id) {
+          setSelectedEmail(null)
+        }
+        loadEmails()
+        loadLabels()
+      } else {
+        alert(`Error: ${result.error || 'Failed to delete email'}`)
+      }
     } catch (error) {
       console.error('Error deleting email:', error)
+      alert(`Error: ${error instanceof Error ? error.message : 'Failed to delete email'}`)
+    }
+  }
+
+  const handleArchive = async (emailId: string) => {
+    try {
+      // Archive = remove INBOX label
+      const response = await fetch('/api/emails/move', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId: emailId,
+          labelId: 'INBOX',
+          labelName: 'INBOX',
+          action: 'remove'
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        loadEmails()
+        loadLabels()
+      } else {
+        alert(`Error: ${result.error || 'Failed to archive email'}`)
+      }
+    } catch (error) {
+      console.error('Error archiving email:', error)
+      alert(`Error: ${error instanceof Error ? error.message : 'Failed to archive email'}`)
     }
   }
 
@@ -1295,11 +1341,13 @@ export default function EmailsPage() {
                 emails.map((email) => {
                   const attachments = (email as any)?.attachments as any[] | undefined
                   const showAttachmentIcon = Boolean(email.hasAttachments || (attachments && attachments.length > 0))
+                  const isHovered = hoveredEmailId === email.id
                   return (
                     <div
                       key={`mid-email-${email.id}`}
-                      {...getButtonPressHandlers(`mid-email-${email.id}`)}
-                      onClick={() => setSelectedEmail(email)}
+                      className="email-list-item"
+                      onMouseEnter={() => setHoveredEmailId(email.id)}
+                      onMouseLeave={() => setHoveredEmailId(null)}
                       style={getButtonPressStyle(
                         `mid-email-${email.id}`,
                         {
@@ -1307,48 +1355,149 @@ export default function EmailsPage() {
                           borderBottom: `1px solid ${colors.border}`,
                           cursor: 'pointer',
                           backgroundColor: selectedEmail?.id === email.id ? colors.primaryLight : 'transparent',
-                          borderLeft: selectedEmail?.id === email.id ? `4px solid ${colors.primary}` : '4px solid transparent'
+                          borderLeft: selectedEmail?.id === email.id ? `4px solid ${colors.primary}` : '4px solid transparent',
+                          position: 'relative'
                         },
                         selectedEmail?.id === email.id ? colors.primaryLight : colors.card,
                         colors.cardHover
                       )}
                     >
-                      <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: spacing(1) }}>
-                        <div style={{ display: 'flex', gap: spacing(1), flexWrap: 'wrap' }}>
-                          <span style={{
-                            padding: '2px 6px',
-                            fontSize: '10px',
-                            fontWeight: '600',
-                            backgroundColor: email.direction === 'received' ? '#e9d5ff' : '#dbeafe',
-                            color: email.direction === 'received' ? '#7c3aed' : '#1e40af',
-                            borderRadius: '4px',
-                            textTransform: 'uppercase'
-                          }}>
-                            {email.direction === 'received' ? 'Received' : 'Sent'}
-                          </span>
-                          {email.transactionId && (
+                      {/* Inline Actions - Show on Hover */}
+                      {isHovered && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: spacing(2),
+                            right: spacing(2),
+                            display: 'flex',
+                            gap: spacing(1),
+                            zIndex: 10,
+                            backgroundColor: colors.card,
+                            padding: spacing(0.5),
+                            borderRadius: spacing(1),
+                            border: `1px solid ${colors.border}`,
+                            boxShadow: `0 2px 8px rgba(0, 0, 0, 0.15)`
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            {...getButtonPressHandlers(`archive-email-${email.id}`)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleArchive(email.id)
+                            }}
+                            style={getButtonPressStyle(
+                              `archive-email-${email.id}`,
+                              {
+                                padding: spacing(1),
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderRadius: spacing(0.5),
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              },
+                              'transparent',
+                              colors.cardHover
+                            )}
+                            title="Archive"
+                          >
+                            <FileText style={{ width: '16px', height: '16px', color: text.secondary.color }} />
+                          </button>
+                          <button
+                            {...getButtonPressHandlers(`move-email-${email.id}`)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedEmail(email)
+                              setShowMoveMenu(true)
+                            }}
+                            style={getButtonPressStyle(
+                              `move-email-${email.id}`,
+                              {
+                                padding: spacing(1),
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderRadius: spacing(0.5),
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              },
+                              'transparent',
+                              colors.cardHover
+                            )}
+                            title="Move to Folder"
+                          >
+                            <MoreVertical style={{ width: '16px', height: '16px', color: text.secondary.color }} />
+                          </button>
+                          <button
+                            {...getButtonPressHandlers(`delete-email-${email.id}`)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDelete(email.id)
+                            }}
+                            style={getButtonPressStyle(
+                              `delete-email-${email.id}`,
+                              {
+                                padding: spacing(1),
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderRadius: spacing(0.5),
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              },
+                              'transparent',
+                              colors.cardHover
+                            )}
+                            title="Delete"
+                          >
+                            <Trash2 style={{ width: '16px', height: '16px', color: colors.error }} />
+                          </button>
+                        </div>
+                      )}
+                      <div
+                        onClick={() => setSelectedEmail(email)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: spacing(1) }}>
+                          <div style={{ display: 'flex', gap: spacing(1), flexWrap: 'wrap' }}>
                             <span style={{
                               padding: '2px 6px',
                               fontSize: '10px',
                               fontWeight: '600',
-                              backgroundColor: colors.successLight,
-                              color: colors.success,
-                              borderRadius: '4px'
+                              backgroundColor: email.direction === 'received' ? '#e9d5ff' : '#dbeafe',
+                              color: email.direction === 'received' ? '#7c3aed' : '#1e40af',
+                              borderRadius: '4px',
+                              textTransform: 'uppercase'
                             }}>
-                              TXN-{email.transactionId.slice(-6)}
+                              {email.direction === 'received' ? 'Received' : 'Sent'}
                             </span>
-                          )}
+                            {email.transactionId && (
+                              <span style={{
+                                padding: '2px 6px',
+                                fontSize: '10px',
+                                fontWeight: '600',
+                                backgroundColor: colors.successLight,
+                                color: colors.success,
+                                borderRadius: '4px'
+                              }}>
+                                TXN-{email.transactionId.slice(-6)}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                            {email.isStarred && <Star style={{ width: '14px', height: '14px', color: colors.warning, fill: colors.warning }} />}
+                            {showAttachmentIcon && (
+                              <Paperclip style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />
+                            )}
+                            <span style={{ fontSize: '12px', ...text.tertiary }}>
+                              {formatDate(email.date)}
+                            </span>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
-                          {email.isStarred && <Star style={{ width: '14px', height: '14px', color: colors.warning, fill: colors.warning }} />}
-                          {showAttachmentIcon && (
-                            <Paperclip style={{ width: '14px', height: '14px', color: colors.text.tertiary }} />
-                          )}
-                          <span style={{ fontSize: '12px', ...text.tertiary }}>
-                            {formatDate(email.date)}
-                          </span>
-                        </div>
-                      </div>
                       <div style={{ fontSize: '14px', fontWeight: email.isUnread ? '600' : '400', ...text.primary, marginBottom: spacing(0.5) }}>
                         From: {email.from}
                       </div>
