@@ -800,7 +800,7 @@ export default function EmailsPage() {
           {/* (Removed duplicate middle pane above columns) */}
 
           {/* Email Filter Bar */}
-          <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}` }}>
+          <div style={{ marginBottom: spacing(3) }}>
             <div className="email-filters-bar">
               <div className="filter-group">
                 <label className="filter-label">
@@ -866,7 +866,7 @@ export default function EmailsPage() {
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: spacing(3), minHeight: '600px' }}>
+          <div style={{ display: 'flex', gap: spacing(3), minHeight: '600px', borderTop: 'none' }}>
           {/* Left Pane - Navigation & Email List */}
           <div style={{
             width: '400px',
@@ -878,10 +878,10 @@ export default function EmailsPage() {
             minHeight: 0
           }}>
           {/* Gmail Labels Section */}
-          <div style={{ padding: spacing(3), borderBottom: `1px solid ${colors.border}` }}>
+          <div style={{ padding: spacing(3), flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div
               className="labels-sidebar"
-              style={labelThemeVars}
+              style={{ ...labelThemeVars, width: '100%', maxWidth: '100%', marginBottom: 0 }}
             >
               {labels.length === 0 ? (
                 <div className="label-empty">
@@ -1465,12 +1465,14 @@ export default function EmailsPage() {
 
         .labels-sidebar {
           width: 100%;
-          max-width: 280px;
           background: var(--label-bg-card);
           border-radius: 12px;
           padding: 12px 0;
-          margin-bottom: 24px;
+          margin-bottom: 0;
           border: 1px solid var(--label-border-subtle);
+          flex: 1;
+          display: flex;
+          flex-direction: column;
         }
 
         .label-section {
@@ -1554,8 +1556,19 @@ export default function EmailsPage() {
 
         .label-item.active {
           background: rgba(104, 159, 56, 0.2);
-          border-left: 3px solid var(--label-accent);
-          padding-left: 13px;
+          position: relative;
+        }
+
+        .label-item.active::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 3px;
+          height: 60%;
+          background: var(--label-accent);
+          border-radius: 0 2px 2px 0;
         }
 
         .label-icon {
@@ -1603,7 +1616,7 @@ export default function EmailsPage() {
         .label-footer {
           padding: 8px 16px;
           border-top: 1px solid var(--label-border-subtle);
-          margin-top: 8px;
+          margin-top: auto;
           padding-top: 16px;
         }
 
@@ -1658,9 +1671,11 @@ export default function EmailsPage() {
           padding: 16px;
           background: ${colors.card};
           border-radius: 12px;
-          margin-bottom: 16px;
+          margin-bottom: 0;
           flex-wrap: wrap;
           border: 1px solid ${colors.border};
+          width: 100%;
+          box-sizing: border-box;
         }
 
         .email-filters-bar .filter-group {
