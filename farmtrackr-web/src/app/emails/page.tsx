@@ -702,8 +702,7 @@ export default function EmailsPage() {
               flexDirection: 'column',
               overflowY: 'auto',
               maxHeight: 'calc(100vh - 300px)',
-              minHeight: 0,
-              display: 'none'
+              minHeight: 0
             }}
           >
             <div style={{ flex: 1, overflowY: 'auto' }}>
