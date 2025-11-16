@@ -26,7 +26,12 @@ import {
   Unlink,
   MoreVertical,
   Filter,
-  FileEdit
+  FileEdit,
+  ArrowLeft,
+  Reply,
+  Forward,
+  Trash2,
+  Download
 } from 'lucide-react'
 import { EmailData } from '@/types'
 
@@ -79,6 +84,9 @@ export default function EmailsPage() {
   const [showLinkSelector, setShowLinkSelector] = useState(false)
   const [isLinking, setIsLinking] = useState(false)
   const [templates, setTemplates] = useState<EmailTemplate[]>(DEFAULT_EMAIL_TEMPLATES)
+  const [showQuickReply, setShowQuickReply] = useState(false)
+  const [quickReplyText, setQuickReplyText] = useState('')
+  const [isReplying, setIsReplying] = useState(false)
 
   const labelThemeVars = useMemo(() => ({
     '--label-bg-card': colors.card,
@@ -397,6 +405,75 @@ export default function EmailsPage() {
       console.error('Error linking email:', error)
     } finally {
       setIsLinking(false)
+    }
+  }
+
+  const handleReply = () => {
+    if (!selectedEmail) return
+    setShowQuickReply(true)
+  }
+
+  const handleForward = async () => {
+    if (!selectedEmail) return
+    // Open composer in forward mode
+    setShowComposer(true)
+    // TODO: Pre-populate forward data
+  }
+
+  const handleToggleStar = async () => {
+    if (!selectedEmail) return
+    
+    try {
+      // TODO: Implement API call to toggle star
+      setSelectedEmail({
+        ...selectedEmail,
+        isStarred: !selectedEmail.isStarred
+      })
+      loadEmails()
+    } catch (error) {
+      console.error('Error toggling star:', error)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!selectedEmail) return
+    
+    if (!confirm('Are you sure you want to delete this email?')) return
+    
+    try {
+      // TODO: Implement API call to delete
+      setSelectedEmail(null)
+      loadEmails()
+    } catch (error) {
+      console.error('Error deleting email:', error)
+    }
+  }
+
+  const handleSendQuickReply = async () => {
+    if (!selectedEmail || !quickReplyText.trim()) return
+    
+    setIsReplying(true)
+    try {
+      const response = await fetch('/api/emails/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId: selectedEmail.id,
+          body: quickReplyText
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setQuickReplyText('')
+        setShowQuickReply(false)
+        loadEmails()
+      }
+    } catch (error) {
+      console.error('Error sending reply:', error)
+    } finally {
+      setIsReplying(false)
     }
   }
 
@@ -1240,38 +1317,297 @@ export default function EmailsPage() {
           {/* Right Pane - Email Detail */}
           <div style={{ flex: 1, ...card, display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: 'calc(100vh - 300px)' }}>
             {selectedEmail ? (
-              <div style={{ flex: 1, overflowY: 'auto', padding: spacing(4) }}>
-                <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                  <h2 style={{ fontSize: '24px', fontWeight: '600', ...text.primary, marginBottom: spacing(4) }}>
-                    {selectedEmail.subject || '(No subject)'}
-                  </h2>
-
-                  <div style={{ marginBottom: spacing(4) }}>
-                    <div style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(1) }}>
-                      <strong>From:</strong> {selectedEmail.from}
-                    </div>
-                    <div style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(1) }}>
-                      <strong>To:</strong> {selectedEmail.to}
-                    </div>
-                    {selectedEmail.cc && (
-                      <div style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(1) }}>
-                        <strong>CC:</strong> {selectedEmail.cc}
-                      </div>
-                    )}
-                    <div style={{ fontSize: '14px', ...text.secondary, marginBottom: spacing(1) }}>
-                      <strong>Date:</strong> {new Date(selectedEmail.date).toLocaleString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit'
-                      })}
-                    </div>
-                    <div style={{ fontSize: '14px', ...text.secondary }}>
-                      <strong>Labels:</strong> {selectedEmail.labels.join(', ')}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {/* Detail Header */}
+                <div style={{
+                  padding: spacing(3),
+                  borderBottom: `1px solid ${colors.border}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: spacing(2),
+                  flexShrink: 0
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), flex: 1 }}>
+                    <button
+                      {...getButtonPressHandlers('back-to-list')}
+                      onClick={() => setSelectedEmail(null)}
+                      style={getButtonPressStyle(
+                        'back-to-list',
+                        {
+                          padding: spacing(1),
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          borderRadius: spacing(1),
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        },
+                        'transparent',
+                        colors.cardHover
+                      )}
+                    >
+                      <ArrowLeft style={{ width: '20px', height: '20px', color: text.primary.color }} />
+                    </button>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h2 style={{
+                        fontSize: '18px',
+                        fontWeight: '600',
+                        ...text.primary,
+                        margin: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {selectedEmail.subject || '(No subject)'}
+                      </h2>
                     </div>
                   </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                    <button
+                      {...getButtonPressHandlers('detail-reply')}
+                      onClick={handleReply}
+                      style={getButtonPressStyle(
+                        'detail-reply',
+                        {
+                          padding: `${spacing(1.5)} ${spacing(2)}`,
+                          backgroundColor: 'transparent',
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: spacing(1),
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: spacing(1),
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          ...text.secondary
+                        },
+                        'transparent',
+                        colors.cardHover
+                      )}
+                    >
+                      <Reply style={{ width: '16px', height: '16px' }} />
+                      Reply
+                    </button>
+                    <button
+                      {...getButtonPressHandlers('detail-forward')}
+                      onClick={handleForward}
+                      style={getButtonPressStyle(
+                        'detail-forward',
+                        {
+                          padding: `${spacing(1.5)} ${spacing(2)}`,
+                          backgroundColor: 'transparent',
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: spacing(1),
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: spacing(1),
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          ...text.secondary
+                        },
+                        'transparent',
+                        colors.cardHover
+                      )}
+                    >
+                      <Forward style={{ width: '16px', height: '16px' }} />
+                      Forward
+                    </button>
+                    <button
+                      {...getButtonPressHandlers('detail-star')}
+                      onClick={handleToggleStar}
+                      style={getButtonPressStyle(
+                        'detail-star',
+                        {
+                          padding: spacing(1.5),
+                          backgroundColor: 'transparent',
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: spacing(1),
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        },
+                        'transparent',
+                        colors.cardHover
+                      )}
+                    >
+                      <Star style={{
+                        width: '18px',
+                        height: '18px',
+                        color: selectedEmail.isStarred ? colors.warning : text.tertiary.color,
+                        fill: selectedEmail.isStarred ? colors.warning : 'none'
+                      }} />
+                    </button>
+                    <button
+                      {...getButtonPressHandlers('detail-delete')}
+                      onClick={handleDelete}
+                      style={getButtonPressStyle(
+                        'detail-delete',
+                        {
+                          padding: spacing(1.5),
+                          backgroundColor: 'transparent',
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: spacing(1),
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        },
+                        'transparent',
+                        colors.cardHover
+                      )}
+                    >
+                      <Trash2 style={{ width: '18px', height: '18px', color: colors.error }} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Detail Content */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: spacing(4) }}>
+                  <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                    {/* Metadata */}
+                    <div style={{
+                      marginBottom: spacing(4),
+                      padding: spacing(3),
+                      backgroundColor: colors.cardHover,
+                      borderRadius: spacing(1.5),
+                      border: `1px solid ${colors.border}`
+                    }}>
+                      <div style={{ display: 'grid', gap: spacing(2) }}>
+                        <div style={{ display: 'flex', alignItems: 'start', gap: spacing(2) }}>
+                          <span style={{ fontSize: '13px', fontWeight: '600', ...text.tertiary, minWidth: '60px' }}>From:</span>
+                          <span style={{ fontSize: '14px', ...text.primary, flex: 1 }}>{selectedEmail.from}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'start', gap: spacing(2) }}>
+                          <span style={{ fontSize: '13px', fontWeight: '600', ...text.tertiary, minWidth: '60px' }}>To:</span>
+                          <span style={{ fontSize: '14px', ...text.primary, flex: 1 }}>{selectedEmail.to}</span>
+                        </div>
+                        {selectedEmail.cc && (
+                          <div style={{ display: 'flex', alignItems: 'start', gap: spacing(2) }}>
+                            <span style={{ fontSize: '13px', fontWeight: '600', ...text.tertiary, minWidth: '60px' }}>CC:</span>
+                            <span style={{ fontSize: '14px', ...text.primary, flex: 1 }}>{selectedEmail.cc}</span>
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'start', gap: spacing(2) }}>
+                          <span style={{ fontSize: '13px', fontWeight: '600', ...text.tertiary, minWidth: '60px' }}>Date:</span>
+                          <span style={{ fontSize: '14px', ...text.primary, flex: 1 }}>
+                            {new Date(selectedEmail.date).toLocaleString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                        {selectedEmail.labels.length > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'start', gap: spacing(2) }}>
+                            <span style={{ fontSize: '13px', fontWeight: '600', ...text.tertiary, minWidth: '60px' }}>Labels:</span>
+                            <div style={{ display: 'flex', gap: spacing(1), flexWrap: 'wrap', flex: 1 }}>
+                              {selectedEmail.labels.map((label) => (
+                                <span key={label} style={{
+                                  fontSize: '12px',
+                                  padding: `${spacing(0.5)} ${spacing(1.5)}`,
+                                  backgroundColor: colors.background,
+                                  color: text.secondary.color,
+                                  borderRadius: spacing(0.5),
+                                  border: `1px solid ${colors.border}`
+                                }}>
+                                  {label.toLowerCase()}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Attachments */}
+                    {(selectedEmail.hasAttachments || (selectedEmail as any)?.attachments) && (
+                      <div style={{ marginBottom: spacing(4) }}>
+                        <div style={{
+                          padding: spacing(3),
+                          backgroundColor: colors.cardHover,
+                          borderRadius: spacing(1.5),
+                          border: `1px solid ${colors.border}`
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), marginBottom: spacing(2) }}>
+                            <Paperclip style={{ width: '18px', height: '18px', color: text.secondary.color }} />
+                            <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0 }}>
+                              Attachments
+                            </h3>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing(1.5) }}>
+                            {((selectedEmail as any)?.attachments || []).length > 0 ? (
+                              ((selectedEmail as any).attachments as any[]).map((attachment: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: spacing(2),
+                                    backgroundColor: colors.background,
+                                    borderRadius: spacing(1),
+                                    border: `1px solid ${colors.border}`
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), flex: 1, minWidth: 0 }}>
+                                    <FileText style={{ width: '18px', height: '18px', color: text.secondary.color, flexShrink: 0 }} />
+                                    <span style={{
+                                      fontSize: '13px',
+                                      ...text.primary,
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap'
+                                    }}>
+                                      {attachment.filename || attachment.name || `Attachment ${idx + 1}`}
+                                    </span>
+                                    {attachment.size && (
+                                      <span style={{ fontSize: '12px', ...text.tertiary, flexShrink: 0 }}>
+                                        ({(attachment.size / 1024).toFixed(1)} KB)
+                                      </span>
+                                    )}
+                                  </div>
+                                  <button
+                                    {...getButtonPressHandlers(`download-attachment-${idx}`)}
+                                    onClick={() => {
+                                      // TODO: Implement download
+                                      console.log('Download attachment:', attachment)
+                                    }}
+                                    style={getButtonPressStyle(
+                                      `download-attachment-${idx}`,
+                                      {
+                                        padding: spacing(1),
+                                        backgroundColor: 'transparent',
+                                        border: 'none',
+                                        borderRadius: spacing(0.5),
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                      },
+                                      'transparent',
+                                      colors.cardHover
+                                    )}
+                                  >
+                                    <Download style={{ width: '16px', height: '16px', color: text.secondary.color }} />
+                                  </button>
+                                </div>
+                              ))
+                            ) : (
+                              <div style={{ padding: spacing(2), ...text.secondary, fontSize: '13px', fontStyle: 'italic' }}>
+                                No attachment details available
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                   <div style={{ marginTop: spacing(3), paddingTop: spacing(3), borderTop: `1px solid ${colors.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(2) }}>
@@ -1421,15 +1757,145 @@ export default function EmailsPage() {
                     )}
                   </div>
 
-                  <div style={{
-                    padding: spacing(4),
-                    backgroundColor: colors.background,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: spacing(1),
-                    ...text.primary,
-                    lineHeight: '1.6',
-                    whiteSpace: 'pre-wrap'
-                  }} dangerouslySetInnerHTML={{ __html: selectedEmail.body || selectedEmail.plainBody }} />
+                    {/* Email Body */}
+                    <div style={{
+                      marginBottom: spacing(4),
+                      padding: spacing(4),
+                      backgroundColor: colors.background,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: spacing(1.5),
+                      ...text.primary,
+                      lineHeight: '1.6',
+                      whiteSpace: 'pre-wrap',
+                      fontSize: '14px'
+                    }} dangerouslySetInnerHTML={{ __html: selectedEmail.body || selectedEmail.plainBody }} />
+
+                    {/* Quick Reply */}
+                    {showQuickReply ? (
+                      <div style={{
+                        marginTop: spacing(4),
+                        padding: spacing(3),
+                        backgroundColor: colors.cardHover,
+                        borderRadius: spacing(1.5),
+                        border: `1px solid ${colors.border}`
+                      }}>
+                        <div style={{ marginBottom: spacing(2) }}>
+                          <h3 style={{ fontSize: '14px', fontWeight: '600', ...text.primary, margin: 0, marginBottom: spacing(1) }}>
+                            Quick Reply
+                          </h3>
+                          <p style={{ fontSize: '12px', ...text.secondary, margin: 0 }}>
+                            Replying to {selectedEmail.from}
+                          </p>
+                        </div>
+                        <textarea
+                          value={quickReplyText}
+                          onChange={(e) => setQuickReplyText(e.target.value)}
+                          placeholder="Type your reply..."
+                          style={{
+                            width: '100%',
+                            minHeight: '120px',
+                            padding: spacing(2),
+                            backgroundColor: colors.background,
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: spacing(1),
+                            fontSize: '14px',
+                            fontFamily: 'inherit',
+                            ...text.primary,
+                            resize: 'vertical',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                              e.preventDefault()
+                              handleSendQuickReply()
+                            }
+                          }}
+                        />
+                        <div style={{ display: 'flex', gap: spacing(2), marginTop: spacing(2), justifyContent: 'flex-end' }}>
+                          <button
+                            {...getButtonPressHandlers('cancel-quick-reply')}
+                            onClick={() => {
+                              setShowQuickReply(false)
+                              setQuickReplyText('')
+                            }}
+                            style={getButtonPressStyle(
+                              'cancel-quick-reply',
+                              {
+                                padding: `${spacing(1.5)} ${spacing(3)}`,
+                                backgroundColor: colors.cardHover,
+                                border: `1px solid ${colors.border}`,
+                                borderRadius: spacing(1),
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                ...text.secondary
+                              },
+                              colors.cardHover,
+                              colors.borderHover
+                            )}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            {...getButtonPressHandlers('send-quick-reply')}
+                            onClick={handleSendQuickReply}
+                            disabled={!quickReplyText.trim() || isReplying}
+                            style={getButtonPressStyle(
+                              'send-quick-reply',
+                              {
+                                padding: `${spacing(1.5)} ${spacing(3)}`,
+                                backgroundColor: colors.primary,
+                                border: `1px solid ${colors.primary}`,
+                                borderRadius: spacing(1),
+                                cursor: (!quickReplyText.trim() || isReplying) ? 'not-allowed' : 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#ffffff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: spacing(1),
+                                opacity: (!quickReplyText.trim() || isReplying) ? 0.5 : 1
+                              },
+                              colors.primary,
+                              colors.primaryHover
+                            )}
+                          >
+                            <Send style={{ width: '16px', height: '16px' }} />
+                            {isReplying ? 'Sending...' : 'Send Reply'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: spacing(4), display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          {...getButtonPressHandlers('show-quick-reply')}
+                          onClick={handleReply}
+                          style={getButtonPressStyle(
+                            'show-quick-reply',
+                            {
+                              padding: `${spacing(1.5)} ${spacing(3)}`,
+                              backgroundColor: colors.primary,
+                              border: `1px solid ${colors.primary}`,
+                              borderRadius: spacing(1),
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              color: '#ffffff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: spacing(1)
+                            },
+                            colors.primary,
+                            colors.primaryHover
+                          )}
+                        >
+                          <Reply style={{ width: '16px', height: '16px' }} />
+                          Quick Reply
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (
