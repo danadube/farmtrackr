@@ -1774,6 +1774,28 @@ export default function EmailsPage() {
                       )}
                     </div>
                     <button
+                      {...getButtonPressHandlers('detail-archive')}
+                      onClick={() => selectedEmail && handleArchive(selectedEmail.id)}
+                      style={getButtonPressStyle(
+                        'detail-archive',
+                        {
+                          padding: spacing(1.5),
+                          backgroundColor: 'transparent',
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: spacing(1),
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        },
+                        'transparent',
+                        colors.cardHover
+                      )}
+                      title="Archive"
+                    >
+                      <FileText style={{ width: '18px', height: '18px', color: text.secondary.color }} />
+                    </button>
+                    <button
                       {...getButtonPressHandlers('detail-delete')}
                       onClick={() => handleDelete()}
                       style={getButtonPressStyle(
@@ -1791,6 +1813,7 @@ export default function EmailsPage() {
                         'transparent',
                         colors.cardHover
                       )}
+                      title="Delete"
                     >
                       <Trash2 style={{ width: '18px', height: '18px', color: colors.error }} />
                     </button>
