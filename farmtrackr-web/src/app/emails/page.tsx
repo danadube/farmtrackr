@@ -1754,7 +1754,7 @@ export default function EmailsPage() {
                     </div>
                     <button
                       {...getButtonPressHandlers('detail-delete')}
-                      onClick={handleDelete}
+                      onClick={() => handleDelete()}
                       style={getButtonPressStyle(
                         'detail-delete',
                         {
