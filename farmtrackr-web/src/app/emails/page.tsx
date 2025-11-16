@@ -1566,7 +1566,8 @@ export default function EmailsPage() {
           top: 50%;
           transform: translateY(-50%);
           width: 3px;
-          height: 60%;
+          height: 40%;
+          max-height: 20px;
           background: var(--label-accent);
           border-radius: 0 2px 2px 0;
         }
