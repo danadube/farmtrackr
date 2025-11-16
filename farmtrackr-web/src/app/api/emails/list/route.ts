@@ -38,14 +38,47 @@ export async function GET(request: NextRequest) {
     
     // Add label filter
     if (filters.gmailLabel && filters.gmailLabel !== 'all') {
-      const labelMap: Record<string, string> = {
+      const labelUpper = filters.gmailLabel.toUpperCase()
+      
+      // Map system labels to Gmail query syntax
+      const systemLabelMap: Record<string, string> = {
         'INBOX': 'in:inbox',
         'STARRED': 'is:starred',
         'SENT': 'in:sent',
         'DRAFTS': 'in:drafts',
         'IMPORTANT': 'is:important',
+        'TRASH': 'in:trash',
+        'SPAM': 'in:spam',
       }
-      query += labelMap[filters.gmailLabel.toUpperCase()] || `label:${filters.gmailLabel}`
+      
+      // Check if it's a system label
+      if (systemLabelMap[labelUpper]) {
+        query = systemLabelMap[labelUpper]
+      } else {
+        // For custom labels, use the label name (Gmail accepts label names in queries)
+        // The label might be passed as ID or name, so we'll try both
+        // First, try to get the label name from the labels API
+        try {
+          const labelsResponse = await gmail.users.labels.list({ userId: 'me' })
+          const allLabels = labelsResponse.data.labels || []
+          
+          // Try to find the label by ID first, then by name
+          const matchingLabel = allLabels.find(
+            (l) => l.id === filters.gmailLabel || l.name === filters.gmailLabel
+          )
+          
+          if (matchingLabel) {
+            // Use the label name in the query (Gmail accepts label names)
+            query = `label:"${matchingLabel.name}"`
+          } else {
+            // Fallback: use the provided value as-is
+            query = `label:"${filters.gmailLabel}"`
+          }
+        } catch (error) {
+          // Fallback: use the provided value as-is
+          query = `label:"${filters.gmailLabel}"`
+        }
+      }
     }
 
     // Add search term

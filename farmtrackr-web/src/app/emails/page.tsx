@@ -87,6 +87,8 @@ export default function EmailsPage() {
   const [showQuickReply, setShowQuickReply] = useState(false)
   const [quickReplyText, setQuickReplyText] = useState('')
   const [isReplying, setIsReplying] = useState(false)
+  const [showMoveMenu, setShowMoveMenu] = useState(false)
+  const [isMoving, setIsMoving] = useState(false)
 
   const labelThemeVars = useMemo(() => ({
     '--label-bg-card': colors.card,
@@ -184,6 +186,20 @@ export default function EmailsPage() {
   useEffect(() => {
     setShowLinkSelector(false)
   }, [selectedEmail?.id])
+
+  // Close move menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (showMoveMenu && !target.closest('[data-move-menu]')) {
+        setShowMoveMenu(false)
+      }
+    }
+    if (showMoveMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMoveMenu])
 
   const loadLabels = async () => {
     try {
@@ -474,6 +490,48 @@ export default function EmailsPage() {
       console.error('Error sending reply:', error)
     } finally {
       setIsReplying(false)
+    }
+  }
+
+  const handleMoveToFolder = async (labelId: string, labelName: string) => {
+    if (!selectedEmail) return
+    
+    setIsMoving(true)
+    setShowMoveMenu(false)
+    
+    try {
+      const response = await fetch('/api/emails/move', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId: selectedEmail.id,
+          labelId,
+          labelName,
+          action: 'add'
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        // Update the email's labels
+        const labelValue = getLabelValue({ id: labelId, name: labelName, value: labelName } as GmailLabel)
+        if (!selectedEmail.labels.includes(labelValue)) {
+          setSelectedEmail({
+            ...selectedEmail,
+            labels: [...selectedEmail.labels, labelValue]
+          })
+        }
+        loadEmails()
+        loadLabels()
+      } else {
+        alert(`Error: ${result.error || 'Failed to move email'}`)
+      }
+    } catch (error) {
+      console.error('Error moving email:', error)
+      alert(`Error: ${error instanceof Error ? error.message : 'Failed to move email'}`)
+    } finally {
+      setIsMoving(false)
     }
   }
 
@@ -1441,6 +1499,102 @@ export default function EmailsPage() {
                         fill: selectedEmail.isStarred ? colors.warning : 'none'
                       }} />
                     </button>
+                    <div style={{ position: 'relative' }} data-move-menu>
+                      <button
+                        {...getButtonPressHandlers('detail-move')}
+                        onClick={() => setShowMoveMenu(!showMoveMenu)}
+                        disabled={isMoving}
+                        style={getButtonPressStyle(
+                          'detail-move',
+                          {
+                            padding: spacing(1.5),
+                            backgroundColor: 'transparent',
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: spacing(1),
+                            cursor: isMoving ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: isMoving ? 0.5 : 1
+                          },
+                          'transparent',
+                          colors.cardHover
+                        )}
+                      >
+                        <MoreVertical style={{ width: '18px', height: '18px', color: text.secondary.color }} />
+                      </button>
+                      {showMoveMenu && (
+                        <div data-move-menu style={{
+                          position: 'absolute',
+                          top: '100%',
+                          right: 0,
+                          marginTop: spacing(1),
+                          backgroundColor: colors.card,
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: spacing(1),
+                          boxShadow: `0 4px 12px rgba(0, 0, 0, 0.15)`,
+                          zIndex: 1000,
+                          minWidth: '200px',
+                          maxHeight: '300px',
+                          overflowY: 'auto',
+                          padding: spacing(1)
+                        }}>
+                          <div style={{
+                            padding: spacing(1.5),
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            ...text.tertiary,
+                            textTransform: 'uppercase',
+                            borderBottom: `1px solid ${colors.border}`,
+                            marginBottom: spacing(1)
+                          }}>
+                            Move to Folder
+                          </div>
+                          {labels.filter(label => {
+                            const labelValue = getLabelValue(label)
+                            // Don't show system labels that can't be moved to
+                            return !['INBOX', 'SENT', 'DRAFTS', 'TRASH', 'SPAM'].includes(labelValue.toUpperCase())
+                          }).map((label) => {
+                            const labelValue = getLabelValue(label)
+                            const isAlreadyInFolder = selectedEmail?.labels.includes(labelValue)
+                            return (
+                              <button
+                                key={label.id || label.name}
+                                {...getButtonPressHandlers(`move-to-${label.id || label.name}`)}
+                                onClick={() => handleMoveToFolder(label.id || labelValue, label.name)}
+                                disabled={isAlreadyInFolder || isMoving}
+                                style={getButtonPressStyle(
+                                  `move-to-${label.id || label.name}`,
+                                  {
+                                    width: '100%',
+                                    padding: spacing(1.5),
+                                    backgroundColor: 'transparent',
+                                    border: 'none',
+                                    borderRadius: spacing(0.5),
+                                    cursor: (isAlreadyInFolder || isMoving) ? 'not-allowed' : 'pointer',
+                                    textAlign: 'left',
+                                    fontSize: '13px',
+                                    ...text.primary,
+                                    opacity: (isAlreadyInFolder || isMoving) ? 0.5 : 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: spacing(1)
+                                  },
+                                  'transparent',
+                                  colors.cardHover
+                                )}
+                              >
+                                <span>{getLabelGlyph(label)}</span>
+                                <span>{getLabelDisplayName(label)}</span>
+                                {isAlreadyInFolder && (
+                                  <span style={{ marginLeft: 'auto', fontSize: '11px', ...text.tertiary }}>✓</span>
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
                     <button
                       {...getButtonPressHandlers('detail-delete')}
                       onClick={handleDelete}
