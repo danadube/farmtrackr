@@ -693,11 +693,11 @@ export default function EmailsPage() {
             </div>
           </div>
 
-          {/* Middle Pane - Email List */}
+          {/* Middle Pane - Email List (hidden preview block above columns) */}
           <div style={{
             width: '420px',
             ...card,
-            display: 'flex',
+            display: 'none',
             flexDirection: 'column',
             overflowY: 'auto',
             maxHeight: 'calc(100vh - 300px)',
