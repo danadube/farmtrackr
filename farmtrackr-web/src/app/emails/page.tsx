@@ -868,7 +868,7 @@ export default function EmailsPage() {
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: spacing(3), minHeight: '600px' }}>
+          <div style={{ display: 'none', gap: spacing(3), minHeight: '600px' }}>
           {/* Left Pane - Navigation & Email List */}
           <div style={{
             width: '400px',
