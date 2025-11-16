@@ -95,6 +95,19 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error moving email:', error)
+    
+    // Check for insufficient scopes error
+    if (error instanceof Error && error.message.includes('insufficient authentication scopes')) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Insufficient authentication scopes. Please reconnect your Google account to grant Gmail permissions.',
+          requiresReauth: true
+        },
+        { status: 403 }
+      )
+    }
+    
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

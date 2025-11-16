@@ -475,7 +475,14 @@ export default function EmailsPage() {
         loadEmails()
         loadLabels()
       } else {
-        alert(`Error: ${result.error || 'Failed to delete email'}`)
+        if (result.requiresReauth) {
+          const reconnect = confirm(`${result.error}\n\nWould you like to reconnect your Google account now?`)
+          if (reconnect) {
+            window.location.href = '/api/google/oauth/authorize'
+          }
+        } else {
+          alert(`Error: ${result.error || 'Failed to delete email'}`)
+        }
       }
     } catch (error) {
       console.error('Error deleting email:', error)
@@ -503,7 +510,14 @@ export default function EmailsPage() {
         loadEmails()
         loadLabels()
       } else {
-        alert(`Error: ${result.error || 'Failed to archive email'}`)
+        if (result.requiresReauth) {
+          const reconnect = confirm(`${result.error}\n\nWould you like to reconnect your Google account now?`)
+          if (reconnect) {
+            window.location.href = '/api/google/oauth/authorize'
+          }
+        } else {
+          alert(`Error: ${result.error || 'Failed to archive email'}`)
+        }
       }
     } catch (error) {
       console.error('Error archiving email:', error)
@@ -577,7 +591,14 @@ export default function EmailsPage() {
         loadEmails()
         loadLabels()
       } else {
-        alert(`Error: ${result.error || 'Failed to move email'}`)
+        if (result.requiresReauth) {
+          const reconnect = confirm(`${result.error}\n\nWould you like to reconnect your Google account now?`)
+          if (reconnect) {
+            window.location.href = '/api/google/oauth/authorize'
+          }
+        } else {
+          alert(`Error: ${result.error || 'Failed to move email'}`)
+        }
       }
     } catch (error) {
       console.error('Error moving email:', error)
