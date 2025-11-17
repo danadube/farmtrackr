@@ -476,7 +476,9 @@ export default function EmailsPage() {
         loadLabels()
       } else {
         if (result.requiresReauth) {
-          const reconnect = confirm(`${result.error}\n\nWould you like to reconnect your Google account now?`)
+          // Show debug info if available
+          const debugInfo = result.debug ? `\n\nDebug: ${JSON.stringify(result.debug, null, 2)}` : ''
+          const reconnect = confirm(`${result.error}${debugInfo}\n\nWould you like to reconnect your Google account now?`)
           if (reconnect) {
             window.location.href = '/api/google/oauth/authorize'
           }
