@@ -1,35 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getGoogleAccessToken } from '@/lib/googleTokenHelper'
 import { getAuthenticatedGmailClient } from '@/lib/googleAuth'
-import { getGoogleOAuthToken } from '@/lib/googleTokenStore'
 
 export const dynamic = 'force-dynamic'
-
-/**
- * Check if the stored token has Gmail scopes
- */
-async function hasGmailScopes(): Promise<{ hasScopes: boolean; scopes: string[] }> {
-  try {
-    const storedToken = await getGoogleOAuthToken()
-    if (!storedToken?.scopes || storedToken.scopes.length === 0) {
-      console.log('No scopes found in stored token')
-      return { hasScopes: false, scopes: [] }
-    }
-    
-    const scopes = Array.isArray(storedToken.scopes) ? storedToken.scopes : []
-    const hasGmail = scopes.some(scope => 
-      typeof scope === 'string' && scope.includes('gmail')
-    )
-    
-    console.log('Stored token scopes:', scopes)
-    console.log('Has Gmail scopes:', hasGmail)
-    
-    return { hasScopes: hasGmail, scopes }
-  } catch (error) {
-    console.error('Error checking Gmail scopes:', error)
-    return { hasScopes: false, scopes: [] }
-  }
-}
 
 /**
  * API Route: Move Email to Folder (Add/Remove Labels)
@@ -54,20 +27,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    
-    // Check if Gmail scopes are present
-    const { hasScopes, scopes } = await hasGmailScopes()
-    if (!hasScopes) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: `Gmail permissions not granted. Current scopes: ${scopes.join(', ')}. Please reconnect your Google account and ensure Gmail access is enabled.`,
-          requiresReauth: true,
-          currentScopes: scopes
-        },
-        { status: 403 }
-      )
-    }
 
     // Get authenticated Gmail client
     const accessToken = await getGoogleAccessToken()
@@ -80,23 +39,45 @@ export async function POST(request: NextRequest) {
 
     const gmail = getAuthenticatedGmailClient(accessToken)
 
+    // Helper to catch and handle scope errors
+    const handleGmailApiError = (apiError: any) => {
+      if (apiError?.code === 403 || 
+          (apiError?.message && apiError.message.includes('insufficient authentication scopes')) ||
+          (apiError?.message && apiError.message.includes('Insufficient Permission'))) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Gmail permissions not granted. Please disconnect and reconnect your Google account, making sure to grant Gmail access when prompted.',
+            requiresReauth: true
+          },
+          { status: 403 }
+        )
+      }
+      throw apiError
+    }
+
     // If we only have labelName, find the label ID
     let targetLabelId = labelId
     if (!targetLabelId && labelName) {
-      const labelsResponse = await gmail.users.labels.list({ userId: 'me' })
-      const allLabels = labelsResponse.data.labels || []
-      const matchingLabel = allLabels.find(
-        (l) => l.name === labelName || l.id === labelName
-      )
-      
-      if (!matchingLabel) {
-        return NextResponse.json(
-          { success: false, error: `Label "${labelName}" not found` },
-          { status: 404 }
+      try {
+        const labelsResponse = await gmail.users.labels.list({ userId: 'me' })
+        const allLabels = labelsResponse.data.labels || []
+        const matchingLabel = allLabels.find(
+          (l) => l.name === labelName || l.id === labelName
         )
+        
+        if (!matchingLabel) {
+          return NextResponse.json(
+            { success: false, error: `Label "${labelName}" not found` },
+            { status: 404 }
+          )
+        }
+        
+        targetLabelId = matchingLabel.id!
+      } catch (apiError: any) {
+        const errorResponse = handleGmailApiError(apiError)
+        if (errorResponse) return errorResponse
       }
-      
-      targetLabelId = matchingLabel.id!
     }
 
     if (!targetLabelId) {
@@ -107,27 +88,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Perform the action (add or remove label)
-    if (action === 'add') {
-      await gmail.users.messages.modify({
-        userId: 'me',
-        id: messageId,
-        requestBody: {
-          addLabelIds: [targetLabelId],
-        },
-      })
-    } else if (action === 'remove') {
-      await gmail.users.messages.modify({
-        userId: 'me',
-        id: messageId,
-        requestBody: {
-          removeLabelIds: [targetLabelId],
-        },
-      })
-    } else {
-      return NextResponse.json(
-        { success: false, error: 'Action must be "add" or "remove"' },
-        { status: 400 }
-      )
+    try {
+      if (action === 'add') {
+        await gmail.users.messages.modify({
+          userId: 'me',
+          id: messageId,
+          requestBody: {
+            addLabelIds: [targetLabelId],
+          },
+        })
+      } else if (action === 'remove') {
+        await gmail.users.messages.modify({
+          userId: 'me',
+          id: messageId,
+          requestBody: {
+            removeLabelIds: [targetLabelId],
+          },
+        })
+      } else {
+        return NextResponse.json(
+          { success: false, error: 'Action must be "add" or "remove"' },
+          { status: 400 }
+        )
+      }
+    } catch (apiError: any) {
+      const errorResponse = handleGmailApiError(apiError)
+      if (errorResponse) return errorResponse
+      throw apiError
     }
 
     return NextResponse.json({

@@ -1,35 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getGoogleAccessToken } from '@/lib/googleTokenHelper'
 import { getAuthenticatedGmailClient } from '@/lib/googleAuth'
-import { getGoogleOAuthToken } from '@/lib/googleTokenStore'
 
 export const dynamic = 'force-dynamic'
-
-/**
- * Check if the stored token has Gmail scopes
- */
-async function hasGmailScopes(): Promise<{ hasScopes: boolean; scopes: string[] }> {
-  try {
-    const storedToken = await getGoogleOAuthToken()
-    if (!storedToken?.scopes || storedToken.scopes.length === 0) {
-      console.log('No scopes found in stored token')
-      return { hasScopes: false, scopes: [] }
-    }
-    
-    const scopes = Array.isArray(storedToken.scopes) ? storedToken.scopes : []
-    const hasGmail = scopes.some(scope => 
-      typeof scope === 'string' && scope.includes('gmail')
-    )
-    
-    console.log('Stored token scopes:', scopes)
-    console.log('Has Gmail scopes:', hasGmail)
-    
-    return { hasScopes: hasGmail, scopes }
-  } catch (error) {
-    console.error('Error checking Gmail scopes:', error)
-    return { hasScopes: false, scopes: [] }
-  }
-}
 
 /**
  * API Route: Delete Email
@@ -47,20 +20,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    
-    // Check if Gmail scopes are present
-    const { hasScopes, scopes } = await hasGmailScopes()
-    if (!hasScopes) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: `Gmail permissions not granted. Current scopes: ${scopes.join(', ')}. Please reconnect your Google account and ensure Gmail access is enabled.`,
-          requiresReauth: true,
-          currentScopes: scopes
-        },
-        { status: 403 }
-      )
-    }
 
     // Get authenticated Gmail client
     const accessToken = await getGoogleAccessToken()
@@ -73,11 +32,29 @@ export async function POST(request: NextRequest) {
 
     const gmail = getAuthenticatedGmailClient(accessToken)
 
-    // Delete the message
-    await gmail.users.messages.delete({
-      userId: 'me',
-      id: messageId,
-    })
+    // Try to delete the message - let the API tell us if scopes are missing
+    try {
+      await gmail.users.messages.delete({
+        userId: 'me',
+        id: messageId,
+      })
+    } catch (apiError: any) {
+      // Check for insufficient scopes error from Gmail API
+      if (apiError?.code === 403 || 
+          (apiError?.message && apiError.message.includes('insufficient authentication scopes')) ||
+          (apiError?.message && apiError.message.includes('Insufficient Permission'))) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Gmail permissions not granted. Please disconnect and reconnect your Google account, making sure to grant Gmail access when prompted.',
+            requiresReauth: true
+          },
+          { status: 403 }
+        )
+      }
+      // Re-throw other errors
+      throw apiError
+    }
 
     return NextResponse.json({
       success: true,
