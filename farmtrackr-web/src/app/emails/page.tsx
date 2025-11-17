@@ -476,21 +476,9 @@ export default function EmailsPage() {
         loadLabels()
       } else {
         if (result.requiresReauth) {
-          // Show debug info if available
-          const debugInfo = result.debug ? `\n\nDebug: ${JSON.stringify(result.debug, null, 2)}` : ''
-          const reconnect = confirm(`${result.error}${debugInfo}\n\nThis usually means your token was created before Gmail permissions were added. You need to disconnect and reconnect to get fresh permissions.\n\nWould you like to disconnect and reconnect your Google account now?`)
-          if (reconnect) {
-            // First disconnect to clear old token
-            fetch('/api/google/oauth/disconnect', { method: 'POST' })
-              .then(() => {
-                // Then reconnect with fresh scopes
-                window.location.href = '/api/google/oauth/authorize'
-              })
-              .catch(() => {
-                // If disconnect fails, just try to reconnect
-                window.location.href = '/api/google/oauth/authorize'
-              })
-          }
+          // Only show reauth prompt if delete actually failed
+          // Don't auto-disconnect/reconnect - let user do it manually from settings
+          alert(`${result.error}\n\nPlease go to Settings and disconnect/reconnect your Google account to grant Gmail delete permissions.`)
         } else {
           alert(`Error: ${result.error || 'Failed to delete email'}`)
         }

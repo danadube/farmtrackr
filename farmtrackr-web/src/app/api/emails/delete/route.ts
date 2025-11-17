@@ -34,30 +34,21 @@ export async function POST(request: NextRequest) {
 
     // Try to delete the message - let the API tell us if scopes are missing
     try {
-      // First, try to move to trash (safer, reversible)
-      // If that works, then permanently delete
-      try {
-        await gmail.users.messages.trash({
-          userId: 'me',
-          id: messageId,
-        })
-        
-        // Wait a moment, then permanently delete from trash
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
-        await gmail.users.messages.delete({
-          userId: 'me',
-          id: messageId,
-        })
-      } catch (trashError: any) {
-        // If trash fails, try direct delete
-        console.log('Trash failed, trying direct delete:', trashError?.message)
-        await gmail.users.messages.delete({
-          userId: 'me',
-          id: messageId,
+      // Try direct delete first (most efficient)
+      await gmail.users.messages.delete({
+        userId: 'me',
+        id: messageId,
+      })
+    } catch (apiError: any) {
+      // If direct delete fails with 404, message might already be deleted - that's OK
+      if (apiError?.code === 404 || apiError?.response?.status === 404) {
+        // Message already deleted or doesn't exist - consider it success
+        return NextResponse.json({
+          success: true,
+          message: 'Email deleted successfully',
         })
       }
-    } catch (apiError: any) {
+      
       console.error('Gmail delete API error:', {
         code: apiError?.code,
         message: apiError?.message,
@@ -83,7 +74,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { 
             success: false, 
-            error: 'Gmail delete permissions not granted. Please disconnect and reconnect your Google account, making sure to grant Gmail access when prompted.',
+            error: 'Gmail delete permissions not granted. Please go to Settings and disconnect/reconnect your Google account to grant Gmail delete permissions.',
             requiresReauth: true,
             debug: {
               code: apiError?.code,
