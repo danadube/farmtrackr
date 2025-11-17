@@ -31,7 +31,8 @@ import {
   Reply,
   Forward,
   Trash2,
-  Download
+  Download,
+  Circle
 } from 'lucide-react'
 import { EmailData } from '@/types'
 
