@@ -525,6 +525,61 @@ export default function EmailsPage() {
     }
   }
 
+  const handleMarkAsRead = async (emailId: string, read: boolean = true) => {
+    try {
+      const response = await fetch('/api/emails/mark-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId: emailId,
+          read: read
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        // Update the email in the list
+        setEmails(prevEmails => 
+          prevEmails.map(email => 
+            email.id === emailId 
+              ? { ...email, isUnread: !read }
+              : email
+          )
+        )
+        
+        // Update selected email if it's the one we're marking
+        if (selectedEmail?.id === emailId) {
+          setSelectedEmail({
+            ...selectedEmail,
+            isUnread: !read
+          })
+        }
+        
+        // Update unread count
+        if (read) {
+          setUnreadCount(prev => Math.max(0, prev - 1))
+        } else {
+          setUnreadCount(prev => prev + 1)
+        }
+        
+        loadLabels()
+      } else {
+        if (result.requiresReauth) {
+          const reconnect = confirm(`${result.error}\n\nWould you like to reconnect your Google account now?`)
+          if (reconnect) {
+            window.location.href = '/api/google/oauth/authorize'
+          }
+        } else {
+          alert(`Error: ${result.error || 'Failed to mark email'}`)
+        }
+      }
+    } catch (error) {
+      console.error('Error marking email:', error)
+      alert(`Error: ${error instanceof Error ? error.message : 'Failed to mark email'}`)
+    }
+  }
+
   const handleSendQuickReply = async () => {
     if (!selectedEmail || !quickReplyText.trim()) return
     
@@ -1480,7 +1535,13 @@ export default function EmailsPage() {
                         </div>
                       )}
                       <div
-                        onClick={() => setSelectedEmail(email)}
+                        onClick={() => {
+                          setSelectedEmail(email)
+                          // Mark as read when clicked
+                          if (email.isUnread) {
+                            handleMarkAsRead(email.id, true)
+                          }
+                        }}
                         style={{ cursor: 'pointer' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: spacing(1) }}>
@@ -1783,6 +1844,55 @@ export default function EmailsPage() {
                         </div>
                       )}
                     </div>
+                    {selectedEmail.isUnread ? (
+                      <button
+                        {...getButtonPressHandlers('detail-mark-read')}
+                        onClick={() => selectedEmail && handleMarkAsRead(selectedEmail.id, true)}
+                        style={getButtonPressStyle(
+                          'detail-mark-read',
+                          {
+                            padding: spacing(1.5),
+                            backgroundColor: 'transparent',
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: spacing(1),
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          },
+                          'transparent',
+                          colors.cardHover
+                        )}
+                        title="Mark as Read"
+                      >
+                        <Circle style={{ width: '18px', height: '18px', color: colors.primary }} />
+                      </button>
+                    ) : (
+                      <button
+                        {...getButtonPressHandlers('detail-mark-unread')}
+                        onClick={() => selectedEmail && handleMarkAsRead(selectedEmail.id, false)}
+                        style={getButtonPressStyle(
+                          'detail-mark-unread',
+                          {
+                            padding: spacing(1.5),
+                            backgroundColor: 'transparent',
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: spacing(1),
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          },
+                          'transparent',
+                          colors.cardHover
+                        )}
+                        title="Mark as Unread"
+                      >
+                        <Circle style={{ width: '18px', height: '18px', color: text.secondary.color, fill: text.secondary.color }} />
+                      </button>
+                    )}
                     <button
                       {...getButtonPressHandlers('detail-delete')}
                       onClick={() => handleDelete()}
