@@ -90,11 +90,21 @@ export async function POST(request: NextRequest) {
     // Perform the action (add or remove label)
     try {
       if (action === 'add') {
+        // When moving to a folder, remove from INBOX unless it's a system label
+        const removeLabelIds: string[] = []
+        const systemLabels = ['INBOX', 'SENT', 'DRAFTS', 'TRASH', 'SPAM']
+        
+        // If moving to a custom folder (not a system label), remove from INBOX
+        if (!systemLabels.includes(targetLabelId.toUpperCase())) {
+          removeLabelIds.push('INBOX')
+        }
+        
         await gmail.users.messages.modify({
           userId: 'me',
           id: messageId,
           requestBody: {
             addLabelIds: [targetLabelId],
+            removeLabelIds: removeLabelIds.length > 0 ? removeLabelIds : undefined,
           },
         })
       } else if (action === 'remove') {

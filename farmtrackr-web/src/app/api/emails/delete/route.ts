@@ -39,15 +39,31 @@ export async function POST(request: NextRequest) {
         id: messageId,
       })
     } catch (apiError: any) {
+      console.error('Gmail delete API error:', {
+        code: apiError?.code,
+        message: apiError?.message,
+        response: apiError?.response?.data,
+        status: apiError?.response?.status
+      })
+      
       // Check for insufficient scopes error from Gmail API
       if (apiError?.code === 403 || 
-          (apiError?.message && apiError.message.includes('insufficient authentication scopes')) ||
-          (apiError?.message && apiError.message.includes('Insufficient Permission'))) {
+          apiError?.response?.status === 403 ||
+          (apiError?.message && (
+            apiError.message.includes('insufficient authentication scopes') ||
+            apiError.message.includes('Insufficient Permission') ||
+            apiError.message.includes('Request had insufficient authentication scopes')
+          ))) {
         return NextResponse.json(
           { 
             success: false, 
             error: 'Gmail permissions not granted. Please disconnect and reconnect your Google account, making sure to grant Gmail access when prompted.',
-            requiresReauth: true
+            requiresReauth: true,
+            debug: {
+              code: apiError?.code,
+              message: apiError?.message,
+              status: apiError?.response?.status
+            }
           },
           { status: 403 }
         )

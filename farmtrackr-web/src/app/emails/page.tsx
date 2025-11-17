@@ -637,12 +637,34 @@ export default function EmailsPage() {
           count: 0,
           type: 'user'
         } as GmailLabel)
-        if (!selectedEmail.labels.includes(labelValue)) {
-          setSelectedEmail({
-            ...selectedEmail,
-            labels: [...selectedEmail.labels, labelValue]
-          })
+        
+        // Update selected email labels - add new label and remove INBOX if it's a custom folder
+        const systemLabels = ['INBOX', 'SENT', 'DRAFTS', 'TRASH', 'SPAM']
+        const isSystemLabel = systemLabels.includes(labelId.toUpperCase()) || systemLabels.includes(labelValue.toUpperCase())
+        
+        const updatedLabels = [...selectedEmail.labels]
+        if (!updatedLabels.includes(labelValue)) {
+          updatedLabels.push(labelValue)
         }
+        // Remove INBOX if moving to a custom folder
+        if (!isSystemLabel && updatedLabels.includes('INBOX')) {
+          updatedLabels.splice(updatedLabels.indexOf('INBOX'), 1)
+        }
+        
+        setSelectedEmail({
+          ...selectedEmail,
+          labels: updatedLabels
+        })
+        
+        // Also update in the emails list
+        setEmails(prevEmails =>
+          prevEmails.map(email =>
+            email.id === selectedEmail.id
+              ? { ...email, labels: updatedLabels }
+              : email
+          )
+        )
+        
         loadEmails()
         loadLabels()
       } else {
@@ -1536,11 +1558,14 @@ export default function EmailsPage() {
                       )}
                       <div
                         onClick={() => {
-                          setSelectedEmail(email)
-                          // Mark as read when clicked
+                          // Update selected email immediately
+                          const updatedEmail = { ...email }
                           if (email.isUnread) {
+                            updatedEmail.isUnread = false
+                            // Mark as read when clicked
                             handleMarkAsRead(email.id, true)
                           }
+                          setSelectedEmail(updatedEmail)
                         }}
                         style={{ cursor: 'pointer' }}
                       >
