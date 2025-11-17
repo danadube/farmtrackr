@@ -1519,8 +1519,19 @@ export default function EmailsPage() {
                             </span>
                           </div>
                         </div>
-                      <div style={{ fontSize: '14px', fontWeight: email.isUnread ? '600' : '400', ...text.primary, marginBottom: spacing(0.5) }}>
-                        From: {email.from}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1), marginBottom: spacing(0.5) }}>
+                        {email.isUnread && (
+                          <div style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: colors.primary,
+                            flexShrink: 0
+                          }} />
+                        )}
+                        <div style={{ fontSize: '14px', fontWeight: email.isUnread ? '600' : '400', ...text.primary, flex: 1 }}>
+                          From: {email.from}
+                        </div>
                       </div>
                       <div style={{ fontSize: '14px', fontWeight: email.isUnread ? '600' : '400', ...text.primary, marginBottom: spacing(1) }}>
                         {email.subject || '(No subject)'}
@@ -1801,6 +1812,30 @@ export default function EmailsPage() {
                 {/* Detail Content */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: spacing(4) }}>
                   <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                    {/* Unread Indicator */}
+                    {selectedEmail.isUnread && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: spacing(1.5),
+                        marginBottom: spacing(3),
+                        padding: spacing(2),
+                        backgroundColor: colors.primaryLight,
+                        borderRadius: spacing(1),
+                        border: `1px solid ${colors.primary}`
+                      }}>
+                        <div style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          backgroundColor: colors.primary,
+                          flexShrink: 0
+                        }} />
+                        <span style={{ fontSize: '13px', fontWeight: '600', color: colors.primary }}>
+                          Unread
+                        </span>
+                      </div>
+                    )}
                     {/* Metadata */}
                     <div style={{
                       marginBottom: spacing(4),

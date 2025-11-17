@@ -1,8 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getGoogleAccessToken } from '@/lib/googleTokenHelper'
 import { getAuthenticatedGmailClient } from '@/lib/googleAuth'
+import { getGoogleOAuthToken } from '@/lib/googleTokenStore'
 
 export const dynamic = 'force-dynamic'
+
+/**
+ * Check if the stored token has Gmail scopes
+ */
+async function hasGmailScopes(): Promise<boolean> {
+  try {
+    const storedToken = await getGoogleOAuthToken()
+    if (!storedToken?.scopes || storedToken.scopes.length === 0) {
+      return false
+    }
+    
+    return storedToken.scopes.some(scope => scope.includes('gmail'))
+  } catch (error) {
+    console.error('Error checking Gmail scopes:', error)
+    return false
+  }
+}
 
 /**
  * API Route: Move Email to Folder (Add/Remove Labels)
@@ -28,6 +46,19 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Check if Gmail scopes are present
+    const hasScopes = await hasGmailScopes()
+    if (!hasScopes) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Gmail permissions not granted. Please reconnect your Google account and ensure Gmail access is enabled.',
+          requiresReauth: true
+        },
+        { status: 403 }
+      )
+    }
+
     // Get authenticated Gmail client
     const accessToken = await getGoogleAccessToken()
     if (!accessToken) {
