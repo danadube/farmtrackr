@@ -1563,68 +1563,41 @@ export default function EmailsPage() {
                   gap: spacing(2),
                   flexShrink: 0
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(2), flex: 1 }}>
-                    <button
-                      {...getButtonPressHandlers('back-to-list')}
-                      onClick={() => setSelectedEmail(null)}
-                      style={getButtonPressStyle(
-                        'back-to-list',
-                        {
-                          padding: spacing(1),
-                          backgroundColor: 'transparent',
-                          border: 'none',
-                          borderRadius: spacing(1),
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        },
-                        'transparent',
-                        colors.cardHover
-                      )}
-                    >
-                      <ArrowLeft style={{ width: '20px', height: '20px', color: text.primary.color }} />
-                    </button>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h2 style={{
-                        fontSize: '18px',
-                        fontWeight: '600',
-                        ...text.primary,
-                        margin: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {selectedEmail.subject || '(No subject)'}
-                      </h2>
-                    </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h2 style={{
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      ...text.primary,
+                      margin: 0,
+                      wordWrap: 'break-word',
+                      overflowWrap: 'break-word'
+                    }}>
+                      {selectedEmail.subject || '(No subject)'}
+                    </h2>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1), flexWrap: 'wrap', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1), flexShrink: 0 }}>
                     <button
                       {...getButtonPressHandlers('detail-reply')}
                       onClick={handleReply}
                       style={getButtonPressStyle(
                         'detail-reply',
                         {
-                          padding: `${spacing(1.5)} ${spacing(2)}`,
+                          padding: spacing(1.5),
                           backgroundColor: 'transparent',
                           border: `1px solid ${colors.border}`,
                           borderRadius: spacing(1),
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: spacing(1),
-                          fontSize: '13px',
-                          fontWeight: '500',
-                          ...text.secondary,
-                          whiteSpace: 'nowrap'
+                          justifyContent: 'center',
+                          flexShrink: 0
                         },
                         'transparent',
                         colors.cardHover
                       )}
+                      title="Reply"
                     >
-                      <Reply style={{ width: '16px', height: '16px' }} />
-                      Reply
+                      <Reply style={{ width: '18px', height: '18px', color: text.secondary.color }} />
                     </button>
                     <button
                       {...getButtonPressHandlers('detail-forward')}
@@ -1632,25 +1605,22 @@ export default function EmailsPage() {
                       style={getButtonPressStyle(
                         'detail-forward',
                         {
-                          padding: `${spacing(1.5)} ${spacing(2)}`,
+                          padding: spacing(1.5),
                           backgroundColor: 'transparent',
                           border: `1px solid ${colors.border}`,
                           borderRadius: spacing(1),
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: spacing(1),
-                          fontSize: '13px',
-                          fontWeight: '500',
-                          ...text.secondary,
-                          whiteSpace: 'nowrap'
+                          justifyContent: 'center',
+                          flexShrink: 0
                         },
                         'transparent',
                         colors.cardHover
                       )}
+                      title="Forward"
                     >
-                      <Forward style={{ width: '16px', height: '16px' }} />
-                      Forward
+                      <Forward style={{ width: '18px', height: '18px', color: text.secondary.color }} />
                     </button>
                     <button
                       {...getButtonPressHandlers('detail-star')}
