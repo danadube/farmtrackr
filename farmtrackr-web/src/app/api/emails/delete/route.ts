@@ -8,25 +8,26 @@ export const dynamic = 'force-dynamic'
 /**
  * Check if the stored token has Gmail scopes
  */
-async function hasGmailScopes(): Promise<boolean> {
+async function hasGmailScopes(): Promise<{ hasScopes: boolean; scopes: string[] }> {
   try {
     const storedToken = await getGoogleOAuthToken()
     if (!storedToken?.scopes || storedToken.scopes.length === 0) {
-      return false
+      console.log('No scopes found in stored token')
+      return { hasScopes: false, scopes: [] }
     }
     
-    const gmailScopes = [
-      'https://www.googleapis.com/auth/gmail.modify',
-      'https://www.googleapis.com/auth/gmail.send',
-      'https://www.googleapis.com/auth/gmail.readonly',
-    ]
-    
-    return storedToken.scopes.some(scope => 
-      gmailScopes.some(gmailScope => scope.includes('gmail'))
+    const scopes = Array.isArray(storedToken.scopes) ? storedToken.scopes : []
+    const hasGmail = scopes.some(scope => 
+      typeof scope === 'string' && scope.includes('gmail')
     )
+    
+    console.log('Stored token scopes:', scopes)
+    console.log('Has Gmail scopes:', hasGmail)
+    
+    return { hasScopes: hasGmail, scopes }
   } catch (error) {
     console.error('Error checking Gmail scopes:', error)
-    return false
+    return { hasScopes: false, scopes: [] }
   }
 }
 
@@ -48,13 +49,14 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if Gmail scopes are present
-    const hasScopes = await hasGmailScopes()
+    const { hasScopes, scopes } = await hasGmailScopes()
     if (!hasScopes) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Gmail permissions not granted. Please reconnect your Google account and ensure Gmail access is enabled.',
-          requiresReauth: true
+          error: `Gmail permissions not granted. Current scopes: ${scopes.join(', ')}. Please reconnect your Google account and ensure Gmail access is enabled.`,
+          requiresReauth: true,
+          currentScopes: scopes
         },
         { status: 403 }
       )
