@@ -34,35 +34,62 @@ export async function POST(request: NextRequest) {
 
     // Try to delete the message - let the API tell us if scopes are missing
     try {
-      await gmail.users.messages.delete({
-        userId: 'me',
-        id: messageId,
-      })
+      // First, try to move to trash (safer, reversible)
+      // If that works, then permanently delete
+      try {
+        await gmail.users.messages.trash({
+          userId: 'me',
+          id: messageId,
+        })
+        
+        // Wait a moment, then permanently delete from trash
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        await gmail.users.messages.delete({
+          userId: 'me',
+          id: messageId,
+        })
+      } catch (trashError: any) {
+        // If trash fails, try direct delete
+        console.log('Trash failed, trying direct delete:', trashError?.message)
+        await gmail.users.messages.delete({
+          userId: 'me',
+          id: messageId,
+        })
+      }
     } catch (apiError: any) {
       console.error('Gmail delete API error:', {
         code: apiError?.code,
         message: apiError?.message,
         response: apiError?.response?.data,
-        status: apiError?.response?.status
+        status: apiError?.response?.status,
+        errors: apiError?.errors
       })
       
       // Check for insufficient scopes error from Gmail API
-      if (apiError?.code === 403 || 
+      const errorMessage = apiError?.message || apiError?.response?.data?.error?.message || ''
+      const isScopeError = apiError?.code === 403 || 
           apiError?.response?.status === 403 ||
-          (apiError?.message && (
-            apiError.message.includes('insufficient authentication scopes') ||
-            apiError.message.includes('Insufficient Permission') ||
-            apiError.message.includes('Request had insufficient authentication scopes')
-          ))) {
+          errorMessage.includes('insufficient authentication scopes') ||
+          errorMessage.includes('Insufficient Permission') ||
+          errorMessage.includes('Request had insufficient authentication scopes') ||
+          (apiError?.response?.data?.error?.errors?.some((e: any) => 
+            e.reason === 'insufficientPermissions' || 
+            e.message?.includes('insufficient') ||
+            e.message?.includes('permission')
+          ))
+      
+      if (isScopeError) {
         return NextResponse.json(
           { 
             success: false, 
-            error: 'Gmail permissions not granted. Please disconnect and reconnect your Google account, making sure to grant Gmail access when prompted.',
+            error: 'Gmail delete permissions not granted. Please disconnect and reconnect your Google account, making sure to grant Gmail access when prompted.',
             requiresReauth: true,
             debug: {
               code: apiError?.code,
-              message: apiError?.message,
-              status: apiError?.response?.status
+              message: errorMessage,
+              status: apiError?.response?.status,
+              fullError: apiError?.response?.data
             }
           },
           { status: 403 }
