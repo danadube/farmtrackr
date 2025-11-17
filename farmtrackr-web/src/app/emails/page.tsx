@@ -31,8 +31,7 @@ import {
   Reply,
   Forward,
   Trash2,
-  Download,
-  Circle
+  Download
 } from 'lucide-react'
 import { EmailData } from '@/types'
 
@@ -1867,7 +1866,13 @@ export default function EmailsPage() {
                         )}
                         title="Mark as Read"
                       >
-                        <Circle style={{ width: '18px', height: '18px', color: colors.primary }} />
+                        <div style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          border: `2px solid ${colors.primary}`,
+                          backgroundColor: 'transparent'
+                        }} />
                       </button>
                     ) : (
                       <button
@@ -1891,7 +1896,12 @@ export default function EmailsPage() {
                         )}
                         title="Mark as Unread"
                       >
-                        <Circle style={{ width: '18px', height: '18px', color: text.secondary.color, fill: text.secondary.color }} />
+                        <div style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          backgroundColor: text.secondary.color
+                        }} />
                       </button>
                     )}
                     <button
