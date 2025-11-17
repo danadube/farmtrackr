@@ -467,21 +467,25 @@ export default function EmailsPage() {
       
       const result = await response.json()
       
-      if (result.success) {
+      // Only proceed if delete was successful
+      if (result.success === true) {
         // If we deleted the selected email, clear selection
         if (selectedEmail?.id === emailToDelete.id) {
           setSelectedEmail(null)
         }
-        loadEmails()
-        loadLabels()
+        // Silently refresh - these functions handle their own errors
+        loadEmails().catch(err => console.error('Error refreshing emails after delete:', err))
+        loadLabels().catch(err => console.error('Error refreshing labels after delete:', err))
+        // Don't show any alerts on success
+        return
+      }
+      
+      // Only show errors if delete actually failed
+      if (result.requiresReauth) {
+        // Don't auto-disconnect/reconnect - let user do it manually from settings
+        alert(`${result.error}\n\nPlease go to Settings and disconnect/reconnect your Google account to grant Gmail delete permissions.`)
       } else {
-        if (result.requiresReauth) {
-          // Only show reauth prompt if delete actually failed
-          // Don't auto-disconnect/reconnect - let user do it manually from settings
-          alert(`${result.error}\n\nPlease go to Settings and disconnect/reconnect your Google account to grant Gmail delete permissions.`)
-        } else {
-          alert(`Error: ${result.error || 'Failed to delete email'}`)
-        }
+        alert(`Error: ${result.error || 'Failed to delete email'}`)
       }
     } catch (error) {
       console.error('Error deleting email:', error)
