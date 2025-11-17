@@ -26,11 +26,11 @@ export const GOOGLE_SCOPES = [
 /**
  * Generate Google OAuth authorization URL
  */
-export function getGoogleAuthUrl(state?: string): string {
+export function getGoogleAuthUrl(state?: string, forceConsent: boolean = true): string {
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: GOOGLE_SCOPES,
-    prompt: 'consent', // Force consent screen to get refresh token
+    prompt: forceConsent ? 'consent' : undefined, // Force consent screen to get refresh token and all scopes
     state: state || undefined,
   })
 }
