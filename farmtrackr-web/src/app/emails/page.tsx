@@ -1599,7 +1599,7 @@ export default function EmailsPage() {
                       </h2>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1) }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing(1), flexWrap: 'wrap', flexShrink: 0 }}>
                     <button
                       {...getButtonPressHandlers('detail-reply')}
                       onClick={handleReply}
@@ -1616,7 +1616,8 @@ export default function EmailsPage() {
                           gap: spacing(1),
                           fontSize: '13px',
                           fontWeight: '500',
-                          ...text.secondary
+                          ...text.secondary,
+                          whiteSpace: 'nowrap'
                         },
                         'transparent',
                         colors.cardHover
@@ -1641,7 +1642,8 @@ export default function EmailsPage() {
                           gap: spacing(1),
                           fontSize: '13px',
                           fontWeight: '500',
-                          ...text.secondary
+                          ...text.secondary,
+                          whiteSpace: 'nowrap'
                         },
                         'transparent',
                         colors.cardHover
@@ -1663,11 +1665,13 @@ export default function EmailsPage() {
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          flexShrink: 0
                         },
                         'transparent',
                         colors.cardHover
                       )}
+                      title={selectedEmail.isStarred ? 'Unstar' : 'Star'}
                     >
                       <Star style={{
                         width: '18px',
@@ -1676,7 +1680,30 @@ export default function EmailsPage() {
                         fill: selectedEmail.isStarred ? colors.warning : 'none'
                       }} />
                     </button>
-                    <div style={{ position: 'relative' }} data-move-menu>
+                    <button
+                      {...getButtonPressHandlers('detail-archive')}
+                      onClick={() => selectedEmail && handleArchive(selectedEmail.id)}
+                      style={getButtonPressStyle(
+                        'detail-archive',
+                        {
+                          padding: spacing(1.5),
+                          backgroundColor: 'transparent',
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: spacing(1),
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        },
+                        'transparent',
+                        colors.cardHover
+                      )}
+                      title="Archive"
+                    >
+                      <FileText style={{ width: '18px', height: '18px', color: text.secondary.color }} />
+                    </button>
+                    <div style={{ position: 'relative', flexShrink: 0 }} data-move-menu>
                       <button
                         {...getButtonPressHandlers('detail-move')}
                         onClick={() => setShowMoveMenu(!showMoveMenu)}
@@ -1692,11 +1719,13 @@ export default function EmailsPage() {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            opacity: isMoving ? 0.5 : 1
+                            opacity: isMoving ? 0.5 : 1,
+                            flexShrink: 0
                           },
                           'transparent',
                           colors.cardHover
                         )}
+                        title="Move to Folder"
                       >
                         <MoreVertical style={{ width: '18px', height: '18px', color: text.secondary.color }} />
                       </button>
@@ -1774,28 +1803,6 @@ export default function EmailsPage() {
                       )}
                     </div>
                     <button
-                      {...getButtonPressHandlers('detail-archive')}
-                      onClick={() => selectedEmail && handleArchive(selectedEmail.id)}
-                      style={getButtonPressStyle(
-                        'detail-archive',
-                        {
-                          padding: spacing(1.5),
-                          backgroundColor: 'transparent',
-                          border: `1px solid ${colors.border}`,
-                          borderRadius: spacing(1),
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        },
-                        'transparent',
-                        colors.cardHover
-                      )}
-                      title="Archive"
-                    >
-                      <FileText style={{ width: '18px', height: '18px', color: text.secondary.color }} />
-                    </button>
-                    <button
                       {...getButtonPressHandlers('detail-delete')}
                       onClick={() => handleDelete()}
                       style={getButtonPressStyle(
@@ -1808,7 +1815,8 @@ export default function EmailsPage() {
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          flexShrink: 0
                         },
                         'transparent',
                         colors.cardHover
