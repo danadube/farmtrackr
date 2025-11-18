@@ -185,15 +185,34 @@ export async function POST(request: NextRequest) {
                 message: 'Email deleted successfully (via trash)',
               })
             } catch (trashDeleteError: any) {
-              // If delete from trash also fails, at least it's in trash
+              // If delete from trash fails, that's OK - at least it's in trash
+              // Permanent delete requires app verification, but trash works
               if (trashDeleteError?.code === 404) {
                 // Message already deleted - that's OK
                 return NextResponse.json({
                   success: true,
                   message: 'Email moved to trash successfully',
+                  permanentlyDeleted: true,
+                })
+              } else if (trashDeleteError?.code === 403 && trashDeleteError?.message?.includes('insufficient')) {
+                // Permanent delete requires app verification, but trash succeeded
+                console.log('Delete attempt - Permanent delete requires verification, but trash succeeded')
+                return NextResponse.json({
+                  success: true,
+                  message: 'Email moved to trash successfully. Permanent delete requires Google app verification.',
+                  permanentlyDeleted: false,
+                  movedToTrash: true,
+                  note: 'Your app needs to be verified by Google to permanently delete emails. The email has been moved to trash and will be automatically deleted after 30 days.',
                 })
               }
-              throw trashDeleteError
+              // For other errors, still return success since trash worked
+              console.warn('Delete attempt - Delete from trash failed, but trash succeeded:', trashDeleteError?.code, trashDeleteError?.message)
+              return NextResponse.json({
+                success: true,
+                message: 'Email moved to trash successfully',
+                permanentlyDeleted: false,
+                movedToTrash: true,
+              })
             }
           } catch (trashError: any) {
             // If trash also fails, fall through to original error
