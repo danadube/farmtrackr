@@ -29,10 +29,22 @@ export async function GET(request: NextRequest) {
     // Try to test delete permission with a test call
     let canDelete = false
     let deleteError: any = null
+    let actualTokenScopes: string[] = []
     
     try {
       const accessToken = await getGoogleAccessToken()
       if (accessToken) {
+        // Check actual token scopes using Google's tokeninfo API
+        try {
+          const tokenInfoResponse = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`)
+          if (tokenInfoResponse.ok) {
+            const tokenInfo = await tokenInfoResponse.json()
+            actualTokenScopes = tokenInfo.scope ? tokenInfo.scope.split(' ') : []
+          }
+        } catch (tokenInfoError) {
+          console.warn('Could not verify token scopes:', tokenInfoError)
+        }
+        
         const gmail = getAuthenticatedGmailClient(accessToken)
         // Try to list messages to verify we can access Gmail
         await gmail.users.messages.list({
@@ -61,9 +73,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       hasToken: true,
       scopes: scopes,
+      actualTokenScopes: actualTokenScopes,
       hasGmailScope,
       hasGmailModify,
       hasGmailReadonly,
+      hasGmailModifyInActual: actualTokenScopes.some(s => s.includes('gmail.modify')),
       canDelete,
       deleteError,
       accountEmail: storedToken.accountEmail,
@@ -72,7 +86,15 @@ export async function GET(request: NextRequest) {
         'https://www.googleapis.com/auth/gmail.modify',
         'https://www.googleapis.com/auth/gmail.send',
         'https://www.googleapis.com/auth/gmail.readonly'
-      ]
+      ],
+      // Diagnostic info
+      diagnostic: {
+        storedHasGmailModify: hasGmailModify,
+        actualHasGmailModify: actualTokenScopes.some(s => s.includes('gmail.modify')),
+        scopesMatch: JSON.stringify(scopes.sort()) === JSON.stringify(actualTokenScopes.sort()),
+        missingFromActual: scopes.filter(s => !actualTokenScopes.includes(s)),
+        extraInActual: actualTokenScopes.filter(s => !scopes.includes(s))
+      }
     })
   } catch (error) {
     console.error('Error verifying scopes:', error)
