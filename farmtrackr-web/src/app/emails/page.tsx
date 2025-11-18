@@ -507,11 +507,14 @@ export default function EmailsPage() {
               window.location.href = '/api/google/oauth/authorize'
             }
           } else {
-            // Has gmail.modify but still failing - might be token refresh issue
+            // Has gmail.modify in stored token but still failing
+            // This means the actual access token doesn't have the scope (token refresh issue)
+            // Always force re-auth when delete fails with scope error, regardless of stored scopes
             const reconnect = confirm(
               `${result.error}\n\n` +
-              `Your token has gmail.modify scope, but delete is still failing.\n\n` +
-              `This might be a token refresh issue. Would you like to disconnect and reconnect to get a fresh token?`
+              `Your stored token shows gmail.modify scope, but the actual access token doesn't have delete permissions.\n\n` +
+              `This happens when a token was created before Gmail scopes were added, or when token refresh loses scopes.\n\n` +
+              `Would you like to disconnect and reconnect to get a fresh token with all required permissions?`
             )
             if (reconnect) {
               await fetch('/api/google/oauth/disconnect', { method: 'POST' })
