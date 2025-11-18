@@ -61,13 +61,34 @@ export async function GET(request: NextRequest) {
 
     let accountEmail: string | null = null
 
+    // Try to get user email from the token's ID token if available, or from userinfo API
     try {
-      oauth2Client.setCredentials({ access_token: tokens.access_token })
-      const oauthClient = google.oauth2({ version: 'v2', auth: oauth2Client })
-      const profile = await oauthClient.userinfo.get()
-      accountEmail = profile.data.email || null
+      // First try to decode the ID token if present (contains user info)
+      if (tokens.id_token) {
+        // ID token is a JWT - decode the payload (base64)
+        const idTokenParts = tokens.id_token.split('.')
+        if (idTokenParts.length === 3) {
+          try {
+            const payload = JSON.parse(Buffer.from(idTokenParts[1], 'base64').toString())
+            accountEmail = payload.email || null
+            console.log('OAuth callback - Got email from ID token:', accountEmail)
+          } catch (idTokenError) {
+            console.warn('Could not decode ID token:', idTokenError)
+          }
+        }
+      }
+      
+      // If ID token didn't work, try userinfo API
+      if (!accountEmail && tokens.access_token) {
+        oauth2Client.setCredentials({ access_token: tokens.access_token })
+        const oauthClient = google.oauth2({ version: 'v2', auth: oauth2Client })
+        const profile = await oauthClient.userinfo.get()
+        accountEmail = profile.data.email || null
+        console.log('OAuth callback - Got email from userinfo API:', accountEmail)
+      }
     } catch (profileError) {
       console.warn('Unable to fetch Google profile during OAuth callback:', profileError)
+      // This is not critical - we can still save the token without the email
     }
 
     await saveGoogleOAuthToken({

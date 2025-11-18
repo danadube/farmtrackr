@@ -21,6 +21,8 @@ export const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/gmail.modify', // Gmail read/write (modify)
   'https://www.googleapis.com/auth/gmail.send', // Gmail send access
   'https://www.googleapis.com/auth/gmail.readonly', // Gmail read-only (fallback)
+  'https://www.googleapis.com/auth/userinfo.profile', // User profile (name, picture)
+  'https://www.googleapis.com/auth/userinfo.email', // User email
 ]
 
 /**
