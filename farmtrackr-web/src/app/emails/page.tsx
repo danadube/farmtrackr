@@ -482,8 +482,40 @@ export default function EmailsPage() {
       
       // Only show errors if delete actually failed
       if (result.requiresReauth) {
-        // Don't auto-disconnect/reconnect - let user do it manually from settings
-        alert(`${result.error}\n\nPlease go to Settings and disconnect/reconnect your Google account to grant Gmail delete permissions.`)
+        // Check what scopes are actually stored
+        try {
+          const scopeResponse = await fetch('/api/google/oauth/verify-scopes')
+          const scopeData = await scopeResponse.json()
+          const hasGmailModify = scopeData.scopes?.some((s: string) => 
+            s.includes('gmail.modify') || s.includes('gmail')
+          )
+          
+          if (!hasGmailModify) {
+            const reconnect = confirm(
+              `${result.error}\n\n` +
+              `Your current token doesn't have Gmail delete permissions.\n\n` +
+              `Would you like to disconnect and reconnect your Google account now to grant the required permissions?`
+            )
+            if (reconnect) {
+              // Disconnect first to clear old token
+              await fetch('/api/google/oauth/disconnect', { method: 'POST' })
+              // Then redirect to reconnect with fresh scopes
+              window.location.href = '/api/google/oauth/authorize'
+            }
+          } else {
+            alert(`${result.error}\n\nYour token appears to have Gmail scopes, but delete is still failing. Please try disconnecting and reconnecting from Settings.`)
+          }
+        } catch (scopeError) {
+          // If scope check fails, just show the error
+          const reconnect = confirm(
+            `${result.error}\n\n` +
+            `Would you like to disconnect and reconnect your Google account now to grant Gmail delete permissions?`
+          )
+          if (reconnect) {
+            await fetch('/api/google/oauth/disconnect', { method: 'POST' })
+            window.location.href = '/api/google/oauth/authorize'
+          }
+        }
       } else {
         alert(`Error: ${result.error || 'Failed to delete email'}`)
       }
