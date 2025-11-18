@@ -459,13 +459,16 @@ export default function EmailsPage() {
     if (!confirm('Are you sure you want to delete this email?')) return
     
     try {
+      console.log('Attempting to delete email:', emailToDelete.id)
       const response = await fetch('/api/emails/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messageId: emailToDelete.id })
       })
       
+      console.log('Delete response status:', response.status)
       const result = await response.json()
+      console.log('Delete response body:', result)
       
       // Only proceed if delete was successful
       if (result.success === true) {

@@ -76,8 +76,14 @@ export async function POST(request: NextRequest) {
         message: apiError?.message,
         response: apiError?.response?.data,
         status: apiError?.response?.status,
-        errors: apiError?.errors
+        errors: apiError?.errors,
+        fullError: JSON.stringify(apiError, null, 2)
       })
+      
+      // Log the actual error response from Google
+      if (apiError?.response?.data) {
+        console.error('Google API error details:', JSON.stringify(apiError.response.data, null, 2))
+      }
       
       // Check for insufficient scopes error from Gmail API
       const errorMessage = apiError?.message || apiError?.response?.data?.error?.message || ''
