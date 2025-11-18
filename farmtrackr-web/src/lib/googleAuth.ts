@@ -23,6 +23,7 @@ export const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly', // Gmail read-only (fallback)
   'https://www.googleapis.com/auth/userinfo.profile', // User profile (name, picture)
   'https://www.googleapis.com/auth/userinfo.email', // User email
+  'https://www.googleapis.com/auth/drive', // Google Drive (read/write access)
 ]
 
 /**
@@ -99,6 +100,18 @@ export function getAuthenticatedGmailClient(accessToken: string) {
   auth.setCredentials({ access_token: accessToken })
 
   const client = google.gmail({ version: 'v1', auth })
+  return client
+}
+
+export function getAuthenticatedDriveClient(accessToken: string) {
+  const auth = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    REDIRECT_URI
+  )
+  auth.setCredentials({ access_token: accessToken })
+
+  const client = google.drive({ version: 'v3', auth })
   return client
 }
 
