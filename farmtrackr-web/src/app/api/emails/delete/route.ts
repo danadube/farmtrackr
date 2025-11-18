@@ -70,7 +70,39 @@ export async function POST(request: NextRequest) {
       console.warn('Could not verify token scopes right before delete:', preCheckError)
     }
 
+    // Double-check: verify the exact token we're about to use has the scope
+    // Sometimes tokeninfo can be cached or show incorrect info
+    console.log('Delete attempt - About to create Gmail client with token (first 20 chars):', accessToken.substring(0, 20))
+    
+    // Try to make a test Gmail API call first to verify the token actually works
     const gmail = getAuthenticatedGmailClient(accessToken)
+    
+    // Test the token with a simple API call first
+    try {
+      console.log('Delete attempt - Testing token with Gmail API list call...')
+      const testList = await gmail.users.messages.list({
+        userId: 'me',
+        maxResults: 1,
+      })
+      console.log('Delete attempt - Gmail API list call succeeded, token is valid')
+    } catch (testError: any) {
+      console.error('Delete attempt - Gmail API list call failed:', testError?.code, testError?.message)
+      if (testError?.code === 403 && testError?.message?.includes('insufficient')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Gmail API access denied. The token does not have Gmail permissions. Please disconnect and reconnect your Google account.',
+            requiresReauth: true,
+            forceFullReauth: true,
+            debug: {
+              testError: testError?.message,
+              diagnosis: 'Token fails even basic Gmail API list call - token does not have Gmail scopes despite tokeninfo saying it does'
+            }
+          },
+          { status: 403 }
+        )
+      }
+    }
 
     // Try to delete the message - let the API tell us if scopes are missing
     try {
