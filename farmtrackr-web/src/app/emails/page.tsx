@@ -481,6 +481,7 @@ export default function EmailsPage() {
       }
       
       // Only show errors if delete actually failed
+      console.log('Delete response:', result)
       if (result.requiresReauth) {
         // Check what scopes are actually stored
         try {
@@ -533,7 +534,8 @@ export default function EmailsPage() {
           }
         }
       } else {
-        alert(`Error: ${result.error || 'Failed to delete email'}`)
+        console.error('Delete failed:', result)
+        alert(`Error: ${result.error || 'Failed to delete email'}\n\nDebug info: ${JSON.stringify(result.debug || {}, null, 2)}`)
       }
     } catch (error) {
       console.error('Error deleting email:', error)
