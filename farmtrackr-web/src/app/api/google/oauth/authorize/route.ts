@@ -15,6 +15,10 @@ export async function GET(request: NextRequest) {
 
     // Generate authorization URL
     const authUrl = getGoogleAuthUrl(state)
+    
+    // Log the authorization URL for debugging
+    console.log('OAuth authorize - Redirect URI being used:', process.env.GOOGLE_OAUTH_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/google/oauth/callback`)
+    console.log('OAuth authorize - Authorization URL:', authUrl)
 
     // Redirect to Google OAuth consent screen
     return NextResponse.redirect(authUrl)

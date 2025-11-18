@@ -50,6 +50,14 @@ export async function GET(request: NextRequest) {
     console.log('OAuth callback - Scopes granted:', scopesFromToken)
     console.log('OAuth callback - Has gmail.modify:', scopesFromToken.some(s => s.includes('gmail.modify')))
     console.log('OAuth callback - All scopes:', JSON.stringify(scopesFromToken, null, 2))
+    console.log('OAuth callback - Token object keys:', Object.keys(tokens))
+    console.log('OAuth callback - Full token scope value:', tokens.scope)
+    
+    // If gmail.modify is missing, log a warning
+    if (!scopesFromToken.some(s => s.includes('gmail.modify'))) {
+      console.error('⚠️ WARNING: gmail.modify scope NOT granted during OAuth!')
+      console.error('Granted scopes:', scopesFromToken)
+    }
 
     let accountEmail: string | null = null
 
