@@ -233,6 +233,7 @@ export function DriveBrowser({ onFileSelect, onFileLink }: DriveBrowserProps) {
               top: '50%',
               transform: 'translateY(-50%)',
               color: text.tertiary.color,
+              pointerEvents: 'none',
             }}
           />
         </div>
