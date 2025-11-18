@@ -85,6 +85,49 @@ export async function POST(request: NextRequest) {
         maxResults: 1,
       })
       console.log('Delete attempt - Gmail API list call succeeded, token is valid')
+      
+      // Try to test modify permissions with a harmless operation (mark as read)
+      // This will tell us if we have modify permissions at all
+      if (testList.data.messages && testList.data.messages.length > 0) {
+        const testMessageId = testList.data.messages[0].id
+        try {
+          console.log('Delete attempt - Testing modify permissions with mark as read...')
+          await gmail.users.messages.modify({
+            userId: 'me',
+            id: testMessageId,
+            requestBody: {
+              addLabelIds: [],
+              removeLabelIds: ['UNREAD'],
+            },
+          })
+          console.log('Delete attempt - Mark as read succeeded, token HAS modify permissions')
+        } catch (modifyTestError: any) {
+          console.error('Delete attempt - Mark as read failed:', modifyTestError?.code, modifyTestError?.message)
+          if (modifyTestError?.code === 403 && modifyTestError?.message?.includes('insufficient')) {
+            console.error('⚠️ CRITICAL: Token has gmail.readonly but NOT gmail.modify!')
+            console.error('This means Google only granted read-only access, not modify access.')
+            console.error('Possible causes:')
+            console.error('1. App is in production mode but not verified by Google')
+            console.error('2. Gmail scopes are restricted and require verification')
+            console.error('3. OAuth consent screen is in testing mode with limited scopes')
+            
+            return NextResponse.json(
+              {
+                success: false,
+                error: 'Your token only has Gmail read-only permissions, not delete permissions. This typically happens when your app is in production mode but not verified by Google for restricted scopes. Gmail modify/delete requires app verification. Please check your Google Cloud Console OAuth consent screen status, or switch to testing mode and add yourself as a test user.',
+                requiresReauth: true,
+                forceFullReauth: true,
+                isReadOnlyOnly: true,
+                debug: {
+                  modifyTestError: modifyTestError?.message,
+                  diagnosis: 'Token has gmail.readonly but NOT gmail.modify - Google only granted read-only access despite gmail.modify being in requested scopes. This is a Google app verification issue.'
+                }
+              },
+              { status: 403 }
+            )
+          }
+        }
+      }
     } catch (testError: any) {
       console.error('Delete attempt - Gmail API list call failed:', testError?.code, testError?.message)
       if (testError?.code === 403 && testError?.message?.includes('insufficient')) {
