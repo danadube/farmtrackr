@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { Sidebar } from '@/components/Sidebar'
+import { DriveBrowser } from '@/components/DriveBrowser'
 import { useThemeStyles } from '@/hooks/useThemeStyles'
 import { useButtonPress } from '@/hooks/useButtonPress'
 
@@ -48,7 +49,7 @@ interface Letterhead {
 export default function DocumentsPage() {
   const { colors, isDark, card, headerCard, headerDivider, headerTint, background, text } = useThemeStyles()
   const { pressedButtons, getButtonPressHandlers, getButtonPressStyle } = useButtonPress()
-  const [activeTab, setActiveTab] = useState<'documents' | 'letterheads'>('documents')
+  const [activeTab, setActiveTab] = useState<'documents' | 'letterheads' | 'drive'>('documents')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'template' | 'contact' | 'report'>('all')
 
