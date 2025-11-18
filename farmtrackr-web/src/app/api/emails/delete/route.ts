@@ -52,6 +52,21 @@ export async function POST(request: NextRequest) {
       console.warn('Error checking token scopes:', tokenInfoError)
     }
 
+    // Double-check the token right before using it - tokeninfo might be cached
+    // Verify the exact token we're about to use has the scope
+    let tokenScopesBeforeDelete: string[] = []
+    try {
+      const preDeleteCheck = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`)
+      if (preDeleteCheck.ok) {
+        const preDeleteInfo = await preDeleteCheck.json()
+        tokenScopesBeforeDelete = preDeleteInfo.scope ? preDeleteInfo.scope.split(' ') : []
+        console.log('Delete attempt - Token scopes RIGHT BEFORE delete call:', tokenScopesBeforeDelete)
+        console.log('Delete attempt - Has gmail.modify RIGHT BEFORE delete:', tokenScopesBeforeDelete.some(s => s.includes('gmail.modify')))
+      }
+    } catch (preCheckError) {
+      console.warn('Could not verify token scopes right before delete:', preCheckError)
+    }
+
     const gmail = getAuthenticatedGmailClient(accessToken)
 
     // Try to delete the message - let the API tell us if scopes are missing
@@ -111,8 +126,12 @@ export async function POST(request: NextRequest) {
               fullError: apiError?.response?.data,
               storedScopes: storedToken?.scopes,
               actualTokenScopes: actualTokenScopes,
+              tokenScopesBeforeDelete: tokenScopesBeforeDelete,
               hasGmailModifyInStored: storedToken?.scopes?.some((s: string) => s.includes('gmail.modify')),
-              hasGmailModifyInActual: actualTokenScopes.some(s => s.includes('gmail.modify'))
+              hasGmailModifyInActual: actualTokenScopes.some(s => s.includes('gmail.modify')),
+              hasGmailModifyBeforeDelete: tokenScopesBeforeDelete.some(s => s.includes('gmail.modify')),
+              accessTokenFirst10: accessToken.substring(0, 10), // For debugging token changes
+              accessTokenLength: accessToken.length
             }
           },
           { status: 403 }
