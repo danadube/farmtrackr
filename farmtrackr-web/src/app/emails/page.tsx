@@ -486,16 +486,20 @@ export default function EmailsPage() {
         try {
           const scopeResponse = await fetch('/api/google/oauth/verify-scopes')
           const scopeData = await scopeResponse.json()
-          const hasGmailModify = scopeData.scopes?.some((s: string) => 
-            s.includes('gmail.modify') || s.includes('gmail')
+          const scopes = scopeData.scopes || []
+          const hasGmailModify = scopes.some((s: string) => 
+            s.includes('gmail.modify')
+          )
+          const hasGmailReadonly = scopes.some((s: string) => 
+            s.includes('gmail.readonly') && !s.includes('gmail.modify')
           )
           
           if (!hasGmailModify) {
-            const reconnect = confirm(
-              `${result.error}\n\n` +
-              `Your current token doesn't have Gmail delete permissions.\n\n` +
-              `Would you like to disconnect and reconnect your Google account now to grant the required permissions?`
-            )
+            const message = hasGmailReadonly
+              ? `Your token only has Gmail read-only permissions, not delete permissions.\n\nYou need to reconnect to grant full Gmail access (gmail.modify scope).`
+              : `Your current token doesn't have Gmail delete permissions.\n\nYou need to reconnect to grant Gmail modify access.`
+            
+            const reconnect = confirm(`${result.error}\n\n${message}\n\nWould you like to disconnect and reconnect your Google account now?`)
             if (reconnect) {
               // Disconnect first to clear old token
               await fetch('/api/google/oauth/disconnect', { method: 'POST' })
@@ -503,7 +507,16 @@ export default function EmailsPage() {
               window.location.href = '/api/google/oauth/authorize'
             }
           } else {
-            alert(`${result.error}\n\nYour token appears to have Gmail scopes, but delete is still failing. Please try disconnecting and reconnecting from Settings.`)
+            // Has gmail.modify but still failing - might be token refresh issue
+            const reconnect = confirm(
+              `${result.error}\n\n` +
+              `Your token has gmail.modify scope, but delete is still failing.\n\n` +
+              `This might be a token refresh issue. Would you like to disconnect and reconnect to get a fresh token?`
+            )
+            if (reconnect) {
+              await fetch('/api/google/oauth/disconnect', { method: 'POST' })
+              window.location.href = '/api/google/oauth/authorize'
+            }
           }
         } catch (scopeError) {
           // If scope check fails, just show the error
