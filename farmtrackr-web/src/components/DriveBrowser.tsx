@@ -292,8 +292,8 @@ export function DriveBrowser({ onFileSelect, onFileLink }: DriveBrowserProps) {
           style={{
             padding: spacing(2),
             borderRadius: spacing(0.75),
-            backgroundColor: colors.error || '#fee',
-            color: colors.errorText || '#c00',
+            backgroundColor: '#fee',
+            color: '#c00',
             fontSize: '14px',
           }}
         >
