@@ -36,6 +36,22 @@ export async function POST(request: NextRequest) {
     console.log('Delete attempt - Stored scopes:', storedToken?.scopes)
     console.log('Delete attempt - Access token length:', accessToken.length)
 
+    // Verify actual access token scopes using Google's tokeninfo API
+    let actualTokenScopes: string[] = []
+    try {
+      const tokenInfoResponse = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`)
+      if (tokenInfoResponse.ok) {
+        const tokenInfo = await tokenInfoResponse.json()
+        actualTokenScopes = tokenInfo.scope ? tokenInfo.scope.split(' ') : []
+        console.log('Delete attempt - Actual token scopes from Google:', actualTokenScopes)
+        console.log('Delete attempt - Has gmail.modify in actual token:', actualTokenScopes.some(s => s.includes('gmail.modify')))
+      } else {
+        console.warn('Could not verify token scopes with Google tokeninfo API')
+      }
+    } catch (tokenInfoError) {
+      console.warn('Error checking token scopes:', tokenInfoError)
+    }
+
     const gmail = getAuthenticatedGmailClient(accessToken)
 
     // Try to delete the message - let the API tell us if scopes are missing
@@ -86,7 +102,11 @@ export async function POST(request: NextRequest) {
               code: apiError?.code,
               message: errorMessage,
               status: apiError?.response?.status,
-              fullError: apiError?.response?.data
+              fullError: apiError?.response?.data,
+              storedScopes: storedToken?.scopes,
+              actualTokenScopes: actualTokenScopes,
+              hasGmailModifyInStored: storedToken?.scopes?.some((s: string) => s.includes('gmail.modify')),
+              hasGmailModifyInActual: actualTokenScopes.some(s => s.includes('gmail.modify'))
             }
           },
           { status: 403 }
