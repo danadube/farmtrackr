@@ -1603,7 +1603,8 @@ export default function CalendarPage() {
                     borderRadius: spacing(0.75),
                     border: `1px solid ${colors.border}`,
                     backgroundColor: colors.surface,
-                    color: text.primary.color,
+                    // Explicitly set color to ensure visibility in light mode
+                    color: isDark ? text.primary.color : '#1a1a1a',
                     fontSize: '13px',
                     fontWeight: 500,
                     cursor: 'pointer',
