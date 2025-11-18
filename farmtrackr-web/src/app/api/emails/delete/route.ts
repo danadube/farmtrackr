@@ -149,11 +149,61 @@ export async function POST(request: NextRequest) {
 
     // Try to delete the message - let the API tell us if scopes are missing
     try {
+      // Gmail API delete requires specific permissions
+      // Some implementations require trash first, then delete
       // Try direct delete first (most efficient)
-      await gmail.users.messages.delete({
-        userId: 'me',
-        id: messageId,
-      })
+      try {
+        await gmail.users.messages.delete({
+          userId: 'me',
+          id: messageId,
+        })
+      } catch (directDeleteError: any) {
+        // If direct delete fails with scope error, try trash then delete
+        if (directDeleteError?.code === 403 && directDeleteError?.message?.includes('insufficient')) {
+          console.log('Delete attempt - Direct delete failed, trying trash then delete approach...')
+          
+          // First, try to trash the message
+          try {
+            await gmail.users.messages.trash({
+              userId: 'me',
+              id: messageId,
+            })
+            console.log('Delete attempt - Message trashed successfully')
+            
+            // Wait a moment for trash to process
+            await new Promise(resolve => setTimeout(resolve, 500))
+            
+            // Then try to permanently delete from trash
+            try {
+              await gmail.users.messages.delete({
+                userId: 'me',
+                id: messageId,
+              })
+              console.log('Delete attempt - Message permanently deleted from trash')
+              return NextResponse.json({
+                success: true,
+                message: 'Email deleted successfully (via trash)',
+              })
+            } catch (trashDeleteError: any) {
+              // If delete from trash also fails, at least it's in trash
+              if (trashDeleteError?.code === 404) {
+                // Message already deleted - that's OK
+                return NextResponse.json({
+                  success: true,
+                  message: 'Email moved to trash successfully',
+                })
+              }
+              throw trashDeleteError
+            }
+          } catch (trashError: any) {
+            // If trash also fails, fall through to original error
+            console.error('Delete attempt - Trash also failed:', trashError?.code, trashError?.message)
+            throw directDeleteError // Throw original delete error, not trash error
+          }
+        } else {
+          throw directDeleteError
+        }
+      }
     } catch (apiError: any) {
       // If direct delete fails with 404, message might already be deleted - that's OK
       if (apiError?.code === 404 || apiError?.response?.status === 404) {
