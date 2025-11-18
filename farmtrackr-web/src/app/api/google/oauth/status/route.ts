@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getGoogleAccessToken } from '@/lib/googleTokenHelper'
-import { getAuthenticatedPeopleClient } from '@/lib/googleAuth'
+import { getAuthenticatedPeopleClient, oauth2Client } from '@/lib/googleAuth'
 import { getGoogleOAuthToken } from '@/lib/googleTokenStore'
+import { google } from 'googleapis'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,15 +28,30 @@ export async function GET(request: NextRequest) {
       try {
         const token = await getGoogleAccessToken()
         if (token) {
-          const people = getAuthenticatedPeopleClient(token)
-          const profile = await people.people.get({
-            resourceName: 'people/me',
-            personFields: 'names,emailAddresses'
-          })
+          oauth2Client.setCredentials({ access_token: token })
           
-          userEmail = profile.data.emailAddresses?.[0]?.value || null
-          userName = profile.data.names?.[0]?.displayName || 
-                     `${profile.data.names?.[0]?.givenName || ''} ${profile.data.names?.[0]?.familyName || ''}`.trim() || null
+          // Try People API first (more detailed)
+          try {
+            const people = getAuthenticatedPeopleClient(token)
+            const profile = await people.people.get({
+              resourceName: 'people/me',
+              personFields: 'names,emailAddresses'
+            })
+            
+            userEmail = profile.data.emailAddresses?.[0]?.value || userEmail
+            userName = profile.data.names?.[0]?.displayName || null
+          } catch (peopleError: any) {
+            // If People API fails (missing profile scope), fall back to OAuth2 userinfo
+            if (peopleError?.code === 403 || peopleError?.message?.includes('profile')) {
+              console.log('People API requires profile scope, falling back to OAuth2 userinfo')
+              const oauthClient = google.oauth2({ version: 'v2', auth: oauth2Client })
+              const userInfo = await oauthClient.userinfo.get()
+              userName = userInfo.data.name || null
+              userEmail = userInfo.data.email || userEmail
+            } else {
+              throw peopleError
+            }
+          }
         }
       } catch (error) {
         console.error('Failed to fetch user info:', error)
