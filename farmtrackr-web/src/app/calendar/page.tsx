@@ -1201,20 +1201,23 @@ export default function CalendarPage() {
                 type="button"
                 {...getButtonPressHandlers('calendar-today')}
                 onClick={handleToday}
-                style={getButtonPressStyle(
-                  'calendar-today',
-                  {
-                    padding: `${spacing(1)} ${spacing(2)}`,
-                    borderRadius: spacing(0.75),
-                    border: `1px solid ${colors.border}`,
-                    backgroundColor: colors.surface,
-                    color: text.primary.color,
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                  },
-                  colors.surface,
-                  colors.cardHover
-                )}
+                style={{
+                  ...getButtonPressStyle(
+                    'calendar-today',
+                    {
+                      padding: `${spacing(1)} ${spacing(2)}`,
+                      borderRadius: spacing(0.75),
+                      border: `1px solid ${colors.border}`,
+                      backgroundColor: colors.surface,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                    },
+                    colors.surface,
+                    colors.cardHover
+                  ),
+                  // Explicitly set color to ensure visibility in light mode
+                  color: isDark ? text.primary.color : '#1a1a1a',
+                }}
               >
                 Today
               </button>
