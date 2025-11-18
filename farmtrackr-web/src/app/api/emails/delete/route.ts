@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       if (isScopeError) {
         // This is a known Google OAuth issue: tokeninfo API shows scopes, but the actual token doesn't have them
         // This happens when a token was created before scopes were added, or when refresh loses scopes
-        // The only solution is to force a full re-authentication
+        // OR when the OAuth consent screen isn't properly configured for Gmail scopes
         console.error('⚠️ CRITICAL: Gmail API says token has insufficient scopes for delete!')
         console.error('Stored scopes:', JSON.stringify(storedToken?.scopes, null, 2))
         console.error('Tokeninfo scopes:', JSON.stringify(actualTokenScopes, null, 2))
@@ -127,8 +127,24 @@ export async function POST(request: NextRequest) {
         console.error('Has gmail.modify in stored:', storedToken?.scopes?.some((s: string) => s.includes('gmail.modify')))
         console.error('Has gmail.modify in tokeninfo:', actualTokenScopes.some(s => s.includes('gmail.modify')))
         console.error('Has gmail.modify before delete:', tokenScopesBeforeDelete.some(s => s.includes('gmail.modify')))
-        console.error('This is a Google OAuth bug - the token needs to be recreated with fresh scopes.')
-        console.error('Forcing full re-authentication required.')
+        
+        // This is a very specific Google bug: tokeninfo shows the scope, but Gmail API rejects it
+        // This typically means:
+        // 1. The OAuth consent screen isn't configured for Gmail scopes, OR
+        // 2. The app needs Google verification for restricted scopes, OR
+        // 3. Gmail API isn't enabled in Google Cloud Console
+        const hasScopeInAllChecks = storedToken?.scopes?.some((s: string) => s.includes('gmail.modify')) &&
+                                    actualTokenScopes.some(s => s.includes('gmail.modify')) &&
+                                    tokenScopesBeforeDelete.some(s => s.includes('gmail.modify'))
+        
+        if (hasScopeInAllChecks) {
+          console.error('⚠️ DIAGNOSIS: Token shows gmail.modify in ALL checks but Gmail API still rejects it!')
+          console.error('This is a Google Cloud Console configuration issue, not a token issue.')
+          console.error('Please check:')
+          console.error('1. Gmail API is enabled in Google Cloud Console')
+          console.error('2. OAuth consent screen includes gmail.modify scope')
+          console.error('3. App is verified (if in production mode with restricted scopes)')
+        }
         
         // Check if this is a refresh token issue
         const isRefreshTokenIssue = storedToken?.scopes?.some((s: string) => s.includes('gmail.modify')) && 
@@ -137,12 +153,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { 
             success: false, 
-            error: isRefreshTokenIssue
+            error: hasScopeInAllChecks
+              ? 'Gmail delete permissions appear to be granted, but Google\'s Gmail API is rejecting the request. This is likely a Google Cloud Console configuration issue. Please verify: 1) Gmail API is enabled, 2) OAuth consent screen includes gmail.modify scope, 3) App is verified if using restricted scopes. Then disconnect and reconnect your Google account.'
+              : isRefreshTokenIssue
               ? 'Your Google account was connected before Gmail delete permissions were added. The refresh token doesn\'t have the new scopes. Please disconnect and reconnect to get a fresh token with all required permissions.'
               : 'Gmail delete permissions not granted. This appears to be a Google OAuth token issue where the token shows the correct scopes but doesn\'t actually have them. Please disconnect and reconnect your Google account to get a fresh token with all required permissions.',
             requiresReauth: true,
             forceFullReauth: true, // Flag to indicate this needs a full re-auth, not just reconnect
             isRefreshTokenIssue,
+            isConfigurationIssue: hasScopeInAllChecks,
             debug: {
               code: apiError?.code,
               message: errorMessage,
@@ -156,7 +175,9 @@ export async function POST(request: NextRequest) {
               hasGmailModifyBeforeDelete: tokenScopesBeforeDelete.some(s => s.includes('gmail.modify')),
               accessTokenFirst10: accessToken.substring(0, 10),
               accessTokenLength: accessToken.length,
-              diagnosis: isRefreshTokenIssue
+              diagnosis: hasScopeInAllChecks
+                ? 'Token shows gmail.modify in all checks but Gmail API rejects it - this is a Google Cloud Console configuration issue. Check: 1) Gmail API enabled, 2) OAuth consent screen configured, 3) App verification status.'
+                : isRefreshTokenIssue
                 ? 'Refresh token was created before Gmail scopes were added. Token refresh doesn\'t include new scopes. Full re-authentication required.'
                 : 'Token shows gmail.modify in tokeninfo but Gmail API rejects it - this is a Google OAuth token refresh bug. Full re-authentication required.'
             }

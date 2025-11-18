@@ -52,6 +52,35 @@ export async function GET(request: NextRequest) {
     console.log('OAuth callback - All scopes:', JSON.stringify(scopesFromToken, null, 2))
     console.log('OAuth callback - Token object keys:', Object.keys(tokens))
     console.log('OAuth callback - Full token scope value:', tokens.scope)
+    console.log('OAuth callback - Refresh token present:', !!tokens.refresh_token)
+    
+    // Verify the token actually has the scopes by checking tokeninfo
+    if (tokens.access_token) {
+      try {
+        const tokenInfoResponse = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${tokens.access_token}`)
+        if (tokenInfoResponse.ok) {
+          const tokenInfo = await tokenInfoResponse.json()
+          const actualScopes = tokenInfo.scope ? tokenInfo.scope.split(' ') : []
+          console.log('OAuth callback - Tokeninfo scopes (immediate check):', actualScopes)
+          console.log('OAuth callback - Has gmail.modify in tokeninfo:', actualScopes.some(s => s.includes('gmail.modify')))
+          
+          // Check if there's a mismatch
+          const hasGmailModifyInGranted = scopesFromToken.some(s => s.includes('gmail.modify'))
+          const hasGmailModifyInTokeninfo = actualScopes.some(s => s.includes('gmail.modify'))
+          
+          if (hasGmailModifyInGranted && !hasGmailModifyInTokeninfo) {
+            console.error('⚠️ CRITICAL: gmail.modify was in granted scopes but NOT in tokeninfo!')
+            console.error('This means Google did not actually grant the scope despite showing it in the consent screen.')
+            console.error('Possible causes:')
+            console.error('1. Gmail API is not enabled in Google Cloud Console')
+            console.error('2. OAuth consent screen is not configured for Gmail scopes')
+            console.error('3. App needs Google verification for restricted scopes')
+          }
+        }
+      } catch (tokenInfoError) {
+        console.warn('OAuth callback - Could not verify token scopes immediately:', tokenInfoError)
+      }
+    }
     
     // If gmail.modify is missing, log a warning
     if (!scopesFromToken.some(s => s.includes('gmail.modify'))) {
