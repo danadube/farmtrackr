@@ -34,7 +34,10 @@ export async function POST(request: NextRequest) {
     const { getGoogleOAuthToken } = await import('@/lib/googleTokenStore')
     const storedToken = await getGoogleOAuthToken()
     console.log('Delete attempt - Stored scopes:', storedToken?.scopes)
+    console.log('Delete attempt - Stored scopes (full):', JSON.stringify(storedToken?.scopes, null, 2))
+    console.log('Delete attempt - Has gmail.modify in stored:', storedToken?.scopes?.some((s: string) => s.includes('gmail.modify')))
     console.log('Delete attempt - Access token length:', accessToken.length)
+    console.log('Delete attempt - Account email:', storedToken?.accountEmail)
 
     // Verify actual access token scopes using Google's tokeninfo API
     let actualTokenScopes: string[] = []
@@ -117,16 +120,29 @@ export async function POST(request: NextRequest) {
         // This is a known Google OAuth issue: tokeninfo API shows scopes, but the actual token doesn't have them
         // This happens when a token was created before scopes were added, or when refresh loses scopes
         // The only solution is to force a full re-authentication
-        console.error('⚠️ CRITICAL: Token shows gmail.modify in tokeninfo but Gmail API says it doesn\'t have it!')
+        console.error('⚠️ CRITICAL: Gmail API says token has insufficient scopes for delete!')
+        console.error('Stored scopes:', JSON.stringify(storedToken?.scopes, null, 2))
+        console.error('Tokeninfo scopes:', JSON.stringify(actualTokenScopes, null, 2))
+        console.error('Tokeninfo scopes before delete:', JSON.stringify(tokenScopesBeforeDelete, null, 2))
+        console.error('Has gmail.modify in stored:', storedToken?.scopes?.some((s: string) => s.includes('gmail.modify')))
+        console.error('Has gmail.modify in tokeninfo:', actualTokenScopes.some(s => s.includes('gmail.modify')))
+        console.error('Has gmail.modify before delete:', tokenScopesBeforeDelete.some(s => s.includes('gmail.modify')))
         console.error('This is a Google OAuth bug - the token needs to be recreated with fresh scopes.')
         console.error('Forcing full re-authentication required.')
+        
+        // Check if this is a refresh token issue
+        const isRefreshTokenIssue = storedToken?.scopes?.some((s: string) => s.includes('gmail.modify')) && 
+                                    !actualTokenScopes.some(s => s.includes('gmail.modify'))
         
         return NextResponse.json(
           { 
             success: false, 
-            error: 'Gmail delete permissions not granted. This appears to be a Google OAuth token issue where the token shows the correct scopes but doesn\'t actually have them. Please disconnect and reconnect your Google account to get a fresh token with all required permissions.',
+            error: isRefreshTokenIssue
+              ? 'Your Google account was connected before Gmail delete permissions were added. The refresh token doesn\'t have the new scopes. Please disconnect and reconnect to get a fresh token with all required permissions.'
+              : 'Gmail delete permissions not granted. This appears to be a Google OAuth token issue where the token shows the correct scopes but doesn\'t actually have them. Please disconnect and reconnect your Google account to get a fresh token with all required permissions.',
             requiresReauth: true,
             forceFullReauth: true, // Flag to indicate this needs a full re-auth, not just reconnect
+            isRefreshTokenIssue,
             debug: {
               code: apiError?.code,
               message: errorMessage,
@@ -140,7 +156,9 @@ export async function POST(request: NextRequest) {
               hasGmailModifyBeforeDelete: tokenScopesBeforeDelete.some(s => s.includes('gmail.modify')),
               accessTokenFirst10: accessToken.substring(0, 10),
               accessTokenLength: accessToken.length,
-              diagnosis: 'Token shows gmail.modify in tokeninfo but Gmail API rejects it - this is a Google OAuth token refresh bug. Full re-authentication required.'
+              diagnosis: isRefreshTokenIssue
+                ? 'Refresh token was created before Gmail scopes were added. Token refresh doesn\'t include new scopes. Full re-authentication required.'
+                : 'Token shows gmail.modify in tokeninfo but Gmail API rejects it - this is a Google OAuth token refresh bug. Full re-authentication required.'
             }
           },
           { status: 403 }
