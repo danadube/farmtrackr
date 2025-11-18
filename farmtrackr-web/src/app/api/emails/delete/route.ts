@@ -30,6 +30,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Log token info for debugging
+    const { getGoogleOAuthToken } = await import('@/lib/googleTokenStore')
+    const storedToken = await getGoogleOAuthToken()
+    console.log('Delete attempt - Stored scopes:', storedToken?.scopes)
+    console.log('Delete attempt - Access token length:', accessToken.length)
+
     const gmail = getAuthenticatedGmailClient(accessToken)
 
     // Try to delete the message - let the API tell us if scopes are missing

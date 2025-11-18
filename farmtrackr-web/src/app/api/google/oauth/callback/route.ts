@@ -46,6 +46,11 @@ export async function GET(request: NextRequest) {
           ? tokens.scope
           : []
 
+    // Log what scopes were actually granted
+    console.log('OAuth callback - Scopes granted:', scopesFromToken)
+    console.log('OAuth callback - Has gmail.modify:', scopesFromToken.some(s => s.includes('gmail.modify')))
+    console.log('OAuth callback - All scopes:', JSON.stringify(scopesFromToken, null, 2))
+
     let accountEmail: string | null = null
 
     try {

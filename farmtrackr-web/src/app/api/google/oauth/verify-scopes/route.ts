@@ -50,13 +50,29 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Check specifically for gmail.modify
+    const hasGmailModify = scopes.some(scope => 
+      typeof scope === 'string' && scope.includes('gmail.modify')
+    )
+    const hasGmailReadonly = scopes.some(scope => 
+      typeof scope === 'string' && scope.includes('gmail.readonly') && !scope.includes('gmail.modify')
+    )
+
     return NextResponse.json({
       hasToken: true,
       scopes: scopes,
       hasGmailScope,
+      hasGmailModify,
+      hasGmailReadonly,
       canDelete,
       deleteError,
-      accountEmail: storedToken.accountEmail
+      accountEmail: storedToken.accountEmail,
+      // Show what scopes we're requesting vs what we got
+      requestedScopes: [
+        'https://www.googleapis.com/auth/gmail.modify',
+        'https://www.googleapis.com/auth/gmail.send',
+        'https://www.googleapis.com/auth/gmail.readonly'
+      ]
     })
   } catch (error) {
     console.error('Error verifying scopes:', error)
