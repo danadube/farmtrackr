@@ -986,39 +986,39 @@ Google Services Layer
 **Priority:** Lower priority - can come after email integration
 
 #### Transaction Pipeline
-- [ ] **Standard Pipeline Stages** (Initial Implementation)
-  - Default stages: Lead → Active → Under Contract → Closed → Cancelled
-  - Visual pipeline interface (Kanban-style or list view)
-  - Drag-and-drop transaction movement between stages
-  - Stage-based filtering and views
-  - Pipeline analytics and reporting
-  - **Each pipeline stage should be a different color** (color coding for visual distinction)
-  - **Make pipeline more usable** (user feedback: "clunky and a little hard to use")
-  - **Standardize section tabs above pipeline** (some tabs pushing listing cards down - fix alignment)
+- [x] **Standard Pipeline Stages** ✅ MOSTLY COMPLETE
+  - Default stages: Lead → Active → Under Contract → Closed → Cancelled ✅
+  - Visual pipeline interface (Kanban-style or list view) ✅
+  - Drag-and-drop transaction movement between stages ✅
+  - Stage-based filtering and views ✅
+  - Pipeline analytics and reporting (partial)
+  - **Each pipeline stage should be a different color** (color coding for visual distinction) ✅
+  - **Make pipeline more usable** (user feedback: "clunky and a little hard to use") (needs refinement)
+  - **Standardize section tabs above pipeline** (some tabs pushing listing cards down - fix alignment) (needs refinement)
 - [ ] **Customizable Pipeline** (Future Enhancement)
   - User ability to customize stage names
   - Add/remove stages
   - Define stage order
   - Stage color coding
-- [ ] **Pipeline Integration**
-  - Link transactions to contacts
-  - Track transactions through workflow stages
-  - Stage-based notifications and reminders
-  - Pipeline dashboard view
-  - **Create tasks from pipeline and attach to listing** (task creation directly from pipeline view)
+- [x] **Pipeline Integration** ✅ MOSTLY COMPLETE
+  - Link transactions to contacts ✅
+  - Track transactions through workflow stages ✅
+  - Stage-based notifications and reminders (not implemented)
+  - Pipeline dashboard view (not implemented)
+  - **Create tasks from pipeline and attach to listing** (task creation directly from pipeline view) ✅
 
 #### Task Management for Pipeline (Asana-like)
-- [ ] **Stage-Specific Tasks**
-  - Define typical tasks for each pipeline stage
-  - Define substage tasks (tasks within a stage)
-  - Task templates per stage
-  - Automatic task creation when transaction moves to stage
-- [ ] **Task Assignment & Tracking**
-  - Assign tasks to transactions
-  - Task due dates and priorities
-  - Task completion tracking
-  - Task checklist items
-  - Task comments and notes
+- [x] **Stage-Specific Tasks** ✅ COMPLETE
+  - Define typical tasks for each pipeline stage ✅
+  - Define substage tasks (tasks within a stage) ✅
+  - Task templates per stage ✅
+  - Automatic task creation when transaction moves to stage ✅
+- [x] **Task Assignment & Tracking** ✅ COMPLETE
+  - Assign tasks to transactions ✅
+  - Task due dates and priorities ✅
+  - Task completion tracking ✅
+  - Task checklist items ✅
+  - Task comments and notes ✅
 - [ ] **Forms Needed Per Stage**
   - Define forms/document types needed for each stage
   - Form checklist per transaction
