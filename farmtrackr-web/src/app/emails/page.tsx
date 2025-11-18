@@ -512,16 +512,26 @@ export default function EmailsPage() {
             }
           } else {
             // Has gmail.modify in stored token but still failing
-            // This means the actual access token doesn't have the scope (token refresh issue)
-            // Always force re-auth when delete fails with scope error, regardless of stored scopes
-            const reconnect = confirm(
-              `${result.error}\n\n` +
-              `Your stored token shows gmail.modify scope, but the actual access token doesn't have delete permissions.\n\n` +
-              `This happens when a token was created before Gmail scopes were added, or when token refresh loses scopes.\n\n` +
-              `Would you like to disconnect and reconnect to get a fresh token with all required permissions?`
-            )
+            // This is a known Google OAuth bug where tokeninfo shows scopes but the token doesn't actually have them
+            const isForceReauth = result.forceFullReauth || result.debug?.diagnosis?.includes('Google OAuth token refresh bug')
+            const message = isForceReauth
+              ? `${result.error}\n\n` +
+                `This is a known Google OAuth issue: your token shows it has gmail.modify permissions, but Google's Gmail API says it doesn't.\n\n` +
+                `This happens when a token was created before Gmail scopes were added, or when token refresh loses scopes.\n\n` +
+                `The only solution is to completely disconnect and reconnect to get a fresh token.\n\n` +
+                `Would you like to disconnect and reconnect now?`
+              : `${result.error}\n\n` +
+                `Your stored token shows gmail.modify scope, but the actual access token doesn't have delete permissions.\n\n` +
+                `This happens when a token was created before Gmail scopes were added, or when token refresh loses scopes.\n\n` +
+                `Would you like to disconnect and reconnect to get a fresh token with all required permissions?`
+            
+            const reconnect = confirm(message)
             if (reconnect) {
+              // Always disconnect first to clear the bad token
               await fetch('/api/google/oauth/disconnect', { method: 'POST' })
+              // Small delay to ensure disconnect completes
+              await new Promise(resolve => setTimeout(resolve, 500))
+              // Then reconnect with fresh scopes
               window.location.href = '/api/google/oauth/authorize'
             }
           }

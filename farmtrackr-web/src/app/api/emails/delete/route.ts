@@ -114,11 +114,19 @@ export async function POST(request: NextRequest) {
           ))
       
       if (isScopeError) {
+        // This is a known Google OAuth issue: tokeninfo API shows scopes, but the actual token doesn't have them
+        // This happens when a token was created before scopes were added, or when refresh loses scopes
+        // The only solution is to force a full re-authentication
+        console.error('⚠️ CRITICAL: Token shows gmail.modify in tokeninfo but Gmail API says it doesn\'t have it!')
+        console.error('This is a Google OAuth bug - the token needs to be recreated with fresh scopes.')
+        console.error('Forcing full re-authentication required.')
+        
         return NextResponse.json(
           { 
             success: false, 
-            error: 'Gmail delete permissions not granted. Please go to Settings and disconnect/reconnect your Google account to grant Gmail delete permissions.',
+            error: 'Gmail delete permissions not granted. This appears to be a Google OAuth token issue where the token shows the correct scopes but doesn\'t actually have them. Please disconnect and reconnect your Google account to get a fresh token with all required permissions.',
             requiresReauth: true,
+            forceFullReauth: true, // Flag to indicate this needs a full re-auth, not just reconnect
             debug: {
               code: apiError?.code,
               message: errorMessage,
@@ -130,8 +138,9 @@ export async function POST(request: NextRequest) {
               hasGmailModifyInStored: storedToken?.scopes?.some((s: string) => s.includes('gmail.modify')),
               hasGmailModifyInActual: actualTokenScopes.some(s => s.includes('gmail.modify')),
               hasGmailModifyBeforeDelete: tokenScopesBeforeDelete.some(s => s.includes('gmail.modify')),
-              accessTokenFirst10: accessToken.substring(0, 10), // For debugging token changes
-              accessTokenLength: accessToken.length
+              accessTokenFirst10: accessToken.substring(0, 10),
+              accessTokenLength: accessToken.length,
+              diagnosis: 'Token shows gmail.modify in tokeninfo but Gmail API rejects it - this is a Google OAuth token refresh bug. Full re-authentication required.'
             }
           },
           { status: 403 }
