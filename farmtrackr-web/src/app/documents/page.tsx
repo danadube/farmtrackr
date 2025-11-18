@@ -639,12 +639,14 @@ export default function DocumentsPage() {
                         margin: '0 0 4px 0'
                       }}
                     >
-                      {activeTab === 'documents' ? 'Documents' : 'Letterheads'}
+                      {activeTab === 'documents' ? 'Documents' : activeTab === 'letterheads' ? 'Letterheads' : 'Google Drive'}
                     </h1>
                     <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '16px', margin: '0' }}>
                       {activeTab === 'documents' 
                         ? 'Manage your farm documents and templates'
-                        : 'Manage letterheads for mail merge letters'
+                        : activeTab === 'letterheads'
+                        ? 'Manage letterheads for mail merge letters'
+                        : 'Browse and manage files in Google Drive'
                       }
                     </p>
                   </div>
@@ -700,6 +702,22 @@ export default function DocumentsPage() {
                 }, activeTab === 'letterheads' ? colors.primary : 'transparent', colors.cardHover)}
               >
                 Letterheads
+              </button>
+              <button
+                {...getButtonPressHandlers('tab-drive')}
+                onClick={() => setActiveTab('drive')}
+                style={getButtonPressStyle('tab-drive', {
+                  padding: '8px 16px',
+                  backgroundColor: activeTab === 'drive' ? colors.primary : 'transparent',
+                  color: activeTab === 'drive' ? '#ffffff' : colors.text.secondary,
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }, activeTab === 'drive' ? colors.primary : 'transparent', colors.cardHover)}
+              >
+                Google Drive
               </button>
               <Link href="/google-sheets" style={{ textDecoration: 'none' }}>
                 <button
@@ -1042,6 +1060,13 @@ export default function DocumentsPage() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Google Drive Tab Content */}
+          {activeTab === 'drive' && (
+            <div style={{ marginBottom: '24px' }}>
+              <DriveBrowser />
             </div>
           )}
 
