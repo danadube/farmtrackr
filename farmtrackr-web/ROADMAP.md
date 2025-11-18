@@ -817,22 +817,22 @@ Google Services Layer
     - `updateCalendarEvent(eventId, updates)`
     - `deleteCalendarEvent(eventId)`
     - `syncCalendarEventsToCRM(contactId)`
-- [ ] **Calendar Event Creation**
+- [x] **Calendar Event Creation** ✅ COMPLETE
   - Create calendar events from meetings/showings/appointments
   - Link events to contacts and transactions
   - Auto-sync calendar events to CRM activities
   - Two-way sync (CRM → Calendar, Calendar → CRM)
-  - **Choose which calendar event is added to** (calendar selection in add event form)
-  - **All-day event support** (toggle for all-day events)
-  - **Multiple day event support** (date range selection)
-- [ ] **Calendar UI Integration**
+  - **Choose which calendar event is added to** (calendar selection in add event form) ✅
+  - **All-day event support** (toggle for all-day events) ✅
+  - **Multiple day event support** (date range selection) ✅
+- [x] **Calendar UI Integration** ✅ COMPLETE
   - Calendar view in dashboard (enhance existing calendar card)
   - Create event from contact/transaction pages
   - View calendar events linked to contacts
   - Calendar event reminders and notifications
-  - **Calendar page header: Fix "Today" button text color in light mode** (currently white text on white background)
-  - **Week view: Fit on page in 1 row** (consider widening entire app or adjusting week view layout)
-  - **Calendar label colors: Match calendar colors on calendar view** (ensure consistency)
+  - **Calendar page header: Fix "Today" button text color in light mode** ✅
+  - **Week view: Fit on page in 1 row** ✅
+  - **Calendar label colors: Match calendar colors on calendar view** ✅
 - [ ] **Event Management**
   - Edit/delete calendar events from CRM
   - Event details viewer (time, location, attendees, description)
